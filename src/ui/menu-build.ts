@@ -291,7 +291,8 @@ export function montarMenuBuild(
     // comparacao mora em `input/ferramenta.ts`; o menu so diz qual botao foi
     // apertado.
     // I-TELA-MENU-DA-PROPOSTA: a secao das ruas e da terra, com titulo, separada das construcoes
-    raiz?.append(tituloDeSecao('ferramentas'));
+    const tituloDasFerramentas = tituloDeSecao('ferramentas');
+    raiz?.append(tituloDasFerramentas);
     const linhaDeFerramentas = document.createElement('div');
     linhaDeFerramentas.className = 'grade ferramentas';
     montarFerramenta(linhaDeFerramentas, 'estrada', 'estrada', 'estrada', temaSertao.menuBuild.estrada,
@@ -357,6 +358,10 @@ export function montarMenuBuild(
       subabaEscolhida = id;
       for (const [g, grade] of grades) grade.hidden = g !== id;
       for (const [g, titulo] of titulos) titulo.hidden = g !== id;
+      // I-TELA-RUAS-SO-NA-VILA (pedido do operador, 2026-10-06): as ruas e rocados so na sub-aba Vila
+      const naVila = id === GRUPO_PADRAO;
+      tituloDasFerramentas.hidden = !naVila;
+      linhaDeFerramentas.hidden = !naVila;
       for (const [g, botao] of botoesDeSubaba) botao.setAttribute('aria-selected', String(g === id));
     }
     escolherSubaba(subabaEscolhida ?? menuBuild.grupos[0]?.id ?? GRUPO_PADRAO);

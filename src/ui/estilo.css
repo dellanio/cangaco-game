@@ -1098,7 +1098,8 @@ body[data-menu] #ajuda { z-index: 30; }
 
 /* o corpo: o pergaminho com a borda de couro da proposta */
 #corpo-aba {
-  background-color: #efdfb8;
+  /* I-TELA-COR-DO-MENU (2026-10-06): a cor do alto de `cidade.png` (e da amostra do operador) */
+  background-color: #edcf9d;
   border: 3px solid #6b4226; border-radius: 3px;
   box-shadow: inset 0 0 0 1px #f8ecd0, inset 0 0 18px rgba(120, 80, 40, 0.28);
   padding: 6px 4px 0 6px;
@@ -1218,3 +1219,4 @@ body[data-menu] #ajuda { z-index: 30; }
 #player-da-trilha .campo { display: grid; grid-template-columns: 62px 1fr; align-items: center; gap: 6px; font-size: 11px; }
 #player-da-trilha .campo.mudo { grid-template-columns: auto 1fr; }
 #player-da-trilha input[type="range"] { width: 100%; min-width: 0; }
+#menu-build .grade.ferramentas[hidden] { display: none; }

@@ -5,9 +5,12 @@
 // a sub-aba dele com um clique de DOM. O gesto da sub-aba em si (mouse de verdade, despausado e
 // segurando 150 ms, CLAUDE.md §8) e exercido nos roteiros F06 e UI-barra-a, nao aqui.
 
-/** O id do predio do menu num seletor (`[data-predio="x"]`), ou null. `data-predio-aberto` nao conta. */
+/** O id do predio do menu num seletor (`[data-predio="x"]`), ou null. `data-predio-aberto` nao conta.
+ *  I-TELA-RUAS-SO-NA-VILA (2026-10-06): uma ferramenta (`[data-ferramenta...]`) so existe na Vila, e o
+ *  seletor dela abre a Vila (o id devolvido e o marcador `@vila`). */
 function predioDoSeletor(seletor) {
   if (typeof seletor !== 'string') return null;
+  if (/\[data-ferramenta[\]=^]/.test(seletor)) return '@vila';
   const m = /\[data-predio="([^"]+)"\]/.exec(seletor);
   return m === null ? null : m[1];
 }
@@ -15,6 +18,12 @@ function predioDoSeletor(seletor) {
 /** Abre, na pagina, a sub-aba do predio `id` se a grade dele estiver escondida. */
 async function abrirSubabaDe(evaluate, id) {
   await evaluate((p) => {
+    if (p === '@vila') {
+      const linha = window.document.querySelector('#menu-build .grade.ferramentas');
+      const vila = window.document.querySelector('#menu-build .subaba[data-grupo="vila"]');
+      if (linha && linha.hidden && vila) vila.click();
+      return;
+    }
     const botao = window.document.querySelector(`#menu-build [data-predio="${p}"]`);
     const grade = botao && botao.closest('.grade');
     if (!grade || !grade.hidden) return;

@@ -63,4 +63,10 @@ describe('I-TELA-MENU-DA-PROPOSTA', () => {
     expect(bloco).toMatch(/\.grade\[data-grupo\] \.icone \{[^}]*box-shadow: none;/);
     expect(bloco).toMatch(/\.grade\[data-grupo\] \.icone\[aria-pressed="true"\] \{[^}]*box-shadow: 0 0 0 2px/);
   });
+
+  it('I-TELA-COR-DO-MENU: o fundo do corpo que vale na cascata e a cor da cidade do pe (#edcf9d)', () => {
+    const blocos = [...css.matchAll(/(^|\n)#corpo-aba \{([^}]*)\}/g)].map((m) => m[2]!);
+    const cores = blocos.flatMap((b) => [...b.matchAll(/background-color:\s*(#[0-9a-f]{6})/gi)].map((m) => m[1]!.toLowerCase()));
+    expect(cores.at(-1)).toBe('#edcf9d');
+  });
 });

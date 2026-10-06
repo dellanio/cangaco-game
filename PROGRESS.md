@@ -21019,3 +21019,19 @@ validador.
 **Evidência:** o roteiro `I-TELA-BALAO-DE-PENSAMENTO` sai 0. Ele confere a opacidade 0,9 na ponte e um
 obreiro indo à obra com o balão de ícone, com o ângulo mudando entre as leituras. A captura do martelo
 no balão do obreiro foi aberta.
+
+### I-TELA-RUAS-SO-NA-VILA e I-TELA-COR-DO-MENU — as ruas só na Vila, e o fundo na cor da cidade (verificado)
+- **Ruas e roçados só na Vila:** o título "Ruas e Roçados" e as cinco ferramentas só aparecem com a
+  sub-aba Vila escolhida (`escolherSubaba` em `src/ui/menu-build.ts`). As outras três mostram direto o
+  título delas e as construções. O `tools/shots/_subaba.js` passou a abrir a Vila antes de mirar
+  qualquer `[data-ferramenta...]`, como já abria a sub-aba do prédio;
+- **A cor do menu:** o fundo do `#corpo-aba` é `#edcf9d`, a cor do alto de `cidade.png` e da amostra do
+  operador (medidas no PNG: 237, 207, 157).
+
+**Teste:** no `tests/I-TELA-MENU-DA-PROPOSTA.test.ts` (5), a cor que vale na cascata. O roteiro
+`I-TELA-MENU-DA-PROPOSTA` confere, nas quatro sub-abas e com o jogo andando:
+- a Vila com os dois títulos e 5 ferramentas visíveis;
+- as outras com só o título delas e 0 ferramentas;
+- a cor computada do corpo.
+
+**Não-regressão:** F06, F08, F18i, F17, F17g e UI-barra-a saem 0. A captura do menu foi aberta.

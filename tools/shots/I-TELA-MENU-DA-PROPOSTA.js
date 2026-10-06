@@ -62,8 +62,13 @@ async function roteiro({ page, capturar, estado, afirmar }) {
     const m = await medir();
     afirmar(m.grade === g.id && m.subabas.find((s) => s.grupo === g.id)?.selecionada, `a sub-aba ${g.id} deveria ficar escolhida: ${JSON.stringify(m.grade)}`);
     const secoes = m.titulos.map((t) => t.secao);
-    afirmar(JSON.stringify(secoes) === JSON.stringify(['ferramentas', g.id]) && m.titulos.every((t) => t.titulo && t.sub),
-      `com a sub-aba ${g.id}, os titulos deveriam ser o das ruas e o dela: ${JSON.stringify(m.titulos)}`);
+    // I-TELA-RUAS-SO-NA-VILA: as ruas e rocados (titulo e ferramentas) so na Vila
+    const esperadas = g.id === 'vila' ? ['ferramentas', g.id] : [g.id];
+    afirmar(JSON.stringify(secoes) === JSON.stringify(esperadas) && m.titulos.every((t) => t.titulo && t.sub),
+      `com a sub-aba ${g.id}, os titulos deveriam ser ${JSON.stringify(esperadas)}: ${JSON.stringify(m.titulos)}`);
+    const ferramentasVisiveis = await page.$$eval('#menu-build [data-ferramenta]', (bs) => bs.filter((b) => b.offsetParent !== null).length);
+    afirmar(g.id === 'vila' ? ferramentasVisiveis === 5 : ferramentasVisiveis === 0,
+      `com a sub-aba ${g.id}, ferramentas visiveis: ${ferramentasVisiveis}`);
     afirmar(m.cartoes.length > 0 && m.cartoes.every((c) => c.nome !== '' && !c.cortado && !c.fora),
       `os cartoes de ${g.id} deveriam ter o nome inteiro e caber na barra: ${JSON.stringify(m.cartoes.filter((c) => !c.nome || c.cortado || c.fora))}`);
   }
@@ -80,6 +85,9 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   // o pe: a cidade e o rodape
   await page.evaluate(() => { const c = window.document.getElementById('corpo-aba'); c.scrollTop = c.scrollHeight; });
   await esperar();
+  // I-TELA-COR-DO-MENU: o fundo do corpo na cor da cidade do pe
+  const corDoCorpo = await page.$eval('#corpo-aba', (c) => window.getComputedStyle(c).backgroundColor);
+  afirmar(corDoCorpo === 'rgb(237, 207, 157)', `o fundo do corpo deveria ser #edcf9d, e ${corDoCorpo}`);
   const pe = await page.evaluate(() => {
     const doc = window.document;
     const cidade = doc.querySelector('#menu-build .cidade');
