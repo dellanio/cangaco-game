@@ -9134,6 +9134,43 @@ A ordem de execução é a desta lista. Cada item tem o aceite abaixo, escrito a
   4. a captura do açude da vila em jogo é aberta, em dois ticks diferentes (a animação). A homologação
      é do operador.
 
+### Pedido do operador de 2026-10-05 (noite, 3): o solo em pixel art e a escola da noru
+
+#### I-ARTE-SOLO-PIXEL-ART — o chão padrão como solo do sertão, em pixel art
+- **Pedido:** "Regere a vegetação padrão como um solo do cangaço nordestino em pixel art." A leitura
+  é a do terreno padrão do mapa, `grama` no manifesto: o chão de caatinga que cobre quase todo o mapa,
+  com as variantes `padrao`, `v1`, `v2` e `v3` sorteadas por tile.
+- **Como** (o mesmo caminho da I-ARTE-AGUA-PIXEL-ART):
+  - um gerador versionado e determinístico desenha as quatro variantes em 32×32, ampliadas 2× para
+    64×64, com uma paleta curta da terra de hoje (os ocres medidos no PNG), dither e pedrinhas,
+    rachaduras e tufos de capim seco;
+  - o **chão de base é o mesmo** nas quatro e emenda em si mesmo, porque elas se encostam em qualquer
+    combinação no mapa. O que muda entre elas são os detalhes, longe da borda;
+  - o manifesto aponta as quatro para os arquivos novos, e os de antes ficam no disco.
+- **Aceite:**
+  1. as quatro variantes 64×64 emendam com elas mesmas e entre si: a coluna da borda de qualquer uma
+     casa com a borda oposta de qualquer outra (o chão de base igual nas bordas, medido no PNG);
+  2. a paleta é curta e os blocos são 2×2;
+  3. o gerador refaz os arquivos byte a byte;
+  4. a captura da vila em jogo é aberta. A homologação é do operador.
+
+#### I-ARTE-ESCOLA-DA-NORU — a escola rural da branch `noru-novos-sprites` no jogo
+- **Pedido:** "Lembro de ter uma escola vindo da branch noru-novos-sprites, aplique-a no jogo."
+- **O que existe (verificado):** a branch registrou a escola rural D (`52af24c`, `SKILL_BUILDER_PROGRESS.md`)
+  como candidata externa, em
+  `D:\projetos-pessoal\cangaco-game-candidatos\arte\D\schoolhouse\rodada-2026-10-03\`. Lá estão os 4
+  PNGs (`stage/assets/...`), a entrada pronta do manifesto (`entry.json`) e os caminhos permitidos
+  (`allowed-paths.txt`). Os assets nunca foram commitados: a branch esperava a homologação do
+  operador, e o pedido de hoje é essa ordem.
+- **Como:** copiar os 4 caminhos permitidos e trocar a entrada `schoolhouse` do manifesto pela
+  `entry.json` (envelope 214×240, footprint 3×3, anchor e as exceções 1,33 e 1,12 iguais às de hoje).
+  As âncoras novas são a da bandeira e a da área de treino. Os arquivos de antes ficam no disco.
+- **Aceite:**
+  1. o manifesto aponta a escola nova, os 4 arquivos existem com a dimensão declarada, e a origem é a
+     master versionada;
+  2. os testes que a branch rodou continuam verdes (F-SPR, F17f, C10, F-ESC, F-VIVO-h);
+  3. os roteiros F17f e F-VIVO-h saem 0, e a captura da escola em jogo é aberta.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
