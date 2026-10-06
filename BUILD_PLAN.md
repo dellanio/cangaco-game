@@ -9217,6 +9217,8 @@ A ordem de execução é a desta lista. Cada item tem o aceite abaixo, escrito a
      toca a playlist e não avança; passar com a trilha pausada troca a faixa e continua pausada;
   6. pelo fundo sonoro, com o tocador falso: `pausar` para a faixa, `continuar` a retoma da mesma faixa,
      e `passar` para a atual e toca a seguinte desde o começo;
+- **Emenda 2 (2026-10-06, antes do código):** a terceira faixa, `music_pianco_03.mp3`, entra depois da
+  segunda. A playlist do dado passa a ter as três, na ordem 01, 02, 03.
   7. o roteiro em jogo, com o jogo andando, aperta os controles (down, 150 ms, up): passar troca o nome
      e a faixa que toca; pausar deixa o áudio da trilha pausado e continuar o retoma; o deslizador do
      volume da música muda o volume do áudio da trilha. A captura do player é aberta.
