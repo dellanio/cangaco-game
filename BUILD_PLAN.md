@@ -9171,6 +9171,38 @@ A ordem de execução é a desta lista. Cada item tem o aceite abaixo, escrito a
   2. os testes que a branch rodou continuam verdes (F-SPR, F17f, C10, F-ESC, F-VIVO-h);
   3. os roteiros F17f e F-VIVO-h saem 0, e a captura da escola em jogo é aberta.
 
+### Pedido do operador de 2026-10-06: a trilha sonora em playlist
+
+#### I-TELA-TRILHA-SONORA — uma playlist de músicas que começa tocando no jogo
+- **Pedido:** "Criar um sistema de soundtrack de uma playlist para o jogo, começando pela primeira
+  (padrão), e que já começa tocando no jogo." A primeira faixa é
+  `D:\projetos-pessoal\cangaco-game-candidatos\sound\music_pianco_01.mp3`, entregue pelo operador.
+- **O que existe (verificado):** a música da paz (`data/som.json` `musica.paz` = `music-peace`) não tem
+  arquivo, e por isso é silêncio. A do combate (`music-combat`) tem arquivo. A troca entre as duas é a
+  passagem de `src/render/fundo-sonoro.ts`.
+- **Como (só tela e dado):**
+  - a camada da **paz** passa a ser a **playlist** (`data/som.json` `musica.playlist`: a lista de faixas,
+    na ordem). Ela começa pela primeira, ao terminar uma faixa passa para a seguinte, e da última volta
+    à primeira. Com uma faixa só, ela recomeça. O combate continua por cima, com a mesma passagem;
+  - a faixa toca sem laço, e o fim dela (`ended`) avança a playlist. A regra "qual a próxima" é pura;
+  - **"já começa tocando":** a música pede para tocar desde o primeiro quadro da partida. O navegador
+    só libera som depois de um gesto do jogador, e o clique em "Nova partida" já é esse gesto. Antes de
+    qualquer gesto, ela tenta de novo a cada segundo, como os laços de hoje;
+  - **a origem:** a regra dos sons (H-ARTE-SONS-CANDIDATOS: só CC0, de Freesound ou OpenGameArt,
+    aprovado na lista) vale para `sons` e não muda. A trilha entra numa seção **própria** do manifesto,
+    `trilha`, com o arquivo, a base (o original do operador em `assets/base/trilha/`) e a origem
+    ("entregue pelo operador"). **Pergunta:** a licença da faixa, que fica registrada como "do operador,
+    a confirmar".
+- **Aceite:**
+  1. a regra pura por tabela: a primeira faixa é a padrão, a próxima de i é i+1, a da última é a
+     primeira, e com uma faixa a próxima é ela mesma;
+  2. pelo fundo sonoro, com o tocador falso: na paz toca a faixa atual da playlist; o fim dela passa
+     para a seguinte; no combate a playlist desce e a música de combate sobe (a passagem de hoje);
+  3. o validador recusa a playlist vazia, a faixa que não está na `trilha` do manifesto, e a entrada da
+     trilha sem arquivo, base ou origem. A regra CC0 de `sons` continua igual;
+  4. o roteiro em jogo, com o gesto: a faixa da playlist está tocando (o elemento de áudio da trilha
+     não pausado, com o tempo andando), e não há erro de console.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
