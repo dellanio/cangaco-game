@@ -21035,3 +21035,14 @@ no balão do obreiro foi aberta.
 - a cor computada do corpo.
 
 **Não-regressão:** F06, F08, F18i, F17, F17g e UI-barra-a saem 0. A captura do menu foi aberta.
+
+### I-ARTE-SOM-DA-FOME — o som da tropa com fome (verificado; não ouvi)
+O operador escolheu o tipo de som ("barriga roncando ou pessoa resmungando"). A linha `troop-hungry` de
+`docs/sons-candidatos.md` já tinha a barriga roncando como candidato 3: "The Deepest & Heaviest Grumbly
+Hunger Growls", de bbonaparte1993, CC0, conferido na página em 2026-10-05. Marquei o 3 e rodei o
+`tools/baixar-sons.js`, que conferiu a licença de novo (CC0) e recortou 22 s → 3 s, com fade de 0,5 s.
+O som entrou no manifesto (`assets/sons/troop-hungry.mp3`, 26 KB), e o resto do manifesto não mudou.
+A tabela de `data/som.json` já ligava o evento ao som, só no lado do jogador.
+**Teste:** `H-ARTE-SONS-APROVADOS` (23 aprovados, e o `troop-hungry` saiu dos sem aprovação) e o
+`I-COMIDA-AVISO-DA-TROPA-COM-FOME` (o som do aviso tem arquivo CC0).
+**Não verificado:** não ouvi o recorte. Os 3 s são o começo do arquivo, sem o silêncio inicial.

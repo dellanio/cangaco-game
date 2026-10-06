@@ -4691,6 +4691,24 @@
         "duracao": 0.7,
         "fade": 0.2
       }
+    },
+    "troop-hungry": {
+      "arquivo": "sons/troop-hungry.mp3",
+      "base": "base/sons/troop-hungry/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://freesound.org/people/bbonaparte1993/sounds/455554/",
+      "autor": "bbonaparte1993",
+      "titulo": "The Deepest &amp; Heaviest Grumbly Hunger Growls &amp; Moans of My Empty Stomach",
+      "baixadoDe": "https://cdn.freesound.org/previews/455/455554_9465620-hq.mp3",
+      "nota": "preview HQ do Freesound (o original pede login)",
+      "aprovado": "3",
+      "duracaoOriginal": 21.996,
+      "duracao": 3,
+      "recorte": {
+        "silencioInicial": true,
+        "duracao": 3,
+        "fade": 0.5
+      }
     }
   }
 }

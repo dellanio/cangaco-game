@@ -4,7 +4,7 @@
  * militares em alerta de um lado vai de 0 a mais de 0, e o lembrete no multiplo enquanto dura.
  */
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { gameData } from '../src/sim/data';
 import type { GameData } from '../src/sim/data/types';
 import { createInitialState, LADO_DO_JOGADOR } from '../src/sim/state';
@@ -104,6 +104,10 @@ describe('I-COMIDA-AVISO-DA-TROPA-COM-FOME', () => {
     const tabela = JSON.parse(readFileSync('data/som.json', 'utf8')) as TabelaDeSom;
     expect(idDoSom({ type: 'troop-hungry', lado: LADO_DO_JOGADOR, unidades: 2 }, tabela)).toBe('troop-hungry');
     expect(idDoSom({ type: 'troop-hungry', lado: LADO_DA_IA, unidades: 2 }, tabela)).toBeNull();
+    // I-ARTE-SOM-DA-FOME: o som tem arquivo no manifesto (a barriga roncando, CC0)
+    const manifesto = JSON.parse(readFileSync('assets/manifest.json', 'utf8')) as { sons: Record<string, { arquivo: string; licenca: string }> };
+    expect(manifesto.sons['troop-hungry']?.licenca).toBe('CC0 1.0');
+    expect(existsSync(`assets/${manifesto.sons['troop-hungry']!.arquivo}`)).toBe(true);
   });
 
   it('(6) o validate:data recusa o lembrete <= 0', () => {

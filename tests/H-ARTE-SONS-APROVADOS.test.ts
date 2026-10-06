@@ -76,12 +76,13 @@ describe('H-ARTE-SONS-APROVADOS — (b) so o que o operador aprovou', () => {
   it('linha sem aprovacao e link que nao e CC0 ficam em silencio: fora do manifesto e sem URL', () => {
     const semAprovacao = LINHAS.filter((l) => escolhaDoOperador(l) === null).map((l) => l.id);
     // H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA: o command-rejected foi aprovado pelo operador (2026-10-04)
-    // I-COMIDA-AVISO-DA-TROPA-COM-FOME (2026-10-05): a linha nova do troop-hungry espera o operador
-    expect(semAprovacao).toEqual(['building-hit', 'peace-ended', 'troop-hungry']);
+    // I-ARTE-SOM-DA-FOME (2026-10-06): o operador escolheu a barriga roncando (3) para o troop-hungry
+    expect(semAprovacao).toEqual(['building-hit', 'peace-ended']);
     for (const id of [...semAprovacao, ...NAO_CC0]) expect(SONS[id], id).toBeUndefined();
     const aprovadas = LINHAS.filter((l) => { const e = escolhaDoOperador(l); return e !== null && typeof e === 'object'; }).map((l) => l.id);
     // 17 da H, mais as cinco de 2026-10-04 (command-rejected, build-wood, build-road, quarry-work, road-placed)
-    expect(aprovadas.length).toBe(22);
+    // e o troop-hungry de 2026-10-06 (I-ARTE-SOM-DA-FOME)
+    expect(aprovadas.length).toBe(23);
     expect(Object.keys(SONS).sort()).toEqual(aprovadas.filter((id) => !NAO_CC0.includes(id)).sort());
     // o caminho do jogo: o id sem arquivo nao ganha URL (silencio)
     const urls = urlsDosSons(SONS, Object.fromEntries(Object.values(SONS).map((s) => [s.arquivo, `/x/${s.arquivo}`])));
