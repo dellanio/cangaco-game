@@ -414,6 +414,15 @@
     "apagarCampo": "Apagar roçado",
     "apagarCampoDesc": "só o traçado; terra arada fica",
     "cartaoVazio": "Passe o mouse num prédio para ver o que ele custa",
+    "_docProposta": "I-TELA-MENU-DA-PROPOSTA (2026-10-05). `rotulos`: o nome curto visivel embaixo de cada ferramenta (o nome inteiro continua no balao). `secoes`: o titulo e a linha de explicacao da secao das ferramentas e da secao de construcoes de cada sub-aba.",
+    "rotulos": { "estrada": "Rua", "demolirEstrada": "Desfazer rua", "apagarCampo": "Apagar roça" },
+    "secoes": {
+      "ferramentas": { "titulo": "Ruas e Roçados", "sub": "Abra caminho de pedra e prepare a terra do milho e da cana." },
+      "vila": { "titulo": "Construções da Vila", "sub": "Edifícios que organizam e fazem crescer a vila." },
+      "comida": { "titulo": "Construções de Comer", "sub": "O que planta, cria e cozinha o sustento do povo." },
+      "materia": { "titulo": "Mato e Pedra", "sub": "Madeira, pedra e os metais da serra." },
+      "guerra": { "titulo": "Construções de Guerra", "sub": "Armas, couro e a tropa que defende a vila." }
+    },
     "grupos": { "vila": "Vila", "comida": "De Comer", "materia": "Mato e Pedra", "guerra": "Guerra" }
   },
   "painelEscola": {

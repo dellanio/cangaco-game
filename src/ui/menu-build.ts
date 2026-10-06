@@ -42,6 +42,32 @@ const temaDeMercadorias = temaSertao.mercadorias as TemaDeMercadorias;
  *  cana achando que arava milho (operador, 2026-09-26). Ate a arte chegar. */
 const corDasCulturas = temaSertao.recursos as Readonly<Record<string, string | undefined>>;
 const rotulosDosGrupos = temaSertao.menuBuild.grupos as Readonly<Record<string, string | undefined>>;
+/** I-TELA-MENU-DA-PROPOSTA — o titulo e a linha de explicacao de cada secao, do tema. */
+const secoesDoMenu = temaSertao.menuBuild.secoes as Readonly<Record<string, { readonly titulo: string; readonly sub: string } | undefined>>;
+const rotulosCurtos = temaSertao.menuBuild.rotulos as Readonly<Record<string, string | undefined>>;
+
+/** I-TELA-MENU-DA-PROPOSTA — o cabecalho de uma secao: o titulo entre os dois mandacarus da proposta
+ *  (CSS) e a linha de explicacao embaixo. */
+function tituloDeSecao(chave: string): HTMLElement {
+  const secao = secoesDoMenu[chave];
+  const caixa = document.createElement('div');
+  caixa.className = 'titulo-secao';
+  caixa.dataset.secao = chave;
+  const titulo = document.createElement('h3');
+  titulo.textContent = secao?.titulo ?? chave;
+  const sub = document.createElement('p');
+  sub.textContent = secao?.sub ?? '';
+  caixa.append(titulo, sub);
+  return caixa;
+}
+
+/** O nome visivel embaixo do icone (a ferramenta e o cartao da construcao). */
+function nomeVisivel(texto: string): HTMLElement {
+  const nome = document.createElement('span');
+  nome.className = 'nome';
+  nome.textContent = texto;
+  return nome;
+}
 
 function nomeDe(id: string): string {
   return temaDePredios[id]?.nome ?? id;
@@ -264,16 +290,18 @@ export function montarMenuBuild(
     // clicar de novo no que ja esta ativo larga a ferramenta (BUG-A). A
     // comparacao mora em `input/ferramenta.ts`; o menu so diz qual botao foi
     // apertado.
+    // I-TELA-MENU-DA-PROPOSTA: a secao das ruas e da terra, com titulo, separada das construcoes
+    raiz?.append(tituloDeSecao('ferramentas'));
     const linhaDeFerramentas = document.createElement('div');
     linhaDeFerramentas.className = 'grade ferramentas';
     montarFerramenta(linhaDeFerramentas, 'estrada', 'estrada', 'estrada', temaSertao.menuBuild.estrada,
       textoDoCustoDaEstrada(), () => {
         ferramenta.alternar('estrada');
-      });
+      }, null, rotulosCurtos['estrada']);
     montarFerramenta(linhaDeFerramentas, 'demolir-estrada', 'demolir-estrada', 'demolir-estrada',
       temaSertao.menuBuild.demolirEstrada, temaSertao.menuBuild.demolirEstradaDesc, () => {
         ferramenta.alternar('demolir-estrada');
-      });
+      }, null, rotulosCurtos['demolirEstrada']);
     // F18i — uma ferramenta de terra POR CULTURA aravel, na ordem do dado, e uma
     // borracha para todas. A borracha e unica porque nao precisa saber a cultura:
     // ela tira o tile do canteiro, seja la o que fosse plantar ali.
@@ -281,12 +309,12 @@ export function montarMenuBuild(
       montarFerramenta(linhaDeFerramentas, 'campo', `campo-${recurso}`, 'campo',
         nomeDaFerramentaDeCampo(recurso), temaSertao.menuBuild.campoDesc, () => {
           ferramenta.alternarCampo(recurso);
-        }, recurso);
+        }, recurso, temaDeMercadorias[recurso] ?? recurso);
     }
     montarFerramenta(linhaDeFerramentas, 'apagar-campo', 'apagar-campo', 'apagar-campo',
       temaSertao.menuBuild.apagarCampo, temaSertao.menuBuild.apagarCampoDesc, () => {
         ferramenta.alternar('apagar-campo');
-      });
+      }, null, rotulosCurtos['apagarCampo']);
     raiz?.append(linhaDeFerramentas);
 
     // I-TELA-SUBABAS-DO-CONSTRUIR (pedido do operador, 2026-10-05): uma SUB-ABA por grupo, na ordem
@@ -296,6 +324,7 @@ export function montarMenuBuild(
     const grupoDe = new Map<string, string>();
     for (const grupo of menuBuild.grupos) for (const id of grupo.predios) grupoDe.set(id, grupo.id);
     const grades = new Map<string, HTMLElement>();
+    const titulos = new Map<string, HTMLElement>();
     const subabas = document.createElement('div');
     subabas.className = 'subabas';
     subabas.setAttribute('role', 'tablist');
@@ -307,10 +336,17 @@ export function montarMenuBuild(
       subaba.className = 'subaba';
       subaba.dataset.grupo = grupo.id;
       subaba.setAttribute('role', 'tab');
-      subaba.textContent = rotulosDosGrupos[grupo.id] ?? grupo.id;
+      // o icone e o `::before` da sub-aba (CSS, PNG do manifesto), como nas abas principais
+      const rotuloDaSubaba = document.createElement('span');
+      rotuloDaSubaba.className = 'rotulo';
+      rotuloDaSubaba.textContent = rotulosDosGrupos[grupo.id] ?? grupo.id;
+      subaba.append(rotuloDaSubaba);
       subaba.addEventListener('click', () => escolherSubaba(grupo.id));
       subabas.append(subaba);
       botoesDeSubaba.set(grupo.id, subaba);
+      const titulo = tituloDeSecao(grupo.id);
+      raiz?.append(titulo);
+      titulos.set(grupo.id, titulo);
       const grade = document.createElement('div');
       grade.className = 'grade';
       grade.dataset.grupo = grupo.id;
@@ -320,15 +356,20 @@ export function montarMenuBuild(
     function escolherSubaba(id: string): void {
       subabaEscolhida = id;
       for (const [g, grade] of grades) grade.hidden = g !== id;
+      for (const [g, titulo] of titulos) titulo.hidden = g !== id;
       for (const [g, botao] of botoesDeSubaba) botao.setAttribute('aria-selected', String(g === id));
     }
     escolherSubaba(subabaEscolhida ?? menuBuild.grupos[0]?.id ?? GRUPO_PADRAO);
+    // I-TELA-MENU-DA-PROPOSTA: na proposta as sub-abas vem no alto do corpo, antes das ruas e roçados
+    titulo.after(subabas);
 
     for (const opcao of opcoes) {
       const botao = botaoIcone(opcao.id, nomeDe(opcao.id));
       botao.dataset.predio = opcao.id;
       const url = iconeDe(opcao.id);
       botao.append(url === null ? miniaturaDoFootprint(opcao.tamanho) : retrato(url));
+      // I-TELA-MENU-DA-PROPOSTA: a construcao e um cartao com o nome visivel embaixo do retrato
+      botao.append(nomeVisivel(nomeDe(opcao.id)));
       // aria-disabled e nao `disabled`: o item bloqueado continua recebendo o
       // clique, que a ferramenta simplesmente ignora — o jogador nao fica sem
       // resposta e o roteiro consegue provar que clicar nele nao ativa nada.
@@ -343,6 +384,11 @@ export function montarMenuBuild(
       itens.set(opcao.id, { botao, planta: plantaDaOpcao(opcao) });
     }
 
+    // I-TELA-MENU-DA-PROPOSTA: a cidade do sertao no pe do menu (enfeite do operador, `cidade.png`)
+    const cidade = document.createElement('div');
+    cidade.className = 'cidade';
+    cidade.setAttribute('aria-hidden', 'true');
+    raiz?.append(cidade);
     raiz?.append(cartao);
     ferramenta.aoMudar(marcarAtivo);
     marcarAtivo(ferramenta.predioAtivo, ferramenta.modo, ferramenta.culturaAtiva);
@@ -355,6 +401,8 @@ export function montarMenuBuild(
   function montarFerramenta(
     linha: HTMLElement, modo: ModoDaFerramenta, id: string, glifo: string, nomeDoBotao: string,
     detalhe: string, aoClicar: () => void, cultura: string | null = null,
+    /** I-TELA-MENU-DA-PROPOSTA — o nome curto visivel embaixo do icone. */
+    rotulo: string = nomeDoBotao,
   ): void {
     const botao = botaoIcone(id, nomeDoBotao);
     botao.dataset.ferramenta = id;
@@ -362,7 +410,7 @@ export function montarMenuBuild(
     desenho.className = `glifo glifo-${glifo}`;
     const cor = cultura === null ? undefined : corDasCulturas[cultura];
     if (cor !== undefined) desenho.style.setProperty('--cor-cultura', cor);
-    botao.append(desenho);
+    botao.append(desenho, nomeVisivel(rotulo));
     botao.addEventListener('click', aoClicar);
     linha.append(botao);
     const planta: Planta = { id, nome: nomeDoBotao, custo: detalhe, requer: '', desc: '' };

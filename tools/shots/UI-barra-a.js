@@ -150,7 +150,14 @@ async function roteiro(ctx) {
   // I-TELA-SUBABAS-DO-CONSTRUIR (2026-10-05): com as sub-abas, a maior delas (Guerra, 9 predios) CABE
   // a 720 — era o pedido do operador ("a lista esta muito comprida"). A sombra continua provada numa
   // janela baixa, onde o corpo rola de verdade.
-  afirmar(!(await haMais()), 'a 720, com as sub-abas, a grade cabe: a sombra do pe deveria estar apagada');
+  // I-TELA-MENU-DA-PROPOSTA (2026-10-05): com os titulos das secoes, os nomes e a cidade no pe, o corpo
+  // do Construir passou a rolar a 720. O que vale e a sombra concordar com a rolagem MEDIDA, no topo e
+  // no fim, e nao a premissa de que cabe.
+  await rolarCorpo('topo');
+  const rola720 = await page.$eval('#corpo-aba', (c) => c.scrollHeight > c.clientHeight + 1);
+  afirmar((await haMais()) === rola720, `a 720 a sombra do pe deveria acompanhar a rolagem (rola: ${rola720})`);
+  await rolarCorpo('fim');
+  afirmar(!(await haMais()), 'a 720, no fim da rolagem, a sombra do pe deveria apagar');
   await page.setViewportSize({ width: 1280, height: 520 });
   await esperarFrame();
   await rolarCorpo('topo');

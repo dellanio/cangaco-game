@@ -132,9 +132,11 @@ async function roteiro(ctx) {
     `a Pedra deveria cair de ${pedraInicial} para ${pedraEsperada} (${totalDeTiles} x ${custoPorTile}), veio ${hudDepoisDeConstruir.stone}`,
   );
   afirmar(
-    hudDepoisDeConstruir.gold === hudInicial.gold && hudDepoisDeConstruir.timber === hudInicial.timber
+    // I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA (2026-10-04): a escola puxa ouro do armazem enquanto a rua sobe,
+    // e o HUD conta so o armazem. O ouro pode descer, e nunca subir; a madeira e a comida nao mudam.
+    Number(hudDepoisDeConstruir.gold) <= Number(hudInicial.gold) && hudDepoisDeConstruir.timber === hudInicial.timber
       && hudDepoisDeConstruir.comida === hudInicial.comida,
-    'so a Pedra deveria mudar',
+    `so a Pedra deveria mudar: ${JSON.stringify(hudInicial)} -> ${JSON.stringify(hudDepoisDeConstruir)}`,
   );
   await capturar('estrada-desenhada');
 

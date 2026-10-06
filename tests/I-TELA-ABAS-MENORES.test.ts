@@ -8,13 +8,25 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 
 const css = readFileSync('src/ui/estilo.css', 'utf8');
-/** O ULTIMO bloco do seletor: e o que vale na cascata. */
+/** Todos os blocos do seletor, na ordem do arquivo: a cascata. A declaracao que vale e a ULTIMA de
+ *  cada propriedade (I-TELA-MENU-DA-PROPOSTA acrescentou um bloco `#abas` so com o fundo, e o ultimo
+ *  bloco deixou de ter todas as propriedades). */
 const bloco = (seletor: string): string => {
-  const i = css.lastIndexOf(`${seletor} {`);
-  if (i < 0) throw new Error(`sem o bloco ${seletor}`);
-  return css.slice(i, css.indexOf('}', i));
+  const partes: string[] = [];
+  let i = css.indexOf(`${seletor} {`);
+  while (i >= 0) {
+    // so o seletor exato: o caractere antes nao pode continuar outro seletor (`#abas button` nao e `#abas`)
+    const antes = i === 0 ? '\n' : css[i - 1]!;
+    if (/[\s},]/.test(antes)) partes.push(css.slice(i, css.indexOf('}', i)));
+    i = css.indexOf(`${seletor} {`, i + 1);
+  }
+  if (partes.length === 0) throw new Error(`sem o bloco ${seletor}`);
+  return partes.join(';');
 };
-const num = (b: string, prop: string): number => Number(new RegExp(String.raw`(?:^|[;{\s])${prop}:\s*([0-9.]+)px`).exec(b)?.[1]);
+const num = (b: string, prop: string): number => {
+  const todas = [...b.matchAll(new RegExp(String.raw`(?:^|[;{\s])${prop}:\s*([0-9.]+)px`, 'g'))];
+  return Number(todas[todas.length - 1]?.[1]);
+};
 
 describe('I-TELA-ABAS-MENORES', () => {
   it('altura, pictograma e rotulo em 80%, e as colunas em 80% da regua', () => {

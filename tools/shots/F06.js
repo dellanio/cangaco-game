@@ -134,6 +134,8 @@ async function roteiro(ctx) {
   const gruposDoDado = require('../../data/menu-build.json').grupos;
   await page.keyboard.press('p');
   for (const g of gruposDoDado) {
+    // I-TELA-MENU-DA-PROPOSTA: o menu ficou mais alto e rola; a sub-aba vem a vista antes do gesto
+    await page.locator(`#menu-build .subaba[data-grupo="${g.id}"]`).scrollIntoViewIfNeeded();
     const sub = await retanguloDe(page, `#menu-build .subaba[data-grupo="${g.id}"]`);
     await page.mouse.move(sub.left + sub.width / 2, sub.top + sub.height / 2);
     await page.mouse.down();

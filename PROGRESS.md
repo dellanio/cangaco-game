@@ -20798,3 +20798,70 @@ borda sumiu.
 `periodo` de distância, foram abertas: as cristas mudam, e as bordas entre tiles não aparecem.
 **Não verificado:** o lago grande e a margem com a pixel art lado a lado (a margem continua a pintura de
 antes). Se o operador aprovar, a margem é o passo seguinte.
+
+### I-TELA-MENU-DA-PROPOSTA — o menu lateral no estilo da proposta do operador (verificado; homologação do operador)
+**O que mudou** (CSS no fim de `src/ui/estilo.css`, `src/ui/menu-build.ts` e o tema; a sim não mudou):
+- **o minimapa** entre os dois enfeites de madeira do operador (estrela e mandacaru), no lugar da rosa
+  dos ventos;
+- **as abas** sobre a tábua escura. A ativa ganha o brilho dourado e a seta para baixo, e o divisor do
+  mandacaru fica embaixo;
+- **o corpo** é pergaminho com a borda de couro, nesta ordem, como na proposta:
+  - as **sub-abas** como abas de verdade, com o ícone do Codex em cima (casa, ramo, pedras, espadas) e
+    o nome embaixo. A escolhida é terracota, com o ícone creme;
+  - **"Ruas e Roçados"**, com a linha "Abra caminho de pedra e prepare a terra do milho e da cana." e
+    as cinco ferramentas no quadro de madeira, com o nome embaixo (Rua, Desfazer rua, Milho, Cana,
+    Apagar roça);
+  - **"Construções da Vila"** (ou de Comer, Mato e Pedra, de Guerra), com a linha de explicação. As
+    construções vão em cartões de pergaminho (a peça do operador), com o retrato, o nome e o cadeado;
+  - **a cidade do sertão** (`fundo_menu`) no pé;
+- **o rodapé** é a tábua com o sol;
+- **a rua** usa o calçamento de pedra do Codex no lugar da barra de tinta.
+
+**A arte:**
+- as peças do operador estão em `assets/base/ui-menu/operador/` (com a proposta) e em
+  `assets/sprites/ui/menu/`;
+- os cinco ícones do Codex (`codex exec`, com a geração de imagem dele) têm os originais em
+  `assets/base/ui-menu/codex/`, e o `tools/limpar-icones-do-menu.mjs` os refaz byte a byte (conferido).
+  O lint do script foi corrigido aqui;
+- o mandacaru dos títulos foi recortado da própria proposta;
+- tudo está em `icones.interface` do manifesto, com a dimensão real e a origem.
+
+**Desvios da proposta, registrados como pergunta:**
+- os cartões vão **3 por linha**: com 260 px, 4 deixariam o nome ilegível;
+- a linha de "filtros" da proposta (Todos, Apenas disponíveis...) não existe no jogo. No lugar dela
+  ficam as ferramentas de rua e roça, no mesmo quadro;
+- as abas principais continuam 20 % menores (o pedido de hoje cedo), menores que as da proposta;
+- a faixa escura de avisos entre o minimapa e as abas continua (a altura fixa, decisão do operador de
+  2026-09-26).
+
+**Teste:** `tests/I-TELA-MENU-DA-PROPOSTA.test.ts` (4) cobre a parte estática:
+- todo PNG do bloco novo existe e está no manifesto, com a dimensão e a origem;
+- o ícone de cada sub-aba e a rua de pedra;
+- o texto de cada seção no tema;
+- a sombra só no ativo (o que o F06 mede).
+
+O projeto não tem DOM de teste, e acrescentar jsdom seria dependência nova. A estrutura fica afirmada
+no roteiro.
+**Evidência:** o roteiro novo `I-TELA-MENU-DA-PROPOSTA` sai 0. No navegador, ele confere:
+- as sub-abas com ícone e rótulo inteiros, e cada ferramenta com o nome inteiro;
+- o gesto em cada sub-aba com o jogo andando (os títulos certos, cada cartão com o nome inteiro e
+  dentro da barra);
+- a cidade e o rodapé no pé.
+
+As duas capturas (o alto e o pé) foram abertas. O F06 passou a rolar a sub-aba até a vista antes do
+gesto, porque o menu ficou mais alto.
+**Não-regressão:** 15 roteiros rodados (F06, F08, F16b, F17, F17g, F18i, F21b, F-T2b, F-T4a, F-TP, F-VIVO-c,
+UI-barra-a, D-TELA-02, I-TELA-JORNAL e I-TELA-BARRA-RAPIDA-DE-RECURSOS). Todos saem 0, depois de dois
+ajustes de roteiro:
+- **UI-barra-a** afirmava que, a 720 px, o Construir cabia sem rolar. Com os títulos, os nomes e a
+  cidade, ele rola. Agora a sombra de "há mais" é conferida contra a rolagem **medida**, no topo e no
+  fim;
+- **F08** ("só a pedra muda") reprovou com o ouro do armazém 20 → 18. Isso não é do menu. Com a rua
+  ligando o armazém à escola, o ouro vai para a escola (o I-TRANSPORTE-OURO-SEMPRE-NA-ESCOLA, de
+  2026-10-04). **Verificado em sonda:** com a rua do roteiro, depois de 1 500 ticks, o armazém fica com
+  15 e a escola com 5 na entrada. O roteiro nunca tinha rodado desde então. Agora o ouro pode descer
+  (nunca subir), e a madeira e a comida continuam fixas.
+- **I-TELA-ABAS-MENORES:** o teste lia só o último bloco `#abas` do CSS, e o bloco novo (só o fundo)
+  passou a ser o último. O helper agora segue a cascata: junta todos os blocos do seletor e vale a
+  última declaração de cada propriedade. Ele acusa (conferido: com a altura 70 no bloco novo, reprova
+  com "expected 70 to be 53").
