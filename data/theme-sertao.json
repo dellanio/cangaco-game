@@ -680,7 +680,7 @@
     "colunas": "{n} por fileira",
     "menosColunas": "−",
     "maisColunas": "+",
-    "investida": "Investida"
+    "investida": "Investida", "converter": "Converter", "mirandoConversao": "Clique no inimigo para converter (Esc cancela)"
   },
   "barra": {
     "_doc": "UI-barra-a (docs/propostas/barra-lateral-unica.md). A barra lateral unica, a esquerda. As chaves de `abas` SAO os ids de ABAS (src/ui/barra.ts), na ida e na volta (tests/UI-barra-a.test.ts). `trancada` e o `title` da aba com cadeado; `logo` e `minimapa` sao o texto do placeholder ate a arte entrar (CLAUDE.md §9).",

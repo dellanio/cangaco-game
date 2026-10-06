@@ -21263,3 +21263,20 @@ mostra o clarão, e o rótulo do convertido já vermelho.
   - o texto pelo tema e o validador.
 - **Não verificado na tela:** não há roteiro (o aceite não pede um). A ligação no `montarJornal` é uma
   chamada por passo.
+
+### I-COMBATE-PADRE-SEM-INVESTIDA — o padre não investe; o golpe dele é a conversão (verificado)
+- **A sim:** `carregaNaInvestida` exclui quem não luta. Antes, o padre passava no filtro da infantaria
+  corpo a corpo (militar, sem projétil e sem montaria), e por isso o botão Investida vinha aceso para
+  ele.
+- **O painel do grupo:**
+  - a Investida só aparece com quem investe;
+  - com um padre no grupo aparece o **Converter**. O clique arma a mira: o botão fica aceso com
+    "Clique no inimigo para converter (Esc cancela)" e o cursor vira cruz sobre o mapa;
+  - o clique esquerdo seguinte num inimigo manda um `ConvertUnit` por padre do grupo, sem soltar a
+    seleção. Fora de inimigo, só desarma;
+  - o botão direito no inimigo continua convertendo, como no AoE2.
+- **Teste:** `tests/I-COMBATE-PADRE-SEM-INVESTIDA.test.ts` (3). O caso do `StormAttack` e o do painel
+  **reprovam** no `carga.ts` antigo (2 de 3, medido) e passam no novo.
+- **Roteiro `I-ARTE-PADRE` (sai 0, 4 capturas):** o passo da conversão passou a ser pelo Converter, com o
+  jogo andando. A captura `converter-armado` (aberta) mostra o painel sem a Investida e o botão armado.
+  A `convertendo` (aberta) mostra o facho e o padre ainda selecionado.

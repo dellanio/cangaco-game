@@ -1,7 +1,7 @@
 'use strict';
 // I-ARTE-PADRE: carrega a partida que `tests/I-ARTE-PADRE.test.ts` grava (o padre, tres cabras em volta e
 // um cabra inimigo a 6 tiles), captura a aura da bencao com o brilho nos abencoados, e depois, com o jogo
-// ANDANDO (§8), seleciona o padre pela caixa e da o botao direito no inimigo: o padre reza (animacao
+// ANDANDO (§8), seleciona o padre pela caixa, arma o Converter e clica no inimigo (I-COMBATE-PADRE-SEM-INVESTIDA): o padre reza (animacao
 // `rezar`, o facho ao alvo) e converte (o clarao, o inimigo passa ao lado do jogador).
 const { readFileSync, existsSync } = require('node:fs');
 const { retanguloDoCanvas } = require('./_canvas');
@@ -56,12 +56,30 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   await esperar();
   s = await estado();
   afirmar(JSON.stringify(s.selecaoMilitar) === JSON.stringify(['padre']), `a caixa deveria pegar so o padre: ${JSON.stringify(s.selecaoMilitar)}`);
+  // I-COMBATE-PADRE-SEM-INVESTIDA: o painel do padre nao tem a Investida, tem o Converter; o Converter
+  // armado e o clique ESQUERDO no inimigo mandam a conversao
+  const botoes = await page.evaluate(() => {
+    const vis = (sel) => { const n = window.document.querySelector(sel); return n !== null && !n.hidden; };
+    return { investida: vis('#painel-grupo [data-acao="investida"]'), converter: vis('#painel-grupo [data-acao="converter"]') };
+  });
+  afirmar(!botoes.investida && botoes.converter, `o padre deveria ter o Converter e nao a Investida: ${JSON.stringify(botoes)}`);
+  const conv = await page.evaluate(() => { const r = window.document.querySelector('#painel-grupo [data-acao="converter"]').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+  await page.mouse.move(conv.x, conv.y);
+  await page.mouse.down();
+  await page.waitForTimeout(150);
+  await page.mouse.up();
+  await esperar();
+  afirmar(await page.evaluate(() => window.document.body.classList.contains('mirando-conversao')), 'o Converter deveria armar a mira');
+  await capturar('converter-armado');
   const inimigo = s.unidadesRenderizadas.find((u) => u.id === 'inimigo');
   const alvo = naPagina((inimigo.gx + 0.5) * TILE_PX, (inimigo.gy + 0.5) * TILE_PX, s.camera);
   await page.mouse.move(alvo.x, alvo.y);
-  await page.mouse.down({ button: 'right' });
+  await page.mouse.down();
   await page.waitForTimeout(150);
-  await page.mouse.up({ button: 'right' });
+  await page.mouse.up();
+  afirmar(!(await page.evaluate(() => window.document.body.classList.contains('mirando-conversao'))), 'o clique no inimigo deveria desarmar a mira');
+  s = await estado();
+  afirmar(s.selecaoMilitar.includes('padre'), `o clique da conversao nao deveria soltar o padre: ${JSON.stringify(s.selecaoMilitar)}`);
 
   // rezando: o facho e a animacao
   let rezando = null;

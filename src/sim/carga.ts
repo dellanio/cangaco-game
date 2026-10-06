@@ -9,7 +9,7 @@ import type { GameData } from './data/types';
 import type { TileDeGrid } from './estradas';
 import { gameData } from './data';
 import { classeDaUnidade } from './condicao';
-import { defDaTropa, ehADistancia } from './combate';
+import { defDaTropa, ehADistancia, naoLuta } from './combate';
 import { custoDoPasso } from './pathfinding';
 
 export const FSM_EM_CARGA = 'em_carga';
@@ -19,7 +19,9 @@ export const FSM_EM_CARGA = 'em_carga';
 export function carregaNaInvestida(tipo: string, dados: GameData = gameData): boolean {
   if (dados.combate.stormAttack.apenas !== 'infantariaCorpoACorpo') return false;
   const def = defDaTropa(tipo, dados);
-  return classeDaUnidade(tipo, dados) === 'militar' && def !== null && !ehADistancia(tipo, dados) && def.montado !== true;
+  // I-COMBATE-PADRE-SEM-INVESTIDA: quem nao luta (o padre) nao investe; o golpe dele e a conversao
+  return classeDaUnidade(tipo, dados) === 'militar' && def !== null && !ehADistancia(tipo, dados) && def.montado !== true
+    && !naoLuta(tipo, dados);
 }
 
 /** A unidade esta em carga e a carga nao aceita ordem: `MoveUnits`, `AttackUnit` e

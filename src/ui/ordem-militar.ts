@@ -46,6 +46,21 @@ export function inimigoSobOPonteiro(
   return null;
 }
 
+/** I-COMBATE-PADRE-SEM-INVESTIDA — os padres do grupo (quem aceita ordem). */
+export function padresDoGrupo(estado: GameState, grupo: readonly string[], dados: GameData): string[] {
+  return quemAceitaOrdem(estado, grupo, dados).filter((id) => estado.unidades.porId[id]?.tipo === ID_DO_PADRE);
+}
+
+/** I-COMBATE-PADRE-SEM-INVESTIDA — o clique do Converter armado: um `ConvertUnit` por padre do grupo no
+ *  inimigo sob o ponteiro; sem inimigo (ou sem padre), nada. */
+export function ordemDeConversao(
+  estado: GameState, dados: GameData, lado: number, grupo: readonly string[], idsNoPonto: readonly string[],
+): Command[] {
+  const alvo = inimigoSobOPonteiro(estado, dados, lado, idsNoPonto);
+  if (alvo === null) return [];
+  return padresDoGrupo(estado, grupo, dados).map((padre) => ({ type: 'ConvertUnit', padre, alvo }));
+}
+
 export function ordemDoBotaoDireito(
   estado: GameState, dados: GameData, lado: number,
   todos: readonly string[], tile: { readonly gx: number; readonly gy: number }, idsNoPonto: readonly string[],

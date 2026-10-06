@@ -1230,3 +1230,7 @@ body[data-menu] #ajuda { z-index: 30; }
 #relogio-do-sol .mostrador { position: relative; width: 96px; height: 96px; background: url('../../assets/sprites/ui/clima/relogio-mostrador.png') center / contain no-repeat; filter: drop-shadow(2px 3px 2px rgba(0, 0, 0, 0.55)); }
 #relogio-do-sol .ponteiro { position: absolute; inset: 0; background: url('../../assets/sprites/ui/clima/relogio-ponteiro.png') center / contain no-repeat; transform-origin: 50% 50%; transition: transform 0.25s linear; }
 #relogio-do-sol .legenda { margin: 0; padding: 1px 8px; background: rgba(44, 29, 18, 0.82); border: 1px solid var(--madeira); border-radius: 3px; font: 11px/1.3 var(--fonte-display); color: var(--ocre); white-space: nowrap; }
+
+/* I-COMBATE-PADRE-SEM-INVESTIDA — o Converter armado: o botao aceso e a mira sobre o mapa */
+#painel-grupo button[data-acao="converter"].armado { background: #f2c94c; color: #2c1d12; }
+body.mirando-conversao #jogo canvas { cursor: crosshair; }

@@ -65,7 +65,7 @@ import { criarSelecaoMilitar } from './input/selecao-militar';
 import { montarPainelGrupo } from './ui/painel-grupo';
 import { montarContadorDePaz } from './ui/contador-de-paz';
 import { montarAvisoDeOrdem, recusaDaPaz } from './ui/aviso-de-ordem';
-import { ordemDoBotaoDireito } from './ui/ordem-militar';
+import { ordemDeConversao, ordemDoBotaoDireito } from './ui/ordem-militar';
 import { direcaoDoArrasto } from './ui/formacao';
 import { criarEscaramuca } from './sim/cenario';
 import type { Command } from './sim/commands';
@@ -226,6 +226,14 @@ export function iniciarPartida(
     },
     {
       aoClicarVazio(tile, ponto, somar) {
+        // I-COMBATE-PADRE-SEM-INVESTIDA: com o Converter armado, o clique escolhe o inimigo (fora dele, desarma)
+        if (painelGrupo.mirandoConversao()) {
+          const comandos = ordemDeConversao(sessao.estado, gameData, LADO_DO_JOGADOR, soldadosDoJogador(selecaoMilitar.ids),
+            ponto === null ? [] : jogo.unidadesNoPonto(ponto));
+          for (const comando of comandos) enviar(comando);
+          painelGrupo.desarmarConversao();
+          return;
+        }
         // soldado sob o pixel vence o predio do tile: e ele que o jogador mirou
         const [soldado] = ponto === null ? [] : soldadosDoJogador(jogo.unidadesNoPonto(ponto));
         if (soldado !== undefined) {

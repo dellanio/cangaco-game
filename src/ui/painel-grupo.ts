@@ -22,6 +22,7 @@ import { resumoDoGrupo } from '../sim/selectors';
 import type { ResumoDoGrupo } from '../sim/selectors';
 import type { SelecaoMilitar } from '../input/selecao-militar';
 import { colunasAjustadas, colunasAtuais, ordemDeFormacao, podeCarregar, quemAceitaOrdem } from './formacao';
+import { padresDoGrupo } from './ordem-militar';
 import temaSertao from '../../data/theme-sertao.json';
 
 type TemaDeTropa = Readonly<Record<string, { readonly nome: string } | undefined>>;
@@ -61,6 +62,9 @@ export interface PainelDoGrupo {
   /** C-COMBATE-01c — as colunas que o jogador escolheu para esta selecao, ou `null` (a sim
    *  usa a padrao). A marcha do botao direito as manda. */
   colunas(): number | null;
+  /** I-COMBATE-PADRE-SEM-INVESTIDA — o Converter esta armado (o proximo clique escolhe o inimigo)? */
+  mirandoConversao(): boolean;
+  desarmarConversao(): void;
 }
 
 /**
@@ -110,7 +114,27 @@ export function montarPainelGrupo(
   investida.type = 'button';
   investida.dataset.acao = 'investida';
   investida.textContent = rotulos.investida;
-  raiz.append(titulo, lista, condicao, esperando, alimentar, ninguem, linhaDeColunas, investida);
+  // I-COMBATE-PADRE-SEM-INVESTIDA — o golpe do padre: arma a mira, e o clique seguinte num inimigo converte
+  const converter = document.createElement('button');
+  converter.type = 'button';
+  converter.dataset.acao = 'converter';
+  converter.textContent = rotulos.converter;
+  converter.hidden = true;
+  raiz.append(titulo, lista, condicao, esperando, alimentar, ninguem, linhaDeColunas, investida, converter);
+  let mirando = false;
+  function armar(sim: boolean): void {
+    mirando = sim;
+    converter.classList.toggle('armado', sim);
+    converter.textContent = sim ? rotulos.mirandoConversao : rotulos.converter;
+    document.body.classList.toggle('mirando-conversao', sim);
+  }
+  converter.addEventListener('click', () => armar(!mirando));
+  window.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape' && mirando) {
+      armar(false);
+      ev.stopImmediatePropagation();
+    }
+  }, true);
 
   let ultimo: GameState | null = null;
   let colunasGuardadas: number | null = null;
@@ -144,6 +168,7 @@ export function montarPainelGrupo(
   // outro grupo, outro assunto: o aviso era do grupo anterior
   selecao.aoMudar(() => {
     ninguem.hidden = true;
+    armar(false);
     colunasGuardadas = null;
     if (ultimo !== null) desenhar(ultimo);
   });
@@ -173,8 +198,12 @@ export function montarPainelGrupo(
     const semOrdem = quemAceitaOrdem(estado, grupo, dados).length === 0;
     if (menos.disabled !== semOrdem) menos.disabled = semOrdem;
     if (mais.disabled !== semOrdem) mais.disabled = semOrdem;
+    // I-COMBATE-PADRE-SEM-INVESTIDA: a Investida so aparece com quem investe; o Converter, com padre
     const semCarga = !podeCarregar(estado, grupo, dados);
-    if (investida.disabled !== semCarga) investida.disabled = semCarga;
+    if (investida.hidden !== semCarga) investida.hidden = semCarga;
+    const semPadre = padresDoGrupo(estado, grupo, dados).length === 0;
+    if (converter.hidden !== semPadre) converter.hidden = semPadre;
+    if (semPadre && mirando) armar(false);
   }
 
   return {
@@ -184,6 +213,12 @@ export function montarPainelGrupo(
     },
     colunas() {
       return colunasGuardadas;
+    },
+    mirandoConversao() {
+      return mirando;
+    },
+    desarmarConversao() {
+      armar(false);
     },
   };
 }
