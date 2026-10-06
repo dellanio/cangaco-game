@@ -9065,6 +9065,70 @@ A ordem de execução é a desta lista. Cada item tem o aceite abaixo, escrito a
      a marca. O roteiro aperta o ícone (down, 150 ms, up) com o jogo andando, e o jornal abre no
      centro com a manchete da fome. O ✕ fecha, e a marca some. A captura do jornal aberto é aberta.
 
+### Pedido do operador de 2026-10-05 (noite): o menu da proposta e a água em pixel art
+
+#### I-TELA-MENU-DA-PROPOSTA — o menu lateral no estilo da proposta do operador
+- **Pedido:** restilizar o menu lateral, que "está com ícones muito dispersos e sem estilo profissional",
+  o mais fiel possível à proposta (`proposta-menu.jpg`). O operador mandou as peças:
+  - `fundo_menu.png`: a cidade no pé do menu;
+  - `enfeite-laterial-01.png` e `enfeite-laterial-02.png`: os enfeites dos lados do minimapa;
+  - `enfeite-01.png`: o divisor com o mandacaru, embaixo das abas;
+  - `enfeite-rodape-01.png`: o rodapé com o sol;
+  - `card-background.png`: o cartão de cada construção.
+
+  Também pediu:
+  - as sub-abas do Construir visíveis **como abas da imagem**, com ícones no mesmo estilo, **gerados pelo
+    Codex**;
+  - textos separando a construção das ruas e da terra (milho e cana) da seção das construções;
+  - o ícone da rua trocado por um pequeno ícone de pedras.
+- **Como:** só tela (CSS, `src/ui/menu-build.ts`, `index.html`) e arte (as peças do operador e os
+  ícones do Codex em `assets/sprites/ui/menu/`, com a origem no manifesto `icones.interface`). A largura
+  da barra continua 260 px. Na proposta, a coluna tem 784 px, e a escala é de mais ou menos 1/3.
+- **Interpretação conservadora, registrada como pergunta:** na proposta, a linha de cima é de filtros
+  ("Todos", "Apenas disponíveis", "Por tipo"...), que o jogo não tem. Os botões dessa linha continuam
+  sendo as ferramentas de hoje (rua, desfazer rua, milho, cana, apagar roça), no mesmo quadro de madeira
+  da proposta e com o nome embaixo. As construções vão em cartões de **3 por linha**, e não 4: com 260 px,
+  4 cartões deixam o nome ilegível.
+- **Aceite:**
+  1. **a estrutura** (teste do DOM em jsdom ou da montagem):
+     - as quatro sub-abas, cada uma com o ícone (`img` do manifesto) e o rótulo;
+     - a seção de ferramentas com o título do tema ("Ruas e Roçados" e uma linha de explicação), cada
+       ferramenta com o nome visível embaixo;
+     - a seção de construções com o título do tema por sub-aba ("Construções da Vila" etc.) e uma linha
+       de explicação;
+     - cada construção num cartão com o retrato e o nome visível;
+  2. **o manifesto:** cada peça e cada ícone novo em `icones.interface`, com o arquivo, a dimensão real e
+     a origem (a peça do operador ou o job/prompt do Codex). O CSS só aponta arquivo que existe;
+  3. **o ícone da rua** é o das pedras, um PNG, e não mais o glifo de barra;
+  4. **o roteiro** em jogo, com uma regra:
+     - abre o Construir e passa pelas quatro sub-abas com o jogo andando (down, 150 ms, up);
+     - confere que nenhum rótulo é cortado (largura de rolagem ≤ largura do nó) e que nenhum cartão
+       sai da barra;
+     - confere que a cidade (`fundo_menu`) e o rodapé estão desenhados;
+     - a captura é aberta e comparada com a proposta;
+  5. a **não-regressão** dos roteiros que clicam no menu (F06, F17, F17g e os que usam o `_subaba.js`)
+     sai 0.
+
+#### I-ARTE-AGUA-PIXEL-ART — a água em pixel art, para o operador ver
+- **Pedido:** "Mude o sprite da água do jogo e suas animações para pixel art para eu ver como fica."
+- **O consumidor (verificado):** a entrada `agua` do manifesto tem o miolo em quatro variantes
+  (`padrao`, `v1`, `v2`, `v3`), que `src/render/agua-viva.ts` alterna a cada `periodo` (8 ticks,
+  `data/agua.json`) com a fase por tile. Tem também as 16 margens (`borda-m*`), que são a areia sobre a
+  água.
+- **Como:** um gerador versionado e determinístico (semente fixa) desenha o miolo em pixel art.
+  - Cada quadro é feito em 32×32, com paleta pequena, e ampliado 2× por vizinho mais próximo para 64×64.
+  - Os quatro quadros emendam sem costura (o ruído é periódico em 32) e são quadros de uma mesma onda
+    andando, para a troca de variante virar animação.
+  - O manifesto aponta as quatro variantes para os arquivos novos. Os antigos ficam no disco, e voltar é
+    trocar quatro linhas do manifesto. As margens não mudam neste item.
+- **Aceite:**
+  1. as quatro variantes 64×64, emendando nas quatro bordas (a coluna 0 continua a 63, e a linha 0 a 63,
+     medido no PNG);
+  2. no máximo N cores por quadro (N no gerador), e blocos de 2×2 iguais (o pixel art ampliado);
+  3. o gerador refaz os quatro arquivos byte a byte (o determinismo);
+  4. a captura do açude da vila em jogo é aberta, em dois ticks diferentes (a animação). A homologação
+     é do operador.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
