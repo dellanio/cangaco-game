@@ -1,0 +1,7 @@
+{
+  "_doc": "I-ARTE-PADRE (2026-10-06). So TELA: os poderes do padre desenhados (src/render/padre-visual.ts). `aura`: o anel da bencao no chao, em volta de cada padre do jogador, no raio da bencao (combat.json padre.raioDaBencao_tiles), com a cor, a opacidade e a espessura; `pulsoTicks` faz o anel respirar entre `alfaMinimo` e `alfa`. `brilho`: o lume nos pes de cada militar abencoado (a regra da sim), pulsando com a aura. `facho`: a luz do padre ao alvo enquanto ele reza (fsm `convertendo`), pulsando no mesmo ritmo. `clarao`: o brilho no convertido, por `duracaoTicks` depois do evento `unit-converted`.",
+  "aura": { "cor": "#ffd23f", "alfa": 0.8, "alfaMinimo": 0.45, "espessuraPx": 3, "pulsoTicks": 20 },
+  "brilho": { "cor": "#ffe08a", "alfa": 0.75, "raioPx": 12 },
+  "facho": { "cor": "#fff1b8", "alfa": 0.9, "espessuraPx": 4 },
+  "clarao": { "cor": "#fff6cf", "alfa": 0.9, "raioPx": 26, "duracaoTicks": 12 }
+}

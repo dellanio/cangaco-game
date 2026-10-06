@@ -2,13 +2,16 @@ import type { GameState, Unidade } from '../sim/state';
 import type { Direcao } from './manifesto';
 import { direcaoDoPasso } from './manifesto';
 import { tipoMilitar } from './direcao-de-unidade';
+import { FSM_CONVERTENDO } from '../sim/systems/padre';
 
-export type AcaoVisual = 'parado' | 'andar' | 'atacar' | 'trabalhar';
+export type AcaoVisual = 'parado' | 'andar' | 'atacar' | 'trabalhar' | 'rezar';
 export interface MemoriaDeAcao { readonly animacao: AcaoVisual | null; readonly inicio: number }
 
 /** Apresentacao apenas: nao dispara ataque nem avanca tarefa. */
 export function acaoDaUnidade(u: Pick<Unidade, 'tipo' | 'fsm'>, andando: boolean, visivel: boolean): AcaoVisual | null {
   if (!visivel) return null;
+  // I-ARTE-PADRE: o padre que reza pela conversao ergue os bracos
+  if (u.fsm === FSM_CONVERTENDO) return 'rezar';
   if (tipoMilitar(u.tipo) && ['lutando', 'atirando', 'atacando'].includes(u.fsm)) return 'atacar';
   if (u.tipo !== 'serf' && u.tipo !== 'recruit' && !tipoMilitar(u.tipo)
     && (['colhendo', 'semeando'].includes(u.fsm) || (u.tipo === 'laborer' && ['nivelando', 'martelando'].includes(u.fsm)))) return 'trabalhar';
@@ -24,6 +27,12 @@ export function animacaoComCarga(
 
 export function atualizarAcao(anterior: MemoriaDeAcao | undefined, animacao: AcaoVisual | null, tick: number): MemoriaDeAcao {
   return anterior?.animacao === animacao && tick >= anterior.inicio ? anterior : { animacao, inicio: tick };
+}
+
+/** I-ARTE-PADRE — o padre reza de frente para quem ele converte. */
+export function direcaoDaOracao(estado: GameState, u: Unidade): Direcao | null {
+  const alvo = u.fsmData.alvoUnidade === undefined ? undefined : estado.unidades.porId[u.fsmData.alvoUnidade];
+  return alvo ? direcaoDoPasso(alvo.gx - u.gx, alvo.gy - u.gy, 8) : null;
 }
 
 /** Tile da tarefa quando existe; trabalho no proprio tile preserva a direcao. */

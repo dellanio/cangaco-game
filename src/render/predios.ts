@@ -38,6 +38,9 @@ export interface AparenciaDoPredio {
  *  `tests/F04-grid-ortogonal.test.ts`). Nao e copia: e a mesma lista. */
 export const ordemDasMercadorias: readonly string[] = gameData.economia.mercadorias;
 
+/** I-ARTE-PADRE — o raio da bencao em tiles, para o anel da aura (a regra e de `sim/systems/padre.ts`). */
+export const raioDaBencao: number = gameData.combate.padre.raioDaBencao_tiles;
+
 /**
  * F-TP: o retangulo em tiles de um TIPO posto em (gx, gy). Mesma razao de
  * `ordemDasMercadorias` — quem em `render/` nao pode importar `sim/data` pega o

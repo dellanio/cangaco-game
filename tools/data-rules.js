@@ -230,6 +230,21 @@ function validarClimaVisual(config, erros) {
   if (!Number.isInteger(ca.maximo) || ca.maximo < 0 || !(ca.velocidadePxPorTick > 0) || !(ca.raioPx > 0) || !cor(ca.cor)) e('calor precisa de maximo inteiro >= 0, velocidadePxPorTick > 0, raioPx > 0 e cor');
 }
 
+// I-ARTE-PADRE — a aura da bencao, o brilho, o facho e o clarao do padre
+function validarPadreVisual(config, erros) {
+  const e = (msg) => erros.push(`interface/padre-visual: ${msg}`);
+  if (!config || typeof config !== 'object') { e('data/padre-visual.json precisa existir e ser objeto'); return; }
+  const cor = (c) => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c);
+  const alfa = (a) => typeof a === 'number' && a >= 0 && a <= 1;
+  const au = config.aura || {};
+  if (!cor(au.cor) || !alfa(au.alfa) || !alfa(au.alfaMinimo) || au.alfaMinimo > au.alfa || !(au.espessuraPx > 0) || !(au.pulsoTicks > 0)) e('aura precisa de cor, alfaMinimo <= alfa em [0, 1], espessuraPx > 0 e pulsoTicks > 0');
+  for (const [nome, campo] of [['brilho', 'raioPx'], ['facho', 'espessuraPx'], ['clarao', 'raioPx']]) {
+    const c = config[nome] || {};
+    if (!cor(c.cor) || !alfa(c.alfa) || !(c[campo] > 0)) e(`${nome} precisa de cor, alfa em [0, 1] e ${campo} > 0`);
+  }
+  if (!Number.isInteger((config.clarao || {}).duracaoTicks) || !(config.clarao.duracaoTicks > 0)) e('clarao.duracaoTicks precisa ser inteiro > 0');
+}
+
 function validarPoeira(poeira, erros) {
   const e = (msg) => erros.push(`interface/poeira: ${msg}`);
   if (!poeira || typeof poeira !== 'object' || Array.isArray(poeira)) {
@@ -2147,6 +2162,7 @@ function validarInterface(dados, interfaceUi) {
   validarBarraRapida(dados, interfaceUi && interfaceUi['barra-rapida'], tema, erros);
   validarJornal(interfaceUi && interfaceUi.jornal, tema, erros, dados);
   validarClimaVisual(interfaceUi && interfaceUi['clima-visual'], erros);
+  validarPadreVisual(interfaceUi && interfaceUi['padre-visual'], erros);
   validarPoeira(interfaceUi && interfaceUi.poeira, erros);
   validarFumaca(interfaceUi && interfaceUi.fumaca, erros);
   validarSom(interfaceUi && interfaceUi.som, erros);

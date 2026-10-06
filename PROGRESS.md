@@ -21186,3 +21186,49 @@ o botão numa chamada só.
 - a ordem do botão direito.
 
 **Ainda não:** o padre desenhado e os poderes na tela (o I-ARTE-PADRE, com o PixelLab gerando).
+
+### I-ARTE-PADRE — o padre desenhado, andando e rezando, e os poderes na tela (verificado; arte espera homologação)
+
+**O que entrou:**
+- **A arte:** o padre (batina preta, chapéu de palha, cruz) pelo PixelLab, personagem
+  `a7fd5c0b-16a0-49a6-986c-df82a5e45f20`, com `andar` (walking-8-frames) e `rezar` (9 quadros, os braços
+  erguidos) nas cinco direções (n, ne, l, se, s; o oeste é espelho). A base fica em
+  `assets/base/units/priest-pixellab/` e o atlas em `assets/sprites/units/priest/`, com 150 quadros.
+- **O `morrer` também entrou**, porque o `G-ARTE-MORTE-DAS-UNIDADES` exige 12 quadros de toda unidade com
+  atlas (o `verify:rapido` acusou). É um v3 do PixelLab com 12 quadros, montado como o do elenco: 8 da queda
+  e o corpo caído esmaecendo em 4 (alfa 0,75 / 0,5 / 0,25 / 0,1).
+- **Decisão: a célula é 80x96, e não 64x96.** O PixelLab devolveu o padre com 61 px de altura, contra os
+  ~72 do elenco. Ele foi escalado 1,2x no vizinho mais próximo, e com os braços erguidos o `rezar` mede
+  70 px de largura, que não cabe em 64. O manifesto já aceita tamanho por entrada (o cavaleiro é
+  128x128). Os pés ficam na linha 91, como no resto.
+- **A ação visual `rezar`** (`src/render/acao-de-unidade.ts`): é a do padre em `convertendo`, virado
+  para o alvo (`direcaoDaOracao`) e com o tempo contado do início da ação, como o `atacar`.
+- **Os poderes na tela** (`src/render/padre-visual.ts`, puro, com os números em
+  `data/padre-visual.json` e o validador em `tools/data-rules.js`):
+  - o anel da bênção no raio, pulsando, só em volta do padre do jogador;
+  - o brilho nos pés de cada abençoado, pela regra da sim (`abencoado`) e com o desvio de desenho da
+    unidade;
+  - o facho do padre ao alvo enquanto ele reza;
+  - o clarão no convertido, por 12 ticks depois do `unit-converted`.
+
+  A cena desenha isso a cada mudança de tempo **ou de partida**, então a partida carregada já pausada
+  também mostra.
+- **Bug achado e corrigido no caminho:** o rótulo do convertido continuava com a cor do bando antigo,
+  porque era pintado só ao criar. Agora o rótulo é repintado quando o lado muda (`ladoDoRotulo`), e a
+  ponte publica `corDoRotulo`, que é a cor pintada de fato. A asserção do roteiro **reprova** sem a
+  correção (`#3F72D6 contra #D64B3F`, medido) e passa com ela.
+
+**Teste:** `tests/I-ARTE-PADRE.test.ts` (6) cobre:
+- todo quadro das animações no atlas, nas cinco direções, e o oeste pelo espelho;
+- a ação `rezar` e a direção ao alvo;
+- aura, brilho e facho só onde devem;
+- o pulso;
+- o validador;
+- a gravação da partida do roteiro.
+
+**Evidência:** o roteiro novo `I-ARTE-PADRE` sai 0, com três capturas abertas. `bencao` mostra o anel e o
+brilho nos três cabras. `convertendo` mostra o padre rezando de frente para o alvo, com o facho, depois de
+a caixa selecioná-lo e de o botão direito ser dado no inimigo, com o jogo andando (§8). `convertido`
+mostra o clarão, e o rótulo do convertido já vermelho.
+
+**Aberto:** a homologação da arte do padre é do operador.

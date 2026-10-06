@@ -12,6 +12,7 @@
  */
 import type { Command } from '../commands';
 import type { GameData } from '../data/types';
+import { gameData } from '../data';
 import type { GameEvent, GameState, Unidade } from '../state';
 import { classeDaUnidade } from '../condicao';
 import { distanciaEmTiles, encostadas } from '../combate';
@@ -30,7 +31,7 @@ export const FSM_CONVERTENDO = 'convertendo';
 export type ConvertUnit = Extract<Command, { readonly type: 'ConvertUnit' }>;
 
 /** O militar esta abencoado: ha um padre vivo do mesmo lado a ate o raio da bencao. */
-export function abencoado(state: GameState, u: Unidade, dados: GameData): boolean {
+export function abencoado(state: GameState, u: Unidade, dados: GameData = gameData): boolean {
   if (classeDaUnidade(u.tipo, dados) !== 'militar') return false;
   const raio = dados.combate.padre.raioDaBencao_tiles;
   for (const id of state.unidades.ordem) {

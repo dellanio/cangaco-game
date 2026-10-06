@@ -354,6 +354,8 @@ export interface EstadoDebug {
   /** A planta fantasma desenhada agora, ou null se escondida. `valida` e o
    *  que `canPlace` respondeu; `motivo` e o porque quando nao pode. */
   plantaFantasma: EstadoDaPlanta | null;
+  /** I-ARTE-PADRE — quantos aneis da bencao, fachos da conversao e claroes a cena desenhou. */
+  padre: { readonly aneis: number; readonly abencoados: number; readonly fachos: number; readonly claroes: number } | null;
   /** I-TELA-CLIMA-VISUAL — o que a camada do clima desenhou no ultimo quadro: a estacao, o veu e quantas
    *  gotas e particulas de calor. */
   clima: { readonly estacao: string | null; readonly veu: { readonly cor: string; readonly alfa: number } | null; readonly gotas: number; readonly calor: number } | null;
@@ -496,6 +498,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     zerarCusto: () => { estado.custo = custoZerado(); },
     nevoa: null,
     clima: null,
+    padre: null,
     ligarVento: () => undefined,
     estradasRenderizadas: 0,
     estradasPlanejadasRenderizadas: 0,

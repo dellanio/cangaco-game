@@ -67,7 +67,7 @@ import { assetDaCamada } from './manifesto';
 import { peDoSprite } from './pe-do-sprite';
 import { atualizarVirada, iniciarVirada } from './virada-de-unidade';
 import type { MemoriaDaVirada } from './virada-de-unidade';
-import { acaoDaUnidade, animacaoComCarga, direcaoDoTrabalho } from './acao-de-unidade';
+import { acaoDaUnidade, animacaoComCarga, direcaoDaOracao, direcaoDoTrabalho } from './acao-de-unidade';
 import dadosDaCargaNasMaos from '../../data/carga-nas-maos.json';
 import { pontoDaCargaNasMaos } from './carga-nas-maos';
 import { animacaoDoGesto, colheitaNasMaos, deslocamentoDoTrabalho } from './gesto-do-trabalho';
@@ -110,6 +110,8 @@ export interface UnidadeRenderizada {
   /** C-IA-03c — o lado da unidade e a cor de bando com que o rotulo foi pintado. */
   readonly lado: number;
   readonly corDoBando: string;
+  /** I-ARTE-PADRE — o fundo que o rotulo tem pintado agora (o convertido troca). */
+  readonly corDoRotulo: string;
   /** BUG-O — o nome do tema da carga, ou null. Com icone (D-TELA-03a) o texto nao se desenha,
    *  mas o nome continua aqui: e o que o jogador leria. */
   readonly rotuloDaCarga: string | null;
@@ -199,6 +201,8 @@ const corDoMarcadorDeFome: string = (
 )[temaSertao.marcadores.fome.cor] ?? temaSertao.paleta.terraQueimada;
 
 interface Desenhado {
+  /** I-ARTE-PADRE — o lado com que o rotulo foi pintado (o convertido troca de bando e de cor). */
+  ladoDoRotulo: number;
   inicioDaAcao: number;
   virada: MemoriaDaVirada;
   distancia: number;
@@ -277,7 +281,7 @@ export function criarCamadaDeUnidades(
     const container = cena.add.container(0, 0, [retangulo, marcadorDeCarga, marcadorDeFome]);
     return { container, retangulo, imagem: null, direcao: 's', nome: rotulo, marcadorDeCarga, iconeDaCarga: null, placaDoIcone: null, marcadorDeFome, balao: null,
       distancia: 0, ultimaPosicao: null, ultimoTickAnimado: -1, animacao: 'parado', acaoDoTrabalho: 'parado', inicioDaAcao: 0, quadro: 0, spriteAnimado: null,
-      virada: iniciarVirada('s', 0) };
+      virada: iniciarVirada('s', 0), ladoDoRotulo: ladoDaUnidade };
   }
 
   /** F-SPR — troca o retangulo pelo sprite quando a arte resolve, e volta quando nao. */
@@ -514,6 +518,7 @@ export function criarCamadaDeUnidades(
             if (item.animacao !== acao) item.inicioDaAcao = estado.tick;
             if (registro?.animacao === acao) item.inicioDaAcao = registro.inicio;
             const alvo = acao === 'trabalhar' ? direcaoDoTrabalho(estado, unidade)
+              : acao === 'rezar' ? direcaoDaOracao(estado, unidade)
               : alvoDaDirecao(unidade.tipo, unidade.direcao, posicao.gx - anterior.gx, posicao.gy - anterior.gy, direcoes);
             item.virada = acao === 'atacar' && alvo ? iniciarVirada(alvo, tempoDeAnimacao(estado.tick, alfa))
               : atualizarVirada(item.virada, alvo, tempoDeAnimacao(estado.tick, alfa), configAnimacao.passoDaViradaTicks);
@@ -525,7 +530,7 @@ export function criarCamadaDeUnidades(
             item.spriteAnimado = null;
             item.quadro = 0;
             if (animacao) {
-              const decorrido = acao === 'atacar' || acao === 'trabalhar'
+              const decorrido = acao === 'atacar' || acao === 'trabalhar' || acao === 'rezar'
                 ? Math.max(0, tempoDeAnimacao(estado.tick, alfa) - item.inicioDaAcao) : tempoDeAnimacao(estado.tick, alfa);
               item.quadro = acao === 'andar' ? quadroDoAndar(item.distancia, animacao.tilesPorCiclo ?? 1, animacao.quadros)
                 : quadroPeloTempo(decorrido, tempo.tickHz, animacao);
@@ -551,6 +556,10 @@ export function criarCamadaDeUnidades(
         const visivel = !invisiveis.has(id);
         item.container.setVisible(visivel);
         item.nome.setVisible(visivel);
+        if (item.ladoDoRotulo !== unidade.lado) {
+          item.ladoDoRotulo = unidade.lado;
+          item.nome.setBackgroundColor(corDoBando(unidade.lado));
+        }
         const carga = unidade.fsmData.carga ?? colheitaNasMaos(estado, unidade, gestoDoTrabalho);
         const marca = carga === null ? null : desenharCarga(item, carga);
         if (marca === null) {
@@ -564,7 +573,7 @@ export function criarCamadaDeUnidades(
         const balaoComo = desenharPensamento(item, pensamento, id, estado.tick);
         renderizadas.push({
           id, tipo: unidade.tipo, gx: posicao.gx, gy: posicao.gy,
-          gxDesenhado: desenhada.gx, gyDesenhado: desenhada.gy, fsm: unidade.fsm, lado: unidade.lado, corDoBando: corDoBando(unidade.lado), carga, rotuloDaCarga: carga === null ? null : rotuloDaCarga(carga), marcaDaCarga: marca,
+          gxDesenhado: desenhada.gx, gyDesenhado: desenhada.gy, fsm: unidade.fsm, lado: unidade.lado, corDoBando: corDoBando(unidade.lado), corDoRotulo: item.nome.style.backgroundColor, carga, rotuloDaCarga: carga === null ? null : rotuloDaCarga(carga), marcaDaCarga: marca,
           deslocamentoPx: { x: desvio.x, y: desvio.y },
           marcadorDeFome: comFome, fracaoDeCondicao: fracaoDeCondicao(unidade),
           pensamento: pensamento === null ? null : pensamento.tipo === 'mercadoria' ? pensamento.mercadoria : pensamento.tipo, balaoComo,

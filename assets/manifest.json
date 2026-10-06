@@ -1285,6 +1285,58 @@
       }
     },
     {
+      "id": "priest",
+      "tipo": "unidade",
+      "footprint": [
+        1,
+        1
+      ],
+      "tamanho": [
+        80,
+        96
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "estados": {
+        "parado:n": "sprites/units/priest/parado.png",
+        "parado:ne": "sprites/units/priest/parado.png",
+        "parado:l": "sprites/units/priest/parado.png",
+        "parado:se": "sprites/units/priest/parado.png",
+        "parado:s": "sprites/units/priest/parado.png"
+      },
+      "atlas": "sprites/units/priest/priest.json",
+      "animacoes": {
+        "parado": {
+          "quadros": 1,
+          "fps": 10,
+          "laco": true
+        },
+        "andar": {
+          "quadros": 8,
+          "tilesPorCiclo": 2,
+          "laco": true
+        },
+        "rezar": {
+          "quadros": 9,
+          "fps": 6,
+          "laco": true
+        },
+        "morrer": {
+          "quadros": 12,
+          "fps": 10,
+          "laco": false
+        }
+      },
+      "licenca": "arte gerada no PixelLab para o projeto, assinatura do operador, 2026-10-06",
+      "origem": {
+        "base": "base/units/priest-pixellab/south.png",
+        "semente": null,
+        "nota": "I-ARTE-PADRE. PixelLab, personagem a7fd5c0b-16a0-49a6-986c-df82a5e45f20 (64x64, low top-down), andar walking-8-frames, rezar custom-praying (9 quadros) e morrer v3 (12, reamostrados em 8 de queda + 4 esmaecendo, como o elenco) por direcao; escalado 1,2x no vizinho mais proximo para a altura do elenco (72 px), celula 80x96 com os pes na linha 91; sha256 da base 560c277a8c5c10b6fd337088eaad17be33fa1586df249a4e4e08962030ad7982"
+      }
+    },
+    {
       "id": "militia",
       "tipo": "unidade",
       "footprint": [

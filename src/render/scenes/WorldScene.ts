@@ -18,6 +18,10 @@ import { faseNoTick, ticksParaAmadurecer } from '../../sim/clima';
 import dadosDoClimaVisualCru from '../../../data/clima-visual.json';
 import { gotasDaChuva, particulasDoCalor, veuDaEstacao } from '../clima-visual';
 import type { ConfigDoClimaVisual } from '../clima-visual';
+import dadosDoPadreVisualCru from '../../../data/padre-visual.json';
+import { desenhoDoPadre } from '../padre-visual';
+import type { ConfigDoPadreVisual } from '../padre-visual';
+const dadosDoPadreVisual = dadosDoPadreVisualCru as ConfigDoPadreVisual;
 const dadosDoClimaVisual = dadosDoClimaVisualCru as ConfigDoClimaVisual;
 import dadosDaObraRevelada from '../../../data/obra-revelacao.json';
 import { blocosVisiveis, recorteDoBloco } from '../obra-revelacao';
@@ -29,7 +33,7 @@ import { particulasDaPoeira, rajadaNaVista } from '../poeira';
 import { codigoDoRecurso, configDoMapa, recursosDeRender, terrenoDeRender } from '../mapa';
 import { CHAO_DA_CANA, chaoDaRoca, quadroDoChaoDaCanaMudou } from '../chao-da-roca';
 import {
-  gridToScreen, screenToGrid, depthDeY, tileDentroDoMapa, ESCALA_DO_MUNDO, PROFUNDIDADE_DA_SELECAO,
+  gridToScreen, screenToGrid, deslocamentoDaUnidade, depthDeY, tileDentroDoMapa, ESCALA_DO_MUNDO, PROFUNDIDADE_DA_SELECAO,
 } from '../grid';
 import { proximoNivel, mundoSobPonto, scrollAncorado } from '../zoom';
 import type { Navegacao } from '../../input/navegacao';
@@ -46,7 +50,7 @@ import type { MarcadorDeDestino } from '../marcador-de-destino';
 import type {
   AnimalNoDebug, CaixaDesenhada, CamadasEmPx, CrescimentoNoDebug, EstadoDebug, OciosoNoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel, SinalDePausadoNoDebug,
 } from '../debug';
-import { aparenciaDoPredio, corDaPilha, dadosDasPilhas, dadosDosAnimais, dadosDoTrabalho, ordemDasMercadorias } from '../predios';
+import { aparenciaDoPredio, corDaPilha, dadosDasPilhas, dadosDosAnimais, dadosDoTrabalho, ordemDasMercadorias, raioDaBencao } from '../predios';
 import { animaisDoCurral, curralDesenhado, quadroDoAnimal } from '../animais';
 import { MAX_PASSOS_POR_QUADRO } from '../../laco';
 import type { AnimalDoCurral } from '../animais';
@@ -427,6 +431,13 @@ export class WorldScene extends Phaser.Scene {
     // abaixo da nevoa)
     const climaNaTela = this.add.graphics().setScrollFactor(0).setDepth(PROFUNDIDADE_DA_NEVOA - 1);
     let ultimoQuadroDoClima = '';
+    // I-ARTE-PADRE: a aura da bencao e o facho da conversao, no mundo, abaixo das unidades; o clarao do
+    // convertido por cima delas
+    const padreNoChao = this.add.graphics().setDepth(0.8);
+    const padreNoAr = this.add.graphics().setDepth(PROFUNDIDADE_DA_NEVOA - 2);
+    const claroes = new Map<string, number>();
+    let estadoDoPadre: unknown = null;
+    let tempoDoPadre = -1;
     const poolDaPoeira = Array.from({ length: dadosDaPoeira.maximoNaVista }, () =>
       this.add.graphics().setDepth(0.75).setVisible(false));
     estado.poolDaPoeira = poolDaPoeira.length;
@@ -753,6 +764,47 @@ export class WorldScene extends Phaser.Scene {
       climaNaTela.fillStyle(Number.parseInt(dadosDoClimaVisual.calor.cor.slice(1), 16), dadosDoClimaVisual.calor.alfa);
       for (const p of calor) climaNaTela.fillCircle(p.x, p.y, dadosDoClimaVisual.calor.raioPx);
       estado.clima = { estacao: fase?.id ?? null, veu, gotas: gotas.length, calor: calor.length };
+    }
+    // I-ARTE-PADRE: a cada quadro em que o tempo ou a partida mudam (a partida carregada pausada tambem)
+    const jogo = this.ponte.atual;
+    if (jogo !== estadoDoPadre || tempoDoClima !== tempoDoPadre) {
+      estadoDoPadre = jogo;
+      tempoDoPadre = tempoDoClima;
+      padreNoChao.clear();
+      padreNoAr.clear();
+      if (jogo !== null) {
+        for (const e of jogo.events) if (e.type === 'unit-converted') claroes.set(e.unidade, jogo.tick + dadosDoPadreVisual.clarao.duracaoTicks);
+        const d = desenhoDoPadre(jogo, raioDaBencao, tempoDoClima, dadosDoPadreVisual);
+        const corDaAura = Number.parseInt(dadosDoPadreVisual.aura.cor.slice(1), 16);
+        for (const a of d.aneis) {
+          padreNoChao.lineStyle(dadosDoPadreVisual.aura.espessuraPx, corDaAura, a.alfa);
+          padreNoChao.strokeCircle((a.gx + 0.5) * tilePx, (a.gy + 0.5) * tilePx, a.raio * tilePx);
+        }
+        const corDoBrilho = Number.parseInt(dadosDoPadreVisual.brilho.cor.slice(1), 16);
+        // nos pes de quem esta abencoado, com o mesmo desvio de desenho da unidade (F18f)
+        for (const b of d.abencoados) {
+          const desvio = deslocamentoDaUnidade(b.unidade, tilePx, ESCALA_DO_MUNDO);
+          padreNoChao.fillStyle(corDoBrilho, b.alfa);
+          padreNoChao.fillEllipse((b.gx + 0.5) * tilePx + desvio.x, (b.gy + 0.5) * tilePx + desvio.y, dadosDoPadreVisual.brilho.raioPx * 2, dadosDoPadreVisual.brilho.raioPx);
+        }
+        const corDoFacho = Number.parseInt(dadosDoPadreVisual.facho.cor.slice(1), 16);
+        for (const f of d.fachos) {
+          padreNoAr.lineStyle(dadosDoPadreVisual.facho.espessuraPx, corDoFacho, f.alfa);
+          const de = deslocamentoDaUnidade(f.padre, tilePx, ESCALA_DO_MUNDO);
+          const para = deslocamentoDaUnidade(f.alvo, tilePx, ESCALA_DO_MUNDO);
+          padreNoAr.lineBetween((f.de.gx + 0.5) * tilePx + de.x, (f.de.gy - 0.2) * tilePx + de.y, (f.para.gx + 0.5) * tilePx + para.x, (f.para.gy - 0.2) * tilePx + para.y);
+        }
+        const corDoClarao = Number.parseInt(dadosDoPadreVisual.clarao.cor.slice(1), 16);
+        for (const [id, ate] of claroes) {
+          const u = jogo.unidades.porId[id];
+          if (u === undefined || jogo.tick > ate) { claroes.delete(id); continue; }
+          const resto = (ate - jogo.tick) / dadosDoPadreVisual.clarao.duracaoTicks;
+          padreNoAr.fillStyle(corDoClarao, dadosDoPadreVisual.clarao.alfa * resto);
+          const desvio = deslocamentoDaUnidade(id, tilePx, ESCALA_DO_MUNDO);
+          padreNoAr.fillCircle((u.gx + 0.5) * tilePx + desvio.x, (u.gy + 0.1) * tilePx + desvio.y, dadosDoPadreVisual.clarao.raioPx * (1.5 - resto * 0.5));
+        }
+        estado.padre = { aneis: d.aneis.length, abencoados: d.abencoados.length, fachos: d.fachos.length, claroes: claroes.size };
+      }
     }
     const chaveDaPoeira = `${tickDaAgua},${alfaDaPoeira},${chaveDaVistaDaAgua}`;
     if (chaveDaPoeira !== ultimoQuadroDaPoeira) {
