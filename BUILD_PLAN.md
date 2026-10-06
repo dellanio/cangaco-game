@@ -9417,6 +9417,73 @@ BALANCE_LOG como [proposta].
   (3) a captura do padre abençoando a tropa e a do padre convertendo são abertas. A homologação é do
   operador.
 
+### Correções do operador de 2026-10-06 (noite): o jornal, o prédio sem trabalhador, o padre e o chão da roça
+
+#### I-TELA-JORNAL-SO-A-ULTIMA — o jornal mostra só a última notícia, e o ícone some ao fechar
+- **Pedido:** "O jornal só deve exibir a última notícia. E o jogador, ao fechar o jornal, o ícone dele
+  some do canto da tela."
+- **Como:**
+  - `data/jornal.json` `maximoDeNoticias` passa a 1, e a folha mostra só a mais nova;
+  - o ícone aparece quando chega notícia não lida e some quando o jogador fecha o jornal (pelo X, pelo
+    ícone ou pelo Esc). Uma notícia nova o faz voltar.
+- **Aceite:**
+  1. com três notícias seguidas, a folha mostra uma só, a terceira;
+  2. ao fechar, o ícone fica escondido; uma notícia nova o mostra de novo;
+  3. o roteiro `I-TELA-JORNAL` é atualizado nesta tarefa, com a asserção nova mais estrita (uma
+     notícia na folha, e o ícone escondido depois do X), e sai 0.
+
+#### I-TELA-JORNAL-PREDIO-SEM-TRABALHADOR — o jornal avisa o prédio parado sem trabalhador
+- **Pedido:** "Casas sem trabalhador por mais de 5 min devem dar aviso no jornal, para que o jogador
+  saiba e providencie a confecção de uma unidade para resolver o problema."
+- **Leitura conservadora (§14):** "casa" é o prédio completo do jogador que pede trabalhador
+  (`buildings.json: trabalhador`, `ehPredioOcupavel`). Ele está sem trabalhador quando
+  `ocupante === null` e ninguém tem a vaga reservada (`vagaDeOcupacao > 0`): quem já está a caminho
+  resolve. Os 5 minutos são de jogo (tick, na escala 1x), no dado `data/jornal.json`
+  (`predioSemTrabalhador.minutos`).
+- **Como:** só tela. O jornal guarda, na memória dele (não no save, como a lista de notícias), o tick em
+  que viu cada prédio vago. Passados os 5 min, sai **uma** notícia por prédio, com o nome do prédio e o
+  do trabalhador que falta, vindos do tema. O relógio zera quando o prédio é ocupado ou some. Uma regra
+  pura (`prediosSemTrabalhador`) decide; o `montarJornal` só a chama.
+- **Aceite:**
+  1. pela regra pura e pelo `step`: um prédio vago dá notícia no tick em que completa 5 min, e não antes;
+     uma só vez enquanto continua vago;
+  2. o prédio ocupado antes dos 5 min não dá notícia, e o relógio zera (vago de novo conta do zero);
+  3. o prédio com a vaga reservada (trabalhador a caminho) não conta; o do outro lado também não; o
+     prédio que não pede trabalhador também não;
+  4. o texto traz o nome do prédio e do trabalhador pelo tema, e o validador recusa o minuto ≤ 0.
+
+#### I-COMBATE-PADRE-SEM-INVESTIDA — o padre não investe; o golpe dele é a conversão
+- **Pedido:** "O padre está com o golpe investida, porém o padre não tem esse golpe. O golpe dele é a
+  conversão, para converter uma unidade inimiga para o seu exército, semelhante à lógica do AoE 2."
+- **Como:**
+  - a sim: `carregaNaInvestida` exclui quem não luta (`naoLuta`). O `StormAttack` com o padre não o põe
+    em carga;
+  - o painel do grupo: a **Investida** só aparece quando alguém do grupo investe. Com um padre no grupo
+    aparece o **Converter**: o clique arma a mira, e o clique seguinte num inimigo manda `ConvertUnit`
+    de cada padre do grupo. O Esc ou um clique fora de inimigo desarma. O botão direito no inimigo
+    continua convertendo, como hoje.
+- **Aceite:**
+  1. pelo `step`: o `StormAttack` com o padre e um cabra põe só o cabra em carga;
+  2. o painel de um grupo só de padre não mostra a Investida e mostra o Converter; o de cabras mostra a
+     Investida e não o Converter;
+  3. o roteiro (despausado, §8): o grupo do padre, o Converter apertado e o clique no inimigo, e o padre
+     reza (`convertendo`); a captura é aberta.
+
+#### I-TELA-CHAO-DA-ROCA-DO-MILHO — o roçado de milho e de cana com o chão desenhado, sem losango
+- **Pedido:** "O design de todo local onde eu criar um tile de milho e cana precisa ter a textura
+  gráfica; atualmente aparece apenas um losango."
+- **O que existe (verificado):** a cana tem a camada do chão (`campoCana`, `chao-da-roca.ts`); o milho
+  não tem (o `D-ARTE-CHAO-DE-ROCA` contava com o terreno `campoArado` do mapa, que o roçado do jogador
+  não tem). E o tile de cultura em pousio desenha o losango do marcador.
+- **Como:** só tela. O milho ganha o chão `campoArado` (a arte que já existe, com as 4 variantes) na
+  mesma camada do chão da cana. O tile em pousio deixa de ter o losango: fica o chão da roça.
+- **Aceite:**
+  1. `chaoDaRoca`: milho (plantado e em pousio) → `campoArado`; cana → `campoCana`; o resto, nada;
+  2. a célula do pousio na tira de recurso é vazia (o chão aparece);
+  3. o roteiro: um roçado de milho e um de cana criados pelo jogador, em pousio e semeados, com o chão
+     desenhado em todo tile e nenhum losango; a captura é aberta. Os roteiros `D-ARTE-CHAO-DE-ROCA` e
+     `F-TR` saem 0.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
