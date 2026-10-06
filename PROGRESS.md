@@ -21120,3 +21120,40 @@ depois.
   com "A seca vem aí" e "É seca no sertão".
 
 As capturas foram abertas, inclusive o recorte ampliado do relógio nas duas estações.
+
+### I-ARTE-IGREJA, I-PREDIO-IGREJA e I-UNIDADE-PADRE — a Igreja, o padre contratado nela, e o padre que não luta (verificado)
+O operador mandou prosseguir com a Igreja sem responder às perguntas da pesquisa. As respostas
+conservadoras estão no BUILD_PLAN, como decisão da sessão, revisável: torre à direita; só militar
+converte; bênção de resistência; Igreja 3×3 (5+5) pela Escola; padre a 2 de ouro na própria Igreja;
+sub-aba Vila; sem IA.
+- **A arte (Codex):** a capela caiada com a torre do sino à direita, o frontão de volutas, a cruz e a
+  porta em arco, na régua da padaria. Tem o par `madeira` (a obra, a mesma silhueta) e `completo`, os
+  originais em `assets/base/church/` e o `tools/limpar-igreja.mjs`. A âncora da bandeira fica no
+  beiral, porque ela flutuava à esquerda na primeira captura;
+- **O prédio:** `church` em `buildings.json` (o 29º; o validador e o F03 contavam 28), na sub-aba Vila,
+  com o nome do tema;
+- **O treino (emenda antes do código):** o `HireMercenary` se generalizou por prédio:
+  - cada tipo pago em ouro é contratado no prédio do seu `predioQueTreina`, e o padrão é a prefeitura
+    (`predioQueContrata`, `tiposContratadosEm` em `src/sim/prefeitura.ts`);
+  - a Igreja recebe ouro pela regra do insumo, e o painel lista, em cada prédio, só os tipos dele;
+  - a Igreja recusa o jagunço, e a prefeitura recusa o padre;
+- **O padre:** está em `units.json` (`mercenarios`, com `predioQueTreina: church` e `naoLuta`). Ele anda
+  com `MoveUnits`, não engaja corpo a corpo, e o `AttackUnit` com ele é recusado com `unidade-nao-luta`.
+
+**Teste:** `tests/I-PREDIO-IGREJA.test.ts` (7) cobre:
+- a Igreja construída pelo `step` (a rua e a planta, até `completo`);
+- o padre na porta, com o ouro debitado, e as recusas (sem ouro, o tipo do outro prédio);
+- o painel e o menu;
+- o determinismo, e grava a partida do roteiro;
+- o padre andando, sem golpear com o inimigo encostado, e a recusa do ataque.
+
+**Evidência:** o roteiro novo `I-PREDIO-IGREJA` sai 0. Ele carrega a partida com a Igreja completa e 5 de
+ouro e confere a Igreja desenhada pelo sprite. Com o jogo andando, abre o painel (só o padre no botão) e
+contrata: o padre aparece e o ouro cai para 3. As capturas foram abertas.
+**O que o roteiro ensinou:** o painel de prédio se refaz a cada tick, por desenho (BUG-B: só o botão
+apertado segura o redesenho), e um `$eval` mediu um botão já trocado (retângulo zerado). O roteiro mede
+o botão numa chamada só.
+**Ainda não:** o padre é o quadrado de placeholder (a arte e as animações são o I-ARTE-PADRE). Os poderes
+(a bênção e a conversão) são os itens seguintes.
+**Testes que mudaram:** F36 (os mercenários da prefeitura passam a ser os sem `predioQueTreina`), F-SPR
+(29 tipos de unidade), I-TELA-SUBABAS-DO-CONSTRUIR (a Igreja na Vila), F03 e o validador (29 prédios).

@@ -19,7 +19,8 @@ describe('I-TELA-SUBABAS-DO-CONSTRUIR', () => {
 
   it('o conteudo de cada sub-aba e o do pedido (mais a Pedreira e a Casa do Gibao, a interpretacao registrada)', () => {
     const de = (id: string): string[] => [...(menu.grupos.find((g) => g.id === id)?.predios ?? [])].sort();
-    expect(de('vila')).toEqual(['inn', 'marketplace', 'schoolhouse', 'storehouse']);
+    // I-PREDIO-IGREJA (2026-10-06): a Igreja, predio novo, vai para Vila ("na duvida, Vila")
+    expect(de('vila')).toEqual(['church', 'inn', 'marketplace', 'schoolhouse', 'storehouse']);
     expect(de('comida')).toEqual(['bakery', 'butchers', 'farm', 'fishermans', 'mill', 'swine_farm', 'wineyard']);
     expect(de('materia')).toEqual(['coal_mine', 'gold_mine', 'iron_mine', 'iron_smithy', 'metallurgists', 'quarry', 'sawmill', 'woodcutters']);
     expect(de('guerra')).toEqual(['armor_smithy', 'armory_workshop', 'barracks', 'stables', 'tannery', 'town_hall', 'watchtower', 'weapon_smithy', 'weapons_workshop']);

@@ -336,8 +336,9 @@ function validarPredios(dados, erros) {
   const predios = dados.buildings && dados.buildings.predios;
   if (!Array.isArray(predios)) return; // forma/* ja reportou
 
-  if (predios.length !== 28) {
-    erros.push(`predios/contagem: esperado 28 predios, achou ${predios.length}`);
+  // I-PREDIO-IGREJA (2026-10-06): a Igreja e o 29o
+  if (predios.length !== 29) {
+    erros.push(`predios/contagem: esperado 29 predios, achou ${predios.length}`);
   }
 
   const idsValidos = new Set(predios.map((p) => p.id));

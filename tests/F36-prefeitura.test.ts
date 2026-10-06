@@ -29,7 +29,8 @@ import { naVila } from './helpers/ancoras';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { gravarEvidencia } from './helpers/evidence';
 
-const MERCENARIOS = gameData.unidades.mercenarios.tipos;
+// I-PREDIO-IGREJA (2026-10-06): o padre e pago em ouro mas contratado na Igreja; a Prefeitura e o resto
+const MERCENARIOS = gameData.unidades.mercenarios.tipos.filter((t) => !('predioQueTreina' in t));
 const armazemDe = (s: GameState): PredioCompleto =>
   s.predios.porId[s.predios.ordem.find((i) => s.predios.porId[i]?.tipo === ID_DO_ARMAZEM) as string] as PredioCompleto;
 const prefeituraDe = (s: GameState): PredioCompleto => s.predios.porId['prefeitura'] as PredioCompleto;

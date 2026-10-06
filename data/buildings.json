@@ -19,6 +19,7 @@
     { "id": "weapons_workshop", "nome": "Oficina de armas",    "tamanho": [4,2], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "sawmill",     "trabalhador": "carpenter" },
     { "id": "barracks",         "nome": "Quartel",             "tamanho": [4,4], "timber": 6, "stone": 6, "hp": 600, "desbloqueadoPor": "sawmill",     "trabalhador": null },
     { "id": "marketplace",      "nome": "Mercado",             "tamanho": [4,3], "timber": 6, "stone": 5, "hp": 550, "desbloqueadoPor": "sawmill",     "trabalhador": null },
+    { "id": "church",           "nome": "Igreja",              "tamanho": [3,3], "timber": 5, "stone": 5, "hp": 500, "desbloqueadoPor": "schoolhouse", "trabalhador": null },
     { "id": "mill",             "nome": "Moinho",              "tamanho": [3,3], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "farm",        "trabalhador": "baker" },
     { "id": "bakery",           "nome": "Padaria",             "tamanho": [3,3], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "mill",        "trabalhador": "baker" },
     { "id": "swine_farm",       "nome": "Granja de porcos",    "tamanho": [4,3], "timber": 4, "stone": 3, "hp": 350, "desbloqueadoPor": "farm",        "trabalhador": "animal_breeder" },

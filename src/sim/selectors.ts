@@ -1,6 +1,6 @@
 import { ehTorreCompleta, pedrasNaTorre, porQueNaoAtira } from './torre';
 import { ehFeiraCompleta, porQueNaoTroca } from './feira';
-import { ehPrefeituraCompleta, ouroNaPrefeitura } from './prefeitura';
+import { ehPredioDeContratoCompleto, ouroNaPrefeitura, tiposContratadosEm } from './prefeitura';
 import { ehQuartelCompleto, recrutasNoQuartel, requisitosDoTipo } from './quartel';
 import { armazemAceita } from './armazem';
 import { limiteDeDistribuicao } from './distribuicao';
@@ -754,10 +754,11 @@ export function painelDoPredio(
         naoTroca: porQueNaoTroca(predio, dados),
       }
       : null,
-    prefeitura: ehPrefeituraCompleta(predio)
+    // I-PREDIO-IGREJA: a Igreja usa o mesmo painel, com os tipos que ela contrata (o padre)
+    prefeitura: ehPredioDeContratoCompleto(predio, dados)
       ? {
         ouro: ouroNaPrefeitura(predio),
-        tipos: dados.unidades.mercenarios.tipos.map((t) => ({
+        tipos: tiposContratadosEm(predio.tipo, dados).map((t) => ({
           tipo: t.id, custo: t.custoOuro, falta: Math.max(0, t.custoOuro - ouroNaPrefeitura(predio)),
         })),
       }

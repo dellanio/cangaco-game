@@ -22,7 +22,7 @@ import { receitaDoTipo } from './producao';
 import { ehQuartelCompleto, ehRequisitoDoQuartel } from './quartel';
 import { ehTorreCompleta, ID_DA_TORRE, MUNICAO_DA_TORRE } from './torre';
 import { alvoDaFeira, ehFeiraCompleta, ID_DA_FEIRA } from './feira';
-import { alvoDeOuroDaPrefeitura, ehPrefeituraCompleta, ID_DA_PREFEITURA } from './prefeitura';
+import { alvoDeOuroDoContrato, tiposContratadosEm } from './prefeitura';
 import { limiteDeDistribuicao } from './distribuicao';
 
 /**
@@ -62,6 +62,7 @@ export function alvoDeEntrada(
 ): number {
   const predio = state.predios.porId[predioId];
   if (!predio || predio.estado !== 'completo') return 0;
+  const tipoDoPredio = predio.tipo;
   const receita = receitaDoTipo(predio.tipo, dados);
   if (receita !== null) {
     // `null` e "gaveta sem limite", e so o armazem tem isso — e armazem nao tem
@@ -100,7 +101,8 @@ export function alvoDeEntrada(
   if (ehFeiraCompleta(predio)) return alvoDaFeira(predio, mercadoria, dados);
   // F36 — a Prefeitura quer ter o ouro do mercenario mais caro (o dado); o que passa
   // disso volta ao armazem pelo nivel 7
-  if (ehPrefeituraCompleta(predio) && mercadoria === MERCADORIA_DE_OURO) return alvoDeOuroDaPrefeitura(dados);
+  // I-PREDIO-IGREJA: a Igreja, que contrata o padre, pela mesma regra
+  if (mercadoria === MERCADORIA_DE_OURO && tiposContratadosEm(tipoDoPredio, dados).length > 0) return alvoDeOuroDoContrato(tipoDoPredio, dados);
   return 0;
 }
 
@@ -172,7 +174,7 @@ export function insumosDoPredio(
   if (predio.tipo === ID_DA_TORRE) return [MUNICAO_DA_TORRE];
   // F35 — a feira com ordem ativa consome A, como qualquer insumo
   // F36 — a Prefeitura consome ouro, como a torre consome pedra
-  if (predio.tipo === ID_DA_PREFEITURA) return [MERCADORIA_DE_OURO];
+  if (tiposContratadosEm(predio.tipo, dados).length > 0) return [MERCADORIA_DE_OURO];
   if (predio.tipo === ID_DA_FEIRA) {
     const t = predio.troca;
     return t !== undefined && t.feitas < t.quantidade ? [t.da] : [];

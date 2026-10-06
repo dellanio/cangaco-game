@@ -203,6 +203,10 @@
       "nome": "Mercenários",
       "desc": "Aqui se contrata jagunço com dinheiro na mão."
     },
+    "church": {
+      "nome": "Igreja",
+      "desc": "A capela da vila. Forma o padre, que abençoa a tropa e converte o inimigo."
+    },
     "iron_smithy": {
       "nome": "Forja",
       "desc": "Minério vira ferro."
@@ -339,6 +343,9 @@
     },
     "warrior": {
       "nome": "Jagunço"
+    },
+    "priest": {
+      "nome": "Padre"
     }
   },
   "mercadorias": {

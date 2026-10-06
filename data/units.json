@@ -254,6 +254,20 @@
     "_doc": "Town hall. Pagos em ouro, prontos na hora. direcoesDeSprite 8 como os outros grupos (D-TELA-05e, decisao do operador de 2026-09-30: 8 direcoes para todas as unidades); so o render le o campo.",
     "tipos": [
       {
+        "id": "priest",
+        "nome": "Padre",
+        "hp": 2,
+        "attack": 1,
+        "attackVsCavalo": 0,
+        "defence": 1,
+        "montado": false,
+        "visao": 9,
+        "custoOuro": 2,
+        "predioQueTreina": "church",
+        "naoLuta": true,
+        "_doc": "I-UNIDADE-PADRE (2026-10-06). Contratado na Igreja por ouro (`predioQueTreina`; a Prefeitura nao o oferece), nao luta (`naoLuta`): reza. Os poderes (a bencao e a conversao) estao em combat.json `padre`. hp 2: fragil, como na pesquisa (o contra da conversao)."
+      },
+      {
         "id": "rebel",
         "nome": "Rebelde",
         "hp": 3,

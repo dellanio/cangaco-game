@@ -1537,3 +1537,8 @@ Medi o mesmo roteiro, o da C-IA-03c (jogar pela tela), contra a mesma IA:
   pedido quer. A calibração passou a medir a economia base com o clima desligado. Se o efeito for forte
   demais, os números a girar juntos são o multiplicador da seca e o número de roças por moinho.
 - Sem irrigação ainda: o Açude (que devolve 25 pontos na seca) vem em itens próprios.
+
+## 2026-10-06 — a Igreja e o padre, [proposta] da sessão (pesquisa em docs/pesquisas/2026-10-05-igreja-e-padre.md)
+- Igreja 3×3, 5 de madeira e 5 de pedra (hp 500), desbloqueada pela Escola; o padre custa 2 de ouro, hp 2,
+  não luta. A bênção (+20 % de resistência, 8 tiles) e a conversão (7 tiles, intervalos de 1,2 s, do 5º ao
+  9º com 38 %, recarga de 30 s) seguem em itens próprios.

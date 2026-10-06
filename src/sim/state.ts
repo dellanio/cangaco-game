@@ -48,6 +48,8 @@ export type MotivoDeRecusaDeLuta =
   | 'unidade-inexistente'
   | 'unidade-nao-militar'
   | 'unidade-a-distancia'
+  /** I-UNIDADE-PADRE — a unidade nao luta (o padre). */
+  | 'unidade-nao-luta'
   | 'alvo-do-proprio-lado'
   /** C-IA-03b — a partida esta em peacetime (`sim/paz.ts`). */
   | 'em-paz'

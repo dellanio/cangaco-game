@@ -256,7 +256,7 @@ describe('F-SPR — unidade: um arquivo por direcao, oeste espelhado', () => {
     }
   });
 
-  it('as direcoes vem de units.json: os 28 tipos, nos tres grupos, todos 8', () => {
+  it('as direcoes vem de units.json: os 29 tipos, nos tres grupos, todos 8', () => {
     // civis 4 -> 8: decisao do operador, 2026-09-30 (BUILD_PLAN, nota da F-SPR); os mercenarios
     // entraram na D-TELA-05e (antes, `null`)
     const grupos = unidadesJson as Record<string, { tipos: { id: string }[] }>;
@@ -265,7 +265,8 @@ describe('F-SPR — unidade: um arquivo por direcao, oeste espelhado', () => {
       expect(tipos.length, nome).toBeGreaterThan(0);
       for (const t of tipos) expect(direcoesDoTipo(t.id), `${nome}/${t.id}`).toBe(8);
     }
-    expect(Object.values(porGrupo).reduce((n, tipos) => n + tipos.length, 0)).toBe(28);
+    // I-UNIDADE-PADRE (2026-10-06): o padre e o 29o
+    expect(Object.values(porGrupo).reduce((n, tipos) => n + tipos.length, 0)).toBe(29);
     expect(direcoesDoTipo('tipo_que_nao_existe')).toBeNull();
     // override por tipo vence o _comum; numero fora de 4 e 8 reprova alto
     const dado = { civis: { _comum: { direcoesDeSprite: 4 }, tipos: [{ id: 'a' }, { id: 'b', direcoesDeSprite: 8 }] } };

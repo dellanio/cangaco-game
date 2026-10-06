@@ -79,6 +79,12 @@ export function defDaTropa(tipo: string, dados: GameData = gameData): DefDeTropa
     ?? dados.unidades.mercenarios.tipos.find((t) => t.id === tipo) ?? null;
 }
 
+/** I-UNIDADE-PADRE — quem nao luta (`units.json: naoLuta`, o padre): nao engaja nem e mandado atacar. */
+export function naoLuta(tipo: string, dados: GameData = gameData): boolean {
+  const def = defDaTropa(tipo, dados);
+  return def !== null && 'naoLuta' in def && def.naoLuta === true;
+}
+
 /** F28d — o projetil do atirador (`units.json: projetil`), ou `null` para quem luta de perto. */
 export function projetilDe(tipo: string, dados: GameData = gameData): string | null {
   const def = defDaTropa(tipo, dados);

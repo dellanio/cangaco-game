@@ -13,7 +13,7 @@ import { MERCADORIA_DE_OURO } from '../state';
 import type { GameData } from '../data/types';
 import { condicaoCheiaDoTipo } from '../condicao';
 import { tileDeSaida } from './escolas';
-import { custoDoMercenario, ehPrefeituraCompleta, motivoDaRecusaDeMercenario, ouroNaPrefeitura } from '../prefeitura';
+import { custoDoMercenario, ehPredioDeContratoCompleto, motivoDaRecusaDeMercenario, ouroNaPrefeitura } from '../prefeitura';
 import { comPredio } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
 
@@ -24,9 +24,9 @@ export function aplicarHireMercenary(state: GameState, comando: HireMercenary, d
   const prefeitura = state.predios.porId[comando.predio];
   const custo = custoDoMercenario(comando.tipo, dados);
   // a porta ANDAVEL, a mesma regra de onde a escola e o quartel soltam o formado
-  const porta = ehPrefeituraCompleta(prefeitura) ? tileDeSaida(state, prefeitura, dados) : null;
+  const porta = ehPredioDeContratoCompleto(prefeitura, dados) ? tileDeSaida(state, prefeitura, dados) : null;
   const recusa = motivo ?? (porta === null ? 'porta-bloqueada' : null);
-  if (recusa !== null || !ehPrefeituraCompleta(prefeitura) || custo === null || porta === null) {
+  if (recusa !== null || !ehPredioDeContratoCompleto(prefeitura, dados) || custo === null || porta === null) {
     return {
       state,
       events: [{

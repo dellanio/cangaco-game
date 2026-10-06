@@ -15,9 +15,7 @@ import type { GameEvent, GameState, MotivoDeRecusaDeLuta, Projetil, Unidade } fr
 import type { GameData } from '../data/types';
 import type { TileDeGrid } from '../estradas';
 import { classeDaUnidade } from '../condicao';
-import {
-  cadenciaDoTiro, chanceDeAcerto, direcaoEntre, distanciaEmTiles, ehADistancia, encostadas, noAlcance, noArco, projetilDe,
-} from '../combate';
+import { cadenciaDoTiro, chanceDeAcerto, direcaoEntre, distanciaEmTiles, ehADistancia, encostadas, noAlcance, noArco, projetilDe, naoLuta } from '../combate';
 import { hpDaUnidade, hpMaximoDoTipo } from '../vida';
 import { nextFloat } from '../rng';
 import { comProjetil, vooEmTicks } from '../projeteis';
@@ -39,7 +37,8 @@ export const FSM_ATIRANDO = 'atirando';
 
 /** Quem luta corpo a corpo: militar do dado que nao atira a distancia. */
 function lutaCorpoACorpo(u: Unidade, dados: GameData): boolean {
-  return classeDaUnidade(u.tipo, dados) === 'militar' && !ehADistancia(u.tipo, dados);
+  // I-UNIDADE-PADRE: quem `naoLuta` (o padre) nao engaja
+  return classeDaUnidade(u.tipo, dados) === 'militar' && !ehADistancia(u.tipo, dados) && !naoLuta(u.tipo, dados);
 }
 
 /** A unidade virada para onde acabou de andar (ou igual, se nao andou). Exportado: a
@@ -61,6 +60,7 @@ export function motivoDaRecusaDeLuta(
     if (u === undefined) return { motivo: 'unidade-inexistente', unidade: id };
     if (classeDaUnidade(u.tipo, dados) !== 'militar') return { motivo: 'unidade-nao-militar', unidade: id };
     if (ehADistancia(u.tipo, dados)) return { motivo: 'unidade-a-distancia', unidade: id };
+    if (naoLuta(u.tipo, dados)) return { motivo: 'unidade-nao-luta', unidade: id };
     if (u.lado === alvo.lado) return { motivo: 'alvo-do-proprio-lado', unidade: id };
   }
   // F-COMBATE-ALVO-NA-VISTA: por ultimo, para as recusas de antes continuarem com o motivo delas
