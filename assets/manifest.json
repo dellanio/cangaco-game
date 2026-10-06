@@ -382,10 +382,10 @@
         1
       ],
       "estados": {
-        "padrao": "sprites/terrain/agua.png",
-        "v1": "sprites/terrain/agua-v1.png",
-        "v2": "sprites/terrain/agua-v2.png",
-        "v3": "sprites/terrain/agua-v3.png",
+        "padrao": "sprites/terrain/agua-pixel/agua-padrao.png",
+        "v1": "sprites/terrain/agua-pixel/agua-v1.png",
+        "v2": "sprites/terrain/agua-pixel/agua-v2.png",
+        "v3": "sprites/terrain/agua-pixel/agua-v3.png",
         "borda-m0": "sprites/terrain/water-shore/water-shore-m0.png",
         "borda-m1": "sprites/terrain/water-shore/water-shore-m1.png",
         "borda-m2": "sprites/terrain/water-shore/water-shore-m2.png",
@@ -407,7 +407,7 @@
       "origem": {
         "base": "base/terrain-water-field/terrain-water-field-source.png",
         "semente": null,
-        "nota": "Miolo de agua em quatro variantes 64x64 e 16 margens cardinais transparentes derivadas da areia canonica."
+        "nota": "I-ARTE-AGUA-PIXEL-ART (2026-10-05, para o operador ver; homologacao dele): o miolo em pixel art, quatro quadros 64x64 gerados por tools/gerar-agua-pixel-art.mjs (32x32 ampliado 2x, paleta de 6 cores, sem acaso). Os quadros de antes continuam em sprites/terrain/agua*.png; voltar e trocar as quatro linhas `padrao`/`v1..v3`. As 16 margens nao mudaram: derivadas da areia canonica (base terrain-water-field)."
       }
     },
     {

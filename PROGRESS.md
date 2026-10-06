@@ -20771,3 +20771,30 @@ chega no 11 700 (sonda headless, ~10 s). O roteiro confere:
 As duas capturas (o ícone e o jornal aberto) foram abertas.
 **Arte:** o ícone e o papel são CSS, não raster. Um ícone desenhado entra só por decisão do operador.
 **Pergunta:** a lista de notícias deve atravessar o save, como no KaM?
+
+## Leva da noite de 2026-10-05 (2) — o menu da proposta e a água em pixel art
+
+### I-ARTE-AGUA-PIXEL-ART — o miolo da água em pixel art (verificado; homologação do operador)
+**O gerador:** `tools/gerar-agua-pixel-art.mjs`, determinístico e sem acaso, desenha quatro quadros:
+- 32×32, ampliados 2× por vizinho mais próximo para 64×64;
+- paleta de 6 cores (os azuis da água de hoje, medidos no PNG, mais a espuma);
+- o corpo em manchas suaves com dither ordenado, e oito cristas em traço que passam por ponto, traço,
+  arco e desfazendo, cada uma numa fase.
+
+O manifesto aponta `padrao`, `v1`, `v2` e `v3` para `sprites/terrain/agua-pixel/`. Os quadros de antes
+continuam no disco, e voltar é trocar as quatro linhas. As 16 margens (a areia) não mudaram.
+**O que a captura ensinou:** na primeira versão o corpo da onda andava entre os quadros, e a borda de
+cada tile aparecia. O render põe tiles vizinhos em quadros diferentes (a fase por tile,
+`src/render/agua-viva.ts`). O corpo passou a ser o mesmo nos quatro quadros, só as cristas animam, e a
+borda sumiu.
+**Teste:** `tests/I-ARTE-AGUA-PIXEL-ART.test.ts` (5) cobre:
+- o manifesto e o tamanho;
+- a emenda nas bordas (o bloco 2×2 atravessa a coluna 0/63 e a linha 0/63);
+- a paleta e os blocos 2×2;
+- os quatro quadros diferentes;
+- o gerador refazendo os arquivos byte a byte.
+
+**Evidência:** o roteiro novo `I-ARTE-AGUA-PIXEL-ART` sai 0. As duas capturas do açude da vila, com um
+`periodo` de distância, foram abertas: as cristas mudam, e as bordas entre tiles não aparecem.
+**Não verificado:** o lago grande e a margem com a pixel art lado a lado (a margem continua a pintura de
+antes). Se o operador aprovar, a margem é o passo seguinte.
