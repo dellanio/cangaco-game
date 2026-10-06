@@ -9223,6 +9223,55 @@ A ordem de execução é a desta lista. Cada item tem o aceite abaixo, escrito a
      e a faixa que toca; pausar deixa o áudio da trilha pausado e continuar o retoma; o deslizador do
      volume da música muda o volume do áudio da trilha. A captura do player é aberta.
 
+### Pedido do operador de 2026-10-06 (manhã): o lote de correções e a Igreja e o clima
+
+#### I-TELA-BALAO-COM-MARTELO — o obreiro que pensa na obra mostra um martelo batendo
+- **Pedido:** "No laborer, quando ele estiver pensando em Obra, coloque uma animação de martelo."
+- **Como (só tela):** o balão do pensamento `construir` mostra o martelo da aba Construir
+  (`sprites/ui/tab-construir-premium.png`, do manifesto), girando em torno do cabo como numa batida, em
+  vez do texto "obra". O ângulo vem de uma regra pura "tick → ângulo", com a amplitude e o período em
+  `data/pensamento.json`.
+- **Aceite:** (1) a regra pura do ângulo, por tabela: periódica, dentro da amplitude e com a fase por
+  unidade; (2) o balão de obra é ícone (`balaoComo: 'icone'`), e não mais texto; (3) a captura de um
+  obreiro com o martelo é aberta.
+
+#### I-TELA-BALAO-TRANSPARENTE — os balões com 10 % de transparência
+- **Pedido:** "Nos balões de pensamento das unidades, aplique uma transparência de 10%."
+- **Aceite:** o balão (fundo, ícone e texto) é desenhado com a opacidade `opacidade` 0,9 de
+  `data/pensamento.json`; o validador recusa a opacidade fora de (0, 1]; a ponte publica a opacidade, e
+  o roteiro a confere.
+
+#### I-ARTE-ESCOLA-DE-VOLTA — a escola volta ao sprite anterior
+- **Pedido:** "Devolve o sprite da schoolhouse anterior. O atual ficou muito ruim e fora das dimensões."
+- **Como:** a entrada `schoolhouse` do manifesto volta à de antes do `a2a26a4` (a Casa do Coronel em
+  sobrado), e os 4 arquivos da escola rural D saem do repositório (continuam na pasta de candidatos de
+  fora).
+- **Aceite:** a entrada é byte a byte a de `a2a26a4^`; os arquivos D não existem mais em `assets/`; os
+  testes da escola (F-SPR, F17f, C10, F-ESC, F-VIVO-h) passam, e a captura do F17f é aberta.
+
+#### I-TELA-RUAS-SO-NA-VILA — Ruas e Roçados só na sub-aba Vila
+- **Pedido:** a seção "Ruas e Roçados" e as ferramentas (Rua, Desfazer rua, Milho, Cana, Apagar roça)
+  aparecem só em Vila; as outras sub-abas mostram direto as construções.
+- **Aceite:** (1) no roteiro, com a Vila escolhida, o título das ruas e as cinco ferramentas estão
+  visíveis; nas outras três sub-abas, nenhum deles aparece, e o primeiro título é o da sub-aba; (2) os
+  roteiros que miram uma ferramenta (`[data-ferramenta=...]`) abrem a Vila antes, como já abrem a
+  sub-aba do prédio (`tools/shots/_subaba.js`); (3) a não-regressão dos roteiros do menu sai 0.
+
+#### I-TELA-COR-DO-MENU — o fundo do corpo do menu na cor da cidade do pé
+- **Pedido (com a amostra de cor):** o fundo do menu das sub-abas na mesma tonalidade da imagem do pé.
+- **Medido:** a amostra do operador e o alto de `cidade.png` dão a mesma cor, ~`#edcf9d` (237, 207, 157).
+- **Aceite:** o `background-color` do `#corpo-aba` que vale na cascata é `#edcf9d`, com teste do CSS, e a
+  captura é aberta.
+
+#### I-ARTE-SOM-DA-FOME — o som da tropa com fome
+- **Pedido:** "Faltou um som para avisar quando as tropas estão com fome. Pode ser o som de uma barriga
+  roncando ou uma pessoa resmungando."
+- **Como:** a linha `troop-hungry` de `docs/sons-candidatos.md` já tem a barriga roncando como
+  candidato 3 (CC0, conferido na página em 2026-10-05). A escolha do operador ("barriga roncando") é o
+  3, e o `tools/baixar-sons.js` baixa, confere a licença, recorta e põe no manifesto.
+- **Aceite:** (1) o som está no manifesto com CC0 e o link da página, e o arquivo existe; (2) o
+  `H-ARTE-SONS-APROVADOS` passa com 23 aprovados; (3) pelo evento, o aviso do jogador toca o som.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
