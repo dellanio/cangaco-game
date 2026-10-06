@@ -30,6 +30,31 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Abertos
 
+## BUG-SOM-BAIXA-A-CADA-TOQUE — cada som tocado baixa o arquivo de novo
+- feature: H-TELA-CAMADA-DE-SOM (o tocador do navegador), relatado pelo operador em 2026-10-05
+- severidade: trava (o operador: "isso travou o game")
+- repro: o console do operador mostrou `net::ERR_CACHE_OPERATION_NOT_SUPPORTED` em
+  `/assets/sons/build-wood.mp3`, `building-completed.mp3` e `goods-produced.mp3`, e um 404. Sonda
+  (`tools/shots`, apagada): a vila pronta a 3x por 60 s, com o cache desligado como no DevTools
+  aberto. Deu 15 sons tocados e **15 downloads** de `/assets/sons/`, um por toque, porque
+  `criarTocadorDoNavegador` faz `cloneNode()` de um `Audio` a cada toque, e cada clone é um player
+  novo que busca o arquivo. Numa vila grande são centenas de downloads simultâneos.
+- **o travamento em si não reproduziu** na sonda (o tick andou os 60 s). O que está verificado é o
+  download por toque; o travamento fica como **hipótese** ligada a ele.
+- o 404: nenhum arquivo do manifesto ou do CSS falta (conferido). O `index.html` não declara ícone, e o
+  navegador pede `/favicon.ico` (hipótese forte: era ele).
+- correção prevista: o som curto passa a ser Web Audio. Cada arquivo é buscado e decodificado uma vez,
+  e cada toque é um `AudioBufferSourceNode` com o ganho. O `index.html` ganha um ícone (o da marca).
+- **aceite (escrito antes do código):**
+  1. por tabela, com o `fetch` e o `AudioContext` falsos injetados: N toques do mesmo id fazem 1
+     busca e 1 decodificação, e cada toque cria uma fonte com o volume pedido. Id sem URL não busca.
+     Com o contexto suspenso (antes do gesto), o toque é silêncio sem erro, e o contexto tenta
+     `resume()`;
+  2. no navegador, com o cache desligado: a vila pronta a 3x por 60 s faz no máximo 1 download por
+     arquivo de som, enquanto os toques passam disso. O tick anda o tempo todo, sem erro de console;
+  3. a página não pede `/favicon.ico` (nenhum 404 na sonda).
+- status: aberto
+
 ## BUG-CARGA-INFINITA-SEM-VEZ — sob carga infinita, a tábua da oficina nunca ganha a pedra da escola
 - feature: D-TRANSPORTE-03 (o lance do KaM e a classe comum), achado pela I-OBRA-UM-TILE-ENTRE-PREDIOS
 - severidade: errado
