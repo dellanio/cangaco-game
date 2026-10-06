@@ -20894,3 +20894,24 @@ Contra o código de antes (`git show HEAD:`), os três primeiros testes da prime
 **Evidência:** o roteiro novo `BUG-SOM-BAIXA-A-CADA-TOQUE` sai 0. Com o cache desligado, a vila pronta
 a 3× por 60 s dá 9 toques e **2 downloads** (1 por arquivo), o tick anda nas 12 amostras, e não há
 nenhuma resposta de erro. Na sonda de antes, sem a correção do laço, eram 4 downloads da pedreira.
+
+### I-ARTE-ESCOLA-DA-NORU — a escola rural da branch `noru-novos-sprites` no jogo (verificado; homologação do operador)
+A branch registrou a escola rural D em `52af24c` (`SKILL_BUILDER_PROGRESS.md`) como candidata
+externa, à espera do operador. Hoje ele mandou aplicá-la. A partir de
+`D:\projetos-pessoal\cangaco-game-candidatos\arte\D\schoolhouse\rodada-2026-10-03\`:
+- entraram os 4 caminhos de `allowed-paths.txt` (as duas masters 2× em `assets/base/schoolhouse/` e os
+  dois derivados `*-D-20261003.png` em `assets/sprites/schoolhouse/`);
+- a entrada `schoolhouse` do manifesto passou a ser a `entry.json`: o mesmo envelope 214×240, footprint
+  3×3, anchor [0,5, 0,875] e as exceções 1,33 e 1,12, mais a âncora da bandeira e a da área de treino;
+- os arquivos da Casa do Coronel (o sobrado) continuam no disco.
+
+**Teste:** os mesmos da branch: F-SPR, F17f, C10, F-ESC e F-VIVO-h, 58 de 58.
+**Evidência:** os roteiros F17f e F-VIVO-h saem 0. As capturas abertas mostram a escola de alpendre,
+quadro-negro e livro ao lado do armazém, e treinando.
+**Visto, para o operador:**
+- (1) o retrato do menu ainda é o sobrado antigo (`icones.predios.schoolhouse`, derivado da base de
+  antes). Trocar é rodar o `tools/derivar-icones.js` com a base nova, e fica para a homologação;
+- (2) o nome no tema continua "Casa do Coronel", e a arte agora é uma escola rural;
+- (3) a camada de treino mostra o retângulo de placeholder ("treino") na porta: não há animação de
+  treino desenhada. A branch já registrava isso;
+- (4) a escola térrea fica visivelmente menor que o armazém.
