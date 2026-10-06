@@ -20865,3 +20865,32 @@ ajustes de roteiro:
   passou a ser o último. O helper agora segue a cascata: junta todos os blocos do seletor e vale a
   última declaração de cada propriedade. Ele acusa (conferido: com a altura 70 no bloco novo, reprova
   com "expected 70 to be 53").
+
+### BUG-SOM-BAIXA-A-CADA-TOQUE — cada som tocado baixava o arquivo de novo (corrigido; o travamento não reproduziu)
+**Relato:** o console do operador mostrou `net::ERR_CACHE_OPERATION_NOT_SUPPORTED` em
+`build-wood.mp3`, `building-completed.mp3` e `goods-produced.mp3`, um 404, e "isso travou o game".
+**Verificado (sonda e roteiro):** com o cache desligado, como no DevTools aberto, cada som curto era um
+`cloneNode()` de `Audio`, e cada clone buscava o arquivo. Na vila pronta, a 3× por 60 s, foram 15
+toques e 15 downloads. As vozes de trabalho em laço faziam o mesmo a cada volta (`quarry-work`, 4
+downloads).
+**Não verificado:** o travamento. Na sonda, o tick andou os 60 s. Ele fica como **hipótese** ligada
+aos downloads em massa numa vila grande.
+**O 404:** nenhum arquivo do manifesto ou do CSS falta (conferido). A página não declarava ícone, e o
+navegador pedia `/favicon.ico`.
+**A correção** (`src/render/tocador-de-som.ts`, só tela):
+- o som curto passou a ser Web Audio (`criarTocadorDeBuffers`). Cada arquivo é buscado e decodificado
+  uma vez, e cada toque é uma fonte sobre o buffer, com o ganho do volume. O contexto suspenso (antes
+  do gesto) é silêncio e tenta `resume()`;
+- os laços (ambiente, música e vozes) guardam o elemento parado e o retomam (`criarLacos`);
+- o `index.html` declara um ícone vazio.
+
+**Teste:** `tests/BUG-SOM-BAIXA-A-CADA-TOQUE.test.ts` (4), com o `fetch`, o contexto e o `Audio` falsos:
+- 52 toques fazem 1 busca e 1 decodificação, com o volume de cada um;
+- o id sem URL e o contexto suspenso;
+- o laço que para e volta 10 vezes cria 1 elemento só;
+- o tocador do jogo sem `cloneNode`, e o ícone declarado.
+
+Contra o código de antes (`git show HEAD:`), os três primeiros testes da primeira versão reprovaram.
+**Evidência:** o roteiro novo `BUG-SOM-BAIXA-A-CADA-TOQUE` sai 0. Com o cache desligado, a vila pronta
+a 3× por 60 s dá 9 toques e **2 downloads** (1 por arquivo), o tick anda nas 12 amostras, e não há
+nenhuma resposta de erro. Na sonda de antes, sem a correção do laço, eram 4 downloads da pedreira.
