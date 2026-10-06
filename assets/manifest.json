@@ -276,16 +276,16 @@
         1
       ],
       "estados": {
-        "padrao": "sprites/terrain/grama-D-v0.png",
-        "v1": "sprites/terrain/grama-D-v1.png",
-        "v2": "sprites/terrain/grama-D-v2.png",
-        "v3": "sprites/terrain/grama-D-v3.png"
+        "padrao": "sprites/terrain/solo-pixel/solo-padrao.png",
+        "v1": "sprites/terrain/solo-pixel/solo-v1.png",
+        "v2": "sprites/terrain/solo-pixel/solo-v2.png",
+        "v3": "sprites/terrain/solo-pixel/solo-v3.png"
       },
       "licenca": "arte propria do projeto, geracao 1 do solo de caatinga escolhida pelo operador em 2026-10-03",
       "origem": {
         "base": "base/terrain/solo-caatinga-D-g1-raw.png",
         "semente": null,
-        "nota": "Solo de caatinga, geracao 1 (D-ARTE-SOLO-CAATINGA, reaberto pelo operador em 2026-10-03). Bruto 1254x1254 sha256 29cf98404a8936bb1193544c0227d7ddf97527397b87c74d1c2113c5a39822f9; reduzido para 320x320 por NEAREST; recortes 64x64 em (126,91), (212,8), (73,225), (172,209) para v0..v3. Pior emenda entre pares 1,145x o meio (limite 1,3). Neutralidade dispensada pelo operador. Candidatos em D:/projetos-pessoal/cangaco-game-candidatos/arte/D/solo-caatinga/."
+        "nota": "I-ARTE-SOLO-PIXEL-ART (2026-10-05, pedido do operador; homologacao dele): as quatro variantes em pixel art, geradas por tools/gerar-solo-pixel-art.mjs (32x32 ampliado 2x, paleta de 9 cores, chao de base igual nas bordas das quatro, detalhes a 3 px ou mais da borda, sem acaso). Os PNGs de antes continuam em sprites/terrain/grama-D-v0..v3.png; voltar e trocar as quatro linhas. A origem abaixo e a da geracao anterior. Solo de caatinga, geracao 1 (D-ARTE-SOLO-CAATINGA, reaberto pelo operador em 2026-10-03). Bruto 1254x1254 sha256 29cf98404a8936bb1193544c0227d7ddf97527397b87c74d1c2113c5a39822f9; reduzido para 320x320 por NEAREST; recortes 64x64 em (126,91), (212,8), (73,225), (172,209) para v0..v3. Pior emenda entre pares 1,145x o meio (limite 1,3). Neutralidade dispensada pelo operador. Candidatos em D:/projetos-pessoal/cangaco-game-candidatos/arte/D/solo-caatinga/."
       }
     },
     {

@@ -20915,3 +20915,32 @@ quadro-negro e livro ao lado do armazém, e treinando.
 - (3) a camada de treino mostra o retângulo de placeholder ("treino") na porta: não há animação de
   treino desenhada. A branch já registrava isso;
 - (4) a escola térrea fica visivelmente menor que o armazém.
+
+### I-ARTE-SOLO-PIXEL-ART — o chão padrão como solo do sertão, em pixel art (verificado; homologação do operador)
+Lido como o terreno padrão do mapa (`grama` no manifesto, o solo de caatinga), que o render sorteia em
+quatro variantes por tile.
+**O gerador:** `tools/gerar-solo-pixel-art.mjs`, determinístico, faz:
+- 32×32, ampliado 2× para 64×64, com uma paleta de 9 cores: os ocres medidos no solo de hoje, a sombra
+  da rachadura, a pedra e o capim seco;
+- o chão de base com manchas fracas de frequência inteira, o grão por hash e dither ordenado;
+- no miolo de cada variante, manchas próprias que somem perto da borda;
+- os detalhes (pedrinhas, pedra, rachaduras, tufos de capim seco) a 3 px ou mais da borda.
+
+Assim as quatro têm **a mesma borda** e se encostam em qualquer combinação. O manifesto aponta as
+quatro, e as de antes ficam no disco.
+**O que a folha ensinou:** a primeira versão emendava, mas a onda diagonal se repetia tile a tile e
+formava faixas. A base ficou mais fraca, e o miolo próprio de cada variante quebrou a repetição.
+**Teste:** `tests/I-ARTE-SOLO-PIXEL-ART.test.ts` (4) cobre:
+- o manifesto e o tamanho;
+- a borda igual nas quatro (2 px de 32 em volta), e as quatro diferentes no miolo;
+- a paleta e os blocos 2×2;
+- o gerador byte a byte.
+
+**Evidência:** o roteiro novo `I-ARTE-SOLO-PIXEL-ART` sai 0. A captura da vila foi aberta: o chão
+contínuo, sem costura.
+**Visto, para o operador:**
+- as margens da areia e da rocha sobre o chão (`borda-grama-*`) são as pinturas de antes, derivadas do
+  solo antigo, e a franja verde delas não combina com o solo novo;
+- as rachaduras finas espalhadas são a camada de detalhes que já existia, e não deste item.
+
+Se o solo for aprovado, as margens são o próximo passo.
