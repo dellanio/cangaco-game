@@ -199,6 +199,11 @@ function validarJornal(config, tema, erros, dadosDoJogo) {
   }
   if (!Number.isInteger(config.maximoDeNoticias) || config.maximoDeNoticias <= 0) e('maximoDeNoticias precisa ser inteiro > 0');
   const noticias = (tema && tema.jornal && tema.jornal.noticias) || {};
+  // I-TELA-JORNAL-PREDIO-SEM-TRABALHADOR
+  const vago = config.predioSemTrabalhador || {};
+  if (typeof vago.minutos !== 'number' || !(vago.minutos > 0)) e('predioSemTrabalhador.minutos precisa ser numero > 0');
+  const nv = noticias.predioSemTrabalhador;
+  if (!nv || !nv.manchete || !nv.texto) e("a noticia 'predioSemTrabalhador' precisa de manchete e texto em theme-sertao.json jornal.noticias");
   for (const [evento, chave] of Object.entries(config.eventos || {})) {
     // I-TELA-CLIMA-VISUAL: a estacao tem uma noticia por fase do ciclo de data/clima.json
     if (evento === 'season-changed') {

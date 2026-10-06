@@ -6,9 +6,13 @@
 import type { GameEvent, GameState } from '../sim/state';
 import { LADO_DO_JOGADOR } from '../sim/state';
 import temaSertao from '../../data/theme-sertao.json';
+import { ehPredioOcupavel, trabalhadorDoTipo } from '../sim/ocupacao';
+import { vagaDeOcupacao } from '../sim/reservas';
 
 export interface ConfigDoJornal {
   readonly maximoDeNoticias: number;
+  /** I-TELA-JORNAL-PREDIO-SEM-TRABALHADOR — os minutos de jogo (1x) de predio vago ate a noticia. */
+  readonly predioSemTrabalhador: { readonly minutos: number };
   readonly eventos: Readonly<Record<string, string>>;
 }
 
@@ -55,6 +59,51 @@ export function acrescentarNoticias(lista: readonly Noticia[], novas: readonly N
   return [...[...novas].reverse(), ...lista].slice(0, maximo);
 }
 
+/** I-TELA-JORNAL-PREDIO-SEM-TRABALHADOR — a memoria da tela: o tick em que cada predio foi visto vago, e
+ *  os ja avisados (um aviso por vez que o predio fica vago). Nao entra no save. */
+export interface MemoriaDosVagos {
+  readonly desde: Readonly<Record<string, number>>;
+  readonly avisados: readonly string[];
+}
+
+export const MEMORIA_VAZIA: MemoriaDosVagos = { desde: {}, avisados: [] };
+
+/**
+ * O predio completo do jogador que pede trabalhador, sem ocupante e sem ninguem a caminho (a vaga nao
+ * reservada): conta o tempo vago; passado `limiteTicks`, ele entra em `novos` uma vez. Ocupado,
+ * reservado ou demolido, sai da memoria (vago de novo conta do zero). Pura.
+ */
+export function prediosSemTrabalhador(
+  estado: GameState, memoria: MemoriaDosVagos, limiteTicks: number,
+): { readonly memoria: MemoriaDosVagos; readonly novos: readonly string[] } {
+  const desde: Record<string, number> = {};
+  const avisados: string[] = [];
+  const novos: string[] = [];
+  for (const id of estado.predios.ordem) {
+    const p = estado.predios.porId[id];
+    if (p === undefined || p.lado !== LADO_DO_JOGADOR || !ehPredioOcupavel(p) || vagaDeOcupacao(estado, id) <= 0) continue;
+    const inicio = memoria.desde[id] ?? estado.tick;
+    desde[id] = inicio;
+    if (memoria.avisados.includes(id)) avisados.push(id);
+    else if (estado.tick - inicio >= limiteTicks) { avisados.push(id); novos.push(id); }
+  }
+  return { memoria: { desde, avisados }, novos };
+}
+
+/** A noticia do predio vago, com os nomes do tema (`{predio}`, `{trabalhador}`, `{minutos}`). */
+export function noticiaDoPredioVago(
+  estado: GameState, predioId: string, minutos: number, texto: TextoDaNoticia,
+): Noticia | null {
+  const p = estado.predios.porId[predioId];
+  const trabalhador = p === undefined ? null : trabalhadorDoTipo(p.tipo);
+  if (p === undefined || trabalhador === null) return null;
+  const predios = temaSertao.predios as Readonly<Record<string, { readonly nome?: string } | undefined>>;
+  const civis = temaSertao.civis as Readonly<Record<string, { readonly nome?: string } | undefined>>;
+  const trocar = (s: string): string => s.split('{predio}').join(predios[p.tipo]?.nome ?? p.tipo)
+    .split('{trabalhador}').join(civis[trabalhador]?.nome ?? trabalhador).split('{minutos}').join(String(minutos));
+  return { tick: estado.tick, chave: `predioSemTrabalhador:${predioId}`, manchete: trocar(texto.manchete), texto: trocar(texto.texto) };
+}
+
 /** A hora de jogo do tick, `mm:ss` (ou `h:mm:ss`), pelo tamanho do tick em ms. */
 export function horaDoJogo(tick: number, tickMs: number): string {
   const total = Math.floor((tick * tickMs) / 1000);
@@ -89,6 +138,9 @@ export function montarJornal(config: ConfigDoJornal, tickMs: number, janela: Win
   icone.setAttribute('aria-label', tema.abrir);
 
   let noticias: Noticia[] = [];
+  let vagos: MemoriaDosVagos = MEMORIA_VAZIA;
+  const minutosVago = config.predioSemTrabalhador.minutos;
+  const limiteVago = Math.round((minutosVago * 60 * 1000) / tickMs);
   let naoLidas = 0;
   let aberto = false;
 
@@ -140,6 +192,16 @@ export function montarJornal(config: ConfigDoJornal, tickMs: number, janela: Win
     get aberto() { return aberto; },
     aoPasso(estado) {
       const novas = noticiasDosEventos(estado.events, estado.tick, config, textos);
+      // I-TELA-JORNAL-PREDIO-SEM-TRABALHADOR
+      const r = prediosSemTrabalhador(estado, vagos, limiteVago);
+      vagos = r.memoria;
+      const textoDoVago = textos['predioSemTrabalhador'];
+      if (textoDoVago !== undefined) {
+        for (const id of r.novos) {
+          const n = noticiaDoPredioVago(estado, id, minutosVago, textoDoVago);
+          if (n !== null) novas.push(n);
+        }
+      }
       if (novas.length === 0) return;
       noticias = acrescentarNoticias(noticias, novas, config.maximoDeNoticias);
       if (aberto) desenharFolha();

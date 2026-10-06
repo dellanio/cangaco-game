@@ -21244,3 +21244,22 @@ mostra o clarão, e o rótulo do convertido já vermelho.
 - **Achado:** com as estações, a notícia mais nova nas duas primeiras já não é sempre a fome (agora é "É
   seca no sertão" no tick ~4 000). Por isso a asserção "a do alto é a da fome" saiu: ela afirmava a ordem
   dos eventos do balanceamento, e não a mecânica do jornal.
+
+### I-TELA-JORNAL-PREDIO-SEM-TRABALHADOR — o jornal avisa o prédio parado sem trabalhador (verificado pela regra)
+- **Leitura conservadora** (escrita no aceite): "casa" é o prédio completo do jogador que pede
+  trabalhador. Ele conta como vago quando não tem ocupante e ninguém tem a vaga reservada; quem está a
+  caminho resolve.
+- **O limite:** 5 minutos de jogo na velocidade 1x (`data/jornal.json` `predioSemTrabalhador.minutos`,
+  3 000 ticks).
+- **O aviso:** sai uma notícia por prédio, e de novo só se ele for ocupado e ficar vago outra vez. O texto
+  vem do tema, com o nome do prédio e do trabalhador, e manda formar um na Casa do Coronel.
+- **Onde mora:** a memória é da tela (`MemoriaDosVagos`, fora do save, como a lista de notícias). Depois
+  de carregar uma partida, a conta recomeça.
+- **Teste:** `tests/I-TELA-JORNAL-PREDIO-SEM-TRABALHADOR.test.ts` (4), com a regra pura rodando sobre o
+  `step`, cobre:
+  - o aviso no tick exato do limite, uma vez só;
+  - o relógio que zera quando o prédio é ocupado;
+  - a vaga reservada, o prédio da IA e o armazém, que não contam. A guarda acusa sem a reserva;
+  - o texto pelo tema e o validador.
+- **Não verificado na tela:** não há roteiro (o aceite não pede um). A ligação no `montarJornal` é uma
+  chamada por passo.
