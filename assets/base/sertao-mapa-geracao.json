@@ -1,0 +1,146 @@
+{
+  "ferramenta": "OpenAI image_gen (nativa)",
+  "referencia": "D:/projetos-pessoal/cangaco-game-candidatos/arte/D/storehouse/generation-02-raw.png",
+  "papelDaReferencia": "Materiais, paleta e pincelada; sem arquitetura ou luz antiga",
+  "contratoComum": "Objeto isolado original do sertao de 1930; fundo transparente; camera top-down 3/4 do sul sobre grid ortogonal; footprint 1x1; legivel em 64x64; luz unica de cima levemente do sul sem componente leste-oeste; quatro valores e sombra curta; sem pessoas, texto ou tile de chao",
+  "candidatas": "D:/projetos-pessoal/cangaco-game-candidatos/arte/sertao-mapa/<id>/generation-01.png",
+  "homologacao": "Pendente do operador",
+  "itens": [
+    {
+      "id": "stick_fence",
+      "assunto": "cerca de vara reta",
+      "fonte": "D:/projetos-pessoal/cangaco-game-candidatos/arte/sertao-mapa/stick_fence/generation-01.png",
+      "hash": "52abb638257c42414728290e917a6c7fd89eb11fc09b82aaecb3619c06442f09",
+      "base": "base/stick_fence/original.png",
+      "derivado": "sprites/props/stick_fence/normal.png",
+      "crop": [
+        0,
+        19,
+        1444,
+        1063
+      ],
+      "ferramenta": "OpenAI image_gen nativa; ffmpeg Lanczos para derivacao",
+      "resultado": "Candidata integrada para homologacao",
+      "proximoPasso": "Prancha e homologacao do operador"
+    },
+    {
+      "id": "well",
+      "assunto": "cacimba de pedra",
+      "fonte": "D:/projetos-pessoal/cangaco-game-candidatos/arte/sertao-mapa/well/generation-01.png",
+      "hash": "5fbfadbdc477d0fb1182e07246c37d9028575426ec782dee9a77ac05070454ce",
+      "base": "base/well/original.png",
+      "derivado": "sprites/props/well/normal.png",
+      "crop": [
+        0,
+        19,
+        1130,
+        1318
+      ],
+      "ferramenta": "OpenAI image_gen nativa; ffmpeg Lanczos para derivacao",
+      "resultado": "Candidata integrada para homologacao",
+      "proximoPasso": "Prancha e homologacao do operador"
+    },
+    {
+      "id": "ox_cart",
+      "assunto": "carro de boi vazio",
+      "fonte": "D:/projetos-pessoal/cangaco-game-candidatos/arte/sertao-mapa/ox_cart/generation-01.png",
+      "hash": "54fa4041db22602d6451e6aa034db611ced9faa0396c61f595387305a60babc7",
+      "base": "base/ox_cart/original.png",
+      "derivado": "sprites/props/ox_cart/normal.png",
+      "crop": [
+        0,
+        25,
+        1358,
+        1101
+      ],
+      "ferramenta": "OpenAI image_gen nativa; ffmpeg Lanczos para derivacao",
+      "resultado": "Candidata integrada para homologacao",
+      "proximoPasso": "Prancha e homologacao do operador"
+    },
+    {
+      "id": "drying_rack",
+      "assunto": "varal de carne de sol",
+      "fonte": "D:/projetos-pessoal/cangaco-game-candidatos/arte/sertao-mapa/drying_rack/generation-01.png",
+      "hash": "483380f0af3048e44fbfcf2027900bd65f4e4c6f940b8712734f52135889517c",
+      "base": "base/drying_rack/original.png",
+      "derivado": "sprites/props/drying_rack/normal.png",
+      "crop": [
+        0,
+        17,
+        1298,
+        1182
+      ],
+      "ferramenta": "OpenAI image_gen nativa; ffmpeg Lanczos para derivacao",
+      "resultado": "Candidata integrada para homologacao",
+      "proximoPasso": "Prancha e homologacao do operador"
+    },
+    {
+      "id": "firewood",
+      "assunto": "pilha de lenha",
+      "fonte": "D:/projetos-pessoal/cangaco-game-candidatos/arte/sertao-mapa/firewood/generation-01.png",
+      "hash": "656ba7bb43960af2a145132de37007fbce470d2eb5c3fd641fbf4c20c94c3451",
+      "base": "base/firewood/original.png",
+      "derivado": "sprites/props/firewood/normal.png",
+      "crop": [
+        0,
+        0,
+        1388,
+        1122
+      ],
+      "ferramenta": "OpenAI image_gen nativa; ffmpeg Lanczos para derivacao",
+      "resultado": "Candidata integrada para homologacao",
+      "proximoPasso": "Prancha e homologacao do operador"
+    },
+    {
+      "id": "ox_bones",
+      "assunto": "ossada de boi",
+      "fonte": "D:/projetos-pessoal/cangaco-game-candidatos/arte/sertao-mapa/ox_bones/generation-01.png",
+      "hash": "bfcc8d21e04976b4d131845edb85036709a53b864f45a3040081ce1fca882890",
+      "base": "base/ox_bones/original.png",
+      "derivado": "sprites/props/ox_bones/normal.png",
+      "crop": [
+        0,
+        21,
+        1308,
+        1144
+      ],
+      "ferramenta": "OpenAI image_gen nativa; ffmpeg Lanczos para derivacao",
+      "resultado": "Candidata integrada para homologacao",
+      "proximoPasso": "Prancha e homologacao do operador"
+    },
+    {
+      "id": "roadside_cross",
+      "assunto": "cruz de beira de estrada",
+      "fonte": "D:/projetos-pessoal/cangaco-game-candidatos/arte/sertao-mapa/roadside_cross/generation-01.png",
+      "hash": "9624a44ee2c5e9b148ac09adedb35f3e8dff615d069331646f0a3d4000ff33b2",
+      "base": "base/roadside_cross/original.png",
+      "derivado": "sprites/props/roadside_cross/normal.png",
+      "crop": [
+        57,
+        19,
+        1081,
+        1318
+      ],
+      "ferramenta": "OpenAI image_gen nativa; ffmpeg Lanczos para derivacao",
+      "resultado": "Candidata integrada para homologacao",
+      "proximoPasso": "Prancha e homologacao do operador"
+    },
+    {
+      "id": "flat_slab",
+      "assunto": "lajedo baixo",
+      "fonte": "D:/projetos-pessoal/cangaco-game-candidatos/arte/sertao-mapa/flat_slab/generation-01.png",
+      "hash": "7c4aa2c0aa27eb8ab44bd8a516bb4fa647bc5647d84331ba33adbc92b22f6c04",
+      "base": "base/flat_slab/original.png",
+      "derivado": "sprites/props/flat_slab/normal.png",
+      "crop": [
+        0,
+        29,
+        1358,
+        1111
+      ],
+      "ferramenta": "OpenAI image_gen nativa; ffmpeg Lanczos para derivacao",
+      "resultado": "Candidata integrada para homologacao",
+      "proximoPasso": "Prancha e homologacao do operador"
+    }
+  ]
+}

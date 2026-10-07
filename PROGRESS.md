@@ -21323,3 +21323,10 @@ Verificacao final desta retomada: npm run verify saiu 1; typecheck, lint, dados 
   u18/u26 presos) fica só no histórico do git, no `50ccff3`.
 - **Hipótese, não verificada nesta sessão:** a varredura antiga sai verde. O registro de 2026-10-04 diz
   isso, mas a suíte longa não foi rodada aqui. Ela será conferida no fechamento do bloco.
+## 2026-10-07 — Codex: I-ARTE-ENFEITES-DO-SERTAO
+
+Contrato: imports puros de src/sim/ permitidos pela correção do operador; alterações na sim e mutações do GameState continuam proibidas. Funis mapa.ts/predios.ts preservados.
+
+Verificado: oito bases originais geradas por image_gen nativa e derivados 64x64 em assets/sprites/props/, footprint 1x1, anchor [0.5,1]. Procedência e hashes em assets/base/sertao-mapa-geracao.json. Manifesto estendido com tipo enfeite sem mudar entradas antigas; validador específico integrado ao F17f, teste reprova ausência e invalidade do anchor. Tema ganhou carcaça, cruz e lajedo. Teste dirigido novo + F17f: 27 testes verdes. verify:rapido saiu 0: 894 testes relacionados em 94 arquivos (log test-output/I-ARTE-ENFEITES-DO-SERTAO-rapido.log).
+
+Captura pelo roteiro saiu 0, aberta: screenshots/I-ARTE-ENFEITES-DO-SERTAO-1-prancha-oito-no-solo.png (zoom 0,5/1/2, oito lado a lado sobre solo real). Não verificado: homologação visual do operador; aparência em mapa ainda pertence ao próximo item. Nenhum asset de 1998 utilizado. Main e arquivos proibidos preservados; sem push.

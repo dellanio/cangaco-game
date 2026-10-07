@@ -604,7 +604,10 @@
     "cacimba",
     "carro de boi",
     "jumento",
-    "varal de carne de sol"
+    "varal de carne de sol",
+    "carcaça de boi",
+    "cruz de beira de estrada",
+    "lajedo baixo"
   ],
   "facoes": {
     "_doc": "Dois bandos rivais. MESMA arquitetura e MESMOS sprites: mudam só a cor do lenço e da bandeira. Foi essa escolha que cortou a conta de arte quase pela metade.",

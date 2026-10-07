@@ -9,6 +9,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
+import { errosDoEnfeite } from '../src/render/manifesto-enfeites';
 import { gameData } from '../src/sim/data';
 import { assetDoPredio, arquivoDoEstagio, chaveDaTextura, ehEntradaDePredio, TIPOS_DE_CAMADA } from '../src/render/manifesto';
 import type { EntradaDeAsset, EntradaDeCamada, Manifesto } from '../src/render/manifesto';
@@ -116,6 +117,7 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
     expect(predios.length).toBeGreaterThan(0);
     const tipos = new Set<string>(['predio', ...TIPOS_DE_CAMADA]);
     for (const e of manifesto.assets) {
+      expect(errosDoEnfeite(e), e.id).toEqual([]);
       expect(typeof e.id).toBe('string');
       expect(tipos.has(e.tipo), `${e.id}: tipo '${e.tipo}'`).toBe(true);
       expect(e.footprint).toHaveLength(2);
