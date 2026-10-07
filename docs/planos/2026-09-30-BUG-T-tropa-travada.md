@@ -242,3 +242,23 @@ regra sai. **Reproduziu**, e a regra fica.
 - A primeira tentativa, com P a dois passos da vaga, **não reproduziu**: em campo aberto, P
   contornava. Caminho de um passo não tem contorno (`esperarOuDesviar`), que era o caso do
   u22/u30 na varredura.
+# Retomada de 2026-10-07 — cadeia de vagas com tropa de 24
+
+Autorização: operador mandou prosseguir com as correções e implementações depois do
+diagnóstico da ordem 13. Não muda os aceites anteriores nem o prazo de 1 500 ticks.
+
+Correção: estender `vagaTomadaPor` para reconhecer a cadeia do ocupante da vaga:
+militares aliados marchando, sem passo em andamento, cada um bloqueado pelo próximo,
+até um aliado parado. Reutilizar a espera `ticksDesvioMilitar` e a troca de vagas já
+existente. Não trocar posição, aumentar velocidade, encerrar ordem sem chegar nem
+atravessar inimigos. Ciclo sem parado não é esta regra e conserva a troca mútua.
+
+Aceites da retomada, escritos antes do código:
+1. cenário isolado com três marchantes e um parado: pelo `step`, termina a marcha,
+   preserva o conjunto das vagas finais e não sobrepõe militares em nenhum tick;
+2. cadeia terminada em inimigo não permite troca de vaga;
+3. manter a varredura original das 400 ordens com 18 soldados e acrescentar a mesma
+   receita com 24: zero presos após 1 500 ticks e zero sobreposições;
+4. testes anteriores de troca mútua, formação e colisão continuam passando;
+5. evidência determinística em `test-output/`, registro em PROGRESS e remoção do
+   BUG-TROPA-DE-24-PRESA somente depois dos aceites verdes.
