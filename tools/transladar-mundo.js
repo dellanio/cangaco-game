@@ -42,14 +42,9 @@ function argumentos(argv) {
   return { k: Number(valor('--k', '32')), saida: valor('--saida', null), detalhe: proprios.includes('--detalhe'), filtro };
 }
 
-/** Os tres textos transladados de +K. Pura: nao le nem escreve arquivo. */
-function transladarTextos(originais, k) {
-  const e =JSON.parse(originais.economia);
-  for (const p of e.estadoInicial.predios) { p.gx += k; p.gy += k; }
-  e.estadoInicial.spawnDeUnidades.gx += k;
-  e.estadoInicial.spawnDeUnidades.gy += k;
-
-  const m = JSON.parse(originais.mapa);
+/** Mapa publicado deslocado, sem regerar terreno ou alterar o argumento. */
+function transladarMapa(original, k) {
+  const m = JSON.parse(JSON.stringify(original));
   const grama = Object.keys(m.legenda).find((c) => m.legenda[c] === 'grama');
   if (grama === undefined) throw new Error('transladar: a legenda do mapa nao tem grama');
   const n = m.largura;
@@ -62,6 +57,19 @@ function transladarTextos(originais, k) {
   for (const r of Object.keys(m.recursos)) m.recursos[r] = m.recursos[r].map(([x, y]) => [x + k, y + k]);
   m.largura = novo;
   m.altura = novo;
+  return m;
+}
+
+/** Os tres textos transladados de +K. Pura: nao le nem escreve arquivo. */
+function transladarTextos(originais, k) {
+  const e =JSON.parse(originais.economia);
+  for (const p of e.estadoInicial.predios) { p.gx += k; p.gy += k; }
+  e.estadoInicial.spawnDeUnidades.gx += k;
+  e.estadoInicial.spawnDeUnidades.gy += k;
+
+  const m = transladarMapa(JSON.parse(originais.mapa), k);
+  const novo = m.largura;
+  const n = novo - k;
 
   const de = `"mapaPadrao": { "largura": ${n}, "altura": ${n} }`;
   if (!originais.terreno.includes(de)) throw new Error(`transladar: terrain.json nao tem ${de}`);
@@ -137,6 +145,6 @@ function main() {
   process.stdout.write(`${texto}\n`);
 }
 
-module.exports = { ARQ, transladarTextos };
+module.exports = { ARQ, transladarTextos, transladarMapa };
 
 if (require.main === module) main();

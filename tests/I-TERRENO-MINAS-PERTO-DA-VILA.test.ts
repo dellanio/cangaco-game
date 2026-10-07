@@ -8,6 +8,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { gameData } from '../src/sim/data';
 import { createInitialState } from '../src/sim/state';
 import type { GameState } from '../src/sim/state';
@@ -25,22 +27,45 @@ const gerador = require('../tools/gerar-mapa.js') as {
   readonly montarArquivo: () => unknown;
   readonly serializar: (arquivo: unknown) => string;
 };
-const SERRA = gerador.SERRA_DO_OESTE;
 /** O mapa como esta no disco (o que o jogo carrega). */
-const MAPA = require('../data/maps/sertao-128.json') as {
+interface MapaDoTeste {
+  readonly largura: number;
+  readonly altura: number;
   readonly linhas: readonly string[];
   readonly legenda: Readonly<Record<string, string>>;
   readonly contagemDeRecursos: Readonly<Record<string, number>>;
   readonly recursos: Readonly<Record<string, readonly (readonly [number, number])[]>>;
+}
+const MAPA = JSON.parse(readFileSync('data/maps/sertao-128.json', 'utf8')) as MapaDoTeste;
+// O gerador publicado não passa pelo plugin/setup de dados do Vitest. Regerar
+// um mapa maior é diferente de deslocar o mapa publicado inteiro.
+const GERADO = JSON.parse(execFileSync(process.execPath, ['-e',
+  'process.stdout.write(JSON.stringify(require("./tools/gerar-mapa.js").montarArquivo()))',
+], { encoding: 'utf8' })) as MapaDoTeste;
+const deslocamento = gameData.mapa.largura - GERADO.largura;
+const { transladarMapa } = require('../tools/transladar-mundo.js') as {
+  transladarMapa: (mapa: MapaDoTeste, k: number) => MapaDoTeste;
 };
+const SERRA: Serra = {
+  x0: gerador.SERRA_DO_OESTE.x0 + deslocamento,
+  x1: gerador.SERRA_DO_OESTE.x1 + deslocamento,
+  y0: gerador.SERRA_DO_OESTE.y0 + deslocamento,
+  y1: gerador.SERRA_DO_OESTE.y1 + deslocamento,
+  veios: gerador.SERRA_DO_OESTE.veios.map((v) => ({ ...v, y0: v.y0 + deslocamento, y1: v.y1 + deslocamento })),
+};
+function yDoVeio(tipo: string, ponta: 'y0' | 'y1'): number {
+  const veio = SERRA.veios.find((v) => v.tipo === tipo);
+  if (!veio) throw new Error(`sem veio de ${tipo}`);
+  return veio[ponta];
+}
 
 const armazem = gameData.economia.estadoInicial.predios.find((p) => p.id === 'storehouse');
 if (armazem === undefined) throw new Error('sem armazem inicial');
 /** As tres minas, encostadas na face leste da serra, uma por veio, com o vao entre lotes. */
 const MINAS = [
-  { tipo: 'coal_mine', id: 'mina-carvao', unidade: 'mineiro-carvao', gx: SERRA.x1 + 2, gy: 32, recurso: 'coal' },
-  { tipo: 'iron_mine', id: 'mina-ferro', unidade: 'mineiro-ferro', gx: SERRA.x1 + 2, gy: 36, recurso: 'iron_ore' },
-  { tipo: 'gold_mine', id: 'mina-ouro', unidade: 'mineiro-ouro', gx: SERRA.x1 + 2, gy: 38, recurso: 'gold_ore' },
+  { tipo: 'coal_mine', id: 'mina-carvao', unidade: 'mineiro-carvao', gx: SERRA.x1 + 2, gy: yDoVeio('coal', 'y0'), recurso: 'coal' },
+  { tipo: 'iron_mine', id: 'mina-ferro', unidade: 'mineiro-ferro', gx: SERRA.x1 + 2, gy: yDoVeio('iron_ore', 'y1'), recurso: 'iron_ore' },
+  { tipo: 'gold_mine', id: 'mina-ouro', unidade: 'mineiro-ouro', gx: SERRA.x1 + 2, gy: yDoVeio('gold_ore', 'y1'), recurso: 'gold_ore' },
 ] as const;
 
 /** Quanto resta de um recurso nos tiles do veio dele. */
@@ -91,10 +116,12 @@ describe('I-TERRENO-MINAS-PERTO-DA-VILA', () => {
   });
 
   it('(3) o mapa no disco e o que o gerador emite, com a serra e os veios dele', () => {
-    const texto = gerador.serializar(gerador.montarArquivo());
-    expect(MAPA).toEqual(JSON.parse(texto));
+    expect(deslocamento).toBeGreaterThanOrEqual(0);
+    expect(MAPA).toEqual(transladarMapa(GERADO, deslocamento));
     const charDaMontanha = Object.entries(MAPA.legenda).find(([, tipo]) => tipo === 'montanha')?.[0];
-    for (const [gx, gy] of gerador.tilesDaSerraDoOeste()) {
+    for (const [x, y] of gerador.tilesDaSerraDoOeste()) {
+      const gx = x + deslocamento;
+      const gy = y + deslocamento;
       expect(MAPA.linhas[gy]?.[gx], `${gx},${gy}`).toBe(charDaMontanha);
     }
     for (const veio of SERRA.veios) {

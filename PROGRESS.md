@@ -21337,3 +21337,12 @@ Captura pelo roteiro saiu 0, aberta: screenshots/I-ARTE-ENFEITES-DO-SERTAO-1-pra
 Verificado: corrigidas somente as quatro ancoras de entrada da Bodega no manifesto: duas sobre a mesa esquerda (y=0,70) e duas sobre a direita (y=0,80). Estoques continuam dinamicos, sem comida pintada na arte nem mudanca de sim. Teste especifico e regressao F-VIVO-a/F17f: 3 arquivos, 34 testes, saida 0. Roteiro carregou fixture com uma unidade de cada um dos quatro alimentos e afirmou quatro pilhas com PNG da Bodega atual; captura aberta em screenshots/I-TELA-PILHAS-NAS-MESAS-DA-BODEGA-1-quatro-comidas-nas-mesas.png. verify:rapido saida 0: 515 testes, 36 s (test-output/ajuste-bodega-rapido.log).
 
 Nao verificado: homologacao visual pelo operador e pilhas maiores no mesmo close. Rio com ponte transitavel e serra com desgaste continuam sem implementacao enquanto a decisao de escopo estiver pendente. Nenhum arquivo de src/sim/ ou test-results.json alterado.
+
+
+## 2026-10-07 — task V: fixtures e gerador no mundo transladado
+
+Verificado: correções somente em testes e infraestrutura. A fixture de save é validada contra id/hash original e deslocada em memória, incluindo referências de tiles e névoa; mapas e saves versionados permanecem intactos. O gerador de minas é comparado com sua publicação original transladada, sem gerar outro mapa aleatório para substituir o contrato.
+
+Testes dirigidos: normal, 4 arquivos/21 testes; transladado, 5 arquivos/25 testes, todos verdes. Typecheck saiu 0. `npm run verify:rapido` saiu 0 (8 testes relacionados; typecheck, lint e dados verdes). Log: `test-output/2026-10-07-varredura-rapido.log`.
+
+Não verificado neste registro: suíte completa; resultados dirigidos não encerram esse portão. Nenhuma alteração em src/sim/, main, .claude/, AGENTS.md ou test-results.json.

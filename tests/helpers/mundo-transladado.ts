@@ -11,6 +11,8 @@ import fs from 'node:fs';
 import { createRequire, syncBuiltinESMExports } from 'node:module';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hashDeTexto } from '../../src/sim/data/hash';
+import { fixtureSaveTransladado } from './fixture-save-transladado';
 
 const require = createRequire(import.meta.url);
 const { ARQ, transladarTextos } = require('../../tools/transladar-mundo.js') as {
@@ -27,6 +29,15 @@ const textos = transladarTextos(
   k,
 );
 const porCaminho = new Map(Object.entries(ARQ).map(([id, f]) => [resolve(f).toLowerCase(), textos[id] as string]));
+
+// Somente esta fixture versionada acompanha o mapa; saves arbitrários continuam
+// sujeitos às recusas de produção e o arquivo do operador nunca é regravado.
+const mapaDaOrigem = JSON.parse(original(ARQ['mapa'] as string, 'utf8')) as { id: string; largura: number; altura: number };
+const mapaDoDestino = JSON.parse(textos['mapa'] as string) as typeof mapaDaOrigem;
+const fixture = resolve('saves/teste-operador-vila-pronta.txt');
+porCaminho.set(fixture.toLowerCase(), fixtureSaveTransladado(original(fixture, 'utf8'),
+  { ...mapaDaOrigem, hash: hashDeTexto(JSON.stringify(mapaDaOrigem)) },
+  { ...mapaDoDestino, hash: hashDeTexto(JSON.stringify(mapaDoDestino)) }, k));
 
 function chave(caminho: unknown): string | null {
   if (typeof caminho === 'string') return resolve(caminho).toLowerCase();
