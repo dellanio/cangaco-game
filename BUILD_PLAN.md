@@ -9484,6 +9484,55 @@ BALANCE_LOG como [proposta].
      desenhado em todo tile e nenhum losango; a captura é aberta. Os roteiros `D-ARTE-CHAO-DE-ROCA` e
      `F-TR` saem 0.
 
+### Pedido do operador de 2026-10-07: o mapa mais perto do sertão (pelo Codex)
+
+#### I-ARTE-ENFEITES-DO-SERTAO — os enfeites do sertão desenhados
+- Oito enfeites, cada um com um tile (1x1) de footprint e no máximo 64x64 px, anchor nos pés: cerca de
+  vara (trecho reto), cacimba, carro de boi, varal de carne de sol, pilha de lenha, carcaça de boi,
+  cruz de beira de estrada e lajedo baixo (pedra rasa no chão).
+  Nomes do jogador em data/theme-sertao.json (a lista `props` já tem seis deles; acrescente os outros).
+- Aceite: (1) cada enfeite tem base em assets/base/, derivado em assets/sprites/props/<id>/ e entrada
+  no manifesto com o tipo novo `enfeite` e os oito campos; (2) o validador do manifesto aceita o tipo
+  novo e reprova uma entrada `enfeite` sem anchor (teste); (3) uma prancha com os oito, lado a lado sobre
+  o solo do jogo, é gerada em screenshots/ e aberta. A homologação é do operador.
+
+#### I-TELA-ENFEITES-NO-MAPA — os enfeites espalhados no mapa, só de enfeite
+- Uma regra pura em src/render/enfeites.ts escolhe, por tile, se há enfeite e qual. É um hash
+  determinístico de (gx, gy, semente do mapa), com a densidade e o peso de cada enfeite em
+  data/enfeites.json. Só vale sobre o solo e a areia, e fora de um raio da vila inicial (o raio também no
+  dado).
+- O enfeite é DECORAÇÃO: não bloqueia passagem, não entra no GameState e não existe para a sim. Ele some
+  do tile que tem prédio (obra ou pronto), rua, roçado, recurso ou unidade parada. A conta é feita pelo
+  estado que a ponte lê, a cada mudança de tick ou de partida, e não a cada quadro.
+- Aceite: (1) a regra pura por tabela: mesma semente dá o mesmo mapa de enfeites, outra semente dá
+  outro; nenhum enfeite em água, rocha, montanha ou dentro do raio da vila; densidade medida dentro de
+  ±20% do dado no sertao-128; (2) o tile que recebe prédio, rua ou roçado pelo step perde o enfeite, e o
+  enfeite volta quando o prédio some; (3) o estado de debug publica quantos enfeites estão na vista, e o
+  roteiro tools/shots/I-TELA-ENFEITES-NO-MAPA.js afirma esse número > 0 numa vista de mato e = 0 sobre a
+  vila; a captura é aberta; (4) os roteiros F-T1, F-SPR e ARTE-VILA continuam saindo 0.
+
+#### I-ARTE-CAATINGA-NA-SECA — a vegetação da seca
+- Para cada vegetação de assets/sprites/vegetation/ (mandacaru, xique-xique, facheiro, macambira,
+  umbuzeiro, árvore seca e a árvore `tree`), um par do mesmo desenho: o atual vale para o inverno, e o
+  novo, para a seca. Na seca, as árvores ficam sem folha, de galho cinza; os cactos ficam iguais, um
+  pouco mais pálidos; a macambira fica avermelhada. Mesma silhueta, mesmo anchor, mesmo tamanho.
+- Aceite: (1) cada entrada de vegetação no manifesto ganha o estado `seca` (ou o equivalente que o
+  manifesto permitir sem quebrar o validador), com a origem apontando para a base do inverno; (2) o
+  teste mede no PNG que o par tem o mesmo tamanho e o mesmo pé (a linha mais baixa não transparente);
+  (3) a prancha inverno x seca é gerada e aberta. A homologação é do operador.
+
+#### I-TELA-CAATINGA-PELA-ESTACAO — a mata troca de cara com a estação
+- O render escolhe a arte da vegetação pela estação do tick (`faseNoTick` em src/sim/clima.ts, só
+  leitura): inverno usa o normal, seca usa o `seca`. Nas transições, a troca é por tile, numa ordem
+  fixa embaralhada por (gx, gy), na proporção da fração da fase. A mata vai secando aos poucos, não
+  num quadro só. Sem PNG da seca, fica o normal (placeholder não é falha).
+- Aceite: (1) a regra pura por tabela: inverno 0% seco, seca 100%, meio da transição para a seca ~50%,
+  monotônica dentro da transição, mesma ordem para o mesmo tile; (2) o estado de debug publica quantas
+  vegetações seca/normal estão na vista; (3) o roteiro tools/shots/I-TELA-CAATINGA-PELA-ESTACAO.js
+  avança o relógio (window.__cangaco.avancar) do inverno até a seca e captura as duas; as capturas são
+  abertas; (4) o custo: a troca só refaz a camada quando a fração muda de degrau, e não a cada quadro
+  (afirme pela contagem de repinturas, nunca por tempo de relógio).
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
