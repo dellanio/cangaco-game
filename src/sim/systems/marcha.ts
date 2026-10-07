@@ -331,9 +331,9 @@ function passoMarchando(state: GameState, u: Unidade, dados: GameData, tick: Tic
  * C-MOVIMENTO-02b — o militar que MARCHA e esta preso na vaga de `u`, ou null. Vale quando `u`
  * chegou ao fim da espera (`ticksDesvioMilitar`) com a propria vaga como tile seguinte, e ali
  * esta outro do mesmo lado, marchando para OUTRA vaga, sem ter saido (`progresso` 0), com um
- * PARADO no tile seguinte dele. Ele espera a tropa que ja chegou, e o contorno passa por `u`:
+ * PARADO no tile seguinte dele, ou no fim de uma cadeia de aliados bloqueados. Ele espera a tropa que ja chegou, e o contorno passa por `u`:
  * a espera nao resolve, e `vagaEmparedadaPor` so troca com quem esta parado. Quem ocupa so de
- * passagem (o seguinte dele e de outro que anda) sai sozinho, e a troca tiraria o lider da
+ * passagem (a cadeia dele nao termina em parado) sai sozinho, e a troca tiraria o lider da
  * vaga do meio.
  */
 export function vagaTomadaPor(state: GameState, u: Unidade, dados: GameData): Unidade | null {
@@ -348,9 +348,31 @@ export function vagaTomadaPor(state: GameState, u: Unidade, dados: GameData): Un
     const dele = o.fsmData.alvoTile;
     const seguinte = o.fsmData.caminho?.[0];
     if (dele === undefined || (dele.gx === alvo.gx && dele.gy === alvo.gy) || seguinte === undefined) continue;
-    if (militarParadoEm(state, seguinte, o.id, dados) !== null) return o;
+    if (cadeiaTerminaEmParado(state, o, dados)) return o;
   }
   return null;
+}
+
+/** BUG-TROPA-DE-24-PRESA: seguir ocupacao fisica, sem passo em curso nem ciclo.
+ * Nao confundir uma coluna andando com uma cadeia bloqueada pela formacao ja parada. */
+function cadeiaTerminaEmParado(state: GameState, inicio: Unidade, dados: GameData): boolean {
+  const vistos = new Set<string>();
+  let atual = inicio;
+  while (!vistos.has(atual.id)) {
+    vistos.add(atual.id);
+    if ((atual.fsmData.progresso ?? 0) !== 0) return false;
+    const seguinte = atual.fsmData.caminho?.[0];
+    if (seguinte === undefined) return false;
+    const parado = militarParadoEm(state, seguinte, atual.id, dados);
+    if (parado !== null) return parado.lado === inicio.lado;
+    const ocupante = state.unidades.ordem.map(id => state.unidades.porId[id]).find(o =>
+      o !== undefined && o.id !== atual.id && o.gx === seguinte.gx && o.gy === seguinte.gy
+      && classeDaUnidade(o.tipo, dados) === 'militar');
+    if (ocupante === undefined || ocupante.lado !== inicio.lado || ocupante.fsm !== FSM_MARCHANDO
+      || (ocupante.fsmData.progresso ?? 0) !== 0 || (ocupante.fsmData.bloqueado ?? 0) === 0) return false;
+    atual = ocupante;
+  }
+  return false;
 }
 
 /**

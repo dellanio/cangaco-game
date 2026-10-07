@@ -18,12 +18,10 @@ const TIPO = gameData.escaramuca.tropaDoJogador.tipo;
 const TIMEOUT_DA_VARREDURA = 120_000;
 
 describe('BUG-T aceite 4 — a varredura das 400 ordens (receita fixada na secao 7 do plano)', () => {
-  it('nenhuma ordem deixa soldado marchando, e nenhum tick tem dois militares no mesmo tile', () => {
+  it.each([TROPA_DOS_TESTES_DE_FORMACAO, 24])('com %i soldados nenhuma ordem deixa preso ou sobreposicao', (quantidade) => {
     let x = 12345n;
     const rnd = (n: number): number => { x = (x * 1103515245n + 12345n) % 2147483648n; return Number(x % BigInt(n)); };
-    // a receita do plano (secao 7) e com a tropa de 18. Com a de 24 do cenario de hoje
-    // (I-COMBATE-ESCARAMUCA-GANHAVEL) a ordem 13 deixa soldados marchando: BUG-TROPA-DE-24-PRESA
-    let s = escaramucaComTropaDe(TROPA_DOS_TESTES_DE_FORMACAO, gameData.economia.estadoInicial.semente);
+    let s = escaramucaComTropaDe(quantidade, gameData.economia.estadoInicial.semente);
     const tropa = s.unidades.ordem.filter((id) => s.unidades.porId[id]?.lado === LADO_DO_JOGADOR && s.unidades.porId[id]?.tipo === TIPO);
     const lider = s.unidades.porId[tropa[0] as string] as Unidade;
     const comPreso: unknown[] = [];
@@ -42,12 +40,13 @@ describe('BUG-T aceite 4 — a varredura das 400 ordens (receita fixada na secao
         sobreposicoes.push(...sobrepostos(s));
       }
       ticks += t;
+      expect(vivos()).toHaveLength(quantidade);
       const presos = vivos().filter((id) => s.unidades.porId[id]?.fsm === 'marchando');
       if (presos.length > 0) comPreso.push({ k, destino, direcao, colunas, presos });
     }
     const aceite4 = { ordens: 400, ticks, comPreso, sobreposicoes: sobreposicoes.slice(0, 20), antesDoConserto: { ordensComPreso: 3, presos: 6, causa: 'troca mutua' } };
     // suite longa: evidencia propria, para nao sobrescrever a do `verify` com uma parte so
-    gravarEvidencia('BUG-T-varredura', { aceite4 });
+    gravarEvidencia(`BUG-T-varredura-${quantidade}`, { quantidade, aceite4 });
     expect(sobreposicoes).toEqual([]);
     expect(comPreso).toEqual([]);
   }, TIMEOUT_DA_VARREDURA);

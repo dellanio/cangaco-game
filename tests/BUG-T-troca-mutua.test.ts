@@ -23,6 +23,7 @@ import { condicaoCheiaDoTipo } from '../src/sim/condicao';
 import { naVila } from './helpers/ancoras';
 import { gravarEvidencia } from './helpers/evidence';
 import { sobrepostos } from './helpers/militares';
+import { vagaTomadaPor } from '../src/sim/systems/marcha';
 
 const TIPO = gameData.escaramuca.tropaDoJogador.tipo;
 const evidencia: Record<string, unknown> = {};
@@ -51,6 +52,39 @@ function campo(s: GameState): { gx: number; gy: number } {
 }
 const mover = (id: string, destino: { gx: number; gy: number }): Command => ({ type: 'MoveUnits', unidades: [id], destino });
 const pos = (s: GameState, id: string): string => `${s.unidades.porId[id]?.gx},${s.unidades.porId[id]?.gy}`;
+
+describe('BUG-T cadeia da vaga tomada', () => {
+  const montar = (ladoDoParado: number): GameState => {
+    const base = semUnidades(createInitialState(1));
+    const p = campo(base);
+    const tile = (dx: number) => ({ gx: p.gx + dx, gy: p.gy });
+    const marchante = (id: string, dx: number, fim: number, caminho: number[]): Unidade => ({
+      ...soldado(id, LADO_DO_JOGADOR, tile(dx)), fsm: 'marchando',
+      fsmData: { alvoTile: tile(fim), caminho: caminho.map(tile), progresso: 0, bloqueado: gameData.movimento.ticksDesvioMilitar },
+    });
+    return com(base, marchante('a', 0, 1, [1]), marchante('b', 1, 4, [2, 3, 4]),
+      marchante('c', 2, 5, [3, 4, 5]), soldado('d', ladoDoParado, tile(3)));
+  };
+  it('termina a cadeia pelo step, sem sobreposicao e preservando as vagas', () => {
+    let s = montar(LADO_DO_JOGADOR);
+    const vagas = s.unidades.ordem.map(id => {
+      const u = s.unidades.porId[id]!; const t = u.fsmData.alvoTile ?? u;
+      return `${t.gx},${t.gy}`;
+    }).sort();
+    expect(vagaTomadaPor(s, s.unidades.porId['a']!, gameData)?.id).toBe('b');
+    for (let t = 0; t < 500; t++) {
+      s = step(s, [], gameData);
+      expect(sobrepostos(s)).toEqual([]);
+      if (s.unidades.ordem.every(id => s.unidades.porId[id]?.fsm === 'ocioso')) break;
+    }
+    expect(s.unidades.ordem.map(id => s.unidades.porId[id]?.fsm)).toEqual(['ocioso', 'ocioso', 'ocioso', 'ocioso']);
+    expect(s.unidades.ordem.map(id => pos(s, id)).sort()).toEqual(vagas);
+  });
+  it('nao troca vaga se a cadeia termina em inimigo', () => {
+    const s = montar(LADO_DA_IA);
+    expect(vagaTomadaPor(s, s.unidades.porId['a']!, gameData)).toBeNull();
+  });
+});
 
 interface Troca {
   readonly ticks: number | null; readonly sobreposicoes: readonly string[]; readonly fim: GameState; readonly teto: number;

@@ -21300,3 +21300,9 @@ mostra o clarão, e o rótulo do convertido já vermelho.
 - **Roteiro `D-ARTE-CHAO-DE-ROCA`:** contava só a cana (`chão 16, cana 10` reprovou, como esperado). Ele
   passou a contar toda cultura na vista, nas três vistas, e sai 0. `F-TR`, `F18`, `F-CANA-b`, `F-D3` e
   `F-T2a` saem 0.
+
+## 2026-10-07 ? BUG-T (tropa de 24 presa), cadeia da vaga tomada
+
+Autorizado pelo operador na retomada. A vaga tomada reconhece cadeia de aliados sem passo em andamento que termina em aliado parado; reutiliza troca de vagas e espera do dado. Nenhum teleporte nem encerramento artificial da marcha.
+
+Verificado: cen?rio isolado termina sem sobreposi??o, preserva vagas; cadeia em inimigo n?o troca. Varreduras de 400 ordens com 18 e 24 passam normal e transladada, zero presos e zero sobreposi??o. Com 24, 6 683 ticks na corrida normal. Acrescentada guarda de que todos continuam vivos. Evid?ncias: test-output/BUG-T-varredura-18.json e -24.json, tamb?m em transladado/. Testes anteriores de forma??o, marcha e colis?o verdes. verify:rapido: 197 arquivos, 1 811 testes verdes, typecheck/lint/dados verdes. BUG-TROPA-DE-24-PRESA removido do arquivo de abertos; test-results.json intocado.
