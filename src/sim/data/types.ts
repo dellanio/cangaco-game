@@ -568,6 +568,9 @@ export interface FaseDoCicloData {
   readonly id: string;
   readonly ticks: Ticks;
   readonly multiplicadorDeCrescimento: number;
+  readonly multiplicadorVelocidade?: number;
+  /** Custos em ticks, convertidos pelo loader, indexados pelo custo base. */
+  readonly custosDeMovimento?: Readonly<Record<number, { readonly normal: number; readonly investida: number }>>;
 }
 
 export interface ClimaData {

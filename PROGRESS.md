@@ -21376,3 +21376,11 @@ Teste PNG confirmou mesmo tamanho e mesmo pe do completo. Regra por tabela confi
 - Testes dirigidos: 2 arquivos, 20 testes verdes; verify:rapido 0, 209 testes. Checagem integral dos pixels abaixo do pe agregada por quadro, sem reduzir cobertura.
 - Shot 0, oito capturas; aberta screenshots/I-TELA-SELECAO-NO-PE-7-quinze-militares-zoom-1.png (tambem zoom 0.5 e 2).
 - Nao verificado: homologacao visual do operador e fechamento completo da leva.
+﻿
+### 2026-10-08 — I-CLIMA-PENALIDADE-DE-MARCHA, decisao do operador aplicada
+- Verificado: fator 0.8 da seca por fase em data/clima.json; loader converte custos normal/investida uma vez. Movimento, troca de vagas, colisao, rua nova e interpolacao consultam o mesmo custo. Crescimento sazonal preservado.
+- F18-rocado.test.ts e F-T2a-recursos.test.ts passam a usar clima.ligado false exclusivamente no dado local: afirmam mecanica de producao/colheita/esgotamento em ticks exatos, nao ritmo sazonal. Prazos literais e assercoes intactos; formulas continuam lendo o dado do teste, inclusive amadurecimento. Precedente: I-CLIMA-ESTACAO, F18-ciclo, F19 e F-CAL-b. Os helpers de invariantes continuam checando progresso menor que custo, agora no custo sazonal correto.
+- Prova pelo step: solo reto 7/9 ticks inverno/seca, solo diagonal 9/11, estrada reta 5/6, estrada diagonal 7/9; razao esperada N/0.8 com erro <=1 tick. Investida: 5/6, 6/7, 3/4, 5/6, respectivamente; custos com bonus e seca uma vez. JSON: test-output/I-CLIMA-PENALIDADE-DE-MARCHA-step.json. Teste puro tambem cobre todos os tipos, clima desligado, troca de fase e parametrizacao.
+- Testes dirigidos: 4 arquivos/39 testes verdes. verify:rapido 0: 2547 testes, 157 s (test-output/ajuste-12-operador-rapido.log). Shot 0, 16 capturas; aberta screenshots/I-CLIMA-PENALIDADE-DE-MARCHA-9-seca-zoom-1.5.png. Captura afirma visual sazonal, nao velocidade.
+- Integracao restrita a propria codex-sertao-mapa. Main e outras worktrees intocadas. noru-novos-sprites excluida: candidatos de escola rejeitados pelo operador (1716b4f), nao integrar nem remover. Merge aguarda main limpa e verify completo 0 depois do rebase.
+- Nao verificado ainda: fechamento completo da branch atual e apos rebase. Nenhuma worktree removida, nenhum push ou escrita em test-results.json.

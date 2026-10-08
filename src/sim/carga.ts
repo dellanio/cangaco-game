@@ -11,6 +11,7 @@ import { gameData } from './data';
 import { classeDaUnidade } from './condicao';
 import { defDaTropa, ehADistancia, naoLuta } from './combate';
 import { custoDoPasso } from './pathfinding';
+import { faseNoTick } from './clima';
 
 export const FSM_EM_CARGA = 'em_carga';
 
@@ -36,6 +37,13 @@ export function custoDoPassoDaUnidade(
   state: GameState, u: Unidade, para: TileDeGrid, dados: GameData = gameData,
 ): number {
   const custo = custoDoPasso(state.estradas, { gx: u.gx, gy: u.gy }, para, dados);
+  const fase = faseNoTick(state.tick, dados);
+  const sazonal = fase === null ? undefined : dados.clima.ciclo[fase.indice];
+  if ((sazonal?.multiplicadorVelocidade ?? 1) !== 1) {
+    const convertido = sazonal?.custosDeMovimento?.[custo];
+    if (convertido === undefined) throw new Error('Custo sazonal ausente: recarregue os dados de movimento pelo loader');
+    return u.fsm === FSM_EM_CARGA ? convertido.investida : convertido.normal;
+  }
   if (u.fsm !== FSM_EM_CARGA) return custo;
   return Math.max(1, Math.round(custo / dados.combate.stormAttack.multiplicadorVelocidade));
 }

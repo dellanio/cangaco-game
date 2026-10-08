@@ -1165,6 +1165,7 @@ function validarClima(dados, erros) {
     if (ids.has(f.id)) e(`fase '${f.id}' repetida`);
     ids.add(f.id);
     if (!(typeof f.duracao_segundos_base === 'number' && f.duracao_segundos_base > 0)) e(`fase '${f.id}': duracao_segundos_base precisa ser > 0`);
+    if (!(Number.isFinite(f.multiplicadorVelocidade) && f.multiplicadorVelocidade > 0)) e(`fase '${f.id}': multiplicadorVelocidade precisa ser finito e > 0`);
     if (!(typeof f.multiplicadorDeCrescimento === 'number' && f.multiplicadorDeCrescimento > 0)) e(`fase '${f.id}': multiplicadorDeCrescimento precisa ser > 0`);
   }
   const tipos = (dados.resources && dados.resources.tipos) || {};

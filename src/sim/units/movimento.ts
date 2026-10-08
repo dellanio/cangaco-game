@@ -1,3 +1,4 @@
+import { custoDoPassoDaUnidade } from '../carga';
 /**
  * O movimento compartilhado por qualquer unidade com FSM (serf, e agora laborer — F11c).
  * Extraido de `systems/serfs.ts` sem mudar corpo: era privado ali, ganhou o segundo
@@ -9,7 +10,7 @@
 import type { DadosDaFsm, GameEvent, GameState, Predio, Unidade } from '../state';
 import type { GameData } from '../data/types';
 import type { TileDeGrid } from '../estradas';
-import { custoDoPasso, passoAndavel } from '../pathfinding';
+import { passoAndavel } from '../pathfinding';
 import { classeDaUnidade } from '../condicao';
 import { colisaoCivilLigada, largadaCivil, largou } from '../colisao';
 import type { ResultadoDeSistema } from '../systems/jobs';
@@ -221,7 +222,7 @@ export function andar(state: GameState, u: Unidade, dados: GameData, parceiro: s
   const caminho = u.fsmData.caminho ?? [];
   const proximo = caminho[0];
   if (proximo === undefined) return u;
-  const custo = custoDoPasso(state.estradas, noTile(u), proximo, dados);
+  const custo = custoDoPassoDaUnidade(state, u, proximo, dados);
   const militar = classeDaUnidade(u.tipo, dados) === 'militar';
   // C-MOVIMENTO-01 — o militar confere o tile ANTES de comecar o passo e espera no proprio
   // tile. Conferir so no fim o deixava desenhado a `custo - 1`, dentro do tile ocupado, e o

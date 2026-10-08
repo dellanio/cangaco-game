@@ -1,3 +1,4 @@
+import { custoDoPassoDaUnidade } from '../carga';
 /**
  * A FSM do laborer (GDD §6.3), um passo por tick, para cada laborer em `unidades.ordem`.
  *
@@ -42,7 +43,7 @@ import {
 } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
 import { alvoDeNivelamento, hpTotalDoTipo, obraNivelada, obraTrabalhavel, tetoDeHp } from '../obra';
-import { custoDoPasso, passoAndavel } from '../pathfinding';
+import { passoAndavel } from '../pathfinding';
 import type { TileDeGrid } from '../estradas';
 import { andar, chegou, comPredio, comUnidade, dadosDaFsm, ficarOcioso, noTile, ocioso, passoDeLado } from '../units/movimento';
 import { ehEstadoDeFome } from '../condicao';
@@ -323,7 +324,7 @@ function passosSobreARuaNova(state: GameState, tile: TileDeGrid, dados: GameData
     const x = atual.unidades.porId[id];
     const proximo = x?.fsmData.caminho?.[0];
     if (x === undefined || proximo === undefined || proximo.gx !== tile.gx || proximo.gy !== tile.gy) continue;
-    const custo = custoDoPasso(atual.estradas, noTile(x), proximo, dados);
+    const custo = custoDoPassoDaUnidade(atual, x, proximo, dados);
     if ((x.fsmData.progresso ?? 0) < custo) continue;
     atual = comUnidade(atual, { ...x, fsmData: { ...x.fsmData, progresso: custo - 1 } });
   }

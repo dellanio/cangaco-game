@@ -1,3 +1,4 @@
+import { custoDoPassoDaUnidade } from '../carga';
 /**
  * F26a — a ordem de MOVER a tropa (`MoveUnits`). Ordem direta (CLAUDE.md §1): nao
  * passa pelo JobBoard.
@@ -12,7 +13,7 @@ import type { GameState, MotivoDeRecusaDeMarcha, Unidade } from '../state';
 import type { GameData } from '../data/types';
 import type { TileDeGrid } from '../estradas';
 import { classeDaUnidade } from '../condicao';
-import { buscarCaminho, custoDoPasso, passoAndavel, tileAndavel } from '../pathfinding';
+import { buscarCaminho, passoAndavel, tileAndavel } from '../pathfinding';
 import { andar, chegou, comUnidade, militarParadoEm, noTile, ocioso, vagaEmparedadaPor } from '../units/movimento';
 import { emCargaIncontrolavel } from '../carga';
 import type { ResultadoDeSistema } from './jobs';
@@ -426,7 +427,7 @@ export function vagaCruzadaCom(state: GameState, u: Unidade, dados: GameData): U
 function terminaOPasso(state: GameState, u: Unidade, dados: GameData): boolean {
   const proximo = u.fsmData.caminho?.[0];
   if (proximo === undefined) return false;
-  return (u.fsmData.progresso ?? 0) + 1 >= custoDoPasso(state.estradas, noTile(u), proximo, dados);
+  return (u.fsmData.progresso ?? 0) + 1 >= custoDoPassoDaUnidade(state, u, proximo, dados);
 }
 
 /** Um tick de cada unidade marchando, em `unidades.ordem`. */

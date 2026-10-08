@@ -7,7 +7,7 @@
 import { gameData } from '../../src/sim/data';
 import type { GameData } from '../../src/sim/data/types';
 import type { GameState } from '../../src/sim/state';
-import { custoDoPasso } from '../../src/sim/pathfinding';
+import { custoDoPassoDaUnidade } from '../../src/sim/carga';
 import { ehPassoDeLado, menorProgresso } from '../../src/sim/colisao';
 import { MERCADORIA_DA_ESTRADA } from '../../src/sim/estradas';
 
@@ -75,7 +75,7 @@ export function violacoesDaFsm(estado: GameState, dados: GameData = gameData): s
     // I-MOVIMENTO-COLISAO-CIVIL-LIGADA: com a colisao ligada, a permuta de frente deixa divida de passo (negativo)
     if (!Number.isInteger(progresso) || progresso < menorProgresso(dados)) v.push(`${id}: progresso invalido (${progresso})`);
     const proximo = caminho[0];
-    if (proximo && progresso >= custoDoPasso(estado.estradas, { gx: u.gx, gy: u.gy }, proximo, dados)) v.push(`${id}: progresso ${progresso} ja completou o passo`);
+    if (proximo && progresso >= custoDoPassoDaUnidade(estado, u, proximo, dados)) v.push(`${id}: progresso ${progresso} ja completou o passo`);
     if (!proximo && progresso !== 0) v.push(`${id}: progresso ${progresso} sem caminho`);
   }
 

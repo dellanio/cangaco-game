@@ -958,6 +958,14 @@ export function loadGameData(raw: RawGameData): GameData {
       ciclo: raw.clima.ciclo.map((fase, i) => ({
         id: fase.id,
         multiplicadorDeCrescimento: fase.multiplicadorDeCrescimento,
+        multiplicadorVelocidade: fase.multiplicadorVelocidade,
+        custosDeMovimento: Object.fromEntries(
+          [...Object.values(movimento.ticksPorTile.aPe), ...Object.values(movimento.ticksPorTileDiagonal.aPe)]
+            .map(custo => [custo, {
+              normal: Math.max(1, Math.round(custo / fase.multiplicadorVelocidade)),
+              investida: Math.max(1, Math.round(custo / (fase.multiplicadorVelocidade * combate.stormAttack.multiplicadorVelocidade))),
+            }]),
+        ),
         ticks: registrar(
           `clima.ciclo[${i}].duracao_segundos_base`, raw.clima.escala, fase.duracao_segundos_base, 'segundos',
           paraTicksDeDuracao(fase.duracao_segundos_base, 'segundos', escalaDe(escalas, raw.clima.escala), tickHz),

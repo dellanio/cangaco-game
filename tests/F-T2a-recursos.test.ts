@@ -14,7 +14,7 @@
 import { describe, expect, it } from 'vitest';
 import { createInitialState } from '../src/sim/state';
 import type { GameState } from '../src/sim/state';
-import { gameData } from '../src/sim/data';
+import { gameData as gameDataDoJogo } from '../src/sim/data';
 import type { GameData, TipoDeRecurso } from '../src/sim/data/types';
 import { step } from '../src/sim/tick';
 import { chaveDeTile, predioLigadoAoArmazem } from '../src/sim/estradas';
@@ -35,6 +35,11 @@ import { gravarEvidencia } from './helpers/evidence';
 // o marcador num teste headless, sem subir cena.
 import { codigoDoRecurso, recursosDeRender } from '../src/render/mapa';
 import temaSertao from '../data/theme-sertao.json';
+
+// Decisao do operador 2026-10-08, precedente I-CLIMA-ESTACAO: os depositos
+// nos ticks exatos abaixo afirmam colheita/esgotamento, nao as estacoes.
+// Desligar clima somente no dado deste teste conserva os prazos e a producao exigida.
+const gameData: GameData = { ...gameDataDoJogo, clima: { ...gameDataDoJogo.clima, ligado: false } };
 
 const chave = (gx: number, gy: number): string => chaveDeTile({ gx, gy });
 

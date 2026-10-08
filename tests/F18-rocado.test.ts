@@ -26,7 +26,7 @@
 import { describe, expect, it } from 'vitest';
 // I-CLIMA-CRESCIMENTO (2026-10-06): o tick maduro vem do tempo da estacao da semeadura, a conta da sim
 import { ticksParaAmadurecer } from '../src/sim/clima';
-import { gameData } from '../src/sim/data';
+import { gameData as gameDataDoJogo } from '../src/sim/data';
 import type { GameData } from '../src/sim/data/types';
 import type { GameState } from '../src/sim/state';
 import { alertasDoEstado } from '../src/sim/selectors';
@@ -34,9 +34,17 @@ import { receitaDoTipo } from '../src/sim/producao';
 import { recursoNoTile } from '../src/sim/recursos';
 import { gravarEvidencia } from './helpers/evidence';
 import {
-  avancar, cenarioDeFazendaDeUmTile, cenarioDeFazendaSemCampo, comCustoDePlantio, comEntrada,
+  avancar as avancarComDados, cenarioDeFazendaDeUmTile as fazendaDeUmTile, cenarioDeFazendaSemCampo as fazendaSemCampo, comCustoDePlantio, comEntrada,
   entradaDe, fsmDe,
 } from './helpers/producao-cenario';
+
+// Decisao do operador 2026-10-08, precedente I-CLIMA-ESTACAO: este arquivo afirma
+// a mecanica da producao em ticks exatos, nao o ritmo das estacoes. Sem clima
+// no dado LOCAL: prazos literais e assercoes preservados. Clima tem teste proprio pelo step.
+const gameData: GameData = { ...gameDataDoJogo, clima: { ...gameDataDoJogo.clima, ligado: false } };
+const avancar: typeof avancarComDados = (estado, ticks, dados = gameData) => avancarComDados(estado, ticks, dados);
+const cenarioDeFazendaDeUmTile: typeof fazendaDeUmTile = (dados = gameData) => fazendaDeUmTile(dados);
+const cenarioDeFazendaSemCampo: typeof fazendaSemCampo = (dados = gameData) => fazendaSemCampo(dados);
 
 const RECEITA = receitaDoTipo('farm', gameData);
 if (RECEITA === null || RECEITA.colheita === null) {
@@ -92,7 +100,7 @@ const IDA = 35;
 const VOLTA = 33;
 const VOLTA_INTEIRA = 1 + IDA + CICLO + VOLTA;
 const SEMEADO_EM = IDA + PLANTIO;
-const MADURO = SEMEADO_EM + ticksParaAmadurecer(GRAO, CRESCER, SEMEADO_EM);
+const MADURO = SEMEADO_EM + ticksParaAmadurecer(GRAO, CRESCER, SEMEADO_EM, gameData);
 const PRIMEIRA = MADURO + VOLTA_INTEIRA;
 const SECOU = MADURO + RENDIMENTO * VOLTA_INTEIRA;
 /** No meio do semear do replantio: o roceiro esta parado no tile, semeando. */

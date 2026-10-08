@@ -8,7 +8,7 @@ import { gameData } from '../../src/sim/data';
 import type { GameData } from '../../src/sim/data/types';
 import type { GameState } from '../../src/sim/state';
 import { ehTarefaDeLaborer } from '../../src/sim/state';
-import { custoDoPasso } from '../../src/sim/pathfinding';
+import { custoDoPassoDaUnidade } from '../../src/sim/carga';
 import { ehPassoDeLado, menorProgresso } from '../../src/sim/colisao';
 
 export const ESTADOS_DO_LABORER = ['ocioso', 'indo_a_obra', 'nivelando', 'esperando_material', 'martelando'] as const;
@@ -76,7 +76,7 @@ export function violacoesDaFsmDoLaborer(estado: GameState, dados: GameData = gam
     if (!Number.isInteger(progresso) || progresso < menorProgresso(dados)) v.push(`${id}: progresso invalido (${progresso})`);
     if (u.fsm === 'indo_a_obra') {
       const proximo = caminho[0];
-      if (proximo && progresso >= custoDoPasso(estado.estradas, { gx: u.gx, gy: u.gy }, proximo, dados)) {
+      if (proximo && progresso >= custoDoPassoDaUnidade(estado, u, proximo, dados)) {
         v.push(`${id}: progresso ${progresso} ja completou o passo`);
       }
       if (!proximo && progresso !== 0) v.push(`${id}: progresso ${progresso} sem caminho`);

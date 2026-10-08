@@ -1,3 +1,4 @@
+import { custoDoPassoDaUnidade } from './carga';
 /**
  * D-MOVIMENTO-01 — a colisao civil (GDD §6.4, revisto em 2026-09-28; plano em
  * docs/planos/2026-09-28-D1-colisao-civil.md). O mecanismo e o do `WalkTo` do kam_remake:
@@ -12,7 +13,7 @@
 import type { GameData } from './data/types';
 import type { DadosDaFsm, GameState, Unidade } from './state';
 import type { TileDeGrid } from './estradas';
-import { custoDoPasso, passoAndavel } from './pathfinding';
+import { passoAndavel } from './pathfinding';
 import type { ModoDeBusca } from './pathfinding';
 import { classeDaUnidade } from './condicao';
 
@@ -451,7 +452,7 @@ export function comPassoComecadoTerminado(state: GameState, antes: Unidade, dado
       : vizinho(novo[0] as TileDeGrid, t) ? novo
         : [{ gx: u.gx, gy: u.gy }, ...novo];
   // o custo do passo pode ter mudado (estrada assentada no meio dele): o progresso fica abaixo dele
-  const teto = custoDoPasso(state.estradas, u, t, dados) - 1;
+  const teto = custoDoPassoDaUnidade(state, u, t, dados) - 1;
   const termina: Unidade = { ...u, fsmData: { ...u.fsmData, caminho: [t, ...resto], progresso: Math.max(1, Math.min(progresso, teto)) } };
   return { ...state, unidades: { ...state.unidades, porId: { ...state.unidades.porId, [u.id]: termina } } };
 }
