@@ -21306,3 +21306,11 @@ mostra o clarão, e o rótulo do convertido já vermelho.
 Autorizado pelo operador na retomada. A vaga tomada reconhece cadeia de aliados sem passo em andamento que termina em aliado parado; reutiliza troca de vagas e espera do dado. Nenhum teleporte nem encerramento artificial da marcha.
 
 Verificado: cen?rio isolado termina sem sobreposi??o, preserva vagas; cadeia em inimigo n?o troca. Varreduras de 400 ordens com 18 e 24 passam normal e transladada, zero presos e zero sobreposi??o. Com 24, 6 683 ticks na corrida normal. Acrescentada guarda de que todos continuam vivos. Evid?ncias: test-output/BUG-T-varredura-18.json e -24.json, tamb?m em transladado/. Testes anteriores de forma??o, marcha e colis?o verdes. verify:rapido: 197 arquivos, 1 811 testes verdes, typecheck/lint/dados verdes. BUG-TROPA-DE-24-PRESA removido do arquivo de abertos; test-results.json intocado.
+
+## 2026-10-07 ? BUG-T (tropa travada): retificacao do fechamento
+
+O teste original aceitava morte de soldados e retirava os mortos da conta. A guarda de todos vivos revelou mortes por combate; com paz por toda a varredura, revelou morte por fome no tick 18 000. A fixture de movimento agora tem paz e condicao suficientes para todo o prazo, sem mudar dados de producao, e afirma todos vivos por ordem.
+
+O conserto da cadeia da ordem 13 passa nos testes isolados e anteriores, mas NAO fecha o aceite completo: ordem 99 com 18 deixa u18/u26 presos; ordem 187 com 24 deixa u16/u25/u32/u39 presos. Inclui bloqueio de quem ja iniciou passo; fora da extensao do plano. BUG-TROPA-DE-24-PRESA restabelecido em BUGS.md. Os testes reforcados ficam reprovados e nao foram desativados. Implementacao interrompida conforme AGENTS.md. O plano do clima foi registrado antes do codigo; sua implementacao ainda nao comecou.
+
+Verificacao final desta retomada: npm run verify saiu 1; typecheck, lint, dados (31 arquivos) e suite normal passaram. Suite transladada: 3 arquivos reprovados, 4 testes reprovados, 2 824 passaram e 5 pulados. Falhas anteriores de hash do save, extracao de carvao e equivalencia mapa/gerador. Log completo: test-output/2026-10-07-pacote-verify.log. Nenhum selo completo, nenhum push, test-results.json intocado.
