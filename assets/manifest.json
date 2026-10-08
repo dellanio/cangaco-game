@@ -108,14 +108,14 @@
     1
   ],
   "estados": {
-    "madeira": "sprites/quarry/quarry_madeira-D-preview.png",
+    "madeira": "sprites/quarry/quarry_madeira-D-20261007.png",
     "completo": "sprites/quarry/quarry_completo-D.png"
   },
-  "licenca": "arte propria do projeto, candidata D da pedreira para ensaio em jogo em 2026-09-30",
+  "licenca": "arte propria do projeto, candidata D da pedreira para ensaio em jogo em 2026-09-30; estado madeira original gerado por image_gen em 2026-10-07 sob autorizacao do operador",
   "origem": {
     "base": "base/quarry/quarry-D-master-2x.png",
     "semente": null,
-    "nota": "Candidato D derivado de candidatos/D/quarry/generation-02-raw.png. Area de trabalho a esquerda e patio de stone a direita sao hipoteses para teste em jogo; arte de madeira e previa antiga redimensionada, com geometria/estilo distintos. Referencia externa usada so para clima e materiais, nao proporcoes."
+    "nota": "Candidato D derivado de candidatos/D/quarry/generation-02-raw.png. Area de trabalho a esquerda e patio de stone a direita sao hipoteses para teste em jogo; arte de madeira e previa antiga redimensionada, com geometria/estilo distintos. Referencia externa usada so para clima e materiais, nao proporcoes. Madeira atual derivada da referencia completa em 2026-10-07; base base/quarry/quarry-madeira-20261007-original.png, SHA256 8394ef4622b6514ed38e042500857a81551671e26c2a88e110284abb755b4cc5, registro em base/quarry/quarry-madeira-20261007-geracao.json."
   },
   "ancoras": {"bandeira": [0.53646, 0.05114], 
     "trabalho": {

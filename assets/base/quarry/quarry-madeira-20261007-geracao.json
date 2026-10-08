@@ -1,0 +1,15 @@
+{
+  "id": "quarry",
+  "estado": "madeira",
+  "base": "base/quarry/quarry-madeira-20261007-original.png",
+  "derivado": "sprites/quarry/quarry_madeira-D-20261007.png",
+  "sha256": "8394ef4622b6514ed38e042500857a81551671e26c2a88e110284abb755b4cc5",
+  "referencia": "sprites/quarry/quarry_completo-D.png",
+  "ferramenta": "image_gen nativa",
+  "chamadas": 1,
+  "limiteDeChamadas": 1,
+  "geracao": "exec-0692fcb5-a803-4ad2-809d-5735d4f7dac8",
+  "prompt": "Use case: precise-object-edit. Piancó RTS sprite, original Brazilian sertão 1930s building. Input is the clean CURRENT completed quarry building, use it as the sole architectural reference. Create its intermediate WOOD-FRAME CONSTRUCTION state. Preserve exact camera (orthogonal top-down 3/4), overall silhouette, placement of southern entrance, porch workbench on left, stone stock enclosure on right, crane frame on right, mast, and canvas foot contact. Show the same building unfinished: exposed timber roof rafters instead of completed thatch roof, unfinished masonry walls with open gaps, partial timber framing. No worker, no materials or stone piles on workbench or stock area, no flag, no text, no added object. Earthy painted woodcut-inspired miniature, matching existing textured materials. SINGLE LIGHT OVERHEAD slightly from SOUTH, NO EAST/WEST lighting. Transparent background, isolated building only, no ground tile, no comparison sheet, no backdrop. Keep the composition aligned to the input so this state can be revealed over the current complete sprite. One building, one intermediate state.\n",
+  "licenca": "Arte original do projeto, geracao nativa autorizada pelo operador em 2026-10-07",
+  "homologacao": "aguardando operador"
+}

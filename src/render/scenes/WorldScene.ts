@@ -26,7 +26,7 @@ const dadosDoPadreVisual = dadosDoPadreVisualCru as ConfigDoPadreVisual;
 const dadosDoClimaVisual = dadosDoClimaVisualCru as ConfigDoClimaVisual;
 import dadosDaObraRevelada from '../../../data/obra-revelacao.json';
 import { ladoDaMercadoriaNoEstoque, ladoPadraoDoEstoque, pilhasVisiveisDoPredio } from '../estoque-visual';
-import { blocosVisiveis, recorteDoBloco } from '../obra-revelacao';
+import { blocosVisiveis, recorteDoBloco, revelacaoVisualDaObra } from '../obra-revelacao';
 import type { GradeDaObra } from '../obra-revelacao';
 import { chaminesRemovidas, particulasDaFumaca, type ParticulaDaFumaca } from '../fumaca';
 import { particulasDaFagulha } from '../fagulha';
@@ -67,7 +67,7 @@ import type { LinhaDoMedidor } from '../medidor-obra';
 import { canteiroDaObra, chaveDoCanteiro } from '../nivelamento-obra';
 import type { CanteiroDaObra } from '../nivelamento-obra';
 import {
-  chaveDaRevelacao, contagemDeEstagios, estagioDoPredio, estaEmObra, ORDEM_DOS_ESTAGIOS, revelacaoDaObra,
+  chaveDaRevelacao, contagemDeEstagios, estagioDoPredio, estaEmObra, ORDEM_DOS_ESTAGIOS,
 } from '../estagio-obra';
 import type { EstagioDaObra, Fracao, RevelacaoDaObra } from '../estagio-obra';
 import { centroDaVila } from '../../sim/selectors';
@@ -92,7 +92,7 @@ import { criarCargaDeUnidades, pedidosDeUnidade, tiposPresentes } from '../carre
 import { urlsDeSprites } from '../sprites-urls';
 import { posicaoDoProjetil } from '../projeteis';
 import {
-  assetDaCamada, assetDoPredio, arquivoDoEstagio, chaveDaTextura, chaveDeTextura, desenhoDoRecurso, temParDeRevelacao,
+  assetDaCamada, assetDoPredio, arquivoDoEstagio, chaveDaTextura, chaveDeTextura, desenhoDoRecurso,
   texturaDaCamada, ESTADO_DO_TERRENO,
 } from '../manifesto';
 import type { ChaveDaRevelacao, DesenhoDoRecurso, EntradaDeAsset, TexturaCarregada } from '../manifesto';
@@ -2085,8 +2085,8 @@ export class WorldScene extends Phaser.Scene {
       const par = predio.estado === 'obra' ? this.parDeRevelacao(predio.tipo) : null;
       const revelacao = par === null
         ? null
-        : revelacaoDaObra(
-          predio.hp, aparencia.hpTotal, aparencia.custo['timber'] ?? 0, aparencia.custo['stone'] ?? 0,
+        : revelacaoVisualDaObra(
+          predio.hp, aparencia.hpTotal, aparencia.custo['timber'] ?? 0, aparencia.custo['stone'] ?? 0, !par.unica,
         );
       if (par === null || revelacao === null) {
         porEstagio[estagio] += 1;
@@ -2273,18 +2273,18 @@ export class WorldScene extends Phaser.Scene {
     return this.textures.exists(chave) ? { chave, entrada } : null;
   }
 
-  /** F17g — as duas texturas da revelacao, ou `null` quando falta uma: sem o par
-   *  no manifesto E no loader, a obra fica nos seis estagios (decisao do operador).
-   *  A mesma pergunta para quem publica no debug e para quem desenha. */
+  /** Ajuste 10: par proprio quando existe, completo por partes quando nao.
+   * Sem completo carregado, conserva os estagios de placeholder.
+   * A mesma escolha publica o debug e desenha a obra. */
   private parDeRevelacao(tipo: string): {
+    readonly unica: boolean;
     readonly madeira: { readonly chave: string; readonly entrada: EntradaDeAsset };
     readonly pedra: { readonly chave: string; readonly entrada: EntradaDeAsset };
   } | null {
-    const entrada = assetDoPredio(manifestoDoJogo, tipo);
-    if (!entrada || !temParDeRevelacao(entrada)) return null;
-    const madeira = this.spriteDoPredio(tipo, 'madeira');
     const pedra = this.spriteDoPredio(tipo, 'completo');
-    return madeira && pedra ? { madeira, pedra } : null;
+    if (!pedra) return null;
+    const madeira = this.spriteDoPredio(tipo, 'madeira');
+    return madeira ? { madeira, pedra, unica:false } : {madeira:pedra,pedra,unica:true};
   }
 
   /** Placeholder do §9: retangulo do tamanho do footprint com o nome

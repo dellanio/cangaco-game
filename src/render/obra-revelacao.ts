@@ -5,7 +5,15 @@
  *
  * Pura e sem `phaser`: o teste a exercita por tabela. A grade vem de `data/obra-revelacao.json`.
  */
-import type { Fracao } from './estagio-obra';
+import { revelacaoDaObra } from './estagio-obra';
+import type { Fracao, RevelacaoDaObra } from './estagio-obra';
+
+/** Sem madeira propria, revela o completo por partes durante todo o progresso. */
+export function revelacaoVisualDaObra(hp: number, hpTotal: number, timber: number, stone: number, temMadeira: boolean): RevelacaoDaObra | null {
+  if (temMadeira) return revelacaoDaObra(hp, hpTotal, timber, stone);
+  if (hp <= 0 || hpTotal <= 0) return null;
+  return {madeira:[0,1],pedra:[Math.min(hp,hpTotal),hpTotal]};
+}
 
 export interface GradeDaObra {
   readonly linhas: number;
