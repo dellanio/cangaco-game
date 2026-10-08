@@ -1,6 +1,6 @@
 import dados from '../../data/estoque-visual.json';
 import type {Predio} from '../sim/state';
-import {pilhasDoPredio} from './pilhas';
+import {posicoesNaPilha, pilhasDoPredio} from './pilhas';
 import type {DadosDasPilhas, PilhaDesenhada} from './pilhas';
 
 export function pilhasVisiveisDoPredio(predio: Predio, contexto: DadosDasPilhas): PilhaDesenhada[] {
@@ -16,4 +16,12 @@ export function ladoPadraoDoEstoque(tilePx: number): number {
 export function ladoDaMercadoriaNoEstoque(tipo: string, mercadoria: string, ladoPadrao: number): number {
   const porPredio: Readonly<Record<string, Readonly<Record<string, number>> | undefined>> = dados.escalaPorPredio;
   return ladoPadrao * (porPredio[tipo]?.[mercadoria] ?? dados.escalaPadrao);
+}
+
+/** Fileira na area de estoque; os outros estoques conservam a pilha tradicional. */
+export function posicoesDaMercadoriaNoEstoque(tipo: string, mercadoria: string, n: number): readonly (readonly [number, number])[] {
+  const regras: Readonly<Record<string, Readonly<Record<string, { readonly espacamentoEmLados: number }>> | undefined>> = dados.fileirasPorPredio;
+  const regra = regras[tipo]?.[mercadoria];
+  if (regra === undefined) return posicoesNaPilha(n);
+  return Array.from({length: n}, (_, i) => [(i - (n - 1) / 2) * regra.espacamentoEmLados, 0] as const);
 }

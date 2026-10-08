@@ -21398,3 +21398,11 @@ Teste PNG confirmou mesmo tamanho e mesmo pe do completo. Regra por tabela confi
 - Decisao solicitada: estoque real de cana com ampliacao da sim; cana transitoria apenas durante colheita/processamento; ou decoracao sem estoque. Revisar aceite em commit proprio antes de continuar.
 - Ultimos itens entregues: fd93d44 (ajuste12) e abf0651 (ajuste13). Verify completo em fd93d44 saiu0; verify:rapido do13 saiu0. Arvore atual tem o rascunho14 pendente e NAO e resultado pronto para merge.
 - Main segue com trabalho de outra sessao; intocada. Apenas nossa worktree sera integrada/removida, apos main limpa e verify completo0 depois do rebase. noru-novos-sprites excluida; escola rejeitada, nao importar nem remover. Nenhum merge, push ou encerramento.
+﻿
+### 2026-10-08 — I-ARTE-BARRIS-DE-CACHACA-NO-CANAVIAL (substitui fardos)
+- Decisao do operador: o estoque exibe cachaca pronta em barris de carvalho, nao cana. Nenhuma receita, economia ou GameState mudou. PNG original/base e derivado32x40 versionados, manifesto pilha/wine com oito campos, prompt/geracao/SHA256 em assets/base/wine-stock/geracao.json.
+- Verificado: quantidades0/1/2/3/4/5/acima teto; zero nao mostra, demais usam estoque real wine limitado pelo teto visual. Fileira lado a lado somente wineyard/wine, escala1.8 e espacamento1.05 em data/estoque-visual.json. Outros estoques conservam sua disposicao.
+- Testes dirigidos:3 arquivos/35 testes verdes; shot0,4 capturas. Abertas screenshots/I-ARTE-BARRIS-DE-CACHACA-NO-CANAVIAL-3-5-barris-cachaca-pronta.png e -4-prancha-barril-no-solo.png (normal/RGBx0.8, zoom0.5/1/2). verify:rapido0,527 testes,34s.
+- Rascunhos de cana substituidos por decisao humana, preservados fora da branch em D:/projetos-pessoal/cangaco-game-candidatos/arte/D/grapes-stock/rodada-2026-10-08/; teste renomeado para o aceite dos barris, sem remover verificacao vigente.
+- Rebase sobre main b460c61 concluido; ambos os historicos de PROGRESS preservados, bases antigas de estilo nao restauradas. Quatro documentos de fix/fechamento-projeto importados, sem codigo/PROGRESS de la; marcha desconsiderada riscada e nao executavel.
+- Nao verificado: homologacao visual do operador, fechamento completo apos todos os ajustes. Nenhum merge/push/remocao de worktree ainda.

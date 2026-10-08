@@ -25,7 +25,7 @@ import type { ConfigDoPadreVisual } from '../padre-visual';
 const dadosDoPadreVisual = dadosDoPadreVisualCru as ConfigDoPadreVisual;
 const dadosDoClimaVisual = dadosDoClimaVisualCru as ConfigDoClimaVisual;
 import dadosDaObraRevelada from '../../../data/obra-revelacao.json';
-import { ladoDaMercadoriaNoEstoque, ladoPadraoDoEstoque, pilhasVisiveisDoPredio } from '../estoque-visual';
+import { ladoDaMercadoriaNoEstoque, ladoPadraoDoEstoque, pilhasVisiveisDoPredio, posicoesDaMercadoriaNoEstoque } from '../estoque-visual';
 import { blocosVisiveis, recorteDoBloco, revelacaoVisualDaObra } from '../obra-revelacao';
 import type { GradeDaObra } from '../obra-revelacao';
 import { chaminesRemovidas, particulasDaFumaca, type ParticulaDaFumaca } from '../fumaca';
@@ -56,7 +56,6 @@ import { aparenciaDoPredio, corDaPilha, dadosDasPilhas, dadosDosAnimais, dadosDo
 import { animaisDoCurral, curralDesenhado, quadroDoAnimal } from '../animais';
 import { MAX_PASSOS_POR_QUADRO } from '../../laco';
 import type { AnimalDoCurral } from '../animais';
-import { posicoesNaPilha } from '../pilhas';
 import type { PilhaDesenhada } from '../pilhas';
 import { areaDoTrabalho, quadroDaEscola, quadroDaFumaca, quadroDeTrabalho, quadroOcioso } from '../trabalho';
 import type { QuadroDeTrabalho } from '../trabalho';
@@ -2610,7 +2609,7 @@ export class WorldScene extends Phaser.Scene {
       const py = caixa.y + caixa.h * pilha.ponto[1];
       const fonte = this.fonteDaPilha(pilha.mercadoria);
       const cor = Phaser.Display.Color.HexStringToColor(corDaPilha(pilha.mercadoria)).color;
-      for (const [dx, dy] of posicoesNaPilha(pilha.n)) {
+      for (const [dx, dy] of posicoesDaMercadoriaNoEstoque(tipo, pilha.mercadoria, pilha.n)) {
         const x = px + dx * lado;
         const y = py + dy * lado - lado / 2;
         if (fonte.fonte === 'icone') {

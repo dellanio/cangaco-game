@@ -12,6 +12,16 @@
     "mill": {
       "corn": 1.3,
       "flour": 2
+    },
+    "wineyard": {
+      "wine": 1.8
+    }
+  },
+  "fileirasPorPredio": {
+    "wineyard": {
+      "wine": {
+        "espacamentoEmLados": 1.05
+      }
     }
   }
 }

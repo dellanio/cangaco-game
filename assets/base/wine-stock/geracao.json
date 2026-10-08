@@ -1,0 +1,26 @@
+{
+  "prompt": "Create ONE original transparent-background game sprite: a small upright oak barrel full of ready Brazilian cachaça, for the stock area of a sugarcane house in Piancó, a 1930s northeastern Brazilian sertão RTS. Barrel alone, no ground, no shadow blob, no glow, no vignette, no building, no people, no words, no labels. Hand-made oak staves, warm weathered brown wood grain, two dark iron hoops, closed wooden lid with a tiny bung, gently bulging barrel body. Orthogonal-grid top-down 3/4 camera: see a modest top ellipse and the front body, feet centered at bottom. Single overhead light slightly from south, no east-west directional light. Three readable values, crevice shading, restrained dark pixel-art edges and earthy texture, consistent with pixel-art corn and burlap flour stock icons of a rustic RTS. Designed for a 32x40 pixel derivative, broad silhouette, readable at small size. Entire actual barrel opaque, transparent background alpha zero. One barrel only, not a pile, not a sheet, not photorealism. No borrowed game assets or game-1998 references.",
+  "chamadas": 1,
+  "geracao": "exec-fca0c0ae-09d2-422f-ab09-2be41b4d4e96",
+  "ferramenta": "image_gen nativa",
+  "licenca": "Arte original gerada para Pianco",
+  "nota": "Barril de carvalho de cachaca pronta, saida wine do wineyard. Nao altera receita ou GameState.",
+  "sha256": "43202a8351ad9185c86d50cec9b219665d55d46ee437dc018634f9a2398a94cc",
+  "derivacao": {
+    "recorte": [
+      218,
+      219,
+      903,
+      1178
+    ],
+    "tamanho": [
+      32,
+      40
+    ],
+    "filtro": "nearest",
+    "anchor": [
+      0.5,
+      1
+    ]
+  }
+}
