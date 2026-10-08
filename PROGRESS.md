@@ -21330,3 +21330,10 @@ Contrato: imports puros de src/sim/ permitidos pela correção do operador; alte
 Verificado: oito bases originais geradas por image_gen nativa e derivados 64x64 em assets/sprites/props/, footprint 1x1, anchor [0.5,1]. Procedência e hashes em assets/base/sertao-mapa-geracao.json. Manifesto estendido com tipo enfeite sem mudar entradas antigas; validador específico integrado ao F17f, teste reprova ausência e invalidade do anchor. Tema ganhou carcaça, cruz e lajedo. Teste dirigido novo + F17f: 27 testes verdes. verify:rapido saiu 0: 894 testes relacionados em 94 arquivos (log test-output/I-ARTE-ENFEITES-DO-SERTAO-rapido.log).
 
 Captura pelo roteiro saiu 0, aberta: screenshots/I-ARTE-ENFEITES-DO-SERTAO-1-prancha-oito-no-solo.png (zoom 0,5/1/2, oito lado a lado sobre solo real). Não verificado: homologação visual do operador; aparência em mapa ainda pertence ao próximo item. Nenhum asset de 1998 utilizado. Main e arquivos proibidos preservados; sem push.
+
+
+### 2026-10-07 - I-TELA-PILHAS-NAS-MESAS-DA-BODEGA
+
+Verificado: corrigidas somente as quatro ancoras de entrada da Bodega no manifesto: duas sobre a mesa esquerda (y=0,70) e duas sobre a direita (y=0,80). Estoques continuam dinamicos, sem comida pintada na arte nem mudanca de sim. Teste especifico e regressao F-VIVO-a/F17f: 3 arquivos, 34 testes, saida 0. Roteiro carregou fixture com uma unidade de cada um dos quatro alimentos e afirmou quatro pilhas com PNG da Bodega atual; captura aberta em screenshots/I-TELA-PILHAS-NAS-MESAS-DA-BODEGA-1-quatro-comidas-nas-mesas.png. verify:rapido saida 0: 515 testes, 36 s (test-output/ajuste-bodega-rapido.log).
+
+Nao verificado: homologacao visual pelo operador e pilhas maiores no mesmo close. Rio com ponte transitavel e serra com desgaste continuam sem implementacao enquanto a decisao de escopo estiver pendente. Nenhum arquivo de src/sim/ ou test-results.json alterado.
