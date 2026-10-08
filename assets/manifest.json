@@ -3758,371 +3758,390 @@
       }
     },
     "predios": {
-      "storehouse": {
-        "arquivo": "sprites/storehouse/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, fornecida pelo operador",
-        "origem": {
-          "base": "base/storehouse/storehouse_menu_icon.png",
-          "semente": null,
-          "nota": "Derivado por tools/derivar-icones.js: 1254x1254, bbox alpha>16 em 19,42 1213x1127, escala 0.0594, centrado em 72x72."
-        }
-      },
-      "woodcutters": {
-        "arquivo": "sprites/woodcutters/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, fornecida pelo operador",
-        "origem": {
-          "base": "base/woodcutters/casa_lenhador_03_completo.png",
-          "semente": null,
-          "nota": "Derivado por tools/derivar-icones.js: 1223x1286, bbox alpha>16 em 46,144 1128x1040, escala 0.0638, centrado em 72x72."
-        }
-      },
-      "watchtower": {
-        "arquivo": "sprites/watchtower/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-a/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "farm": {
-        "arquivo": "sprites/farm/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-a/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "wineyard": {
-        "arquivo": "sprites/wineyard/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-a/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "fishermans": {
-        "arquivo": "sprites/fishermans/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-a/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "gold_mine": {
-        "arquivo": "sprites/gold_mine/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-a/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "coal_mine": {
-        "arquivo": "sprites/coal_mine/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-a/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "iron_mine": {
-        "arquivo": "sprites/iron_mine/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-a/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "weapons_workshop": {
-        "arquivo": "sprites/weapons_workshop/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-a/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "barracks": {
-        "arquivo": "sprites/barracks/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-b/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "marketplace": {
-        "arquivo": "sprites/marketplace/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, fornecida pelo operador",
-        "origem": {
-          "base": "base/marketplace/marketplace_menu_icon.png",
-          "semente": null,
-          "nota": "Derivado por tools/derivar-icones.js: 1254x1254, bbox alpha>16 em 50,69 1169x1133, escala 0.0616, centrado em 72x72."
-        }
-      },
-      "mill": {
-        "arquivo": "sprites/mill/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-b/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "bakery": {
-        "arquivo": "sprites/bakery/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-b/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "swine_farm": {
-        "arquivo": "sprites/swine_farm/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-b/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "stables": {
-        "arquivo": "sprites/stables/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-b/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "butchers": {
-        "arquivo": "sprites/butchers/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-b/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "tannery": {
-        "arquivo": "sprites/tannery/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-b/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "armory_workshop": {
-        "arquivo": "sprites/armory_workshop/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-c/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "metallurgists": {
-        "arquivo": "sprites/metallurgists/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-c/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "town_hall": {
-        "arquivo": "sprites/town_hall/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-c/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "iron_smithy": {
-        "arquivo": "sprites/iron_smithy/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-c/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "weapon_smithy": {
-        "arquivo": "sprites/weapon_smithy/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-c/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "armor_smithy": {
-        "arquivo": "sprites/armor_smithy/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/building-atlas-c/source.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "quarry": {
-        "arquivo": "sprites/quarry/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/quarry/quarry_02_completo.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "sawmill": {
-        "arquivo": "sprites/sawmill/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
-        "origem": {
-          "base": "base/sawmill/sawmill_06_completo.png",
-          "semente": null,
-          "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
-        }
-      },
-      "schoolhouse": {
-        "arquivo": "sprites/schoolhouse/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, fornecida pelo operador",
-        "origem": {
-          "base": "base/schoolhouse/schoolhouse_menu_icon.png",
-          "semente": null,
-          "nota": "Derivado por tools/derivar-icones.js: 1254x1254, bbox alpha>16 em 21,45 1209x1159, escala 0.0596, centrado em 72x72."
-        }
-      },
-      "inn": {
-        "arquivo": "sprites/inn/icone.png",
-        "tamanho": [
-          72,
-          72
-        ],
-        "licenca": "arte propria do projeto, fornecida pelo operador",
-        "origem": {
-          "base": "base/inn/inn_menu_icon.png",
-          "semente": null,
-          "nota": "Derivado por tools/derivar-icones.js: 1254x1254, bbox alpha>16 em 32,112 1194x1063, escala 0.0603, centrado em 72x72."
-        }
-      }
-    },
+  "storehouse": {
+    "arquivo": "sprites/storehouse/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, fornecida pelo operador",
+    "origem": {
+      "base": "base/storehouse/storehouse_menu_icon.png",
+      "semente": null,
+      "nota": "Derivado por tools/derivar-icones.js: 1254x1254, bbox alpha>16 em 19,42 1213x1127, escala 0.0594, centrado em 72x72."
+    }
+  },
+  "woodcutters": {
+    "arquivo": "sprites/woodcutters/icone-atual.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, candidata D em 2026-10-01",
+    "origem": {
+      "base": "base/woodcutters/woodcutters-D-master-2x.png",
+      "semente": null,
+      "fonteCompleta": "sprites/woodcutters/woodcutters_completo-D.png",
+      "sha256": "9d5320d7daed16f32aac37a17a93ece2cba61bcbcd40910a95c91f31d32b1d48",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
+    }
+  },
+  "watchtower": {
+    "arquivo": "sprites/watchtower/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-a/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "farm": {
+    "arquivo": "sprites/farm/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-a/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "wineyard": {
+    "arquivo": "sprites/wineyard/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-a/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "fishermans": {
+    "arquivo": "sprites/fishermans/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-a/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "gold_mine": {
+    "arquivo": "sprites/gold_mine/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-a/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "coal_mine": {
+    "arquivo": "sprites/coal_mine/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-a/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "iron_mine": {
+    "arquivo": "sprites/iron_mine/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-a/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "weapons_workshop": {
+    "arquivo": "sprites/weapons_workshop/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-a/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "barracks": {
+    "arquivo": "sprites/barracks/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-b/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "marketplace": {
+    "arquivo": "sprites/marketplace/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, fornecida pelo operador",
+    "origem": {
+      "base": "base/marketplace/marketplace_menu_icon.png",
+      "semente": null,
+      "nota": "Derivado por tools/derivar-icones.js: 1254x1254, bbox alpha>16 em 50,69 1169x1133, escala 0.0616, centrado em 72x72."
+    }
+  },
+  "mill": {
+    "arquivo": "sprites/mill/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-b/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "bakery": {
+    "arquivo": "sprites/bakery/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-b/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "swine_farm": {
+    "arquivo": "sprites/swine_farm/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-b/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "stables": {
+    "arquivo": "sprites/stables/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-b/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "butchers": {
+    "arquivo": "sprites/butchers/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-b/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "tannery": {
+    "arquivo": "sprites/tannery/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-b/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "armory_workshop": {
+    "arquivo": "sprites/armory_workshop/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-c/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "metallurgists": {
+    "arquivo": "sprites/metallurgists/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-c/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "town_hall": {
+    "arquivo": "sprites/town_hall/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-c/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "iron_smithy": {
+    "arquivo": "sprites/iron_smithy/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-c/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "weapon_smithy": {
+    "arquivo": "sprites/weapon_smithy/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-c/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "armor_smithy": {
+    "arquivo": "sprites/armor_smithy/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/building-atlas-c/source.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "quarry": {
+    "arquivo": "sprites/quarry/icone-atual.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, candidata D da pedreira para ensaio em jogo em 2026-09-30",
+    "origem": {
+      "base": "base/quarry/quarry-D-master-2x.png",
+      "semente": null,
+      "fonteCompleta": "sprites/quarry/quarry_completo-D.png",
+      "sha256": "c5aa73c62d28eb1eefe35d17d51b9c952332e7b61ce5552dcf55b179f165e835",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
+    }
+  },
+  "sawmill": {
+    "arquivo": "sprites/sawmill/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "origem": {
+      "base": "base/sawmill/sawmill_06_completo.png",
+      "semente": null,
+      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+    }
+  },
+  "schoolhouse": {
+    "arquivo": "sprites/schoolhouse/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, fornecida pelo operador",
+    "origem": {
+      "base": "base/schoolhouse/schoolhouse_menu_icon.png",
+      "semente": null,
+      "nota": "Derivado por tools/derivar-icones.js: 1254x1254, bbox alpha>16 em 21,45 1209x1159, escala 0.0596, centrado em 72x72."
+    }
+  },
+  "inn": {
+    "arquivo": "sprites/inn/icone.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte propria do projeto, fornecida pelo operador",
+    "origem": {
+      "base": "base/inn/inn_menu_icon.png",
+      "semente": null,
+      "nota": "Derivado por tools/derivar-icones.js: 1254x1254, bbox alpha>16 em 32,112 1194x1063, escala 0.0603, centrado em 72x72."
+    }
+  },
+  "church": {
+    "arquivo": "sprites/church/icone-atual.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "gerado pelo Codex (image_generation) para o projeto em 2026-10-06, limpo por tools/limpar-igreja.mjs",
+    "origem": {
+      "base": "base/church/completo-original.png",
+      "semente": null,
+      "fonteCompleta": "sprites/church/completo.png",
+      "sha256": "3536a3d8a85058051c36dbddeeb9b1be21c45db8cced1e15728a568bf33ae41c",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
+    }
+  }
+},
     "_doc": "Icones da interface (CLAUDE.md §9). `predios` e por id NEUTRO, derivado da base por tools/derivar-icones.js (rode de novo ao trocar a base); `hud` e por campo de src/ui/hud.ts, desenhado a mao em SVG no registro da xilogravura (tinta, papel, ocre, terracota). Quem resolve `predios` e src/ui/icones.ts, por parametro; `hud` e desenhado pelo CSS por url(). O teste tests/icones-ui.test.ts confere arquivo, dimensao e base.",
     "hud": {
       "gold": {
