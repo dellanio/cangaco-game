@@ -371,16 +371,12 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
 #jornal .papel {
   pointer-events: auto; position: relative; width: min(640px, 80vw); max-height: 78vh; overflow: auto;
   box-sizing: border-box; padding: 26px 34px 30px; color: #2b2116;
-  background:
-    radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.35), transparent 60%),
-    radial-gradient(ellipse at 80% 90%, rgba(120, 90, 40, 0.18), transparent 55%),
-    linear-gradient(90deg, transparent 49.6%, rgba(90, 70, 40, 0.18) 50%, transparent 50.4%),
-    #eadcb8;
+  background: #eadcb8 url('../../assets/sprites/ui/newspaper_paper/normal.png') center / 100% 100% no-repeat;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55); transform: rotate(-0.6deg);
   font-family: Georgia, 'Times New Roman', serif;
 }
 #jornal header { text-align: center; border-bottom: 3px double #2b2116; margin-bottom: 14px; padding-bottom: 6px; }
-#jornal h1 { margin: 0; font: 700 34px/1.1 var(--fonte-display), Georgia, serif; letter-spacing: 0.04em; }
+#jornal h1 { margin: 0; font: 700 34px/1.1 Georgia, 'Times New Roman', serif; letter-spacing: 0.04em; }
 #jornal .linha-da-data { margin: 4px 0 0; font-style: italic; font-size: 13px; }
 #jornal .colunas { column-count: 2; column-gap: 26px; column-rule: 1px solid rgba(43, 33, 22, 0.4); }
 #jornal .noticia { break-inside: avoid; margin: 0 0 14px; }

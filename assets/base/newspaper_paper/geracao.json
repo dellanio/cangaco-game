@@ -1,0 +1,7 @@
+{
+  "ferramenta": "image_gen nativa",
+  "sha256": "2073d204be3299ea37f92dd376e07f7d5885a61953d76436712fcd6e454f9506",
+  "prompt": "Original landscape flat opaque old newspaper paper texture for Brazilian sertao 1930 UI; warm yellowed cream cellulose fibers, soft age mottling and subtle fold creases; quiet bright central reading area; worn edges; no text, illustrations, watermarks, scene or perspective; diffuse light without east-west direction",
+  "derivacao": "ffmpeg Lanczos 768x512",
+  "homologacao": "Pendente do operador"
+}

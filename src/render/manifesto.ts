@@ -87,7 +87,7 @@ export interface AncorasDoPredio {
  *  vivo: `trabalho` (os quadros de um predio), `pilha` (UMA unidade de mercadoria) e
  *  `animal` (a criacao, nas tres idades). As regras deles estao em `manifesto-camadas.ts`. */
 export const TIPOS_DE_CAMADA = [
-  'terreno', 'estrada', 'recurso', 'vegetacao', 'unidade', 'trabalho', 'pilha', 'animal', 'enfeite',
+  'terreno', 'estrada', 'recurso', 'vegetacao', 'unidade', 'trabalho', 'pilha', 'animal', 'enfeite', 'interface',
 ] as const;
 export type TipoDeCamada = (typeof TIPOS_DE_CAMADA)[number];
 
