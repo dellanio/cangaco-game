@@ -1,0 +1,25 @@
+{
+  "data": "2026-10-08",
+  "ferramenta": "OpenAI image_gen",
+  "geracao": "exec-4083dbf7-8ec8-43ee-b759-7cd966f9e191",
+  "referencias": [],
+  "descricao": "Peixe inteiro vertical, cabeca para baixo, corda curta de sisal no rabo. Luz superior ligeiramente do sul, sem eixo leste-oeste. Uma chamada, arte original.",
+  "sha256": "1b764fa4d78637e23d43db1bc2f4add73201d8ffa84859f96bc55eab7d444a4c",
+  "derivacao": {
+    "recorte": [
+      312,
+      49,
+      775,
+      1391
+    ],
+    "tamanho": [
+      32,
+      80
+    ],
+    "filtro": "nearest",
+    "anchor": [
+      0.5,
+      1
+    ]
+  }
+}

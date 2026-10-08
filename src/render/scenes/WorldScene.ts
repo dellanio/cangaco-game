@@ -25,7 +25,7 @@ import type { ConfigDoPadreVisual } from '../padre-visual';
 const dadosDoPadreVisual = dadosDoPadreVisualCru as ConfigDoPadreVisual;
 const dadosDoClimaVisual = dadosDoClimaVisualCru as ConfigDoClimaVisual;
 import dadosDaObraRevelada from '../../../data/obra-revelacao.json';
-import { ladoDaMercadoriaNoEstoque, ladoPadraoDoEstoque, pilhasVisiveisDoPredio, posicoesDaMercadoriaNoEstoque } from '../estoque-visual';
+import { ladoDaMercadoriaNoEstoque, ladoPadraoDoEstoque, pilhasVisiveisDoPredio, posicoesDaMercadoriaNoEstoque, pontosDosPeixesPendurados } from '../estoque-visual';
 import { blocosVisiveis, recorteDoBloco, revelacaoVisualDaObra } from '../obra-revelacao';
 import type { GradeDaObra } from '../obra-revelacao';
 import { chaminesRemovidas, particulasDaFumaca, type ParticulaDaFumaca } from '../fumaca';
@@ -2141,7 +2141,7 @@ export class WorldScene extends Phaser.Scene {
         pilhasNoDebug[id] = pilhas.map((x) => ({
           gaveta: x.gaveta, mercadoria: x.mercadoria, n: x.n,
           ladoPx: ladoDaMercadoriaNoEstoque(predio.tipo, x.mercadoria, ladoPadraoDoEstoque(tilePx)),
-          ...this.fonteNoDebug(x.mercadoria),
+          ...this.fonteNoDebug(x.mercadoria, predio.tipo),
         }));
       }
       const chaveDasPilhas = pilhas.map((x) => `${x.mercadoria}:${x.n}`).join(',');
@@ -2518,13 +2518,16 @@ export class WorldScene extends Phaser.Scene {
 
   /** F-VIVO-a — a textura da unidade de uma mercadoria. D-TELA-03b: o PNG `pilha`, senao o icone
    *  da mercadoria, senao o quadrado do §9 (`icone-da-mercadoria.ts`). */
-  private fonteDaPilha(mercadoria: string): FonteDaPilha {
-    return fonteDaPilha(mercadoria, iconesDoJogo, (chave) => this.textures.exists(chave));
+  private fonteDaPilha(mercadoria: string, tipo?: string): FonteDaPilha {
+    const pendurados = pontosDosPeixesPendurados(tipo ?? '', mercadoria, 1);
+    const peixe = pontosDosPeixesPendurados('inn', mercadoria, 1) !== null;
+    return fonteDaPilha(mercadoria, iconesDoJogo, (chave) =>
+      !(peixe && pendurados === null && chave.startsWith('pilha:')) && this.textures.exists(chave));
   }
 
   /** D-TELA-03b — a fonte da pilha para a ponte: `sprite` continua dizendo "PNG de pilha" (F-VIVO-a). */
-  private fonteNoDebug(mercadoria: string): { readonly sprite: boolean; readonly fonte: 'pilha' | 'icone' | 'quadrado' } {
-    const { fonte } = this.fonteDaPilha(mercadoria);
+  private fonteNoDebug(mercadoria: string, tipo?: string): { readonly sprite: boolean; readonly fonte: 'pilha' | 'icone' | 'quadrado' } {
+    const { fonte } = this.fonteDaPilha(mercadoria, tipo);
     return { sprite: fonte === 'pilha', fonte };
   }
 
@@ -2629,7 +2632,20 @@ export class WorldScene extends Phaser.Scene {
       const lado = ladoDaMercadoriaNoEstoque(tipo, pilha.mercadoria, ladoPadraoDoEstoque(tilePx));
       const px = caixa.x + caixa.w * pilha.ponto[0];
       const py = caixa.y + caixa.h * pilha.ponto[1];
-      const fonte = this.fonteDaPilha(pilha.mercadoria);
+      const fonte = this.fonteDaPilha(pilha.mercadoria, tipo);
+      const pendurados = pontosDosPeixesPendurados(tipo, pilha.mercadoria, pilha.n);
+      if (pendurados !== null) {
+        for (const ponto of pendurados) {
+          const x = caixa.x + caixa.w * ponto[0];
+          const y = caixa.y + caixa.h * ponto[1];
+          if (fonte.fonte !== 'quadrado') {
+            const imagem = this.add.image(x, y, fonte.chave).setOrigin(0.5, 1);
+            imagem.setDisplaySize(lado, lado * imagem.height / imagem.width);
+            objetos.push(imagem);
+          } else objetos.push(this.add.rectangle(x, y - lado / 2, lado, lado, 0xc2aa7b));
+        }
+        continue;
+      }
       const cor = Phaser.Display.Color.HexStringToColor(corDaPilha(pilha.mercadoria)).color;
       for (const [dx, dy] of posicoesDaMercadoriaNoEstoque(tipo, pilha.mercadoria, pilha.n)) {
         const x = px + dx * lado;
