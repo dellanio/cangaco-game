@@ -309,6 +309,8 @@ export interface EstadoDebug {
   };
   /** F-SPR — quantos sprites de vegetacao a cena tem de pe agora (mapa inteiro). */
   vegetacaoRenderizada: number;
+  enfeitesNaVista: number;
+  recalculosDosEnfeites: number;
   rochasRenderizadas: number;
   /** D-ARTE-BANDEIRA-FACCAO — panos atualizados neste quadro. */
   bandeirasRedesenhadas: number;
@@ -499,6 +501,8 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     detalhesDoTerrenoPorTipo: {},
     arteDasCamadas: { terreno: [], recurso: [], vegetacao: [] },
     vegetacaoRenderizada: 0,
+    enfeitesNaVista: 0,
+    recalculosDosEnfeites: 0,
     rochasRenderizadas: 0,
     bandeirasRedesenhadas: 0,
     vegetacaoBalancando: 0,

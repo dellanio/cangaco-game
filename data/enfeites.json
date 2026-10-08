@@ -1,0 +1,15 @@
+{
+  "_doc": "Somente decoracao de tela: 4% dos tiles de solo/areia elegiveis fora de 20 tiles da vila. Nenhuma colisao ou efeito na sim.",
+  "densidade": 0.04,
+  "raioDaVila": 20,
+  "pesos": {
+    "stick_fence": 1,
+    "well": 1,
+    "ox_cart": 1,
+    "drying_rack": 1,
+    "firewood": 2,
+    "ox_bones": 1,
+    "roadside_cross": 1,
+    "flat_slab": 4
+  }
+}

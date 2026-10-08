@@ -5,6 +5,11 @@
  * importa `../sim/data`), nao por convencao.
  */
 import { gameData } from '../sim/data';
+import arquivoDoMapa from '../../data/maps/sertao-128.json';
+
+/** Semente versionada do mapa: o loader da sim nao a inclui no GameState. */
+export const sementeDoMapa: number = arquivoDoMapa.semente;
+export const centroDaVilaInicial = gameData.economia.estadoInicial.spawnDeUnidades;
 import type { RecursoNoTile } from '../sim/state';
 import { TERRENOS_DE_MAPA } from '../sim/data/terrenos';
 import type { TerrenoDeMapa } from '../sim/data/types';

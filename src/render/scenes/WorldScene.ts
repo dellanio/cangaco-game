@@ -1,5 +1,7 @@
 import dadosDaBandeira from '../../../data/bandeira.json';
 import { transformacaoDoClima } from '../cobertura-clima';
+import { candidatosAEnfeite, MemoriaDosEnfeites } from '../enfeites';
+import { sementeDoMapa, centroDaVilaInicial } from '../mapa';
 import { panoDaBandeira } from '../bandeira';
 // A cena so le o estado (aqui, so gameData/tema e o GameState via ponte) e
 // desenha. Nada de logica de jogo (CLAUDE.md §10): nenhuma decisao de regra
@@ -195,6 +197,9 @@ export class WorldScene extends Phaser.Scene {
   /** `?semArte=` (F17e/F17f): predios que o loader nao traz, lidos uma vez. */
   private readonly prediosSemArte = prediosSemArteDaBusca(window.location.search);
   private readonly recursosDesenhados = new Map<string, number>();
+  private readonly memoriaDosEnfeites = new MemoriaDosEnfeites(candidatosAEnfeite(terrenoDeRender, sementeDoMapa, centroDaVilaInicial));
+  private readonly enfeitesDesenhados = new Map<string, Phaser.GameObjects.Image>();
+  private ultimoMapaDeEnfeites: object | null = null;
   private readonly chaoDaCanaNoMapa = new Map<string, number>();
   private ultimoQuadroDoChaoDaCana: { readonly tick: number; readonly vista: string; readonly partida: object | null } | null = null;
   private chaoDaCanaNaVista = 0;
@@ -679,6 +684,28 @@ export class WorldScene extends Phaser.Scene {
       // F18a: o zoom sai daqui pelo mesmo motivo que o scroll — e no preRender
       // que o clamp de setBounds acontece, entao este e o valor ja limitado.
       estado.camera = { scrollX: camera.scrollX, scrollY: camera.scrollY, zoom: camera.zoom };
+      const enfeites = this.memoriaDosEnfeites.atualizar(this.ponte.atual, this.ponte.identidadePartida ?? 0);
+      if (enfeites !== this.ultimoMapaDeEnfeites) {
+        this.ultimoMapaDeEnfeites = enfeites;
+        const vivos = new Set(enfeites.map(e => `${e.gx},${e.gy}`));
+        for (const [k, sprite] of this.enfeitesDesenhados) if (!vivos.has(k)) { sprite.destroy(); this.enfeitesDesenhados.delete(k); }
+        for (const e of enfeites) {
+          const k = `${e.gx},${e.gy}`;
+          if (this.enfeitesDesenhados.has(k)) continue;
+          const entrada = manifestoDoJogo.assets.find(a => a.tipo === 'enfeite' && a.id === e.id);
+          const chave = `enfeite:${e.id}:normal`;
+          if (!entrada || !this.textures.exists(chave)) continue;
+          const canto = gridToScreen(e, tilePx, ESCALA_DO_MUNDO);
+          const x = canto.x + tilePx * ESCALA_DO_MUNDO / 2;
+          const y = canto.y + tilePx * ESCALA_DO_MUNDO;
+          const imagem = this.add.image(x,y,chave).setOrigin(entrada.anchor[0],entrada.anchor[1])
+            .setDisplaySize(entrada.tamanho[0]*ESCALA_DO_MUNDO,entrada.tamanho[1]*ESCALA_DO_MUNDO).setDepth(depthDeY(y));
+          this.enfeitesDesenhados.set(k, imagem);
+        }
+      }
+      const vistaEnfeites = camera.worldView;
+      estado.enfeitesNaVista = [...this.enfeitesDesenhados.values()].filter(i => i.x >= vistaEnfeites.x && i.x < vistaEnfeites.right && i.y >= vistaEnfeites.y && i.y < vistaEnfeites.bottom).length;
+      estado.recalculosDosEnfeites = this.memoriaDosEnfeites.recalculos;
       // F-D2: o roteiro afirma o teto sobre este numero, em vez de cronometrar
       // pixel entre dois quadros e brigar com o relogio do navegador.
       estado.navegacao = {

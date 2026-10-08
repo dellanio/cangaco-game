@@ -21347,6 +21347,41 @@ Testes dirigidos: normal, 4 arquivos/21 testes; transladado, 5 arquivos/25 teste
 
 Não verificado neste registro: suíte completa; resultados dirigidos não encerram esse portão. Nenhuma alteração em src/sim/, main, .claude/, AGENTS.md ou test-results.json.
 
+## 2026-10-07 — Codex: I-TELA-ENFEITES-NO-MAPA, implementado mas bloqueado no aceite
+
+Verificado: regra pura e cache de ocupacao em src/render/enfeites.ts; densidade/pesos/raio em data/enfeites.json (decoracao apenas). Semente do JSON do mapa e centro inicial expostos por mapa.ts; nenhum import novo direto de sim/data fora dos funis. Nenhuma escrita no GameState ou alteracao de src/sim/.
+
+Densidade real no sertao-128: 577 enfeites / 13.983 tiles elegiveis = 0,041264392476578704 (4,126%), alvo 4%, faixa aceita 3,2–4,8%. Teste novo e F04: 20/20 verdes. Construir, rua e rocado pelo step ocultam; demolir predio devolve. Cache mantem a mesma resposta em 100 chamadas de quadro sem novo estado. verify:rapido saiu 0 com 185 testes relacionados (28 s), log test-output/I-TELA-ENFEITES-NO-MAPA-rapido.log.
+
+Roteiro novo saiu 0, capturas abertas: screenshots/I-TELA-ENFEITES-NO-MAPA-1-vila-sem-enfeites.png e -2-mato-com-enfeites.png. Medidas em test-output/I-TELA-ENFEITES-NO-MAPA-medidas.json: vila 0; vista (64,64) com 8; 1 recalculo pausado. Harness existente semNevoa foi usado para inspecionar a arte, sem mudar estado. F-T1 saiu 0 (4 capturas), F-SPR saiu 0 (2 capturas).
+
+BLOQUEIO: ARTE-VILA sai 1 em tools/shots/ARTE-VILA.js:89, exigindo canavial e pelo menos mais um predio vizinho da Bodega. A fixture salva oferece somente wineyard nesse predicado. A mesma falha foi reproduzida em copia limpa de a4ec16b, sem nenhum codigo ou arte desta branch, em test-output/baseline-main (log test-output/baseline-main/test-output/ARTE-VILA-baseline.log). A main real nao foi tocada. Nao afrouxado roteiro, nao alterado save, sim ou aceite. Logs da branch: test-output/sertao-ARTE-VILA.log, sertao-F-T1.log e sertao-F-SPR.log.
+
+Nao verificado: aceite integral do item 2 (regressao ARTE-VILA reprovada); homologacao visual do operador. Item 2 permanece SEM COMMIT. Itens 3 e 4 nao iniciados: ordem da entrega preservada. A correcao da fixture/roteiro preexistente precisa ser resolvida no escopo do operador antes de prosseguir. verify completo final em execucao; resultado sera anexado abaixo. Sem push ou merge.
+
+### Resultado final do portao — 2026-10-07
+
+`npm run verify` saiu 1. Typecheck, lint e validate:data passaram. Normal: 307 arquivos e 2.844 testes aprovados. Transladada: 304 arquivos aprovados / 3 reprovados; 2.829 testes aprovados, 4 reprovados, 5 skips existentes. I-MOVIMENTO-FILA-DE-CIVIS nao coletou por hash incompatível; BUG-CIVIL-RECUA-NO-DESENHO reprovou dois casos pelo mesmo hash (save 35efe91e, mapa transladado 54d520de). I-TERRENO-MINAS-PERTO-DA-VILA reprovou dois casos de coordenadas/comparacao com gerador. As correcoes das fixtures/gerador da branch fix/fechamento-projeto nao fazem parte da main a4ec16b usada aqui. Log integral: test-output/sertao-verificacao-final.log. Saida final: FALHOU: test:transladado. O selo .verify-ok NAO foi criado.
+
+A guarda F04 e os testes novos passaram; nao alterado nenhum arquivo de src/sim/, AGENTS.md, .claude/ ou test-results.json (diff contra main vazio nesses caminhos). Parada sem improvisar: resolver ARTE-VILA e os bloqueios de infraestrutura da base antes de encerrar o item 2. Nao geradas artes da seca, nao iniciado item 4. Alteracoes parciais do item 2 e este registro permanecem na worktree, sem commit de feature para um aceite reprovado.
+
+Commits (git log --oneline main..HEAD):
+- 538865b feat(I-ARTE-ENFEITES-DO-SERTAO): oito enfeites originais com bases e prancha
+- 8a42c0a docs(sertao-mapa): aceites dos enfeites do sertao e da caatinga pela estacao, antes do codigo
+
+
+
+### 2026-10-07 - resultado final dos ajustes visuais (HEAD a94f1c1)
+
+Verificado: npm run verify executado ate o fim, saida 1; typecheck e lint passaram, validate:data passou com 31 arquivos e 0 erros. Suite normal: 311 arquivos e 2848 testes passaram (132,22 s). Suite transladada: 308 arquivos passaram, 3 falharam; 2833 testes passaram, 4 falharam, 5 ficaram excluidos pela configuracao existente (122,22 s). Nao houve alteracao ou afrouxamento de verificacoes. Log completo em test-output/ajustes-visuais-verify-final.log; .verify-ok nao foi criado.
+
+Bloqueios reproduzidos: I-MOVIMENTO-FILA-DE-CIVIS e BUG-CIVIL-RECUA-NO-DESENHO recusam save pelo hash 35efe91e versus 54d520de no transladado; I-TERRENO-MINAS-PERTO-DA-VILA falha no cenario de producao e comparacao mapa/gerador. Sao os mesmos bloqueios registrados antes das quatro correcoes visuais. ARTE-VILA ainda bloqueia o commit dos enfeites distribuidos por vizinhanca incompleta da fixture, tambem reproduzida na main limpa.
+
+Entregue na branch, aguardando homologacao visual do operador: cobertura climatica, icones atuais de woodcutters/quarry/church, papel vintage do jornal com fonte serifada e comidas sobre as mesas da Bodega. Capturas abertas registradas nas secoes individuais. Os oito enfeites receberam homologacao do operador; distribuicao no mapa permanece na arvore de trabalho, sem commit. Sem merge ou push. Nenhuma mudanca em src/sim/, AGENTS.md, .claude/ ou test-results.json.
+
+Nao implementado: rio/ponte transitavel, margens/grama seca e serra com desgaste (aguardando revisao de escopo); caatinga seca e troca sazonal do pacote original. A agua e intransponivel no contrato atual (data/terrain.json), e a extracao apaga recurso rochoso esgotado (src/sim/recursos.ts). Nao simular travessia funcional por desenho nem mudar sim sem resposta do operador. O presente registro permanece na arvore de trabalho junto ao item de enfeites bloqueado.
+
+
 
 ### 2026-10-07 - ajuste 7, I-TELA-PEDRA-ESTOQUE-MAIOR
 
@@ -21376,6 +21411,16 @@ Teste PNG confirmou mesmo tamanho e mesmo pe do completo. Regra por tabela confi
 - Testes dirigidos: 2 arquivos, 20 testes verdes; verify:rapido 0, 209 testes. Checagem integral dos pixels abaixo do pe agregada por quadro, sem reduzir cobertura.
 - Shot 0, oito capturas; aberta screenshots/I-TELA-SELECAO-NO-PE-7-quinze-militares-zoom-1.png (tambem zoom 0.5 e 2).
 - Nao verificado: homologacao visual do operador e fechamento completo da leva.
+
+### 2026-10-07 — retomada dos ajustes e preservacao para integracao
+- Entregue e commitado I-TELA-SELECAO-NO-PE em 19d25a9: 15 tipos/2180 quadros, shot 0 com oito capturas e verify:rapido 0 com 209 testes. Captura aberta: screenshots/I-TELA-SELECAO-NO-PE-7-quinze-militares-zoom-1.png.
+- I-CLIMA-PENALIDADE-DE-MARCHA em andamento, SEM commit de implementacao e SEM selo verde: velocidade 0.8 na seca em data/clima.json; custos convertidos pelo loader; marcha, colisao e interpolacao consultam o mesmo custo; bonus de investida aplicado uma vez. Crescimento preservado. Testes dirigidos iniciais: 4 arquivos/22 testes verdes; depois da correcao dos helpers de invariantes: 2 arquivos/29 testes verdes (test-output/ajuste-12-invariantes.log).
+- Shot sazonal saiu 0 com 16 capturas; aberta screenshots/I-CLIMA-PENALIDADE-DE-MARCHA-9-seca-zoom-1.5.png. A captura confirma aparencia da fase, NAO mede a velocidade; as medidas ficam em test-output/I-CLIMA-PENALIDADE-DE-MARCHA.json.
+- Bloqueio concreto: verify:rapido revelou prazos exatos de F18-rocado e F-T2a-recursos calculados sem a penalidade sazonal. F18: ultimo degrau recebeu 4, exigia 5; F-T2a: 36 em vez de 39, e sobrepostas 33/3 em vez de 36/3 no horizonte fixo. Nao alterei esses aceites nem desativei o clima para ocultar a divergencia. Pergunta ao operador pendente para revisar os prazos preservando producao/conservacao/esgotamento.
+- Integracao NAO executada. main tem trabalho nao commitado de outra sessao; noru-novos-sprites tem manifesto modificado e quatro PNGs novos de escola candidata. Pergunta sobre termino das sessoes pendente. Todas as quatro worktrees permanecem.
+- Salvaguarda fora dos checkouts: D:/projetos-pessoal/cangaco-game-integracao-preservada-20261007/inventario.json, pastas 0..3 com patches binarios/arquivos novos, historico-todas-refs.bundle (516612545 bytes, git bundle verify valido). Isto preserva trabalho, NAO equivale a integrar na main. Evidencias ignoradas ainda permanecem na worktree ativa e devem ser copiadas antes da remocao.
+- Nao entregues nesta retomada: ajustes 13..16, rio/ponte, serra, enfeites no mapa e caatinga sazonal. Nao removi worktrees, nao fiz push nem escrevi test-results.json.
+- Fechamento desta retomada: npm run verify saiu 1. Typecheck, lint e validate:data verdes (31 arquivos/0 erros); suite normal: 2 arquivos reprovados, 316 verdes, 3 testes reprovados e 2864 verdes (2867 total). Somente F18-rocado/F-T2a-recursos, pelos prazos registrados acima. A etapa transladada nao foi executada porque o verify para na primeira etapa reprovada. Log completo: test-output/integracao-verify-pendente-20261007.log. Nenhum selo completo criado. Parada pelo conflito de aceites, aguardando decisao; merge e encerramento permanecem pendentes.
 ﻿
 ### 2026-10-08 — I-CLIMA-PENALIDADE-DE-MARCHA, decisao do operador aplicada
 - Verificado: fator 0.8 da seca por fase em data/clima.json; loader converte custos normal/investida uma vez. Movimento, troca de vagas, colisao, rua nova e interpolacao consultam o mesmo custo. Crescimento sazonal preservado.
@@ -21415,3 +21460,6 @@ Verificado: sprite original 32x80 com peixe vertical e corda de sisal; base/deri
 ﻿
 ### 2026-10-08 — fixture ARTE-VILA conforme vizinhanca escrita
 Verificado: vila pronta regenerada pelo helper deterministico, com escola-vizinha-bodega em (40,34), um tile de folga junto da Bodega. Canavial preservado. Nova assercao protege dois vizinhos e escola; igualdade byte a byte do save e testes originais mantidos. Quatro testes dirigidos verdes; ARTE-VILA saida 0 com nove capturas, aberta screenshots/ARTE-VILA-6-close-bodega-canavial-vizinhos.png. verify:rapido 218 testes, 40s, saida 0. Nenhuma alteracao na sim nem no roteiro ARTE-VILA.
+
+### 2026-10-08 — I-TELA-ENFEITES-NO-MAPA finalmente verificado
+Verificado: regra pura de gx/gy/semente, com densidade e pesos em data/enfeites.json; ocupacao lida sem escrever no GameState, cache por estado/partida, sem recalculo por quadro pausado. Medicao sertao-128: 577 enfeites em 13983 tiles elegiveis, 4,1264% contra alvo 4% (desvio +3,16%, dentro de +/-20%). Raio da vila 20 tiles. Tres testes dirigidos verdes. Roteiro I-TELA-ENFEITES-NO-MAPA saiu 0: vila 0, mato 8 (centro 64,64), um recalculo. Capturas abertas screenshots/I-TELA-ENFEITES-NO-MAPA-1-vila-sem-enfeites.png e -2-mato-com-enfeites.png. F-T1, F-SPR e ARTE-VILA sairam 0. O bloqueio historico de ARTE-VILA descrito nas notas de 2026-10-07 foi resolvido no commit da fixture anterior. Nao verificado: caatinga da seca e troca sazonal, rio/ponte e serra; fechamento completo ainda pendente.
