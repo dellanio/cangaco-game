@@ -21384,3 +21384,9 @@ Teste PNG confirmou mesmo tamanho e mesmo pe do completo. Regra por tabela confi
 - Testes dirigidos: 4 arquivos/39 testes verdes. verify:rapido 0: 2547 testes, 157 s (test-output/ajuste-12-operador-rapido.log). Shot 0, 16 capturas; aberta screenshots/I-CLIMA-PENALIDADE-DE-MARCHA-9-seca-zoom-1.5.png. Captura afirma visual sazonal, nao velocidade.
 - Integracao restrita a propria codex-sertao-mapa. Main e outras worktrees intocadas. noru-novos-sprites excluida: candidatos de escola rejeitados pelo operador (1716b4f), nao integrar nem remover. Merge aguarda main limpa e verify completo 0 depois do rebase.
 - Nao verificado ainda: fechamento completo da branch atual e apos rebase. Nenhuma worktree removida, nenhum push ou escrita em test-results.json.
+﻿
+### 2026-10-08 — I-TELA-MILHO-E-FUBA-NO-MOINHO
+- Verificado: somente mill/corn fator 1.3 e mill/flour fator 2.0, em data/estoque-visual.json. Lado base 12.8 px -> milho16.64/fuba25.6 px, antes do fator comum do icone. Mesmas ancoras/quantidades; nenhum estoque ou receita alterado.
+- Testes dirigidos: 2 arquivos/3 testes verdes. Shot0, captura aberta screenshots/I-TELA-MILHO-E-FUBA-NO-MOINHO-1-moinho-milho-30-fuba-100-porcento.png, com cinco de cada mercadoria. verify:rapido0,190 testes,28s.
+- Fechamento adicional do ajuste12: npm run verify saiu0 em fd93d44 (test-output/ajuste-12-operador-verify.log): typecheck/lint/dados verdes,318 arquivos/2868 testes normais verdes; mundo transladado318 arquivos/2866 verdes e5 testes registrados como pulados pelo relatorio. Nenhum skip novo neste trabalho. Esse resultado nao e o fechamento apos rebase da integracao.
+- Nao verificado: homologacao visual do operador e fechamento/rebase finais. Main e worktrees alheias intocadas.
