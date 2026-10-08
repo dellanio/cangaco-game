@@ -1,0 +1,91 @@
+﻿task,prioridade,entrega,aceite_dependencia,status_inicial
+A01,P0,"Piloto de conjunto: unidade, árvore e prédio atuais com chão","Selecionar referência canônica e testar 0,5/1/2 e RGB×0,8. A folha aberta mostra graus diferentes de detalhe entre vegetação, prédio e personagem; [Provável] harmonização precisa de piloto, não filtro global",a executar
+A02,P0,farm/madeira,"Mesmo canvas, silhueta, porta, milho e anchors do completo; obra não muda de geometria ao concluir",a executar
+A03,P0,wineyard/madeira,"Derivar do completo; manter identidade de cana/cachaça, sem uvas ou videira",a executar
+A04,P0,fishermans/madeira,Derivar do completo; entrada e margem de água alinhadas,a executar
+A05,P0,mill/madeira,Roda e edificação na mesma posição entre estados; mecanismo não salta,a executar
+A06,P0,bakery/madeira,"Mesmo telhado, fachada, anchors de trabalho/estoque/fumaça; não embutir estoque permanente",a executar
+A07,P0,storehouse/madeira,Substituir madeira provisória pela estrutura do completo aprovado. Divergência registrada no manifest; manter anchors normalizados,a executar
+A08,P0,"tree: muda, crescendo_1, crescendo_2","Três derivados específicos, mesma base/linha dos pés e canvas compartilhado. Consumidor de crescimento já existe; hoje encolhe adulta como fallback",a executar
+A09,P0,"corn: semeado, muda, verde",Três estados próprios. Pronto continua a base madura; transição visual no mesmo tick da simulação,a executar
+A10,P0,"grapes: semeado, muda, verde",Três estados de cana-de-açúcar; nenhuma videira. Preservar leitura sobre campoCana,a executar
+A11,P0,"horses: idade1/2/3, quatro quadros cada","12 quadros de cavalos para Cocheira, mesmo contrato animal dos bodes; pivô fixo, idades legíveis, cinco animais no curral sem fallback",a executar
+A12,P0,rogue/atacar — Emboscador,"Inspecionar todos os 8 frames por direção e retocar estilingue, mão e trajetória; arma visível no zoom 0,5, sem mudança em combate",a executar
+A13,P0,vagabond/atacar — Aguilhadeiro,Corrigir comprimento da vara ao norte ao longo do golpe; revisar sul já retocado e montaria; sem jitter ou alteração de alcance,a executar
+A14,P1,schoolhouse/treino,"Oito quadros de camada para treinamento; prédio tem consumidor, mas não entrada trabalho. Separar pessoa/efeito do corpo e preservar escola restaurada pelo operador",a executar
+A15,P1,trabalho/ocioso,Laço genérico de oito quadros no contrato atual; pilotar aparência neutra adequada a diferentes casas antes de espalhar. Não desenhar civil errado em toda casa,a executar
+A16,P1,Trabalho das três minas,"Uma task por gold_mine/coal_mine/iron_mine; derivar personagem mineiro e laços do caso dentro, validar abertura/máscara e não só gerar folha solta",a executar
+A17,P1,Trabalho de swine_farm e stables,"Uma task por prédio, personagem animal_breeder, laços e recorte pela área real; bodes/cavalos continuam camadas independentes",a executar
+A18,P1,hand_axe — machado PixelLab,"Já tem ícone: gerar a melhoria pedida, preservar id/origem e distinguir do defeito do roteiro D-TELA-03. Uma candidata e prova na carga/pilha/barra",a executar
+A19,P1,Açude,"Depois da decisão de footprint: madeira/completo e quatro níveis de água. Água móvel em camada separada, barragem fixa; custo da fazenda e trabalhador Roceiro já decididos",a executar
+A20,P1,Revisão de luz em 11 prédios,"gold_mine, coal_mine, weapons_workshop, marketplace, butchers, tannery, armory_workshop, metallurgists, iron_smithy, weapon_smithy, armor_smithy. Manifest registra ressalvas de luz sul invertida; algumas foram aceitas pelo operador. Reavaliar e regenerar só com reprovação atual",a executar
+A21,P1,Homologação pendente,"Padre, árvore seca, bodes, água, solo e menu lateral: abrir evidência atual e registrar decisão. Arquivo presente não significa aprovação humana",a executar
+C01,P1,Juazeiro: duas silhuetas adicionais,"[Provável] reduz repetição de mata. Mesma escala e luz; distribuição determinística, sem alterar quantidade/colisão dos recursos",a executar
+C02,P1,Árvore seca: duas variantes,"Galhos legíveis a 0,5, sem aparência de cópia espelhada; preservar a escolha de árvore seca",a executar
+C03,P1,Mandacaru: duas variantes,"Conferir referência botânica limpa; diferenciar braços e massa, não só cor",a executar
+C04,P1,Facheiro: duas variantes,Colunas em conjunto com identidade distinta do mandacaru; prova de escala junto a unidade,a executar
+C05,P1,Xique-xique: duas variantes,Porte baixo/ramificação identificáveis; não confundir com facheiro reduzido,a executar
+C06,P1,Macambira: duas variantes,"Bromélia reconhecível, roseta legível e sem ruído de folha fina",a executar
+C07,P1,Biblioteca de 20 decalques,"Quatro tufos secos, quatro seixos, quatro rachaduras, quatro gravetos/folhas, quatro touceiras baixas. Todos isolados e transparentes. Precisa consumidor determinístico com culling; não adicionar recurso ou obstáculo na sim",a executar
+C08,P1,Agrupamento visual de mata e caatinga,Pilotar distribuição sobre recursos existentes. Alterar gerador e oferta de madeira é task de balanceamento separada; não misturar com decoração,a executar
+C09,P1,Costuras de grama/areia/água/rocha,"Assets atuais existem. Comparar mosaicos 3×3 e máscaras 0–15 no manifest real. Abrir bordas/cantos, zooms e tint; gerar somente transições reprovadas. Métrica ou extrusion sozinha não prova todas as emendas corrigidas",a executar
+C10,P1,Rocha/minérios em esgotamento,"rock, coal, iron_ore, gold_ore: planejar até três estágios por id a partir da mesma base. Consumidor baseado em quantidade precisa aceite próprio; não cadastrar estágios como espécies aleatórias",a executar
+C11,P2,Toco de juazeiro,"A sim guarda quantidade zero, mas render atual oculta recurso esgotado. Gerar candidata é possível; integrar exige regra explícita de desenho e espaço preservado para replantio",a executar
+C12,P2,Chão sazonal e plantas murchas,"Inverno/ seca já têm efeito visual. Plantas murchas são opção do plano do clima, não falta obrigatória. Evitar quatro sets de todo terreno se tint adequado resolve",a executar
+C13,P2,Cenário regional do brejo,"Candidatas de vegetação mais verde e solo úmido para Areia; preservar luz, tile e leitura das unidades",a executar
+C14,P2,Cenário litorâneo,"Areia branca, terra escura avermelhada, margens de rio e vegetação regional; mapear ids/transições antes de integrar. Não gerar neve ou gelo",a executar
+C15,P2,Pedra/estrada em cenário,"Rua já tem arte e conexiones. Provar legibilidade sobre solo novo e caminho assentado/planejado; não reabrir a entrega como ""sem sprite""",a executar
+C16,P2,Decoração de aldeia/campanha,"Cercas, carroça, troncos, barris, embarcadouro e marcos somente após indicar mapa/uso. Sem mercadoria pintada dentro de prédio ou elemento que sugira obstáculo inexistente",a executar
+U01,P1,Matriz completa dos 29 atlas,Todos os estados declarados e direções consumidas; não gastar em idle/andar/morrer já existente sem reprovação,a executar
+U02,P1,scout/knight e demais montados,"[Provável] revisar passada das patas, selim e estabilidade; há observação histórica de movimento fraco. Abrir ciclo atual antes de decidir regeneração",a executar
+U03,P1,Máscara de facção,"Contrato artístico pede máscara separada; auditar consumidor atual antes de gerar 29 séries. Pilotar militia, azul/vermelho, 0,5/1/2; não aprovar troca que apague tecido/sombra",a executar
+U04,P1,Camadas de trabalho existentes,"13 entradas com PixelLab presentes. Conferir recorte pela área, pé/escala da rua e janela no prédio; cortes são contrato atual, não motivo para refazer os 13 automaticamente",a executar
+U05,P2,Fumaça genérica ausente,"A padaria já tem fumaça procedural. Fallback genérico de F-VIVO é outro consumidor: decidir removê-lo/substituí-lo ou produzir seus oito frames, sem duplicar fumaça",a executar
+U06,P2,Impactos/projéteis/poderes,"Sangue/poeira/faísca, flecha/pedra e poderes do Padre: primeiro revisar procedural existente; sprites adicionais somente com consumidor e legibilidade comprovada",a executar
+U07,P2,Mortes e corpos,Quadros de morte existem. Corpos cortados foram aceitos pelo operador; não tratar isso como bug obrigatório. Revisar apenas defeito novo comprovado,a executar
+B01,P0,Tropa 18/24 presa,"Incorporar a fixture reforçada da main sem alterá-la; reproduzir ordens 99/187; ampliar plano antes do código para passos iniciados. 400 ordens, todos vivos, sem sobreposição, sem marcha após 1500 ticks",desconsiderado pelo operador em 2026-10-08 (b460c61) - nao executar nem contar como pendencia
+B02,P0,Armas sob carga infinita,Tábua recebe atendimento e quartel recebe armas; conservar reservas/mercadoria. Operador escolhe envelhecimento ou teto de atendimento consecutivo,a executar
+B03,P0,Obreiro ocupa canteiro,Decisão recebida: ocupa. Atualizar colisão/reservas e fila de entrega; F18f sem pilha e obra conclui,a executar
+B04,P0,Mundo transladado,"Saves de fixtures, dados lidos por CJS e minas em coordenadas absolutas são bloqueios. Corrigir testes/infraestrutura sem ignorar suite, alterar hash publicado ou forçar original em toda corrida",a executar
+B05,P0,Roteiro D-TELA-03,"Machado tem ícone. Criar fixture deliberada sem arte para testar fallback, manter teste do machado real; não retirar cobertura",a executar
+B06,conferir no plano,Película climática e jornal,"Zoom compensado; roteiro atualizado à decisão de uma notícia. Clima passou em 0,5/1/2 e jornal passou. Verificação completa ainda necessária; operador marca feature",verificado localmente; falta gate completo
+B07,P1,Luz do relevo,"Comparar com/sem relevo, localizar diferença estável e investigar ligado:false. Não habilitar por suposição nem atribuir tudo às texturas",a executar
+F01,P1,Açude: prédio,"Custo fazenda/Roceiro definidos; fechar footprint, desbloqueio e implantação antes da sim",a executar
+F02,P1,Açude: água,"Enchimento por chuva, armazenamento, evaporação/vazão e estados de nível com dados; água não é nova fome/sede de pessoas",a executar
+F03,P1,Açude: irrigação,"Escolher ligação por distância ou transporte, culturas atendidas e consumo; vazio não irriga, seca com irrigação difere de seca sem ela",a executar
+F04,P1,Açude: interface,"Nível, vínculo com fazenda, raio/ligação e alerta; prova visual e integração da A19",a executar
+F05,P1,Barra de comida,Operador decide total armazenado ou estoque do armazém. Cenário armazém 10/Bodega 5 explicita resultado na barra/HUD,a executar
+F06,P1,Aviso prédio vago cinco minutos,"Lógica implementada. Roteiro visual verifica antes/depois, uma notícia e reset quando ocupa; não confundir com bug de jornal resolvido",a executar
+F07,P1,"Tutorial, dicas e ajuda","Percorrer primeira partida sem conhecimento prévio, clareza das cadeias, fome, paz, estoque e desbloqueios; registrar e corrigir ambiguidades",a executar
+F08,P1,Balanceamento climático/econômico,"Lote com milho/cana, seca/irrigação e roças por moinho. 14,5% de espera é medição atual com clima, não automaticamente bug contra antigo teto de 10%",a executar
+F09,P1,Combate no difícil,"Medir tropa de 24 contra fácil/normal/difícil, aproximação sob névoa e poderes do Padre. Ajustar lote aprovado, não números avulsos",a executar
+F10,P2,Halt / Split / Link,"Lacuna do GDD; definir regras de parar, separar e unir grupos e aceites antes de implementar. Formação já existe",a executar
+F11,P2,Atalhos do GDD,"B, F, Delete, Ctrl+1..9 e 1..9 não existem na tabela atual. Fechar conflitos com WASD/ajuda e comandos; atalho não aparece na ajuda antes de existir",a executar
+F12,P2,Logística fina de prédio,"Entrega/esvaziar por casa, recusa de armas/recrutas no quartel, fechamento para trabalhador: lacunas comparadas ao KaM, não regras aprovadas de Piancó",a executar
+F13,P2,Outros controles econômicos,"Ponto de corte do lenhador, reunião/teto de ouro da Prefeitura e reordenar escola: propor aceites, confirmar consumidor e decisão. Modos do lenhador já implementados",a executar
+F14,conferir no plano,F-REPL-c plantar tile vazio,"Adiado por decisão, não tarefa esquecida. Reabrir somente com aceite e efeito na disponibilidade de madeira",adiado por decisao
+F15,conferir no plano,Escala de grandes exércitos,Custo all-against-all já medido em 50/100/200. Reavaliar antes de cenário que aumenta unidade; otimização ampla exige plano próprio,condicionado a gatilho
+F16,P2,Feedback de obra/estoque/desbloqueio,"Auditar animações e efeitos atuais antes de propor pulso do HUD, poeira de martelo ou destaque de botão novo; parte do feedback já existe",a executar
+S01,P1,victory,"Candidato CC0, origem verificável, aprovação auditiva, recorte e disparo único de vitória",a executar
+S02,P1,building-hit,Banco CC0 e teste de dano/limite por quadro/distância; hoje sem arquivo no manifest,a executar
+S03,P1,peace-ended,Aviso CC0 e disparo único no fim da paz; não depender apenas do jornal,a executar
+S04,conferir no plano,music-peace,"Conferir consumo após trilha de três faixas. Se substituído, documentar configuração; se consumido, fornecer faixa aprovada, sem duplicar trilha",a executar
+S05,P1,Cortes e mixagem,"Ouvir sons existentes, transições e volumes em partida; licença e distância não provam qualidade auditiva",a executar
+E01,P0,verify completo,"Typecheck, lint, 31 dados, suite normal e transladada verdes; nenhum selo com falha",a executar
+E02,P1,Longos e screenshots,"Sob trava, sem concorrência; suite longa limpa no HEAD e todos os roteiros, uma execução por vez",a executar
+E03,P1,Build,"Conferir dist, rotas, arquivos, atlas, console e licenças; masters/candidatas não entram no build",a executar
+E04,P1,Playtest externo,"Pessoas de fora, relatórios reais, triagem/reteste; não marcar por teste automatizado",a executar
+E05,P1,Publicação itch,Pacote revisável para operador publicar; link jogável verificado. Não publicar ou enviar convites sem autorização,a executar
+M00,P2,"Escolher id oficial, schema de missão, cenário inicial, objetivos e falhas; save/progressão/desbloqueios",Mapa de campanha e identidade visual piloto,a executar
+M01,conferir no plano,Primeira missão e objetivo próprio; onboarding no cenário real,"Caatinga da abertura, tela/ilustração de briefing",a executar
+M02,conferir no plano,"Objetivo econômico com prazo, ligado aos dados da missão",Variação regional de vila/solo e briefing,a executar
+M03,conferir no plano,Cavalaria inimiga e ouro renovável conforme roteiro,"Caatinga mais seca, pontos de recurso e briefing",a executar
+M04,conferir no plano,Defesa por ondas e água/pesca,Açude/margens de água e mapa defensivo,a executar
+M05,conferir no plano,"Mercado, segundo armazém e objetivo de duração","Feira/aldeia, estrada e briefing",a executar
+M06,conferir no plano,Cadeia de ferro e terreno verde/brejo,Kit C13 e mapa com identidade úmida,a executar
+M07,conferir no plano,Regra nova de capturar unidade e objetivo composto; não presumir conversão do Padre equivalente,Retrato/identidade do alvo e locais de interação,a executar
+M08,conferir no plano,"Cavalaria, prazo e mapa amplo",Canavial com kit de crescimento e briefing,a executar
+M09,conferir no plano,"Alvo protegido, torres e mercenários","Cenário urbano/litoral, fachada/props só conforme mapa",a executar
+M10,conferir no plano,"Duas frentes, conclusão, persistência e epílogo","Rio/margens/porto, tela de conclusão",a executar
+M11,P2,"Briefings, diálogos e epílogo em UI de campanha","Retratos de Severino, Vicente Cabo Branco, Coronel Antônio e Dona Esperança; outros personagens somente após roteiro confirmar uso",a executar
+M12,P2,Missões encadeadas e replay determinístico,"Dez miniaturas dos mapas, seleção bloqueada/liberada e mapa regional; identidade deriva dos mapas finais",a executar
