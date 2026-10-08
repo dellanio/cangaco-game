@@ -95,6 +95,9 @@ Aceite: altura 1,50, largura 1,00, contato com solo identico; lavoura matura
 capturada, sem alterar maturacao, quantidade colhida ou passagem.
 
 ## 16 - I-ARTE-PEIXES-PENDURADOS-NA-BODEGA
+### Pre-requisito da captura do ajuste 15 — 2026-10-08
+A fixture BUG-W deve calcular os estagios usando o tempo sazonal da semeadura, como o render e tileMaduro. Preservar as assercoes de todos os quatro estagios, equivalencia com a sim, recem-semeado e maduro lado a lado; nao mudar prazos nem desligar clima nesta prova visual.
+
 
 Peixe de estoque maior, vertical, pendurado em pequenas cordas nas laterais
 da Bodega. Usar estoque real, distribuir entre esquerda/direita com diferenca
