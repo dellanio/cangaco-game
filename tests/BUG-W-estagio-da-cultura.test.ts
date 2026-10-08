@@ -84,7 +84,9 @@ describe('BUG-W — a partida que o roteiro carrega', () => {
       const r: Record<string, string> = {};
       for (const [k, rec] of Object.entries(e.recursos)) {
         if (rec?.tipo !== 'corn') continue;
-        const est = estagioDaCultura(rec, e.tick, crescer);
+        // O tempo e o da estacao da semeadura, igual ao render e tileMaduro.
+        const tempo = rec.semeadoEm === undefined ? crescer : ticksParaAmadurecer('corn', crescer, rec.semeadoEm);
+        const est = estagioDaCultura(rec, e.tick, tempo);
         if (est !== null) r[k] = est;
       }
       return r;

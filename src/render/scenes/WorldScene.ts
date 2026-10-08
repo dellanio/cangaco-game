@@ -33,6 +33,7 @@ import { particulasDaFagulha } from '../fagulha';
 import { celulasDaAguaParaTrocar } from '../agua-viva';
 import { particulasDaPoeira, rajadaNaVista } from '../poeira';
 import { codigoDoRecurso, configDoMapa, recursosDeRender, terrenoDeRender } from '../mapa';
+import { geometriaDaCultura } from '../culturas-visual';
 import { CHAOS_DA_ROCA, chaoDaRoca, indiceDoChao, quadroDoChaoDaCanaMudou } from '../chao-da-roca';
 import {
   gridToScreen, screenToGrid, deslocamentoDaUnidade, depthDeY, tileDentroDoMapa, ESCALA_DO_MUNDO, PROFUNDIDADE_DA_SELECAO,
@@ -201,6 +202,7 @@ export class WorldScene extends Phaser.Scene {
   /** F-SPR — como cada CODIGO de recurso se desenha, resolvido uma vez no `create`
    *  (a arte ja chegou no `preload`). Indice e o codigo, como na tira. */
   private desenhoPorCodigo: readonly DesenhoDoRecurso[] = [];
+  private culturasEmPe = new Map<string, Phaser.GameObjects.Image>();
 
   /** F-SPR — o sprite de vegetacao de pe por tile, para o diff. Memoria de render,
    *  como `recursosDesenhados`: a verdade continua em `state.recursos`. */
@@ -1621,6 +1623,8 @@ export class WorldScene extends Phaser.Scene {
       camada.putTileAt(0, gx, gy);
       this.recursosDesenhados.delete(chave);
       this.estagioDesenhado.delete(chave);
+      this.culturasEmPe.get(chave)?.destroy();
+      this.culturasEmPe.delete(chave);
       marcarComVizinhos(chave);
     }
     for (const chave of repintar) {
@@ -1749,9 +1753,27 @@ export class WorldScene extends Phaser.Scene {
       : estagioDaCultura(recurso, tick, recurso.semeadoEm === undefined
         ? recursosDeRender.ticksDeCrescer[recurso.tipo] ?? 0
         : ticksParaAmadurecer(recurso.tipo, recursosDeRender.ticksDeCrescer[recurso.tipo] ?? 0, recurso.semeadoEm));
+    const desenho = this.desenhoPorCodigo[codigo];
+    const geometria = geometriaDaCultura(recurso.tipo, estagio, configDoMapa.tilePx);
+    const emPe = geometria.emPe && desenho?.como === 'textura';
+    const atual = this.culturasEmPe.get(chave);
+    if (emPe) {
+      if (!atual || atual.texture.key !== desenho.chave) {
+        atual?.destroy();
+        const canto = gridToScreen(tileDeChave(chave), configDoMapa.tilePx, ESCALA_DO_MUNDO);
+        const imagem = this.add.image(canto.x + geometria.peX, canto.y + geometria.peY, desenho.chave)
+          .setOrigin(0.5, 1).setDisplaySize(geometria.largura, geometria.altura)
+          .setDepth(depthDeY(canto.y + geometria.peY));
+        this.luz?.tingir(imagem, imagem.x, imagem.y, `cultura:${chave}`);
+        this.culturasEmPe.set(chave, imagem);
+      }
+    } else if (atual) {
+      atual.destroy();
+      this.culturasEmPe.delete(chave);
+    }
     if (!repor && estagio === (this.estagioDesenhado.get(chave) ?? null)) return;
     const { gx, gy } = tileDeChave(chave);
-    camada.getTileAt(gx, gy)?.setAlpha(estagio === null ? 1 : ALFA_DO_ESTAGIO[estagio]);
+    camada.getTileAt(gx, gy)?.setAlpha(emPe ? 0 : estagio === null ? 1 : ALFA_DO_ESTAGIO[estagio]);
     if (estagio === null) this.estagioDesenhado.delete(chave);
     else this.estagioDesenhado.set(chave, estagio);
   }

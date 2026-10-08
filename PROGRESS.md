@@ -21406,3 +21406,6 @@ Teste PNG confirmou mesmo tamanho e mesmo pe do completo. Regra por tabela confi
 - Rascunhos de cana substituidos por decisao humana, preservados fora da branch em D:/projetos-pessoal/cangaco-game-candidatos/arte/D/grapes-stock/rodada-2026-10-08/; teste renomeado para o aceite dos barris, sem remover verificacao vigente.
 - Rebase sobre main b460c61 concluido; ambos os historicos de PROGRESS preservados, bases antigas de estilo nao restauradas. Quatro documentos de fix/fechamento-projeto importados, sem codigo/PROGRESS de la; marcha desconsiderada riscada e nao executavel.
 - Nao verificado: homologacao visual do operador, fechamento completo apos todos os ajustes. Nenhum merge/push/remocao de worktree ainda.
+﻿
+### 2026-10-08 — I-TELA-MILHO-MADURO-MAIS-ALTO
+Verificado: altura do milho pronto 1,50; largura 1,00; pe preservado no limite sul do tile. Estagios anteriores e cana conservados, sem mudanca na sim. Fixture BUG-W corrigida para calcular tempo sazonal da semeadura, mantendo todas assercoes. Testes dirigidos: 7 verdes; verify:rapido: 187 testes, saida 0 (27 s). Captura aberta: screenshots/I-TELA-MILHO-MADURO-MAIS-ALTO-1-rocado-em-estagios.png. Nao verificado: homologacao visual pelo operador e fechamento completo apos os demais ajustes.
