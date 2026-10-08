@@ -21314,3 +21314,12 @@ O teste original aceitava morte de soldados e retirava os mortos da conta. A gua
 O conserto da cadeia da ordem 13 passa nos testes isolados e anteriores, mas NAO fecha o aceite completo: ordem 99 com 18 deixa u18/u26 presos; ordem 187 com 24 deixa u16/u25/u32/u39 presos. Inclui bloqueio de quem ja iniciou passo; fora da extensao do plano. BUG-TROPA-DE-24-PRESA restabelecido em BUGS.md. Os testes reforcados ficam reprovados e nao foram desativados. Implementacao interrompida conforme AGENTS.md. O plano do clima foi registrado antes do codigo; sua implementacao ainda nao comecou.
 
 Verificacao final desta retomada: npm run verify saiu 1; typecheck, lint, dados (31 arquivos) e suite normal passaram. Suite transladada: 3 arquivos reprovados, 4 testes reprovados, 2 824 passaram e 5 pulados. Falhas anteriores de hash do save, extracao de carvao e equivalencia mapa/gerador. Log completo: test-output/2026-10-07-pacote-verify.log. Nenhum selo completo, nenhum push, test-results.json intocado.
+
+### BUG-T e BUG-TROPA-DE-24-PRESA — desconsiderados por decisão do operador (2026-10-08)
+- O operador mandou desconsiderar os dois: "se acontecer novamente, eu abro uma nova demanda". O
+  BUG-TROPA-DE-24-PRESA saiu do `BUGS.md`. O `tests/BUG-T-troca-mutua.longo.test.ts` e o plano
+  `docs/planos/2026-09-30-BUG-T-tropa-travada.md` voltaram ao estado de antes do `50ccff3`: a fixture
+  antiga, de 18, e sem a emenda da paz e da condição. A retomada de 2026-10-07 (que achou a ordem 99 com
+  u18/u26 presos) fica só no histórico do git, no `50ccff3`.
+- **Hipótese, não verificada nesta sessão:** a varredura antiga sai verde. O registro de 2026-10-04 diz
+  isso, mas a suíte longa não foi rodada aqui. Ela será conferida no fechamento do bloco.

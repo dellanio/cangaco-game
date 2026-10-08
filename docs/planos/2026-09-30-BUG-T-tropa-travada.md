@@ -262,10 +262,3 @@ Aceites da retomada, escritos antes do código:
 4. testes anteriores de troca mútua, formação e colisão continuam passando;
 5. evidência determinística em `test-output/`, registro em PROGRESS e remoção do
    BUG-TROPA-DE-24-PRESA somente depois dos aceites verdes.
-
-Guarda adicional da fixture: as 400 ordens medem marcha em paz (duração suficiente
-para todo o prazo da varredura), e todos os soldados devem continuar vivos em cada
-ordem. A fixture usa condicao inicial suficiente para o horizonte de movimento,
-sem mudar dado de producao. A paz antiga acabava durante a corrida e a IA eliminava
-soldados, retirando-os da conta dos presos; a fome tambem invalidava a contagem.
-A ordem 13 ocorre antes do fim da paz antiga e continua coberta.

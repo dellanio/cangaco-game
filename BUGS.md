@@ -59,23 +59,6 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   o serf espera na fila e a pilha some; se não, o roteiro deve contar só quem ocupa.
 - status: aberto, esperando a decisão
 
-## BUG-TROPA-DE-24-PRESA — com a tropa de 24, a varredura do BUG-T deixa soldados marchando
-- feature: C-MOVIMENTO / BUG-T (a tropa travada), exposto pela I-COMBATE-ESCARAMUCA-GANHAVEL
-- severidade: errado
-- repro: a varredura de `tests/BUG-T-troca-mutua.longo.test.ts` (as 400 ordens, a receita do plano
-  `docs/planos/2026-09-30-BUG-T-tropa-travada.md` §7) com a tropa da escaramuca de 24
-  (`criarEscaramuca(semente)` com o dado de hoje, em vez da fixture de 18): ordem k = 13, destino
-  (24, 43), direcao 0, colunas 3.
-- esperado: o aceite 4 do BUG-T: nenhuma ordem deixa soldado marchando.
-- observado: depois de 1 500 ticks, `u19`, `u20`, `u22`, `u23`, `u24`, `u27`, `u34`, `u37` (e mais)
-  seguem em `marchando`. Igual com a colisao civil ligada e desligada (medido): e a tropa maior, e
-  nao a colisao. A varredura voltou a rodar com a fixture de 18 (a receita do plano), e por isso
-  continua verde; este bug e o que ela acharia com 24. **Causa nao investigada.**
-- evidência: a saida do `npm run test:longo` de 2026-10-04 (branch `dellanio/colisao-e-escaramuca`)
-- status: aberto
-
-- Retomada 2026-10-07: a cadeia da ordem 13 foi corrigida, mas o aceite completo permanece reprovado. Com fixture de movimento em paz e condicao suficiente, ordem 99 (18 soldados) deixa u18/u26 presos; ordem 187 (24 soldados) deixa u16/u25/u32/u39 presos. Caso de passo em andamento nao coberto pela extensao. Evidencia: test-output/BUG-T-diagnostico-18.json e -24.json.
-
 ## BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE — o roteiro da D-TELA-03 supoe que o machado nao tem icone
 - feature: D-TELA-03 (logistica na tela)
 - severidade: errado
