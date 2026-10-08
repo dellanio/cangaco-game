@@ -124,3 +124,10 @@ registrar bloqueio concreto e manter worktree/trabalho intactos.
 
 ### Detalhamento do aceite 12 — custo sazonal compartilhado
 O carregador converte os custos retos/diagonais de estrada/solo para cada fase uma unica vez, com round(custo / multiplicadorVelocidade). A investida conserva seu bonus, com round(custo / (bonus * multiplicadorVelocidade)), sem aplicar a seca duas vezes. Simulacao, troca de vagas, colisao e interpolacao usam a mesma consulta. Na mudanca de fase, o passo em curso passa a usar o custo da fase atual; os ticks ja acumulados permanecem, chegando no proximo tick se o novo custo ja foi vencido. A velocidade efetiva por passo difere de 0,80 apenas pelo arredondamento de ate meio tick no custo. Todos os efeitos existentes de crescimento permanecem em data/clima.json, junto do novo multiplicador de velocidade por fase.
+
+### Correcao do operador — 2026-10-08 (prevalece sobre integracao anterior)
+- F18-rocado e F-T2a-recursos e outros testes com o mesmo conflito rodam com clima.ligado false no dado local do teste, documentado no arquivo, pelo precedente de I-CLIMA-ESTACAO. Nenhum prazo literal ou assercao de producao muda. Formulas existentes continuam lendo o dado do teste. A penalidade da seca permanece ligada no jogo.
+- A prova propria da penalidade usa step: mesma marcha no inverno e na seca leva N e N/0.8 ticks, com tolerancia de 1 tick pelo arredondamento do loader. A investida combina seu bonus com a seca uma so vez. Registrar no PROGRESS os testes de producao isolados do clima e a justificativa.
+- Integrar e encerrar somente codex-sertao-mapa, apos main com git status vazio e verify completo 0 na branch rebaseada sobre main. Nao assumir nem tocar no trabalho da main ou das outras worktrees.
+- noru-novos-sprites excluida da integracao: escola rural rejeitada em 2026-10-06, restauracao do sobrado em 1716b4f. Nao integrar manifesto ou quatro candidatos, nem apagar a worktree.
+- Se verify completo reprovar, parar e reportar; nunca integrar com verde parcial.
