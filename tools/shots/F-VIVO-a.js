@@ -9,7 +9,7 @@
 // forma certa: 1 a 5 unidades, sem PNG (o placeholder colorido).
 //
 // Os tres casos:
-//  - o armazem, com o estoque inicial: 4 pilhas desde o tick 0;
+//  - o armazem, com o estoque inicial: sem pilhas externas (ajuste 8 do operador);
 //  - uma obra com material entregue e ainda nao pregado: a pedreira enquanto sobe;
 //  - uma pedreira com saida: a mesma pedreira, ocupada, com pedra na gaveta.
 //
@@ -34,7 +34,6 @@ const { predios } = require('../../data/buildings.json');
 
 const TILE_PX = 64;
 const TETO_DA_PILHA = 5; // src/render/pilhas.ts; o teste headless afirma o mesmo numero
-const PONTOS_DO_ARMAZEM = 4; // src/render/manifesto-camadas.ts
 const defDe = (id) => predios.find((p) => p.id === id);
 const noDado = (id) => economia.estadoInicial.predios.find((p) => p.id === id);
 
@@ -143,8 +142,8 @@ async function roteiro(ctx) {
   afirmar(ID_ARMAZEM !== undefined && ID_ESCOLA !== undefined, 'armazem e escola deveriam estar no estado inicial');
   const doArmazem = inicio.pilhasDesenhadas[ID_ARMAZEM] ?? [];
   afirmar(
-    doArmazem.length === PONTOS_DO_ARMAZEM,
-    `o estoque inicial tem mais de ${PONTOS_DO_ARMAZEM} mercadorias: o armazem deveria desenhar ${PONTOS_DO_ARMAZEM} pilhas, veio ${JSON.stringify(doArmazem)}`,
+    doArmazem.length === 0,
+    `armazem completo nao desenha mercadorias externas, veio ${JSON.stringify(doArmazem)}`,
   );
   afirmar(
     new Set(doArmazem.map((p) => p.mercadoria)).size === doArmazem.length,
@@ -245,7 +244,7 @@ async function roteiro(ctx) {
   );
   conferirForma(ID_PEDREIRA, naSaida);
   const armazemAgora = comSaida.pilhasDesenhadas[ID_ARMAZEM] ?? [];
-  afirmar(armazemAgora.length === PONTOS_DO_ARMAZEM, `o armazem deveria seguir com 4 pilhas, veio ${JSON.stringify(armazemAgora)}`);
+  afirmar(armazemAgora.length === 0, `armazem continua sem pilhas externas apos abastecer a pedreira, veio ${JSON.stringify(armazemAgora)}`);
   conferirForma(ID_ARMAZEM, armazemAgora);
   await capturar('pedreira');
 }

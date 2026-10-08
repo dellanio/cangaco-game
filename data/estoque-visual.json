@@ -2,6 +2,7 @@
   "_doc": "Ajustes de tamanho apenas das mercadorias desenhadas nos estoques. Nao altera quantidades, capacidade ou carga transportada.",
   "ladoEmTiles": 0.2,
   "escalaPadrao": 1,
+  "ocultarEmPrediosCompletos": ["storehouse"],
   "escalaPorPredio": {
     "quarry": { "stone": 1.3 }
   }

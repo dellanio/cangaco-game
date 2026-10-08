@@ -25,7 +25,7 @@ import type { ConfigDoPadreVisual } from '../padre-visual';
 const dadosDoPadreVisual = dadosDoPadreVisualCru as ConfigDoPadreVisual;
 const dadosDoClimaVisual = dadosDoClimaVisualCru as ConfigDoClimaVisual;
 import dadosDaObraRevelada from '../../../data/obra-revelacao.json';
-import { ladoDaMercadoriaNoEstoque, ladoPadraoDoEstoque } from '../estoque-visual';
+import { ladoDaMercadoriaNoEstoque, ladoPadraoDoEstoque, pilhasVisiveisDoPredio } from '../estoque-visual';
 import { blocosVisiveis, recorteDoBloco } from '../obra-revelacao';
 import type { GradeDaObra } from '../obra-revelacao';
 import { chaminesRemovidas, particulasDaFumaca, type ParticulaDaFumaca } from '../fumaca';
@@ -56,7 +56,7 @@ import { aparenciaDoPredio, corDaPilha, dadosDasPilhas, dadosDosAnimais, dadosDo
 import { animaisDoCurral, curralDesenhado, quadroDoAnimal } from '../animais';
 import { MAX_PASSOS_POR_QUADRO } from '../../laco';
 import type { AnimalDoCurral } from '../animais';
-import { pilhasDoPredio, posicoesNaPilha } from '../pilhas';
+import { posicoesNaPilha } from '../pilhas';
 import type { PilhaDesenhada } from '../pilhas';
 import { areaDoTrabalho, quadroDaEscola, quadroDaFumaca, quadroDeTrabalho, quadroOcioso } from '../trabalho';
 import type { QuadroDeTrabalho } from '../trabalho';
@@ -2113,7 +2113,7 @@ export class WorldScene extends Phaser.Scene {
       // F-VIVO-a: a pilha muda sem mexer em estado nem em estagio (o serf entrega,
       // o padeiro assa), entao ela entra na chave pelo mesmo motivo do medidor. So
       // o que se DESENHA entra: quantidade acima de 5 nao redesenha nada.
-      const pilhas = pilhasDoPredio(predio, DADOS_DAS_PILHAS);
+      const pilhas = pilhasVisiveisDoPredio(predio, DADOS_DAS_PILHAS);
       if (pilhas.length > 0) {
         pilhasNoDebug[id] = pilhas.map((x) => ({
           gaveta: x.gaveta, mercadoria: x.mercadoria, n: x.n,

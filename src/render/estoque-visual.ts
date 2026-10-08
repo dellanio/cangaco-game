@@ -1,4 +1,12 @@
 import dados from '../../data/estoque-visual.json';
+import type {Predio} from '../sim/state';
+import {pilhasDoPredio} from './pilhas';
+import type {DadosDasPilhas, PilhaDesenhada} from './pilhas';
+
+export function pilhasVisiveisDoPredio(predio: Predio, contexto: DadosDasPilhas): PilhaDesenhada[] {
+  if (predio.estado === 'completo' && dados.ocultarEmPrediosCompletos.includes(predio.tipo)) return [];
+  return pilhasDoPredio(predio, contexto);
+}
 
 export function ladoPadraoDoEstoque(tilePx: number): number {
   return tilePx * dados.ladoEmTiles;
