@@ -2563,6 +2563,7 @@
         0.5,
         0.99204
       ],
+      "escalaDeExibicao": 1.2,
       "estados": {
         "completo": "sprites/barracks/barracks_completo-D-20261002.png",
         "madeira": "sprites/barracks/barracks_madeira-D-20261002.png"

@@ -18,10 +18,10 @@ const regraA = regraDoManifesto(manifesto);
 const regraL = regraDeLarguraDoManifesto(manifesto);
 const TILE = 64;
 const predios = manifesto.assets.filter((e): e is EntradaDeAsset => e.tipo === 'predio') as EntradaDeAsset[];
-const ESPERADO: Record<string, number> = { butchers: 1.2, armory_workshop: 1.2, tannery: 1.2, stables: 1.3 };
+const ESPERADO: Record<string, number> = { butchers: 1.2, armory_workshop: 1.2, tannery: 1.2, stables: 1.3, barracks: 1.2 };
 
 describe('I-ARTE-PREDIOS-MAIORES', () => {
-  it('os quatro saem maiores pelo fator pedido, e os outros nao mudam', () => {
+  it('os quatro originais e o quartel do ajuste 9 saem maiores pelo fator pedido, e os outros nao mudam', () => {
     for (const e of predios) {
       const lote = e.footprint[0] * TILE;
       const { escalaDeExibicao: _f, ...semOCampo } = e;

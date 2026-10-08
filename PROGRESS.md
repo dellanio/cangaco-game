@@ -21358,3 +21358,8 @@ Correcao dos bloqueios anteriores: incorporados os aceites e a correcao de fixtu
 ### 2026-10-07 - ajuste 8, I-TELA-ARMAZEM-SEM-PILHAS-EXTERNAS
 
 Verificado: armazem completo nao desenha produtos externos. Estoque logico preservado (teste conserva quatro pilhas logicas e compara estado byte a byte); obra ainda desenha material entregue, demais edificios mantem pilhas. Dado de tela explicita a excecao. Testes dirigidos e regressao F-VIVO-a: 2 arquivos, 10 testes passaram. Roteiro F-VIVO-a atualizado para o comportamento pedido, preservando construcao, transporte e saida da pedreira; wrapper do item saiu 0 com tres capturas. Aberta screenshots/I-TELA-ARMAZEM-SEM-PILHAS-EXTERNAS-1-armazem.png. verify:rapido saiu 0: 188 testes, 29 s. Nao verificado: homologacao visual do operador; painel de estoque nao foi aberto na captura deste item (sua regra e estoques nao mudaram).
+
+
+### 2026-10-07 - ajuste 9, I-TELA-QUARTEL-MAIS-IMPONENTE
+
+Verificado: barracks usa escalaDeExibicao 1,20 no manifesto, mesma escala na madeira e no completo, footprint 4x4 e anchor [0,5;0,99204] conservados. Testes dirigidos e regressoes dos predios maiores/F-ESC: 3 arquivos, 14 testes passaram. Captura aberta screenshots/I-TELA-QUARTEL-MAIS-IMPONENTE-1-quartel-e-igreja.png; caixas lidas do desenho medem 307,2x307,2 px, antes 256x256, com igreja atual ao lado. Dica foi fechada com jogo despausado durante clique sustentado, evitando encobrir o quartel. verify:rapido saida 0: 519 testes, 33 s. Nao verificado: homologacao visual pelo operador; merge segue pendente.
