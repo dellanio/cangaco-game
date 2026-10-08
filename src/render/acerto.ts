@@ -12,6 +12,8 @@ import { ESCALA_DO_MUNDO, gridToScreen, gridToScreenCentro, LADO_DA_UNIDADE_EM_T
 
 /** O minimo do que a camada de unidades desenhou que o acerto precisa. */
 export interface UnidadeDesenhada {
+  readonly frame?: string;
+  readonly peY?: number;
   readonly id: string;
   readonly gxDesenhado: number;
   readonly gyDesenhado: number;

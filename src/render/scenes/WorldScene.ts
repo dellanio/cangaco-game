@@ -105,8 +105,8 @@ import { COR_DA_PLACA_DO_ICONE, fonteDaPilha, iconeNaPilha } from '../icone-da-m
 import dadosDaCargaNasMaos from '../../../data/carga-nas-maos.json';
 import type { FonteDaPilha } from '../icone-da-mercadoria';
 import { escalaDoSprite, regraDeLarguraDoManifesto, regraDoManifesto } from '../escala-predio';
-import { centroDesenhado, unidadesNaCaixa, unidadesNoPonto } from '../acerto';
-import { LADO_DA_UNIDADE_EM_TILES as LADO_DO_SOLDADO } from '../grid';
+import { unidadesNaCaixa, unidadesNoPonto } from '../acerto';
+import { geometriaDoAnel, larguraDoTracoDeSelecao } from '../selecao-visual';
 import type { UnidadeDesenhada } from '../acerto';
 import type { SelecaoMilitar } from '../../input/selecao-militar';
 import { mascaraCardinal, VIZINHOS_CARDINAIS } from '../mascara-cardinal';
@@ -928,7 +928,7 @@ export class WorldScene extends Phaser.Scene {
       this.desenharPedras(estado);
       // C2b: cada projetil no ar, interpolado com o mesmo alfa das unidades
       estado.projeteisNoAr = this.desenharProjeteis(projeteisNoAr, tilePx, this.relogio.alfa());
-      estado.selecaoMilitar = this.desenharSelecao(marcasDeSelecao, estado.unidadesRenderizadas, tilePx);
+      estado.selecaoMilitar = this.desenharSelecao(marcasDeSelecao, estado.unidadesRenderizadas, tilePx, estado);
       estado.caixaDeSelecao = this.desenharCaixa(caixaDeSelecao);
       estado.marcadorDeDestino = this.desenharMarcador(marcaDoDestino, tilePx);
     });
@@ -938,19 +938,21 @@ export class WorldScene extends Phaser.Scene {
    *  acerto). Devolve os ids que de fato ganharam anel, para o roteiro afirmar o que a
    *  tela mostra e nao o que a selecao guarda. */
   private desenharSelecao(
-    marcas: Phaser.GameObjects.Graphics, desenhadas: readonly UnidadeDesenhada[], tilePx: number,
+    marcas: Phaser.GameObjects.Graphics, desenhadas: readonly UnidadeDesenhada[], tilePx: number, debug: EstadoDebug,
   ): string[] {
     marcas.clear();
     const ids = new Set(this.selecaoMilitar.ids);
     const marcadas: string[] = [];
-    const raio = (tilePx * LADO_DO_SOLDADO) / 2 + 3;
-    marcas.lineStyle(2, COR_DA_SELECAO, 1);
+    const aneis: ReturnType<typeof geometriaDoAnel>[] = [];
+    marcas.lineStyle(larguraDoTracoDeSelecao, COR_DA_SELECAO, 1);
     for (const u of desenhadas) {
       if (!ids.has(u.id)) continue;
-      const c = centroDesenhado(u, tilePx);
-      marcas.strokeEllipse(c.x, c.y + raio * 0.6, raio * 2, raio);
+      const g = geometriaDoAnel(u, tilePx);
+      marcas.strokeEllipse(g.x, g.y, g.largura, g.altura);
+      aneis.push(g);
       marcadas.push(u.id);
     }
+    debug.aneisDeSelecao = aneis;
     return marcadas;
   }
 

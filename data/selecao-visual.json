@@ -1,0 +1,8 @@
+{
+  "_doc": "Ajuste 11: anel no pe visivel do militar. Recuo transparente medido nos PNGs e registrado em pes-dos-militares.json; apenas desenho, sem alterar hitbox.",
+  "alphaOpaco": 128,
+  "margemDoRaioPx": 3,
+  "larguraDoTracoPx": 2,
+  "alturaRelativaALargura": 0.5,
+  "deslocamentoDoPePx": 0
+}

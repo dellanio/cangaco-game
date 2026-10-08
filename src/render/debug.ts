@@ -233,6 +233,7 @@ export interface EstadoDebug {
   projeteisNoAr: readonly { readonly projetil: string; readonly fracao: number; readonly gx: number; readonly gy: number; readonly altura: number }[];
   /** F26b — as unidades que ganharam o anel de selecao NESTE quadro (lido do desenho). */
   selecaoMilitar: readonly string[];
+  aneisDeSelecao: readonly import('./selecao-visual').GeometriaDoAnel[];
   /** F26b — a caixa de selecao desenhada agora, em px de mundo, ou `null`. */
   caixaDeSelecao: { readonly a: { readonly x: number; readonly y: number }; readonly b: { readonly x: number; readonly y: number } } | null;
   /** C-TELA-02 — o tile do destino marcado NESTE quadro, ou `null` quando a marca sumiu. */
@@ -467,6 +468,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     camadasEmPx: {},
     caixasDesenhadas: {},
     selecaoMilitar: [],
+    aneisDeSelecao: [],
     pedrasDaTorre: 0,
     ultimaPedra: null,
     projeteisNoAr: [],
