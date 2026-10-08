@@ -18,6 +18,7 @@ import dadosDaFumaca from '../../../data/fumaca.json';
 import dadosDoPensamento from '../../../data/pensamento.json';
 import { CHAVE_DO_MARTELO } from '../pensamento';
 import { faseNoTick, ticksParaAmadurecer } from '../../sim/clima';
+import { degrauDaCaatinga, texturaDaCaatinga } from '../caatinga';
 import dadosDoClimaVisualCru from '../../../data/clima-visual.json';
 import { gotasDaChuva, particulasDoCalor, veuDaEstacao } from '../clima-visual';
 import type { ConfigDoClimaVisual } from '../clima-visual';
@@ -212,6 +213,9 @@ export class WorldScene extends Phaser.Scene {
   /** F-SPR — o sprite de vegetacao de pe por tile, para o diff. Memoria de render,
    *  como `recursosDesenhados`: a verdade continua em `state.recursos`. */
   private readonly vegetacaoDesenhada = new Map<string, Phaser.GameObjects.Image>();
+  private degrauSazonal = -1;
+  private recalculosDaCaatinga = 0;
+  private repinturasDaCaatinga = 0;
   private ventoLigado = true;
   private readonly panosDasBandeiras = new Map<string, {
     pano: Phaser.GameObjects.Polygon; mastro: Phaser.GameObjects.Rectangle; gx: number; gy: number;
@@ -895,7 +899,14 @@ export class WorldScene extends Phaser.Scene {
       estado.mascarasDoLajedo = this.mascarasDoLajedo();
       estado.lajedoDesenhado = this.lajedoDesenhado();
       estado.transicoesVisiveis = this.lerTransicoesVisiveis(camadasDeTransicao);
-      estado.vegetacaoRenderizada = this.vegetacaoDesenhada.size;
+    estado.vegetacaoRenderizada = this.vegetacaoDesenhada.size;
+    const vistaDaMata = this.cameras.main.worldView;
+    let normal = 0, seca = 0;
+    for (const [chave, imagem] of this.vegetacaoDesenhada) {
+      if (this.ponte.atual?.recursos[chave]?.tipo !== 'tree' || !vistaDaMata.contains(imagem.x, imagem.y)) continue;
+      if (imagem.texture.key.split(':')[2] === 'seca') seca++; else normal++;
+    }
+    estado.caatinga = { normal, seca, degrau: this.degrauSazonal, recalculos: this.recalculosDaCaatinga, repinturas: this.repinturasDaCaatinga };
       estado.ligarVento = (ligado) => { this.ventoLigado = ligado; this.vegetacaoNova = true; };
       estado.rochasRenderizadas = this.rochaDesenhada.size;
       const inicioDoVento = agora();
@@ -1622,6 +1633,12 @@ export class WorldScene extends Phaser.Scene {
   private atualizarRecursos(camada: Phaser.Tilemaps.TilemapLayer): Record<string, number> {
     const recursos = this.ponte.atual?.recursos ?? {};
     const repintar = new Set<string>();
+    const degrau = degrauDaCaatinga(faseNoTick(this.ponte.atual?.tick ?? 0));
+    if (degrau !== this.degrauSazonal) {
+      this.degrauSazonal = degrau;
+      this.recalculosDaCaatinga++;
+      for (const [chave, recurso] of Object.entries(recursos)) if (recurso.tipo === 'tree') repintar.add(chave);
+    }
     const marcarComVizinhos = (chave: string): void => {
       repintar.add(chave);
       const { gx, gy } = tileDeChave(chave);
@@ -1694,6 +1711,7 @@ export class WorldScene extends Phaser.Scene {
     if (crescimento === null) this.crescimentoDesenhado.delete(chave);
     else this.crescimentoDesenhado.set(chave, { estado: crescimento, fonte: comPng ? 'png' : 'placeholder', escala });
     if (atual?.texture.key === textura && atual.scaleX === escala) return;
+    if (desenho.entrada.id === 'tree' && atual !== undefined && atual.texture.key !== textura) this.repinturasDaCaatinga++;
     atual?.destroy();
     this.vegetacaoNova = true;
     this.ultimoTickDaVegetacao.delete(chave);
@@ -1741,11 +1759,9 @@ export class WorldScene extends Phaser.Scene {
     let quantos = 0;
     const ticksNaVista: Record<string, number> = {};
     const arvores: Record<string, { especie: string; anguloGraus: number }> = {};
-    const entradaDaArvore = assetDaCamada(manifestoDoJogo, 'vegetacao', 'tree');
-    const especies = entradaDaArvore ? this.especiesCarregadasDaVegetacao(entradaDaArvore) : [];
     for (const [chave, imagem] of this.arvoresNaVista) {
       const { gx, gy } = tileDeChave(chave);
-      const especie = especieDoTile(especies, gx, gy).split(':')[2] ?? 'presente';
+      const especie = imagem.texture.key.split(':').slice(2).join(':') || 'presente';
       const transformacao = transformacaoDoVento(
         dadosDoVento, quadro.tick, quadro.alfa, gx, gy, imagem.x, imagem.y, especie,
       );
@@ -1841,7 +1857,10 @@ export class WorldScene extends Phaser.Scene {
     const estados = this.especiesCarregadasDaVegetacao(desenho.entrada);
     if (estados.length === 0) return desenho.chave;
     const { gx, gy } = tileDeChave(chave);
-    return especieDoTile(estados, gx, gy);
+    const normal = especieDoTile(estados, gx, gy);
+    return desenho.entrada.id === 'tree'
+      ? texturaDaCaatinga(normal, gx, gy, this.degrauSazonal, (textura) => this.textures.exists(textura))
+      : normal;
   }
 
   /** Mascaras publicadas para o roteiro provar a troca dos quatro vizinhos. */

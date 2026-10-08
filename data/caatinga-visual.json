@@ -1,0 +1,5 @@
+{
+  "_doc": "I-TELA-CAATINGA-PELA-ESTACAO: somente tela. Degraus limitam repinturas; semente fixa embaralha a ordem por tile, sem estado da sim.",
+  "degraus": 64,
+  "semente": 20261007
+}

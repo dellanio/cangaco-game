@@ -309,6 +309,7 @@ export interface EstadoDebug {
   };
   /** F-SPR — quantos sprites de vegetacao a cena tem de pe agora (mapa inteiro). */
   vegetacaoRenderizada: number;
+  caatinga: { readonly normal: number; readonly seca: number; readonly degrau: number; readonly recalculos: number; readonly repinturas: number };
   enfeitesNaVista: number;
   recalculosDosEnfeites: number;
   rochasRenderizadas: number;
@@ -501,6 +502,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     detalhesDoTerrenoPorTipo: {},
     arteDasCamadas: { terreno: [], recurso: [], vegetacao: [] },
     vegetacaoRenderizada: 0,
+    caatinga: { normal: 0, seca: 0, degrau: -1, recalculos: 0, repinturas: 0 },
     enfeitesNaVista: 0,
     recalculosDosEnfeites: 0,
     rochasRenderizadas: 0,
