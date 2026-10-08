@@ -131,3 +131,9 @@ O carregador converte os custos retos/diagonais de estrada/solo para cada fase u
 - Integrar e encerrar somente codex-sertao-mapa, apos main com git status vazio e verify completo 0 na branch rebaseada sobre main. Nao assumir nem tocar no trabalho da main ou das outras worktrees.
 - noru-novos-sprites excluida da integracao: escola rural rejeitada em 2026-10-06, restauracao do sobrado em 1716b4f. Nao integrar manifesto ou quatro candidatos, nem apagar a worktree.
 - Se verify completo reprovar, parar e reportar; nunca integrar com verde parcial.
+
+### Correcao do operador de 2026-10-08 — item14: I-ARTE-BARRIS-DE-CACHACA-NO-CANAVIAL
+Substitui o aceite de fardos de cana (I-ARTE-FARDOS-DE-CANA-NO-CANAVIAL). wineyard exibe sua saida real wine, a cachaca pronta, em barris de carvalho originais, lado a lado na area de estoque. Zero nao exibe barril; quantidades1..teto visual exibem unidades correspondentes, sem representar cana como mercadoria. Mesmo ponto do estoque; escala/espacamento em data. Base/derivado/manifesto com oito campos, origem e licença. Teste tests/I-ARTE-BARRIS-DE-CACHACA-NO-CANAVIAL.test.ts cobre0/1/2/3/4/5/acima teto, ausencia de segundo andar, transparencia/dimensoes/procedencia e quantidades reais. Prancha e capturas minimo/maximo abertas. Sem mudar receita, economia ou GameState.
+
+### Integracao adicional autorizada — 2026-10-08
+fix/fechamento-projeto entra somente pelos quatro documentos indicados, sem codigo ou PROGRESS. BUG-T/BUG-TROPA-DE-24-PRESA desconsiderado em b460c61 e retirado da fila executavel. Rebasear codex-sertao-mapa sobre main atual, sem restaurar serf-D.png/storehouse-front-D.png apagados pelo operador. Apos verify completo0 na branch rebaseada, mergear somente codex-sertao-mapa; remover sua worktree e a worktree/branch fix/fechamento-projeto, desfazendo junctions sem atravessa-las. noru-novos-sprites permanece intacta. Se verify completo reprovar, parar e reportar, sem merge.
