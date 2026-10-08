@@ -1,0 +1,11 @@
+# I-TELA-RIO-E-PONTE-MATA-BURRO — especificacao anterior ao codigo
+
+Escopo de mapa/simulacao autorizado pelo operador em 2026-10-07 e retomado em 2026-10-08. Sem alterar formato de GameState. Nao reabrir a marcha de 18/24 soldados desconsiderada.
+
+- O rio principal conecta as bordas norte e sul do mapa; um braco liga o antigo acude da abertura ao rio, tornando a agua uma rede conectada. Geometria, largura, ondulacao, faixa seca e posicao da ponte ficam em data/rio.json. A reserva inicial permanece protegida. O centro antigo do lago continua agua.
+- A ponte e terreno permanente `ponte`, com custo de movimento igual ao solo em data/terrain.json; o tipo e acrescentado ao fim do vocabulario para preservar os codigos existentes. Ela permite caminhar e nao permite plantar predio ou rocado. O render usa a mesma grade que o caminho, nunca simula uma ponte transitavel sobre agua bloqueada.
+- Ponte de madeira original no estilo mata-burro, um modulo de piso conectavel no eixo leste/oeste, PNG/base/derivado/origem/manifesto. Orcamento: uma geracao nativa, luz superior levemente sul. Sem asset de 1998. Imagem de piso sem pessoa, animal ou mercadoria.
+- Margens desenhadas com cantos arredondados e transicoes de solo seco em tom marrom; nenhuma borda verde viva. Ajustes visuais leem a grade sem alterar estado. Capturas em 0.5/1/2 e uma unidade sobre a ponte sao abertas.
+- Teste tests/I-TELA-RIO-E-PONTE-MATA-BURRO.test.ts: gerador reproduz o mapa; agua conectada ate ambas as bordas; ponte cruza todo o leito e tem terra dos dois lados; A* e marcha pelo step atravessam a ponte, nunca agua; agua continua bloqueada; construcao/rocado sobre ponte recusados; nenhuma regra depende do tema.
+- Alteracao legitima do mapa muda seu hash. Saves antigos continuam recusados; fixture de vila pronta e regenerada pelo helper existente para o novo mapa, sem remendar hash nem relaxar guarda. Testes normal/transladado e os roteiros existentes permanecem obrigatorios.
+- Antes do commit de implementacao: teste dirigido sob trava, shot aberto e verify:rapido 0. No fechamento: verify completo, test:longo e shot:todos; main limpa, sem push. Se alguma verificacao exigir alteracao de aceite nao prevista aqui, parar e reportar.
