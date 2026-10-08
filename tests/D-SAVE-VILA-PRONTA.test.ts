@@ -161,6 +161,23 @@ export function vilaPronta(): GameState {
   s = comPredio(s, 'barracks', QUARTEL, lugarPara(s, 'barracks'), (q) => ({ ...q, estoque: { ...q.estoque, entrada: {} }, recrutas: RECRUTAS }));
 
   s = comPredio(s, 'inn', 'bodega', lugarPara(s, 'inn'));
+  // ARTE-VILA exige canavial E outro predio junto da Bodega. O segundo
+  // vizinho deve existir na fixture, com a mesma folga de um tile e rua propria.
+  const bodega = s.predios.porId['bodega']!;
+  const buscaVizinho = comTudoDestravado(s);
+  let vizinho: { gx: number; gy: number } | null = null;
+  const caixaBodega = caixaDeTipo('inn', bodega.gx, bodega.gy, gameData)!;
+  for (let gy = caixaBodega.y0 - 4; gy <= caixaBodega.y1 + 1 && vizinho === null; gy++) {
+    for (let gx = caixaBodega.x0 - 4; gx <= caixaBodega.x1 + 1; gx++) {
+      const caixa = caixaDeTipo('schoolhouse', gx, gy, gameData)!;
+      const dx = Math.max(0, caixa.x0 - caixaBodega.x1, caixaBodega.x0 - caixa.x1);
+      const dy = Math.max(0, caixa.y0 - caixaBodega.y1, caixaBodega.y0 - caixa.y1);
+      if (dx + dy === 1 && canPlace(buscaVizinho, 'schoolhouse', gx, gy, gameData).ok
+        && semRecursoEmVolta(s, 'schoolhouse', gx, gy)) { vizinho = { gx, gy }; break; }
+    }
+  }
+  if (vizinho === null) throw new Error('fixture ARTE-VILA: sem lugar para segundo vizinho da Bodega');
+  s = comPredio(s, 'schoolhouse', 'escola-vizinha-bodega', vizinho);
 
   for (const id of [...s.predios.ordem]) {
     const p = s.predios.porId[id];
@@ -223,6 +240,20 @@ describe('o save de teste do operador (vila pronta)', () => {
     // nenhum predio do jogador abre com aviso: sem trabalhador, sem estrada, sem campo, veio esgotado
     const meus = new Set(doJogador.map((p) => p?.id));
     expect(alertasDoEstado(s, gameData).filter((a) => meus.has(a.predio)).map((a) => `${a.predio}:${a.causa}`)).toEqual([]);
+  });
+
+  it('ARTE-VILA tem canavial e segundo predio vizinhos da Bodega, com um tile de folga', () => {
+    const s = carregar(TEXTO, gameData), b = s.predios.porId['bodega']!;
+    const caixa = caixaDeTipo(b.tipo, b.gx, b.gy, gameData)!;
+    const vizinhos = s.predios.ordem.map(id => s.predios.porId[id]!).filter(p => {
+      if (p.id === b.id) return false;
+      const c = caixaDeTipo(p.tipo, p.gx, p.gy, gameData)!;
+      return Math.max(0, c.x0 - caixa.x1, caixa.x0 - c.x1)
+        + Math.max(0, c.y0 - caixa.y1, caixa.y0 - c.y1) <= 1;
+    });
+    expect(vizinhos.some(p => p.tipo === 'wineyard')).toBe(true);
+    expect(vizinhos.length).toBeGreaterThanOrEqual(2);
+    expect(vizinhos.some(p => p.id === 'escola-vizinha-bodega')).toBe(true);
   });
 
   it('aceite: carregado o save, em ate 2 000 ticks uma arma sai da casa de armas e entra no quartel', () => {
