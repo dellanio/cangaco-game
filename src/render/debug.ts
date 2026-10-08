@@ -360,7 +360,10 @@ export interface EstadoDebug {
   padre: { readonly aneis: number; readonly abencoados: number; readonly fachos: number; readonly claroes: number } | null;
   /** I-TELA-CLIMA-VISUAL — o que a camada do clima desenhou no ultimo quadro: a estacao, o veu e quantas
    *  gotas e particulas de calor. */
-  clima: { readonly estacao: string | null; readonly veu: { readonly cor: string; readonly alfa: number } | null; readonly gotas: number; readonly calor: number } | null;
+  clima: { readonly estacao: string | null; readonly veu: { readonly cor: string; readonly alfa: number } | null; readonly gotas: number; readonly calor: number;
+    readonly limites: { readonly x: number; readonly y: number; readonly largura: number; readonly altura: number };
+    readonly vista: { readonly x: number; readonly y: number; readonly largura: number; readonly altura: number };
+  } | null;
   /** Predio que a ferramenta carrega (src/input/ferramenta.ts), ou null. */
   ferramentaAtiva: string | null;
   /**

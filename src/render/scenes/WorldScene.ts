@@ -1,4 +1,5 @@
 import dadosDaBandeira from '../../../data/bandeira.json';
+import { transformacaoDoClima } from '../cobertura-clima';
 import { panoDaBandeira } from '../bandeira';
 // A cena so le o estado (aqui, so gameData/tema e o GameState via ponte) e
 // desenha. Nada de logica de jogo (CLAUDE.md §10): nenhuma decisao de regra
@@ -745,12 +746,14 @@ export class WorldScene extends Phaser.Scene {
       const alfaDaPoeira = this.relogio.alfa();
     // I-TELA-CLIMA-VISUAL: a estacao do tick, e o que ela desenha na vista
     const tempoDoClima = tickDaAgua + alfaDaPoeira;
-    const chaveDoClima = `${tempoDoClima.toFixed(2)},${this.scale.width},${this.scale.height}`;
+      const chaveDoClima = `${tempoDoClima.toFixed(2)},${camera.width},${camera.height},${camera.zoom},${camera.originX},${camera.originY}`;
     if (chaveDoClima !== ultimoQuadroDoClima) {
       ultimoQuadroDoClima = chaveDoClima;
       const fase = faseNoTick(tickDaAgua);
-      const w = this.scale.width;
-      const h = this.scale.height;
+        const w = camera.width;
+        const h = camera.height;
+        const ajuste = transformacaoDoClima(w,h,camera.zoom,camera.originX,camera.originY);
+        climaNaTela.setScale(ajuste.escala).setPosition(ajuste.x,ajuste.y);
       climaNaTela.clear();
       const veu = veuDaEstacao(fase, dadosDoClimaVisual);
       if (veu !== null && veu.alfa > 0) {
@@ -763,7 +766,12 @@ export class WorldScene extends Phaser.Scene {
       const calor = particulasDoCalor(fase, tempoDoClima, w, h, dadosDoClimaVisual);
       climaNaTela.fillStyle(Number.parseInt(dadosDoClimaVisual.calor.cor.slice(1), 16), dadosDoClimaVisual.calor.alfa);
       for (const p of calor) climaNaTela.fillCircle(p.x, p.y, dadosDoClimaVisual.calor.raioPx);
-      estado.clima = { estacao: fase?.id ?? null, veu, gotas: gotas.length, calor: calor.length };
+        const canto = camera.getWorldPoint(camera.x,camera.y);
+        estado.clima = { estacao: fase?.id ?? null, veu, gotas: gotas.length, calor: calor.length,
+          limites: { x: camera.x + (climaNaTela.x + camera.scrollX - canto.x)*camera.zoom,
+            y: camera.y + (climaNaTela.y + camera.scrollY - canto.y)*camera.zoom,
+            largura: w*climaNaTela.scaleX*camera.zoom, altura: h*climaNaTela.scaleY*camera.zoom },
+          vista: {x:camera.x,y:camera.y,largura:w,altura:h} };
     }
     // I-ARTE-PADRE: a cada quadro em que o tempo ou a partida mudam (a partida carregada pausada tambem)
     const jogo = this.ponte.atual;
