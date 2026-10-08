@@ -25,6 +25,7 @@ import type { ConfigDoPadreVisual } from '../padre-visual';
 const dadosDoPadreVisual = dadosDoPadreVisualCru as ConfigDoPadreVisual;
 const dadosDoClimaVisual = dadosDoClimaVisualCru as ConfigDoClimaVisual;
 import dadosDaObraRevelada from '../../../data/obra-revelacao.json';
+import { ladoDaMercadoriaNoEstoque, ladoPadraoDoEstoque } from '../estoque-visual';
 import { blocosVisiveis, recorteDoBloco } from '../obra-revelacao';
 import type { GradeDaObra } from '../obra-revelacao';
 import { chaminesRemovidas, particulasDaFumaca, type ParticulaDaFumaca } from '../fumaca';
@@ -2116,6 +2117,7 @@ export class WorldScene extends Phaser.Scene {
       if (pilhas.length > 0) {
         pilhasNoDebug[id] = pilhas.map((x) => ({
           gaveta: x.gaveta, mercadoria: x.mercadoria, n: x.n,
+          ladoPx: ladoDaMercadoriaNoEstoque(predio.tipo, x.mercadoria, ladoPadraoDoEstoque(tilePx)),
           ...this.fonteNoDebug(x.mercadoria),
         }));
       }
@@ -2405,7 +2407,7 @@ export class WorldScene extends Phaser.Scene {
       ...corpo,
       ...this.desenharTrabalho(predio.tipo, quadro, fumaca, caixa),
       ...this.desenharAnimais(animais, quadroAnimal, caixa, tilePx),
-      ...this.desenharPilhas(pilhas, caixa, tilePx),
+      ...this.desenharPilhas(predio.tipo, pilhas, caixa, tilePx),
       ...this.desenharMedidor(linhas, larguraPx, alturaPx, canteiro === null || canteiro.nivelada),
       ...this.desenharBandeira(predio, tilePx, contatoDaBandeira),
       ...this.desenharSinalDePausado(predio, caixa, tilePx),
@@ -2594,13 +2596,14 @@ export class WorldScene extends Phaser.Scene {
    *  (`posicoesNaPilha`), com o pe da pilha no ponto. PNG quando o manifesto tem a
    *  `pilha` da mercadoria; senao um quadrado com a cor do tema. */
   private desenharPilhas(
+    tipo: string,
     pilhas: readonly PilhaDesenhada[],
     caixa: { readonly x: number; readonly y: number; readonly w: number; readonly h: number },
     tilePx: number,
   ): Phaser.GameObjects.GameObject[] {
-    const lado = tilePx * LADO_DA_UNIDADE_EM_TILES;
     const objetos: Phaser.GameObjects.GameObject[] = [];
     for (const pilha of pilhas) {
+      const lado = ladoDaMercadoriaNoEstoque(tipo, pilha.mercadoria, ladoPadraoDoEstoque(tilePx));
       const px = caixa.x + caixa.w * pilha.ponto[0];
       const py = caixa.y + caixa.h * pilha.ponto[1];
       const fonte = this.fonteDaPilha(pilha.mercadoria);

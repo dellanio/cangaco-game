@@ -21346,3 +21346,10 @@ Verificado: correções somente em testes e infraestrutura. A fixture de save é
 Testes dirigidos: normal, 4 arquivos/21 testes; transladado, 5 arquivos/25 testes, todos verdes. Typecheck saiu 0. `npm run verify:rapido` saiu 0 (8 testes relacionados; typecheck, lint e dados verdes). Log: `test-output/2026-10-07-varredura-rapido.log`.
 
 Não verificado neste registro: suíte completa; resultados dirigidos não encerram esse portão. Nenhuma alteração em src/sim/, main, .claude/, AGENTS.md ou test-results.json.
+
+
+### 2026-10-07 - ajuste 7, I-TELA-PEDRA-ESTOQUE-MAIOR
+
+Verificado: pedra desenhada no estoque de quarry 30% maior nos dois eixos; ponto de contato e quantidade conservados. Dado em data/estoque-visual.json, regra pura em src/render/estoque-visual.ts. Lado-base antigo da pilha e 0,2 tile, distinto do lado de unidade militar (0,5 tile); mantido e agora parametrizado. Lado da pedra medido pela cena: 12,8 -> 16,64 px antes do fator padrao do icone. Testes dirigidos: 2 arquivos, 18 testes passaram. Captura aberta: screenshots/I-TELA-PEDRA-ESTOQUE-MAIOR-1-pedreira-tres-pedras-30-porcento.png, tres pedras. verify:rapido saida 0, 186 testes, 30 s. Nao verificado: homologacao visual do operador; merge ainda pendente.
+
+Correcao dos bloqueios anteriores: incorporados os aceites e a correcao de fixtures da worktree fix/fechamento-projeto. Corrida dirigida transladada em test-output/integracao-fixtures-transladado.log: 4 arquivos e 21 testes passaram, 19,52 s; includes filas civis, recuo civil, minas e transformacao das fixtures. Resultado completo antigo vermelho permanece no historico; nova verificacao completa sera rodada no fechamento.

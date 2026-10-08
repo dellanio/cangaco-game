@@ -44,6 +44,8 @@ export interface PredioNoDebug {
 
 /** F-VIVO-a — uma pilha desenhada, como o roteiro a le. */
 export interface PilhaNoDebug {
+  /** Lado real usado no desenho da mercadoria, em pixels de mundo. */
+  readonly ladoPx: number;
   readonly gaveta: GavetaDaPilha;
   readonly mercadoria: string;
   readonly n: number;
