@@ -121,3 +121,6 @@ relevantes foram preservados. So entao remover worktrees entregues, sem force.
 Nao remover a checkout principal nem atravessar junction de node_modules.
 Se sessao concorrente, arte nao homologada ou verificacao impedir isso,
 registrar bloqueio concreto e manter worktree/trabalho intactos.
+
+### Detalhamento do aceite 12 — custo sazonal compartilhado
+O carregador converte os custos retos/diagonais de estrada/solo para cada fase uma unica vez, com round(custo / multiplicadorVelocidade). A investida conserva seu bonus, com round(custo / (bonus * multiplicadorVelocidade)), sem aplicar a seca duas vezes. Simulacao, troca de vagas, colisao e interpolacao usam a mesma consulta. Na mudanca de fase, o passo em curso passa a usar o custo da fase atual; os ticks ja acumulados permanecem, chegando no proximo tick se o novo custo ja foi vencido. A velocidade efetiva por passo difere de 0,80 apenas pelo arredondamento de ate meio tick no custo. Todos os efeitos existentes de crescimento permanecem em data/clima.json, junto do novo multiplicador de velocidade por fase.
