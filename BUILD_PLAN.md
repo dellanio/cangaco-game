@@ -9521,6 +9521,8 @@ BALANCE_LOG como [proposta].
   teste mede no PNG que o par tem o mesmo tamanho e o mesmo pé (a linha mais baixa não transparente);
   (3) a prancha inverno x seca é gerada e aberta. A homologação é do operador.
 
+- Emenda do operador de 2026-10-08: a guarda do I-ARTE-ARVORE-SECA passa a afirmar que os seis estados antigos (presente, umbuzeiro, mandacaru, facheiro, xique-xique, macambira) existem e apontam para EXATAMENTE os mesmos arquivos de antes, comparando caminho por caminho; todo estado novo é `seca` ou `seca:<id>`, e para cada `seca:<id>` existe o estado `<id>` correspondente (`seca` corresponde a `presente`); nenhum outro estado aparece; o anchor continua [0.5, 1]. Uma sonda com o estado estranho `outono` e outra com o caminho de `mandacaru` trocado devem reprovar, e as sondas são apagadas depois. A entrada vegetação `umbuzeiro` não existe no mapa e é removida: o slot é `tree:umbuzeiro`, hoje a árvore seca, e seu par é `tree:seca:umbuzeiro`. O facheiro conserva as mesmas hastes e os mesmos braços do inverno, alterando somente a palidez.
+
 #### I-TELA-CAATINGA-PELA-ESTACAO — a mata troca de cara com a estação
 - O render escolhe a arte da vegetação pela estação do tick (`faseNoTick` em src/sim/clima.ts, só
   leitura): inverno usa o normal, seca usa o `seca`. Nas transições, a troca é por tile, numa ordem
