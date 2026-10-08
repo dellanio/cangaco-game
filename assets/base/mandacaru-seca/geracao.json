@@ -1,0 +1,35 @@
+{
+  "data": "2026-10-08",
+  "ferramenta": "OpenAI image_gen",
+  "geracao": "exec-0b924a2a-fb0f-41e1-a61b-864368f6e9bd",
+  "baseDoInverno": "base/mandacaru-seca/inverno.png",
+  "arquivoDoInverno": "sprites/vegetation/mandacaru-double-frame.png",
+  "sha256Inverno": "48d122306e2721ae69e069289c8c3ca1917754e6fe5a796837fc4fd6a79d8c46",
+  "sha256": "cdceaee52e591208f3eb00ad827722ade3c09b1411a21352b15133f576cef6ba",
+  "licenca": "Arte OpenAI 2026-10-08",
+  "promptResumo": "Par da seca do mesmo desenho; cactos palidos, macambira avermelhada, arvores sem folhas e galhos cinza; luz superior ligeiramente sul sem eixo leste-oeste.",
+  "derivacao": {
+    "tamanho": [
+      192,
+      256
+    ],
+    "caixaInverno": {
+      "x0": 68,
+      "y0": 132,
+      "x1": 123,
+      "y1": 251
+    },
+    "caixaGeracao": {
+      "x0": 386,
+      "y0": 739,
+      "x1": 700,
+      "y1": 1423
+    },
+    "filtro": "maior alfa por area",
+    "anchor": [
+      0.5,
+      1
+    ],
+    "pe": 251
+  }
+}

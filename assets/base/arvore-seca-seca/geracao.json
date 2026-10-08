@@ -1,0 +1,35 @@
+{
+  "data": "2026-10-08",
+  "ferramenta": "OpenAI image_gen",
+  "geracao": "exec-c9ca629b-a450-4fcc-8ced-194fdf7246cb",
+  "baseDoInverno": "base/arvore-seca-seca/inverno.png",
+  "arquivoDoInverno": "sprites/vegetation/arvore-seca-double-frame.png",
+  "sha256Inverno": "dc4b2f6bd29eb2bb163709becd2ddd4ea812db82bd589179a5bc7024e3a71753",
+  "sha256": "044664f05d81d5666f7e671d85152ab1fa6d8f7b7edefb1c57e41ff05333a785",
+  "licenca": "Arte OpenAI 2026-10-08",
+  "promptResumo": "Par da seca do mesmo desenho; cactos palidos, macambira avermelhada, arvores sem folhas e galhos cinza; luz superior ligeiramente sul sem eixo leste-oeste.",
+  "derivacao": {
+    "tamanho": [
+      192,
+      256
+    ],
+    "caixaInverno": {
+      "x0": 0,
+      "y0": 47,
+      "x1": 191,
+      "y1": 250
+    },
+    "caixaGeracao": {
+      "x0": 2,
+      "y0": 252,
+      "x1": 1083,
+      "y1": 1414
+    },
+    "filtro": "maior alfa por area",
+    "anchor": [
+      0.5,
+      1
+    ],
+    "pe": 250
+  }
+}

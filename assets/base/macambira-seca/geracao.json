@@ -1,0 +1,35 @@
+{
+  "data": "2026-10-08",
+  "ferramenta": "OpenAI image_gen",
+  "geracao": "exec-e96cd910-4249-4de2-804d-e5f7967a6ba1",
+  "baseDoInverno": "base/macambira-seca/inverno.png",
+  "arquivoDoInverno": "sprites/vegetation/macambira-double-frame.png",
+  "sha256Inverno": "a84827b6f0a57608662f2917246ce3862aebc68ac2884980703657bc99cdef70",
+  "sha256": "5bc82848f85b3315ea38a9772bd9d12083a1e887becadf436da772c319ef7b50",
+  "licenca": "Arte OpenAI 2026-10-08",
+  "promptResumo": "Par da seca do mesmo desenho; cactos palidos, macambira avermelhada, arvores sem folhas e galhos cinza; luz superior ligeiramente sul sem eixo leste-oeste.",
+  "derivacao": {
+    "tamanho": [
+      192,
+      256
+    ],
+    "caixaInverno": {
+      "x0": 52,
+      "y0": 188,
+      "x1": 139,
+      "y1": 251
+    },
+    "caixaGeracao": {
+      "x0": 283,
+      "y0": 959,
+      "x1": 804,
+      "y1": 1339
+    },
+    "filtro": "maior alfa por area",
+    "anchor": [
+      0.5,
+      1
+    ],
+    "pe": 251
+  }
+}

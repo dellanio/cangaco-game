@@ -26,7 +26,24 @@ describe('I-ARTE-ARVORE-SECA', () => {
   });
 
   it('os outros estados e o anchor ficam', () => {
-    expect(Object.keys(tree.estados)).toEqual(['presente', 'umbuzeiro', 'mandacaru', 'facheiro', 'xique-xique', 'macambira']);
+    const antigos: Readonly<Record<string, string>> = {
+      presente: 'sprites/vegetation/tree-D-double.png',
+      umbuzeiro: 'sprites/vegetation/arvore-seca-double-frame.png',
+      mandacaru: 'sprites/vegetation/mandacaru-double-frame.png',
+      facheiro: 'sprites/vegetation/facheiro-double-frame.png',
+      'xique-xique': 'sprites/vegetation/xique-xique-double-frame.png',
+      macambira: 'sprites/vegetation/macambira-double-frame.png',
+    };
+    for (const [estado, caminho] of Object.entries(antigos)) {
+      expect(tree.estados[estado], estado).toBe(caminho);
+    }
+    for (const estado of Object.keys(tree.estados)) {
+      if (Object.hasOwn(antigos, estado)) continue;
+      expect(estado === 'seca' || estado.startsWith('seca:'), estado).toBe(true);
+      const inverno = estado === 'seca' ? 'presente' : estado.slice('seca:'.length);
+      expect(Object.hasOwn(antigos, inverno), estado).toBe(true);
+      expect(tree.estados[inverno], estado).toBe(antigos[inverno]);
+    }
     expect(tree.anchor).toEqual([0.5, 1]);
   });
 });

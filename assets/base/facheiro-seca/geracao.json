@@ -1,0 +1,36 @@
+{
+  "data": "2026-10-08",
+  "ferramenta": "OpenAI image_gen",
+  "geracao": "exec-3dbfc5f6-64a2-4927-b2ba-c73e36072ca2",
+  "geracaoAnteriorReprovada": "exec-ce20c4a1-4cfa-4a3d-9927-ca2f36bd9fe4",
+  "baseDoInverno": "base/facheiro-seca/inverno.png",
+  "arquivoDoInverno": "sprites/vegetation/facheiro-double-frame.png",
+  "sha256Inverno": "7dce7ca5737fa5f2b379bcd014680483a95dd579fbd300438121453511d914c7",
+  "sha256": "b6a39197ee175eaa19da32f7680607ea9da5ec52894a23da95fcf5719cf6ac3f",
+  "licenca": "Arte OpenAI 2026-10-08",
+  "promptResumo": "Recoloracao do facheiro de inverno: conservar exatamente hastes finas, bracos, espinhos, silhueta, quadro e pe; alterar somente pigmento verde para oliva acinzentado ligeiramente palido. Luz unica superior levemente sul, sem eixo leste-oeste; transparente, sem solo nem texto.",
+  "derivacao": {
+    "tamanho": [
+      192,
+      256
+    ],
+    "caixaInverno": {
+      "x0": 73,
+      "y0": 132,
+      "x1": 117,
+      "y1": 251
+    },
+    "caixaGeracao": {
+      "x0": 406,
+      "y0": 744,
+      "x1": 664,
+      "y1": 1431
+    },
+    "filtro": "maior alfa por area",
+    "anchor": [
+      0.5,
+      1
+    ],
+    "pe": 251
+  }
+}

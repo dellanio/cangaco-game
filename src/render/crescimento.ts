@@ -46,7 +46,7 @@ export function escalaDoPlaceholder(estado: EstadoDeCrescimento): number {
  *  arvore adulta. */
 export function especiesDaVegetacao(estados: readonly string[]): string[] {
   const crescimento: readonly string[] = ESTADOS_DE_CRESCIMENTO;
-  return estados.filter((estado) => !crescimento.includes(estado));
+  return estados.filter((estado) => !crescimento.includes(estado) && estado !== 'seca' && !estado.startsWith('seca:'));
 }
 
 /**

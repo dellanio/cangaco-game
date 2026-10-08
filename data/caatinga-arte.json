@@ -1,0 +1,48 @@
+{
+  "pares": [
+    {
+      "id": "tree",
+      "entrada": "tree",
+      "estado": "presente",
+      "inverno": "sprites/vegetation/tree-D-double.png",
+      "geracao": "exec-06741ce7-84bd-4d93-a717-12c4a5df8710"
+    },
+    {
+      "id": "mandacaru",
+      "entrada": "tree",
+      "estado": "mandacaru",
+      "inverno": "sprites/vegetation/mandacaru-double-frame.png",
+      "geracao": "exec-0b924a2a-fb0f-41e1-a61b-864368f6e9bd"
+    },
+    {
+      "id": "xique-xique",
+      "entrada": "tree",
+      "estado": "xique-xique",
+      "inverno": "sprites/vegetation/xique-xique-double-frame.png",
+      "geracao": "exec-d6334f0e-d8bf-4897-8823-2e83bcc02150"
+    },
+    {
+      "id": "facheiro",
+      "entrada": "tree",
+      "estado": "facheiro",
+      "inverno": "sprites/vegetation/facheiro-double-frame.png",
+      "geracao": "exec-3dbfc5f6-64a2-4927-b2ba-c73e36072ca2",
+      "geracaoAnteriorReprovada": "exec-ce20c4a1-4cfa-4a3d-9927-ca2f36bd9fe4",
+      "promptResumo": "Recoloracao do facheiro de inverno: conservar exatamente hastes finas, bracos, espinhos, silhueta, quadro e pe; alterar somente pigmento verde para oliva acinzentado ligeiramente palido. Luz unica superior levemente sul, sem eixo leste-oeste; transparente, sem solo nem texto."
+    },
+    {
+      "id": "macambira",
+      "entrada": "tree",
+      "estado": "macambira",
+      "inverno": "sprites/vegetation/macambira-double-frame.png",
+      "geracao": "exec-e96cd910-4249-4de2-804d-e5f7967a6ba1"
+    },
+    {
+      "id": "arvore-seca",
+      "entrada": "tree",
+      "estado": "umbuzeiro",
+      "inverno": "sprites/vegetation/arvore-seca-double-frame.png",
+      "geracao": "exec-c9ca629b-a450-4fcc-8ced-194fdf7246cb"
+    }
+  ]
+}
