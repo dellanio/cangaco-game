@@ -43,3 +43,21 @@ a selecao pela soma de todo o lajedo do D-TELA-SERRA-POR-LAJEDO (opcao A de
 4. Integrar regra pura e render, validar extracao e evidencias, commit da feature.
 
 O rio segue aguardando a decisao propria de testes/mapa. Main e noru intocadas.
+
+## Implementacao das juncoes — 2026-10-09, antes do consumo pelo render
+
+A prova externa com rampas alfa FIXAS nas bordas de encaixe passou pela revisao
+independente. O tratamento se aplica somente a juncoes, nunca a quantidade,
+tempo ou interpolacao entre volumes. Cada volume menor nasce de desenho nativo.
+Os primeiros dois atlas usaram duas chamadas para o volume intacto; com os
+quatro volumes menores o total previsto passa a seis chamadas, incluindo a
+correcao reprovada. Sem aprovar candidatos antigos por causa desse custo.
+
+Ha duas mascaras: `m` descreve vizinhos presentes no chao; `h` descreve os
+vizinhos cuja altura e pelo menos a do tile. A face alta fica exposta diante
+de um vizinho mais baixo, com apoio nativo. `h` e sempre subconjunto de `m`.
+O estado `v<volume>:h<h>:m<m>` aponta ao desenho nativo da mascara de altura.
+Aliases no manifesto compartilham arquivos, preservando as 16 conexoes do
+chao e os estados antigos; a guarda F-TR continua lendo o sufixo `m` da
+textura REAL, e a guarda nova confere tambem `h` e seu arquivo correspondente.
+Nenhuma assercao antiga e removida ou afrouxada.
