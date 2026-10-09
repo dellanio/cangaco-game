@@ -1,0 +1,837 @@
+{
+  "doc": "Diagnostico sem alterar ativos; arte nova precisa validar integralmente.",
+  "fontes": [
+    {
+      "id": "rock",
+      "categoria": "natural",
+      "tipo": "vegetacao",
+      "footprint": [
+        1,
+        1
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "origem": {
+        "base": "base/rocks-atlas/rocks-atlas-source.png",
+        "semente": null,
+        "nota": "Afloramento autoral derivado em presente mais 16 mascaras cardinais 128x160; as bordas reduzem e deslocam a massa para dentro do aglomerado sem touceira ou pedra cortada."
+      },
+      "estados": [
+        {
+          "estado": "presente",
+          "path": "sprites/props/rock-autotile/rock.png",
+          "tamanho": [
+            128,
+            160
+          ],
+          "pe": 156,
+          "sha256": "0002ea5f0bd8265ef82a85d7ec2254f5289d2534dc5b444bafae6664ab7c88da",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "presente/front/0: luz sul invertida (Δ=-10.0)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "presente/front/0: 62 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "m0",
+          "path": "sprites/props/rock-autotile/rock-m0.png",
+          "tamanho": [
+            128,
+            160
+          ],
+          "pe": 156,
+          "sha256": "0002ea5f0bd8265ef82a85d7ec2254f5289d2534dc5b444bafae6664ab7c88da",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "m0/front/0: luz sul invertida (Δ=-10.0)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "m0/front/0: 62 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "m1",
+          "path": "sprites/props/rock-autotile/rock-m1.png",
+          "tamanho": [
+            128,
+            160
+          ],
+          "pe": 153,
+          "sha256": "84f2ac52c005327c73b8bedd929c59e97c58c98db78b3af75b31a3524305c81e",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "m1/front/0: luz sul invertida (Δ=-10.2)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "m1/front/0: 54 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "m2",
+          "path": "sprites/props/rock-autotile/rock-m2.png",
+          "tamanho": [
+            128,
+            160
+          ],
+          "pe": 156,
+          "sha256": "d189a2b439971704427d0e05c56c3053a4cb45628a05c4c806194012070b23f2",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "m2/front/0: luz sul invertida (Δ=-10.2)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "m2/front/0: 54 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "m3",
+          "path": "sprites/props/rock-autotile/rock-m3.png",
+          "tamanho": [
+            128,
+            160
+          ],
+          "pe": 153,
+          "sha256": "08c795e6d59f1dbdee6a542738b39edc47bb50afbb85b033f7bb35faad30af7a",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "m3/front/0: luz sul invertida (Δ=-10.0)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "m3/front/0: 48 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "m4",
+          "path": "sprites/props/rock-autotile/rock-m4.png",
+          "tamanho": [
+            128,
+            160
+          ],
+          "pe": 159,
+          "sha256": "1219c864b8eaf496319ec4a47236f758467913e53b1092504cc280bdeca2c471",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "m4/front/0: luz sul invertida (Δ=-10.2)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "m4/front/0: 51 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "m5",
+          "path": "sprites/props/rock-autotile/rock-m5.png",
+          "tamanho": [
+            128,
+            160
+          ],
+          "pe": 156,
+          "sha256": "cfedd9eb501c6d96ae1f11e11a23568970494de635b60d5c887ea17d0835d1cd",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "m5/front/0: luz sul invertida (Δ=-10.0)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "m5/front/0: 48 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "m6",
+          "path": "sprites/props/rock-autotile/rock-m6.png",
+          "tamanho": [
+            128,
+            160
+          ],
+          "pe": 159,
+          "sha256": "134bc6e44da7e668963b43ad29e45dd896aa282812e1bc69c5f8b38058e791bc",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "m6/front/0: luz sul invertida (Δ=-10.0)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "m6/front/0: 45 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "m7",
+          "path": "sprites/props/rock-autotile/rock-m7.png",
+          "tamanho": [
+            128,
+            160
+          ],
+          "pe": 156,
+          "sha256": "15a8e66f7a03373641f33650e63dd7c35107840bc859bd307c99278cb0b56529",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "m7/front/0: luz sul invertida (Δ=-10.1)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "m7/front/0: 52 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "m8",
+          "path": "sprites/props/rock-autotile/rock-m8.png",
+          "tamanho": [
+            128,
+            160
+          ],
+          "pe": 156,
+          "sha256": "4683907d57b9de0d741fab9b94f04d814107b9bb23a7b8d6d4e19ff8cc48c117",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "m8/front/0: luz sul invertida (Δ=-10.2)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "m8/front/0: 54 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "m9",
+          "path": "sprites/props/rock-autotile/rock-m9.png",
+          "tamanho": [
+            128,
+            160
+          ],
+          "pe": 153,
+          "sha256": "bac62b439a90b20bccf56061d0549593a5b5793aa72398b7b3faba604a411efa",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "m9/front/0: luz sul invertida (Δ=-10.0)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "m9/front/0: 48 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "m10",
+          "path": "sprites/props/rock-autotile/rock-m10.png",
+          "tamanho": [
+            128,
+            160
+          ],
+          "pe": 156,
+          "sha256": "cfedd9eb501c6d96ae1f11e11a23568970494de635b60d5c887ea17d0835d1cd",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "m10/front/0: luz sul invertida (Δ=-10.0)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "m10/front/0: 48 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "m11",
+          "path": "sprites/props/rock-autotile/rock-m11.png",
+          "tamanho": [
+            128,
+            160
+          ],
+          "pe": 153,
+          "sha256": "b2bf9d8023a0fb1bf3066b581ff0fbd897cdc9b7a6124f8ca0b42727cffaa917",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "m11/front/0: luz sul invertida (Δ=-10.1)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "m11/front/0: 52 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "m12",
+          "path": "sprites/props/rock-autotile/rock-m12.png",
+          "tamanho": [
+            128,
+            160
+          ],
+          "pe": 159,
+          "sha256": "6f32160f116ef98f42117320cb82f9df146794f2c3578b66fa9bba6c090d37a2",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "m12/front/0: luz sul invertida (Δ=-10.0)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "m12/front/0: 45 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "m13",
+          "path": "sprites/props/rock-autotile/rock-m13.png",
+          "tamanho": [
+            128,
+            160
+          ],
+          "pe": 156,
+          "sha256": "2bb756072131c4683c3c2c2f3b8fe4f73ebe16cf2cc748599ed980edfbde15ed",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "m13/front/0: luz sul invertida (Δ=-10.1)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "m13/front/0: 52 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "m14",
+          "path": "sprites/props/rock-autotile/rock-m14.png",
+          "tamanho": [
+            128,
+            160
+          ],
+          "pe": 159,
+          "sha256": "9c191347b8b813c65c7d433123a038e15765ebe99a70ea8af8c561e925257465",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "m14/front/0: luz sul invertida (Δ=-10.1)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "m14/front/0: 48 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "m15",
+          "path": "sprites/props/rock-autotile/rock-m15.png",
+          "tamanho": [
+            128,
+            160
+          ],
+          "pe": 156,
+          "sha256": "61b6155b0847d8a31c98131f5ae9863e256daea6301991a8335396ff223a9fd0",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "m15/front/0: luz sul invertida (Δ=-10.2)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "m15/front/0: 43 pixels transparentes de borda sem bleed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tree",
+      "categoria": "natural",
+      "tipo": "vegetacao",
+      "footprint": [
+        1,
+        1
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "origem": {
+        "base": "base/vegetation-sertao/juazeiro-D-double-master-2x.png",
+        "semente": null,
+        "nota": "Juazeiro D generation-01 com silhueta linear 2x no quadro 192x256, pe preservado. Outros estados somente acolchoados com transparencia no mesmo quadro, sem aumento visual. Candidata com luz anterior. I-ARTE-ARVORE-SECA (pedido do operador, 2026-10-05): o estado `umbuzeiro` (a arvore pequena que destoava) passou a apontar para uma ARVORE SECA da caatinga, no porte do juazeiro: PixelLab create_image_pro, job 72ed5301-21ec-4c70-b37d-38dedec62d00, estilo do juazeiro D como referencia, sha256 c5ab80a6ced07fc538dc76b86d6e3ae472e440fe1029b63a7e752c8b0cf5207b; o pe descido 19 px para a linha do juazeiro (pixels de alfa > 128); master 2x em base/vegetation-sertao/arvore-seca-master-2x.png. A chave `umbuzeiro` ficou (vento.json e a distribuicao das especies a leem); o nome do estado e o slot, nao a especie desenhada. Pares da seca em base/<especie>-seca/geracao.json, com origem apontando a copia versionada do inverno e SHA256. Seis estados OpenAI 2026-10-08; mesma linha do pe e quadro."
+      },
+      "estados": [
+        {
+          "estado": "presente",
+          "path": "sprites/vegetation/tree-D-double.png",
+          "tamanho": [
+            192,
+            256
+          ],
+          "pe": 253,
+          "sha256": "a8cd74d7e7db0f9a15fdf42cc4346bbc74d9962a2788d8c392138369424c8296",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "presente/front/0: luz sul invertida (Δ=-11.3)"
+            }
+          ]
+        },
+        {
+          "estado": "umbuzeiro",
+          "path": "sprites/vegetation/arvore-seca-double-frame.png",
+          "tamanho": [
+            192,
+            256
+          ],
+          "pe": 250,
+          "sha256": "dc4b2f6bd29eb2bb163709becd2ddd4ea812db82bd589179a5bc7024e3a71753",
+          "erros": [
+            {
+              "code": "alpha-bleed",
+              "detail": "umbuzeiro/front/0: 1820 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "mandacaru",
+          "path": "sprites/vegetation/mandacaru-double-frame.png",
+          "tamanho": [
+            192,
+            256
+          ],
+          "pe": 251,
+          "sha256": "48d122306e2721ae69e069289c8c3ca1917754e6fe5a796837fc4fd6a79d8c46",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "mandacaru/front/0: luz sul invertida (Δ=-9.8)"
+            }
+          ]
+        },
+        {
+          "estado": "facheiro",
+          "path": "sprites/vegetation/facheiro-double-frame.png",
+          "tamanho": [
+            192,
+            256
+          ],
+          "pe": 251,
+          "sha256": "7dce7ca5737fa5f2b379bcd014680483a95dd579fbd300438121453511d914c7",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "facheiro/front/0: luz sul invertida (Δ=-11.1)"
+            }
+          ]
+        },
+        {
+          "estado": "xique-xique",
+          "path": "sprites/vegetation/xique-xique-double-frame.png",
+          "tamanho": [
+            192,
+            256
+          ],
+          "pe": 251,
+          "sha256": "959dbecca32f1e5b1525488a6a757b0914e2f507726b4e137831aa37a31a8768",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "xique-xique/front/0: luz sul invertida (Δ=-16.8)"
+            }
+          ]
+        },
+        {
+          "estado": "macambira",
+          "path": "sprites/vegetation/macambira-double-frame.png",
+          "tamanho": [
+            192,
+            256
+          ],
+          "pe": 251,
+          "sha256": "a84827b6f0a57608662f2917246ce3862aebc68ac2884980703657bc99cdef70",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "macambira/front/0: luz sul invertida (Δ=-24.3)"
+            }
+          ]
+        },
+        {
+          "estado": "seca",
+          "path": "sprites/vegetation/tree-seca-20261008.png",
+          "tamanho": [
+            192,
+            256
+          ],
+          "pe": 253,
+          "sha256": "b92f00ac7fb40815a15ffb34e9243a9db2a4572fe15e19a7a90bf4c082d01d57",
+          "erros": [
+            {
+              "code": "alpha-bleed",
+              "detail": "seca/front/0: 69 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "seca:mandacaru",
+          "path": "sprites/vegetation/mandacaru-seca-20261008.png",
+          "tamanho": [
+            192,
+            256
+          ],
+          "pe": 251,
+          "sha256": "72fab4b61a0d814116851806f41871cf2c26094092d135b29313f1d8d0753350",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "seca:mandacaru/front/0: luz sul invertida (Δ=-17.0)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "seca:mandacaru/front/0: 122 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "seca:xique-xique",
+          "path": "sprites/vegetation/xique-xique-seca-20261008.png",
+          "tamanho": [
+            192,
+            256
+          ],
+          "pe": 251,
+          "sha256": "66a55e1ba1500e746339f98ae2fd991685c62971f44a10e96cab3237412e33cb",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "seca:xique-xique/front/0: luz sul invertida (Δ=-16.3)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "seca:xique-xique/front/0: 87 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "seca:facheiro",
+          "path": "sprites/vegetation/facheiro-seca-20261008.png",
+          "tamanho": [
+            192,
+            256
+          ],
+          "pe": 251,
+          "sha256": "3ab73a79e26f9154325c4cc608329156549b034a1b3968d214c123191200fe60",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "seca:facheiro/front/0: luz sul invertida (Δ=-9.3)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "seca:facheiro/front/0: 77 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "seca:macambira",
+          "path": "sprites/vegetation/macambira-seca-20261008.png",
+          "tamanho": [
+            192,
+            256
+          ],
+          "pe": 251,
+          "sha256": "24ef072275ba6b77acf1f2e9bd52d37c46205378adfcdcf026f3d5b10bd1390b",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "seca:macambira/front/0: luz sul invertida (Δ=-14.3)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "seca:macambira/front/0: 102 pixels transparentes de borda sem bleed"
+            }
+          ]
+        },
+        {
+          "estado": "seca:umbuzeiro",
+          "path": "sprites/vegetation/arvore-seca-seca-20261008.png",
+          "tamanho": [
+            192,
+            256
+          ],
+          "pe": 250,
+          "sha256": "8119815a48aa37fb67f8956b010b2934186a28e6405b07affdec819f582186dd",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "seca:umbuzeiro/front/0: luz sul invertida (Δ=-7.2)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "seca:umbuzeiro/front/0: 94 pixels transparentes de borda sem bleed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fish",
+      "categoria": "natural",
+      "tipo": "recurso",
+      "footprint": [
+        1,
+        1
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "origem": {
+        "base": "base/resource-atlas/source.png",
+        "semente": null,
+        "nota": "Derivado pela skill pianco-art-pipeline do layout fish."
+      },
+      "estados": [
+        {
+          "estado": "presente",
+          "path": "sprites/resources/fish.png",
+          "tamanho": [
+            64,
+            64
+          ],
+          "pe": 63,
+          "sha256": "36455b598ef44c49e2cf57c50d2c95d3b5ec18ce7e45488072c1130ddea86660",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "presente/front/0: luz sul invertida (Δ=-4.0)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "presente/front/0: 9 pixels transparentes de borda sem bleed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "corn",
+      "categoria": "cultivo",
+      "tipo": "recurso",
+      "footprint": [
+        1,
+        1
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "origem": {
+        "base": "base/resources/corn-D-master-2x.png",
+        "semente": null,
+        "nota": "Candidato D derivado de candidatos/D/corn-tile/generation-01-raw.png; milho maduro no tile."
+      },
+      "estados": [
+        {
+          "estado": "presente",
+          "path": "sprites/resources/corn-D.png",
+          "tamanho": [
+            64,
+            64
+          ],
+          "pe": 63,
+          "sha256": "314698f28a415368306d3a7ab7f919078acb6ce6a64787c49c72d9520b48e8be",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "presente/front/0: luz sul invertida (Δ=-18.3)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "presente/front/0: 13 pixels transparentes de borda sem bleed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "grapes",
+      "categoria": "cultivo",
+      "tipo": "recurso",
+      "footprint": [
+        1,
+        1
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "origem": {
+        "base": "base/resources/grapes-D-master-2x.png",
+        "semente": null,
+        "nota": "Candidato D derivado de candidatos/D/sugarcane-tile/generation-01-raw.png; id grapes representa cana-de-acucar."
+      },
+      "estados": [
+        {
+          "estado": "presente",
+          "path": "sprites/resources/grapes-D.png",
+          "tamanho": [
+            64,
+            64
+          ],
+          "pe": 63,
+          "sha256": "e7b13415b25c8edb1f66fa7b9ed7a800aa7c40b8206a5feddfa152685f8c64c8",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "presente/front/0: luz sul invertida (Δ=-1.6)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "presente/front/0: 8 pixels transparentes de borda sem bleed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "coal",
+      "categoria": "natural",
+      "tipo": "recurso",
+      "footprint": [
+        1,
+        1
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "origem": {
+        "base": "base/resource-atlas/source.png",
+        "semente": null,
+        "nota": "Derivado pela skill pianco-art-pipeline do layout coal."
+      },
+      "estados": [
+        {
+          "estado": "presente",
+          "path": "sprites/resources/coal.png",
+          "tamanho": [
+            64,
+            64
+          ],
+          "pe": 63,
+          "sha256": "2ee4c4c56370996e2e322f6b33ebb8de4b7523ada1c77cff456607c6a456d20b",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "presente/front/0: luz sul invertida (Δ=-15.0)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "presente/front/0: 42 pixels transparentes de borda sem bleed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "iron_ore",
+      "categoria": "natural",
+      "tipo": "recurso",
+      "footprint": [
+        1,
+        1
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "origem": {
+        "base": "base/resource-atlas/source.png",
+        "semente": null,
+        "nota": "Derivado pela skill pianco-art-pipeline do layout iron_ore."
+      },
+      "estados": [
+        {
+          "estado": "presente",
+          "path": "sprites/resources/iron_ore.png",
+          "tamanho": [
+            64,
+            64
+          ],
+          "pe": 57,
+          "sha256": "426ef94a9cf997c19d19ab1a15c19fef9da9fe1025deb1187233eb9f2c9d2234",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "presente/front/0: luz sul invertida (Δ=-29.0)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "presente/front/0: 41 pixels transparentes de borda sem bleed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gold_ore",
+      "categoria": "natural",
+      "tipo": "recurso",
+      "footprint": [
+        1,
+        1
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "origem": {
+        "base": "base/resource-atlas/source.png",
+        "semente": null,
+        "nota": "Derivado pela skill pianco-art-pipeline do layout gold_ore."
+      },
+      "estados": [
+        {
+          "estado": "presente",
+          "path": "sprites/resources/gold_ore.png",
+          "tamanho": [
+            64,
+            64
+          ],
+          "pe": 58,
+          "sha256": "1cef2c00a3d3ebf8e96ffa646e0317d330c02d53d43ede28ec51efd1d13e4447",
+          "erros": [
+            {
+              "code": "light-direction",
+              "detail": "presente/front/0: luz sul invertida (Δ=-7.3)"
+            },
+            {
+              "code": "alpha-bleed",
+              "detail": "presente/front/0: 53 pixels transparentes de borda sem bleed"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
