@@ -1,0 +1,46 @@
+{
+  "escala": 0.05226480836236934,
+  "estados": [
+    {
+      "estado": "presente",
+      "width": 59,
+      "height": 60
+    }
+  ],
+  "report": {
+    "id": "fish",
+    "kind": "resource",
+    "mode": "trial",
+    "approved": false,
+    "success": true,
+    "errors": [],
+    "warnings": [
+      "Ensaio técnico sem calibração cromática; não equivale a aprovação"
+    ],
+    "frames": [
+      {
+        "state": "presente",
+        "direction": "front",
+        "index": 0,
+        "path": "D:/projetos-pessoal/cangaco-game-candidatos/arte/D/fontes-naturais-20261009/fish/derivados-1/presente.png",
+        "footline": 62,
+        "centroidX": 31.585218541589335,
+        "regions": [
+          {
+            "luma": 129.44973708121896,
+            "hue": 73.2861618821857
+          },
+          {
+            "luma": 127.36244568939075,
+            "hue": 70.04720477138608
+          },
+          {
+            "luma": 137.76752932147306,
+            "hue": 63.20969684105228
+          }
+        ]
+      }
+    ],
+    "contactSheets": []
+  }
+}

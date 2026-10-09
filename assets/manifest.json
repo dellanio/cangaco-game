@@ -2456,13 +2456,14 @@
         1
       ],
       "estados": {
-        "presente": "sprites/resources/fish.png"
+        "presente": "sprites/resources/fish/presente.png",
+        "legado": "sprites/resources/fish.png"
       },
       "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
       "origem": {
-        "base": "base/resource-atlas/source.png",
+        "base": "base/fish-natural/atlas-1.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout fish."
+        "nota": "Geracao nativa exec-b0b26c1d-83cb-4c51-ab6e-96c7b942a544.png. Derivacao tecnica comum tools/derivar-fontes-naturais.mjs; bleed apenas em alpha zero."
       }
     },
     {
@@ -2531,13 +2532,16 @@
         1
       ],
       "estados": {
-        "presente": "sprites/resources/coal.png"
+        "presente": "sprites/resources/coal/presente.png",
+        "legado": "sprites/resources/coal.png",
+        "reduzido": "sprites/resources/coal/reduzido.png",
+        "remanescente": "sprites/resources/coal/remanescente.png"
       },
       "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
       "origem": {
-        "base": "base/resource-atlas/source.png",
+        "base": "base/coal-natural/atlas-2.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout coal."
+        "nota": "Geracao nativa exec-7745028e-12ef-4b04-a4cc-768122d6f74c.png. Derivacao tecnica comum tools/derivar-fontes-naturais.mjs; bleed apenas em alpha zero."
       }
     },
     {
@@ -2556,13 +2560,16 @@
         1
       ],
       "estados": {
-        "presente": "sprites/resources/iron_ore.png"
+        "presente": "sprites/resources/iron_ore/presente.png",
+        "legado": "sprites/resources/iron_ore.png",
+        "reduzido": "sprites/resources/iron_ore/reduzido.png",
+        "remanescente": "sprites/resources/iron_ore/remanescente.png"
       },
       "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
       "origem": {
-        "base": "base/resource-atlas/source.png",
+        "base": "base/iron_ore-natural/atlas-2.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout iron_ore."
+        "nota": "Geracao nativa exec-c7fc763b-773f-4f16-befa-511c9e6740f0.png. Derivacao tecnica comum tools/derivar-fontes-naturais.mjs; bleed apenas em alpha zero."
       }
     },
     {
@@ -2581,13 +2588,16 @@
         1
       ],
       "estados": {
-        "presente": "sprites/resources/gold_ore.png"
+        "presente": "sprites/resources/gold_ore/presente.png",
+        "legado": "sprites/resources/gold_ore.png",
+        "reduzido": "sprites/resources/gold_ore/reduzido.png",
+        "remanescente": "sprites/resources/gold_ore/remanescente.png"
       },
       "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
       "origem": {
-        "base": "base/resource-atlas/source.png",
+        "base": "base/gold_ore-natural/atlas-2.png",
         "semente": null,
-        "nota": "Derivado pela skill pianco-art-pipeline do layout gold_ore."
+        "nota": "Geracao nativa exec-de6fc894-50fd-4267-87bc-cee37101d67c.png. Derivacao tecnica comum tools/derivar-fontes-naturais.mjs; bleed apenas em alpha zero."
       }
     },
     {

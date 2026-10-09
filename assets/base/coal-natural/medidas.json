@@ -1,0 +1,100 @@
+{
+  "escala": 0.091324200913242,
+  "estados": [
+    {
+      "estado": "presente",
+      "width": 60,
+      "height": 48
+    },
+    {
+      "estado": "reduzido",
+      "width": 60,
+      "height": 33
+    },
+    {
+      "estado": "remanescente",
+      "width": 58,
+      "height": 20
+    }
+  ],
+  "report": {
+    "id": "coal",
+    "kind": "resource",
+    "mode": "trial",
+    "approved": false,
+    "success": true,
+    "errors": [],
+    "warnings": [
+      "Ensaio técnico sem calibração cromática; não equivale a aprovação"
+    ],
+    "frames": [
+      {
+        "state": "presente",
+        "direction": "front",
+        "index": 0,
+        "path": "D:/projetos-pessoal/cangaco-game-candidatos/arte/D/fontes-naturais-20261009/coal/derivados-2/presente.png",
+        "footline": 62,
+        "centroidX": 31.53133497850948,
+        "regions": [
+          {
+            "luma": 27.791512868454543,
+            "hue": null
+          },
+          {
+            "luma": 52.12638610865412,
+            "hue": null
+          },
+          {
+            "luma": 59.08862052429266,
+            "hue": null
+          }
+        ]
+      },
+      {
+        "state": "reduzido",
+        "direction": "front",
+        "index": 0,
+        "path": "D:/projetos-pessoal/cangaco-game-candidatos/arte/D/fontes-naturais-20261009/coal/derivados-2/reduzido.png",
+        "footline": 62,
+        "centroidX": 31.15998232304586,
+        "regions": [
+          {
+            "luma": 32.62348593613177,
+            "hue": null
+          },
+          {
+            "luma": 60.741708928249516,
+            "hue": null
+          },
+          {
+            "luma": 55.67637512155026,
+            "hue": null
+          }
+        ]
+      },
+      {
+        "state": "remanescente",
+        "direction": "front",
+        "index": 0,
+        "path": "D:/projetos-pessoal/cangaco-game-candidatos/arte/D/fontes-naturais-20261009/coal/derivados-2/remanescente.png",
+        "footline": 62,
+        "centroidX": 31.420973631328486,
+        "regions": [
+          {
+            "luma": 36.28507328193923,
+            "hue": null
+          },
+          {
+            "luma": 56.77600408889743,
+            "hue": null
+          },
+          {
+            "luma": 48.6546830827519,
+            "hue": null
+          }
+        ]
+      }
+    ],
+    "contactSheets": []
+  }
+}

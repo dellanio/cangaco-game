@@ -1,0 +1,100 @@
+{
+  "escala": 0.08836524300441827,
+  "estados": [
+    {
+      "estado": "presente",
+      "width": 60,
+      "height": 46
+    },
+    {
+      "estado": "reduzido",
+      "width": 58,
+      "height": 32
+    },
+    {
+      "estado": "remanescente",
+      "width": 59,
+      "height": 20
+    }
+  ],
+  "report": {
+    "id": "iron_ore",
+    "kind": "resource",
+    "mode": "trial",
+    "approved": false,
+    "success": true,
+    "errors": [],
+    "warnings": [
+      "Ensaio técnico sem calibração cromática; não equivale a aprovação"
+    ],
+    "frames": [
+      {
+        "state": "presente",
+        "direction": "front",
+        "index": 0,
+        "path": "D:/projetos-pessoal/cangaco-game-candidatos/arte/D/fontes-naturais-20261009/iron_ore/derivados-2/presente.png",
+        "footline": 62,
+        "centroidX": 31.048055691920403,
+        "regions": [
+          {
+            "luma": 39.02730834985943,
+            "hue": 16.642553841158588
+          },
+          {
+            "luma": 66.6765383478288,
+            "hue": 17.46135077161813
+          },
+          {
+            "luma": 84.04995230533628,
+            "hue": 18.052373141588703
+          }
+        ]
+      },
+      {
+        "state": "reduzido",
+        "direction": "front",
+        "index": 0,
+        "path": "D:/projetos-pessoal/cangaco-game-candidatos/arte/D/fontes-naturais-20261009/iron_ore/derivados-2/reduzido.png",
+        "footline": 62,
+        "centroidX": 30.10369316435728,
+        "regions": [
+          {
+            "luma": 40.62704456622191,
+            "hue": 17.051494773677064
+          },
+          {
+            "luma": 79.43800290431892,
+            "hue": 17.793866509369764
+          },
+          {
+            "luma": 84.07060119652152,
+            "hue": 17.838403043796006
+          }
+        ]
+      },
+      {
+        "state": "remanescente",
+        "direction": "front",
+        "index": 0,
+        "path": "D:/projetos-pessoal/cangaco-game-candidatos/arte/D/fontes-naturais-20261009/iron_ore/derivados-2/remanescente.png",
+        "footline": 62,
+        "centroidX": 30.972840708785423,
+        "regions": [
+          {
+            "luma": 44.315509730250426,
+            "hue": 16.921113083080854
+          },
+          {
+            "luma": 84.68289411146694,
+            "hue": 17.64089486077279
+          },
+          {
+            "luma": 75.95147080876215,
+            "hue": 17.699222420818558
+          }
+        ]
+      }
+    ],
+    "contactSheets": []
+  }
+}

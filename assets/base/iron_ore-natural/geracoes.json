@@ -1,0 +1,22 @@
+{
+  "selecionada": 2,
+  "registros": [
+    {
+      "prompt": "Create an original pixel-art game sprite atlas for ONE natural resource: a iron ore seam deposit (iron_ore), for a1930s Brazilian sertao RTS. Use the attached author-owned iron ore sprite only for identity/material, not its old lighting. Transparent background. A wide3-column by1-row atlas, precisely three equal square cells, each object independent, no text/grid/ground. Left: intact low irregular iron-bearing rocky outcrop, dark chariron ore angular strata. Middle: same geological deposit after partial extraction, visibly lower with fewer upper pieces and newly exposed facets. Right: almost depleted, a very low fragment of the same deposit remaining near the ground. These are three NATIVELY DRAWN volumes, not scaled copies. Keep same logical footprint and bottom center alignment in all three cells. Target64x64px per derived sprite, legible at32x32px: crisp authored pixel art, 3-4 material values, no smooth plastic gradient. Light ONLY from above and slightly SOUTH/camera: the lower/front visible facets are illuminated cool medium-grey chariron ore and rear/upper facets are muted charcoal-grey and dark red-brown midtone. In EACH cell the visible lower half must be clearly brighter than the upper half, roughly15-25 luma levels, while deep dark cracks remain thin. No east/west lighting bias. No bright white diamonds, no gold, no spheres, no cast-shadow disk, no floating cap, no grass or water. Preserve a natural angular rock seam identity, width similar in all states, upper ledges removed rather than whole sprite shrunk. Small palette with dark slate/chariron ore and warm grey stone. Fully transparent clean alpha, no white or colored matte.",
+      "source": "C:\\Users\\della\\.codex\\generated_images\\01a114a8-cf6f-7a41-8d70-8a03a4f941ad\\exec-63a1be89-3910-46a0-9768-a68b918ee36a.png",
+      "geracao": "exec-63a1be89-3910-46a0-9768-a68b918ee36a",
+      "referencia": "assets/sprites/resources/iron_ore.png",
+      "situacao": "candidata, validacao pendente",
+      "rodada": 1,
+      "sha256": "f41ddb01bbda0039ac821483b17c4bf827883493bb9f984bf3b5f4370370d7d4",
+      "id": "exec-63a1be89-3910-46a0-9768-a68b918ee36a"
+    },
+    {
+      "prompt": "Edit this exact three-cell iron ore deposit atlas. Preserve all three silhouettes, rusty red iron bands in slate grey rock, pixel art, cell spacing, grounded feet, decreasing heights and widths. ONLY repaint illumination natively: single overhead light slightly from SOUTH, bottom/front faces lighter grey/rust and top/north faces distinctly darker. The average visible lower half of EACH deposit must be substantially brighter than its upper half; target lower surfaces about 20 luminance points lighter. No left/right lighting bias. Matte mineral, no white highlights, no glow, no detached gravel, no cast shadow, transparent background. Three equal horizontal cells, same composition and volume states. Do not change geometry.",
+      "source": "C:\\Users\\della\\.codex\\generated_images\\01a114a8-cf6f-7a41-8d70-8a03a4f941ad\\exec-c7fc763b-773f-4f16-befa-511c9e6740f0.png",
+      "id": "exec-c7fc763b-773f-4f16-befa-511c9e6740f0.png",
+      "rodada": 2,
+      "sha256": "6f070831cab8cddfc11ed7d1b6012a255fa4151be4823ffd8ba8bd93a7b86fcc"
+    }
+  ]
+}

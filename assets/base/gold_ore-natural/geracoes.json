@@ -1,0 +1,22 @@
+{
+  "selecionada": 2,
+  "registros": [
+    {
+      "prompt": "Create an original pixel-art game sprite atlas for ONE natural resource: a raw gold ore seam deposit (gold_ore), for a1930s Brazilian sertao RTS. Use the attached author-owned gold ore sprite only for identity/material, not its old lighting. Transparent background. A wide3-column by1-row atlas, precisely three equal square cells, each object independent, no text/grid/ground. Left: intact low irregular gold-bearing rocky outcrop, dark chargold ore angular strata. Middle: same geological deposit after partial extraction, visibly lower with fewer upper pieces and newly exposed facets. Right: almost depleted, a very low fragment of the same deposit remaining near the ground. These are three NATIVELY DRAWN volumes, not scaled copies. Keep same logical footprint and bottom center alignment in all three cells. Target64x64px per derived sprite, legible at32x32px: crisp authored pixel art, 3-4 material values, no smooth plastic gradient. Light ONLY from above and slightly SOUTH/camera: the lower/front visible facets are illuminated cool medium-grey chargold ore and rear/upper facets are muted dark grey-brown midtone. In EACH cell the visible lower half must be clearly brighter than the upper half, roughly15-25 luma levels, while deep dark cracks remain thin. No east/west lighting bias. No bright white diamonds, no coins or refined gold bars, no spheres, no cast-shadow disk, no floating cap, no grass or water. Preserve a natural angular rock seam identity, width similar in all states, upper ledges removed rather than whole sprite shrunk. Small palette with dark slate/chargold ore and warm grey stone. Fully transparent clean alpha, no white or colored matte.",
+      "source": "C:\\Users\\della\\.codex\\generated_images\\01a114a8-cf6f-7a41-8d70-8a03a4f941ad\\exec-100438c7-c4e6-4b37-8726-3be4832af7ea.png",
+      "geracao": "exec-100438c7-c4e6-4b37-8726-3be4832af7ea",
+      "referencia": "assets/sprites/resources/gold_ore.png",
+      "situacao": "candidata, validacao pendente",
+      "rodada": 1,
+      "sha256": "50375ba613bbc429c00046dadc4291fb30690820ba84e80647d5e80af14de8be",
+      "id": "exec-100438c7-c4e6-4b37-8726-3be4832af7ea"
+    },
+    {
+      "prompt": "Edit this exact three-cell gold ore deposit atlas. Preserve three outlines, rock formations, native pixel art, grounded base, spacing and volume progression. Repaint material as natural brown-grey host rock with MUTED ochre gold mineral veins embedded in it, not treasure or glowing yellow nuggets. Single light overhead slightly from SOUTH: lower/front faces distinctly brighter than upper/north ones, average lower half at least 20 luminance points lighter in EACH sprite. No side light bias. Darker top rock and muted gold veins, medium warm grey lower faces, matte surface. No glow, no text, no shadow halo, no ground. Transparent background. Three equal horizontal cells and same declining geometric volume.",
+      "source": "C:\\Users\\della\\.codex\\generated_images\\01a114a8-cf6f-7a41-8d70-8a03a4f941ad\\exec-de6fc894-50fd-4267-87bc-cee37101d67c.png",
+      "id": "exec-de6fc894-50fd-4267-87bc-cee37101d67c.png",
+      "rodada": 2,
+      "sha256": "51326a44875023eeb3818ddb6e042379da201329affdfdfb4ddc4d3c4a83604a"
+    }
+  ]
+}

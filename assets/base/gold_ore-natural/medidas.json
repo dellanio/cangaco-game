@@ -1,0 +1,100 @@
+{
+  "escala": 0.0907715582450832,
+  "estados": [
+    {
+      "estado": "presente",
+      "width": 59,
+      "height": 53
+    },
+    {
+      "estado": "reduzido",
+      "width": 60,
+      "height": 39
+    },
+    {
+      "estado": "remanescente",
+      "width": 54,
+      "height": 26
+    }
+  ],
+  "report": {
+    "id": "gold_ore",
+    "kind": "resource",
+    "mode": "trial",
+    "approved": false,
+    "success": true,
+    "errors": [],
+    "warnings": [
+      "Ensaio técnico sem calibração cromática; não equivale a aprovação"
+    ],
+    "frames": [
+      {
+        "state": "presente",
+        "direction": "front",
+        "index": 0,
+        "path": "D:/projetos-pessoal/cangaco-game-candidatos/arte/D/fontes-naturais-20261009/gold_ore/derivados-2/presente.png",
+        "footline": 62,
+        "centroidX": 30.70157952852394,
+        "regions": [
+          {
+            "luma": 68.28077762873389,
+            "hue": 28.481575466808806
+          },
+          {
+            "luma": 93.8246739703787,
+            "hue": 29.186364565319877
+          },
+          {
+            "luma": 90.18766524515581,
+            "hue": 28.493991084134848
+          }
+        ]
+      },
+      {
+        "state": "reduzido",
+        "direction": "front",
+        "index": 0,
+        "path": "D:/projetos-pessoal/cangaco-game-candidatos/arte/D/fontes-naturais-20261009/gold_ore/derivados-2/reduzido.png",
+        "footline": 62,
+        "centroidX": 31.699822304427844,
+        "regions": [
+          {
+            "luma": 72.29236928737961,
+            "hue": 28.396359470529376
+          },
+          {
+            "luma": 95.447724781077,
+            "hue": 29.48903399562107
+          },
+          {
+            "luma": 83.75087125484006,
+            "hue": 28.371433459834122
+          }
+        ]
+      },
+      {
+        "state": "remanescente",
+        "direction": "front",
+        "index": 0,
+        "path": "D:/projetos-pessoal/cangaco-game-candidatos/arte/D/fontes-naturais-20261009/gold_ore/derivados-2/remanescente.png",
+        "footline": 62,
+        "centroidX": 32.065149533985426,
+        "regions": [
+          {
+            "luma": 64.93497133979238,
+            "hue": 26.29915201377321
+          },
+          {
+            "luma": 93.23126265579225,
+            "hue": 29.55219698007579
+          },
+          {
+            "luma": 83.51702923877859,
+            "hue": 29.479180324826757
+          }
+        ]
+      }
+    ],
+    "contactSheets": []
+  }
+}
