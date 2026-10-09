@@ -2140,6 +2140,15 @@ function validarSerra(config, erros) {
   if (!Number.isFinite(config.escala) || config.escala <= 0) e('escala precisa ser positiva');
 }
 
+function validarFontesNaturais(config, erros) {
+  const e = msg => erros.push(`interface/fontes-naturais: ${msg}`);
+  if (!config || typeof config !== 'object') { e('data/fontes-naturais.json precisa existir'); return; }
+  if (!Array.isArray(config.tipos) || config.tipos.length !== 3 || new Set(config.tipos).size !== 3 || config.tipos.some(t => !['coal', 'iron_ore', 'gold_ore'].includes(t))) e('tres fontes minerais existentes');
+  if (!Array.isArray(config.limiares) || config.limiares.length !== 2 || config.limiares.some((l, i) => !Number.isFinite(l) || l <= 0 || l >= 1 || (i > 0 && l >= config.limiares[i - 1]))) e('dois limiares estritamente decrescentes em (0,1)');
+  if (!Array.isArray(config.estados) || config.estados.join(',') !== 'presente,reduzido,remanescente') e('tres volumes nativos em ordem');
+  if (!Number.isFinite(config.escala) || config.escala <= 0) e('escala positiva');
+}
+
 function validarInterface(dados, interfaceUi) {
   const erros = [];
   const animacao = interfaceUi && interfaceUi['animacao-unidade'];
@@ -2170,6 +2179,7 @@ function validarInterface(dados, interfaceUi) {
   validarRotulosDeModo(dados, tema, erros);
   validarRelevo(dados, interfaceUi && interfaceUi.relevo, erros);
   validarSerra(interfaceUi && interfaceUi.serra, erros);
+  validarFontesNaturais(interfaceUi && interfaceUi['fontes-naturais'], erros);
   validarBandeira(interfaceUi && interfaceUi.bandeira, erros);
   validarVento(interfaceUi && interfaceUi.vento, erros);
   validarAguaPeixe(interfaceUi && interfaceUi['agua-peixe'], erros);
@@ -2275,4 +2285,4 @@ function validarTudo(dados) {
   return erros;
 }
 
-module.exports = { validarSerra, validarSom, validarCargaNasMaos, validarBandeira, validarFumaca, validarTudo, validarInterface, validarVento, validarPoeira, getByPath };
+module.exports = { validarFontesNaturais, validarSerra, validarSom, validarCargaNasMaos, validarBandeira, validarFumaca, validarTudo, validarInterface, validarVento, validarPoeira, getByPath };

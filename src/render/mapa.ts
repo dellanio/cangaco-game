@@ -11,6 +11,10 @@ import arquivoDoMapa from '../../data/maps/sertao-128.json';
 export const sementeDoMapa: number = arquivoDoMapa.semente;
 /** Rendimento lido pelo render; unico funil para a regra visual da serra. */
 export const rendimentoDaRocha = gameData.recursos.tipos.rock!.rendimentoPorTile;
+/** Funil para os rendimentos usados somente na apresentacao dos depositos. */
+export const rendimentosDasFontes: Readonly<Record<string, number>> = Object.fromEntries(
+  Object.entries(gameData.recursos.tipos).map(([tipo, recurso]) => [tipo, recurso.rendimentoPorTile]),
+);
 export const centroDaVilaInicial = gameData.economia.estadoInicial.spawnDeUnidades;
 import type { RecursoNoTile } from '../sim/state';
 import { TERRENOS_DE_MAPA } from '../sim/data/terrenos';

@@ -283,6 +283,7 @@ export interface EstadoDebug {
    *  ou `presente` sem a arte da mascara), lido de volta da imagem e nao recalculado.
    *  O roteiro confere contra a mascara que ele mesmo tira do conjunto de rochas. */
   lajedoDesenhado: Readonly<Record<string, string>>;
+  fontesNaturais: { readonly recalculos: number; readonly repinturas: number; readonly tiles: Readonly<Record<string, { readonly tipo: string; readonly estado: string; readonly quantidade: number; readonly textura: string | null }>> };
   serra: { readonly recalculos: number; readonly repinturas: number; readonly trechos: Readonly<Record<string, {
     readonly volume: number; readonly mascara: number; readonly altura: number; readonly estado: string; readonly textura: string;
   }>> };
@@ -498,6 +499,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     recursosVarridosPeloChao: 0,
     mascarasDoLajedo: {},
     lajedoDesenhado: {},
+    fontesNaturais: { recalculos: 0, repinturas: 0, tiles: {} },
     serra: { recalculos: 0, repinturas: 0, trechos: {} },
     texturaDoTerreno: {},
     transicoesVisiveis: {},

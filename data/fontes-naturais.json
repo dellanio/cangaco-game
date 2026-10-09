@@ -1,0 +1,7 @@
+{
+  "_doc": "Somente render: fracao do rendimento original do tile. Nao altera exploracao.",
+  "tipos": ["coal", "iron_ore", "gold_ore"],
+  "limiares": [0.6666666666666666, 0.3333333333333333],
+  "estados": ["presente", "reduzido", "remanescente"],
+  "escala": 1
+}

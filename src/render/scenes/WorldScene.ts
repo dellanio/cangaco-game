@@ -5,6 +5,8 @@ import { sementeDoMapa, centroDaVilaInicial } from '../mapa';
 import { panoDaBandeira } from '../bandeira';
 import { configDaSerra, MemoriaDaSerra, texturaDaSerra } from '../serra';
 import { rendimentoDaRocha } from '../mapa';
+import { rendimentosDasFontes } from '../mapa';
+import { configDasFontes, MemoriaDasFontes, texturaDaFonte } from '../fontes-naturais';
 // A cena so le o estado (aqui, so gameData/tema e o GameState via ponte) e
 // desenha. Nada de logica de jogo (CLAUDE.md §10): nenhuma decisao de regra
 // mora aqui, so apresentacao.
@@ -220,6 +222,9 @@ export class WorldScene extends Phaser.Scene {
   private repinturasDaCaatinga = 0;
   private readonly memoriaDaSerra = new MemoriaDaSerra();
   private repinturasDaSerra = 0;
+  private readonly memoriaDasFontes = new MemoriaDasFontes();
+  private readonly fontesDesenhadas = new Map<string, Phaser.GameObjects.Image>();
+  private repinturasDasFontes = 0;
   private ventoLigado = true;
   private readonly panosDasBandeiras = new Map<string, {
     pano: Phaser.GameObjects.Polygon; mastro: Phaser.GameObjects.Rectangle; gx: number; gy: number;
@@ -908,6 +913,12 @@ export class WorldScene extends Phaser.Scene {
           ...trecho, textura: this.vegetacaoDesenhada.get(chave)?.texture.key ?? '(sem sprite)',
         }])),
       };
+      estado.fontesNaturais = {
+        recalculos: this.memoriaDasFontes.recalculos, repinturas: this.repinturasDasFontes,
+        tiles: Object.fromEntries([...this.memoriaDasFontes.fontes].map(([chave, fonte]) => [chave, {
+          ...fonte, textura: this.fontesDesenhadas.get(chave)?.texture.key ?? null,
+        }])),
+      };
       estado.transicoesVisiveis = this.lerTransicoesVisiveis(camadasDeTransicao);
     estado.vegetacaoRenderizada = this.vegetacaoDesenhada.size;
     const vistaDaMata = this.cameras.main.worldView;
@@ -1544,6 +1555,11 @@ export class WorldScene extends Phaser.Scene {
     });
     const arte = this.desenhoPorCodigo.map((d) => (d.como === 'textura' ? d.chave : null));
     const vazias = this.desenhoPorCodigo.flatMap((d, codigo) => (d.como === 'vegetacao' ? [codigo] : []));
+    for (let codigo = 0; codigo < arte.length; codigo++) {
+      if (configDasFontes.tipos.includes(recursosDeRender.tipos[codigo - 1] ?? '') && arte[codigo] !== null) {
+        arte[codigo] = null; vazias.push(codigo);
+      }
+    }
     const idsCom = (como: DesenhoDoRecurso['como']): string[] => this.desenhoPorCodigo.flatMap(
       (d, codigo) => (d.como === como ? [recursosDeRender.tipos[codigo - 1] as string] : []),
     );
@@ -1643,6 +1659,7 @@ export class WorldScene extends Phaser.Scene {
   private atualizarRecursos(camada: Phaser.Tilemaps.TilemapLayer): Record<string, number> {
     const recursos = this.ponte.atual?.recursos ?? {};
     const repintar = new Set<string>();
+    for (const chave of this.memoriaDasFontes.atualizar(recursos, this.ponte.atual?.tick ?? 0, rendimentosDasFontes)) this.pintarFonteNatural(chave);
     for (const chave of this.memoriaDaSerra.atualizar(recursos, this.ponte.atual?.tick ?? 0, rendimentoDaRocha)) repintar.add(chave);
     const degrau = degrauDaCaatinga(faseNoTick(this.ponte.atual?.tick ?? 0));
     if (degrau !== this.degrauSazonal) {
@@ -1694,6 +1711,25 @@ export class WorldScene extends Phaser.Scene {
    *  do tile, como o do predio no footprint; a imagem sai no tamanho do arquivo e pode
    *  transbordar o tile — por isso e sprite, e nao celula da tira. Depth pelo pe: a
    *  unidade no tile de cima passa atras, a do tile de baixo passa na frente. */
+  private pintarFonteNatural(chave: string): void {
+    const atual = this.fontesDesenhadas.get(chave);
+    const textura = texturaDaFonte(this.memoriaDasFontes.fontes.get(chave), chave => this.textures.exists(chave));
+    if (textura === null) {
+      if (atual) { atual.destroy(); this.fontesDesenhadas.delete(chave); this.repinturasDasFontes++; }
+      return;
+    }
+    if (atual?.texture.key === textura) return;
+    atual?.destroy();
+    const { tilePx } = configDoMapa;
+    const canto = gridToScreen(tileDeChave(chave), tilePx, ESCALA_DO_MUNDO);
+    const tipo = this.memoriaDasFontes.fontes.get(chave)!.tipo;
+    const entrada = manifestoDoJogo.assets.find(a => a.tipo === 'recurso' && a.id === tipo)!;
+    const imagem = this.add.image(canto.x + tilePx / 2, canto.y + tilePx, textura)
+      .setOrigin(entrada.anchor[0], entrada.anchor[1]).setScale(configDasFontes.escala).setDepth(depthDeY(canto.y + tilePx));
+    this.luz?.tingir(imagem, imagem.x, imagem.y, `fonte:${chave}`);
+    this.fontesDesenhadas.set(chave, imagem); this.repinturasDasFontes++;
+  }
+
   private pintarVegetacao(chave: string, codigo: number): void {
     const desenho = this.desenhoPorCodigo[codigo];
     const atual = this.vegetacaoDesenhada.get(chave);
