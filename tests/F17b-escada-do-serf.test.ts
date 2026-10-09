@@ -29,7 +29,7 @@ import { buscarCaminho } from '../src/sim/pathfinding';
 import { cenarioDePedreira, pedreiraDaVila } from './helpers/producao-cenario';
 import { comEstradas, comObra, comUnidadeExtra } from './helpers/jobs-cenario';
 import { gravarEvidencia } from './helpers/evidence';
-import { linhaHDe, naVila, relativoA } from './helpers/ancoras';
+import { linhaHDe, linhaVDe, naVila, relativoA } from './helpers/ancoras';
 
 const SERF = 'serf-da-escada';
 const OBRA = 'obra-longe';
@@ -68,7 +68,7 @@ function comCargaNaPedreira(estado: GameState, id: string): GameState {
  */
 function cenario(comAObra: boolean): GameState {
   let s = comCargaNaPedreira(cenarioDePedreira(), PEDREIRA);
-  s = comEstradas(s, linhaHDe(naVila, 0, 16, 6)); // y=36, x 29..45 hoje
+  s = comEstradas(s, [...linhaHDe(naVila, 0, 16, 6), ...linhaVDe(naVila, 0, 3, 5)]);
   if (comAObra) {
     s = comObra(s, OBRA, { ...naVila(13, 4), tipo: 'quarry', faltam: { stone: 2 } });
     const obra = s.predios.porId[OBRA];

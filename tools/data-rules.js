@@ -1482,6 +1482,13 @@ function validarNevoaDoTerreno(dados, erros) {
 // aparecem quando se cruza o bloco com o resto do dado: terreno que a legenda de
 // custo/intransponivel nao conhece nao existe para o mapa, e recurso que
 // resources.json nao declara nao tem como nascer. Raio negativo nao e reserva.
+function validarLajedoDaVila(config, mapa, erros) {
+  const e = msg => erros.push(`terreno/geracao/lajedoDaVila: ${msg}`);
+  if (!config || typeof config !== 'object') { e('configuracao precisa existir'); return; }
+  if (!Number.isInteger(config.gx) || !Number.isInteger(config.gy) || !Number.isInteger(config.raio) || config.raio <= 0) { e('centro inteiro e raio inteiro positivo'); return; }
+  if (config.gx - config.raio < 0 || config.gy - config.raio < 0 || config.gx + config.raio >= mapa.largura || config.gy + config.raio >= mapa.altura) e('disco precisa ficar dentro do mapa');
+}
+
 function validarGeracaoDoTerreno(dados, erros) {
   const terrain = dados.terrain;
   if (!terrain) return; // forma/* ja reportou
@@ -1490,6 +1497,7 @@ function validarGeracaoDoTerreno(dados, erros) {
     erros.push('terreno/geracao: terrain.geracao precisa existir (F-D3)');
     return;
   }
+  validarLajedoDaVila(geracao.lajedoDaVila, terrain.mapaPadrao, erros);
   const reserva = geracao.reservaDaVila;
   if (!reserva || typeof reserva !== 'object') {
     erros.push('terreno/geracao: terrain.geracao.reservaDaVila precisa existir (F-D3)');
@@ -2285,4 +2293,4 @@ function validarTudo(dados) {
   return erros;
 }
 
-module.exports = { validarFontesNaturais, validarSerra, validarSom, validarCargaNasMaos, validarBandeira, validarFumaca, validarTudo, validarInterface, validarVento, validarPoeira, getByPath };
+module.exports = { validarLajedoDaVila, validarFontesNaturais, validarSerra, validarSom, validarCargaNasMaos, validarBandeira, validarFumaca, validarTudo, validarInterface, validarVento, validarPoeira, getByPath };

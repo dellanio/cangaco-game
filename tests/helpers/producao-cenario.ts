@@ -50,19 +50,31 @@ const serra = (dados: GameData): Relativo => relativoA(ancoraDaSerra(dados));
 /** A pedreira da vila: ao lado do lajedo, com a porta na rua que sobe ate o armazem.
  *  Exportada porque `fome-cenario.ts` pede a MESMA pedreira. */
 export function pedreiraDaVila(): TileDeGrid {
-  return lajedo()(4, 5); // (26,34) hoje
+  // Recuo de um tile a oeste: lote livre, com o vao do armazem conservado.
+  // A ancora continua sendo a rocha, inclusive no mundo transladado.
+  return lajedo()(3, 5); // (25,31) hoje
 }
 
 /** A rua da porta do armazem ate a porta de `pedreiraDaVila`. */
-export function ruaDaPedreiraDaVila(dados: GameData = gameData): TileDeGrid[] {
-  const v = vila(dados); // (29,33) .. (28,36) hoje
-  return [v(0, 3), v(0, 4), v(0, 5), v(0, 6), v(-1, 6)];
+export function ruaDaPedreiraDaVila(dados: GameData = gameData, pedreira: TileDeGrid = pedreiraDaVila()): TileDeGrid[] {
+  const armazem = vila(dados)(0, 0);
+  const a = caixaDeTipo(ID_DO_ARMAZEM, armazem.gx, armazem.gy, dados)!;
+  const p = caixaDeTipo('quarry', pedreira.gx, pedreira.gy, dados)!;
+  // A rua liga as portas reais: deslocar o lajedo move a pedreira, nao a vila.
+  // O percurso antigo e reproduzido quando as duas ancoras estao no lugar antigo.
+  const rua: TileDeGrid[] = [];
+  for (let gy = Math.min(a.y1, p.y1); gy <= Math.max(a.y1, p.y1); gy++) rua.push(tile(a.x0, gy));
+  const portaDaPedreira = p.x1 - 1;
+  for (let gx = Math.min(portaDaPedreira, a.x0); gx <= Math.max(portaDaPedreira, a.x0); gx++) {
+    if (gx !== a.x0) rua.push(tile(gx, p.y1));
+  }
+  return rua;
 }
 
 /** O tile de rocha colado no footprint de `pedreiraDaVila`: o que os cenarios de
  *  esgotamento transformam em jazida unica (`comJazida`). */
 export function rochaDaPedreiraDaVila(): readonly [number, number] {
-  const t = lajedo()(3, 3); // (25,32) hoje
+  const t = lajedo()(3, 3); // (25,29) hoje
   return [t.gx, t.gy];
 }
 

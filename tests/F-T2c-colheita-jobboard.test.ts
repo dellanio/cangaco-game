@@ -36,6 +36,7 @@ import { ancoraDoLajedo, linhaHDe, linhaVDe, naVila, relativoA } from './helpers
 import { comEspacoNaSaida, comJazida, comProdutorOcupado, fsmDe } from './helpers/producao-cenario';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { gravarEvidencia } from './helpers/evidence';
+import { ruaDaPedreiraDaVila } from './helpers/producao-cenario';
 
 /** A rua da F-T2a, a partir da vila: y=36 de x=18 a x=35 hoje, mais a coluna do
  *  armazem ate a porta. */
@@ -79,9 +80,10 @@ function colheitaDaPedreira(dados: GameData): ColheitaDeRecurso {
  *  a MESMA mancha de rocha — o cenario que o aceite pede. */
 function duasPedreiras(dados: GameData = DADOS): GameState {
   const vazio: GameState = { ...createInitialState(1, dados), unidades: { porId: {}, ordem: [] } };
-  let s = comProdutorOcupado(vazio, { tipo: 'quarry', id: 'q1', unidade: 'pedreiro-1', ...LAJEDO(0, 5) }, dados);
-  s = comProdutorOcupado(s, { tipo: 'quarry', id: 'q2', unidade: 'pedreiro-2', ...LAJEDO(4, 5) }, dados);
-  s = comEstradas(s, RUA);
+  const q1 = LAJEDO(-1, 5), q2 = LAJEDO(3, 5);
+  let s = comProdutorOcupado(vazio, { tipo: 'quarry', id: 'q1', unidade: 'pedreiro-1', ...q1 }, dados);
+  s = comProdutorOcupado(s, { tipo: 'quarry', id: 'q2', unidade: 'pedreiro-2', ...q2 }, dados);
+  s = comEstradas(s, [...RUA, ...ruaDaPedreiraDaVila(dados, q1), ...ruaDaPedreiraDaVila(dados, q2)]);
   const colheita = colheitaDaPedreira(dados);
   for (const id of ['q1', 'q2']) {
     if (!predioLigadoAoArmazem(s, predioDe(s, id), dados)) throw new Error(`fixture: '${id}' nao ligou`);
@@ -220,11 +222,11 @@ describe('F-T2c — duas pedreiras de alcances sobrepostos nunca colhem o mesmo 
     expect(r.tiquesComTarefaRepetida).toEqual([]);
     expect(r.violacoes).toEqual([]);
     // o aceite so vale se as duas estiveram em ciclo JUNTAS, cada uma no seu tile —
-    // e nao por um tick: 2313 dos 3000, exato. Os 687 que faltam sao 646 de jazida
-    // seca depois do ultimo deposito (t2354) mais os 41 ticks de troca de tile
+    // e nao por um tick: 2325 dos 3000, exato. Os 675 restantes incluem a jazida
+    // seca depois do ultimo deposito (t2469) e as trocas de tile/viagens distintas
     // entre um deposito e o claim seguinte. Nenhuma folga aqui: e a soma de duas
     // contas fechadas.
-    expect(r.ticksComAsDuasEmTarefa).toBe(2313);
+    expect(r.ticksComAsDuasEmTarefa).toBe(2325);
     // e se a jazida inteira saiu pelo caminho de verdade, um lote por queda —
     // dois na mesma queda era exatamente o exploit da F-T2a
     expect(r.colhido).toBe(ROCHA.length * 2 * LOTE);
@@ -232,9 +234,9 @@ describe('F-T2c — duas pedreiras de alcances sobrepostos nunca colhem o mesmo 
     expect(r.quedas.map((q) => q.queda)).toEqual(r.quedas.map(() => LOTE));
     // cada pedreira levou metade da jazida, nos ticks exatos da sua viagem. E aqui
     // que a F-T3 aparece: os depositos das duas NUNCA caem no mesmo tick, porque o
-    // caminho de q2 ate o lajedo e 8 ticks mais curto que o de q1.
-    expect(r.depositosPorPredio.q2).toEqual([580, 1160, 1740, 2320]);
-    expect(r.depositosPorPredio.q1).toEqual([588, 1176, 1770, 2354]);
+    // caminhos ate o lajedo e a fila sao distintos. Medicao pelo step apos o recuo.
+    expect(r.depositosPorPredio.q2).toEqual([580, 1160, 1744, 2332]);
+    expect(r.depositosPorPredio.q1).toEqual([713, 1293, 1881, 2469]);
     expect(r.ticksComAsDuas).toBe(0);
     // LOTE3-c: 3000 ticks com a invariante a cada tick; o limite e para o caso travar
     // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,59 s
@@ -369,7 +371,7 @@ describe('F-T2c — evidencia', () => {
   it('grava test-output/F-T2c.json com o aceite medido', () => {
     const r = correr(duasPedreiras(), CORRIDA);
     gravarEvidencia('F-T2c', {
-      cenario: 'q1 (22,34) e q2 (26,34), alcance 6, mancha de rocha em y=30, x=24..27',
+      cenario: 'q1 e q2 recuadas um tile a oeste do lajedo transladado, alcance 6; rocha relativa ao mesmo lajedo',
       rochaPorTile: 2,
       ticks: CORRIDA,
       ticksComAsDuasProduzindo: r.ticksComAsDuas,

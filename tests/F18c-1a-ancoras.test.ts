@@ -69,7 +69,7 @@ describe('F18c-1a — as ancoras andam com o mundo', () => {
     const umTile = comJazida(gameData, 'rock', [rochaDaPedreiraDaVila()], 2);
     expect(ancoraDoLajedo(umTile)).not.toEqual(ancoraDoLajedo(gameData));
     expect(pedreiraDaVila()).toEqual({
-      gx: ancoraDoLajedo(gameData).gx + 4, gy: ancoraDoLajedo(gameData).gy + 5,
+      gx: ancoraDoLajedo(gameData).gx + 3, gy: ancoraDoLajedo(gameData).gy + 5,
     });
   });
 

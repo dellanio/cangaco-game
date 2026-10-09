@@ -150,8 +150,16 @@ describe('F-T4b: a geometria da abertura e UMA so', () => {
     // Um guarda que nunca reprova nao e guarda. Aqui o predicado de recurso e
     // desligado — e exatamente o que aconteceria se um dos dois lados deixasse
     // de ler `bloqueiaConstrucao` — e a abertura tem de sair de outro lugar,
-    // porque foi a rocha do lajedo que empurrou a fila para oeste (BUG-F).
-    const cego = geometriaDaAbertura({ ...predicadosDoRoteiro(), bloqueia: () => false });
-    expect(cego.plantas.map((p) => p.gx)).not.toEqual(pelaSim.plantas.map((p) => p.gx));
+    // quando o lote calculado tem o bloqueio controlado da sonda abaixo.
+    // O lajedo novo nao invade o grupo da pedra. A sonda mantem um bloqueio
+    // explicito no primeiro lote calculado, em vez de depender desse acidente do mapa.
+    const base = predicadosDoRoteiro();
+    const cego = geometriaDaAbertura({ ...base, bloqueia: () => false });
+    const lote = cego.plantas.find(p => p.tipo === 'quarry');
+    if (lote === undefined) throw new Error('sonda: abertura sem pedreira');
+    const comBloqueio = geometriaDaAbertura({
+      ...base, bloqueia: (gx, gy) => (gx === lote.gx && gy === lote.gy) || base.bloqueia(gx, gy),
+    });
+    expect(cego.plantas.map((p) => p.gx)).not.toEqual(comBloqueio.plantas.map((p) => p.gx));
   });
 });

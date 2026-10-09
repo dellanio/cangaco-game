@@ -80,7 +80,14 @@ describe('F-T4b — o lenhador da abertura sai, colhe e a tora chega', () => {
   let toras = 0;
 
   for (let i = 0; i < TETO; i += 1) {
-    s = step(s, comandosNoTick(s, abertura, i));
+    // Este aceite exige o caminho casa -> armazem -> serraria. Com a abertura
+    // mais curta a serraria pronta pede o tronco direto e o armazem nao e destino.
+    // O jogador deste cenario espera a primeira entrega antes de plantar a serraria.
+    // Tudo continua por comando real, dentro dos mesmos 3000 ticks.
+    const primeiroTroncoEntregue = (medidor.resultado().entregasPorEvento['tree_trunk'] ?? 0) > 0;
+    const comandos = comandosNoTick(s, abertura, i).filter(c =>
+      c.type !== 'PlaceBlueprint' || c.buildingId !== 'sawmill' || primeiroTroncoEntregue);
+    s = step(s, comandos);
     medidor.observar(s);
     const idDaCasa = s.predios.ordem.find((id) => {
       const p = s.predios.porId[id];
@@ -114,13 +121,15 @@ describe('F-T4b — o lenhador da abertura sai, colhe e a tora chega', () => {
       toras = naGaveta;
       if (tickDaTora === null) tickDaTora = i;
     }
-    if (tickDaTora !== null && (medidor.resultado().entregueAoArmazem['timber'] ?? 0) > 0) break;
+      const entregas = medidor.resultado().entregasPorEvento;
+      if (tickDaTora !== null && (entregas['tree_trunk'] ?? 0) > 0 && (entregas['timber'] ?? 0) > 0) break;
   }
 
   const casaFinal = predioNoTile(s, primeiroDaMata.gx, primeiroDaMata.gy);
   const colhendo = trilha.filter((p) => p.fsm === 'colhendo');
   const noArmazem = estoqueDosArmazens(s);
-  const entregue = medidor.resultado().entregueAoArmazem;
+  // Evento confirma entrega mesmo quando retirada no mesmo tick zera o delta do saldo.
+  const entregue = medidor.resultado().entregasPorEvento;
 
   gravarEvidencia('F-T4b-lenhador', {
     feature: 'F-T4b — o lenhador sai para colher',
@@ -133,6 +142,8 @@ describe('F-T4b — o lenhador da abertura sai, colhe e a tora chega', () => {
     timberInicial,
     timberFinal: noArmazem['timber'] ?? 0,
     entregueAoArmazem: entregue,
+    fonteDasEntregas: 'task-completed com destino no armazem',
+    deltasPositivosDoSaldo: medidor.resultado().entregueAoArmazem,
     ticksDeTrilha: trilha.length,
     ticksColhendo: colhendo.length,
     arvoreReclamada: colhendo[0]?.arvore ?? null,

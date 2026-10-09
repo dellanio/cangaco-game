@@ -35,6 +35,7 @@ import { gravarEvidencia } from './helpers/evidence';
 // o marcador num teste headless, sem subir cena.
 import { codigoDoRecurso, recursosDeRender } from '../src/render/mapa';
 import temaSertao from '../data/theme-sertao.json';
+import { ruaDaPedreiraDaVila } from './helpers/producao-cenario';
 
 // Decisao do operador 2026-10-08, precedente I-CLIMA-ESTACAO: os depositos
 // nos ticks exatos abaixo afirmam colheita/esgotamento, nao as estacoes.
@@ -52,11 +53,11 @@ const RUA: TileDeGrid[] = [
   ...[3, 4, 5].map((dy) => vila(0, dy)),
 ];
 
-/** As duas pedreiras do arquivo, a partir do LAJEDO: a de dentro, (26,34) hoje,
+/** As duas pedreiras do arquivo, a partir do LAJEDO: a de dentro, (25,31) hoje,
  *  com 13 tiles de rocha ao alcance; e a da borda, (32,34) hoje, com um so. */
 const NO_LAJEDO = pedreiraDaVila();
-const NA_BORDA = relativoA(ancoraDoLajedo())(10, 5);
-/** O tile de rocha vizinho de `NO_LAJEDO`: (25,32) hoje. */
+const NA_BORDA = relativoA(ancoraDoLajedo())(10, 8); // A sul do armazem, com o vao conservado.
+/** O tile de rocha vizinho de `NO_LAJEDO`: (25,29) hoje. */
 const ROCHA = rochaDaPedreiraDaVila();
 /** LOTE3-c: o pedreiro traz `sai.stone` blocos por viagem e so reclama tile que
  *  tenha o lote inteiro. Toda jazida injetada neste arquivo e multipla dele. */
@@ -68,7 +69,7 @@ function cenarioEm({ gx, gy }: TileDeGrid, dados: GameData, id = 'q1'): GameStat
   const comQuarry = comProdutorOcupado(
     vazio, { tipo: 'quarry', id, unidade: `pedreiro-${id}`, gx, gy }, dados,
   );
-  const s = comEstradas(comQuarry, RUA);
+  const s = comEstradas(comQuarry, [...RUA, ...ruaDaPedreiraDaVila(dados, { gx, gy })]);
   const p = s.predios.porId[id];
   if (p === undefined || !predioLigadoAoArmazem(s, p, dados)) {
     throw new Error(`fixture: '${id}' em (${gx},${gy}) nao ficou ligado ao armazem`);
@@ -109,20 +110,21 @@ function produzirDrenando(
  * entao um ciclo que encurte ou alargue reprova em vez de passar mais rapido.
  */
 const ULTIMO_DEPOSITO = {
-  /** jazida de um tile e dois lotes, pedreira em (26,34): tile (25,32). LOTE3-c:
-   *  o ciclo e 501 (3 pedras por viagem) e nao mais 167, dai 552 e nao 218 */
-  curtoPrimeiro: 552,
-  curtoSegundo: 1104,
-  /** 13 tiles a um lote cada, pedreira no lajedo (26,34) */
-  lajedo: 7378,
+  /** Lajedo ao norte, pedreira recuada: step mede dois lotes nos ticks 558/1116.
+   *  O ciclo conserva os 501 ticks (3 pedras por viagem), o trajeto mudou. */
+  curtoPrimeiro: 558,
+  curtoSegundo: 1116,
+  /** 13 tiles a um lote cada; todos os depositos do novo trajeto afirmados abaixo. */
+  lajedo: 7444,
   /** um unico tile ao alcance, pedreira na borda (32,34). 580 com o ciclo de 501
    *  (LOTE3-c); era 246, e nao 244, desde a
    *  noite 17: a roca da vila entrou na faixa sul (x 26..30, y 35..36) e o
    *  caminho da borda cruza chao arado, mais caro que grama no A*. */
-  borda: 580,
+  borda: 622,
   /** as duas sobrepostas: q1 no lajedo leva 12 tiles, q2 na borda leva 1 */
-  sobrepostas: 6812,
+  sobrepostas: 6868,
 } as const;
+
 
 // --- a camada, antes de qualquer sistema -------------------------------------
 
@@ -164,7 +166,7 @@ describe('F-T2a — a camada de recurso: o mapa diz ONDE, o estado diz QUANTO', 
 // --- perna 1 -----------------------------------------------------------------
 
 describe('F-T2a — perna 1: o exploit de demolir-e-reconstruir morre', () => {
-  // Um unico tile de rocha, de 2 lotes, vizinho da pedreira de (26,34): dois
+  // Um unico tile de rocha, de 2 lotes, vizinho da pedreira de (25,31): dois
   // ciclos e a jazida acaba. Com o veio no PREDIO, demolir e reconstruir devolvia
   // o rendimento inteiro por meio custo de construcao (F16a).
   const curto = comJazida(gameData, 'rock', [ROCHA], 2 * LOTE);
@@ -237,15 +239,17 @@ describe('F-T2a — perna 2: o lugar passa a importar, e o numero prova', () => 
     expect(a.produzido).toBe(tilesNoLajedo * LOTE);
     expect(b.produzido).toBe(tilesNaBorda * LOTE);
     // e o ritmo tambem: 13 viagens, a primeira e a ultima no tick exato. O lajedo
-    // esgota em 7378 ticks e nao nos 13 x 501 = 6513 do ciclo puro — a diferenca
+    // esgota em 7444 ticks e nao nos 13 x 501 = 6513 do ciclo puro — a diferenca
     // e a viagem, e ela esta declarada, nao tolerada.
     expect(a.ticksDeDeposito).toHaveLength(tilesNoLajedo);
-    expect(a.ticksDeDeposito[0]).toBe(594);
+    expect(a.ticksDeDeposito[0]).toBe(600);
     expect(a.ticksDeDeposito.at(-1)).toBe(ULTIMO_DEPOSITO.lajedo);
+    // Nova geometria autorizada: todo deposito continua exato, nao apenas os extremos.
+    expect(a.ticksDeDeposito).toEqual([600, 1186, 1772, 2358, 2934, 3506, 4078, 4650, 5226, 5784, 6342, 6900, 7444]);
     expect(b.ticksDeDeposito).toEqual([ULTIMO_DEPOSITO.borda]);
     expect(disponivelDe(a.fim, 'q1', umPorTile)).toBe(0);
     expect(disponivelDe(b.fim, 'q1', umPorTile)).toBe(0);
-    // LOTE3-c: o lajedo leva 7378 ticks; o limite e para o caso travar
+    // LOTE3-c: o lajedo leva 7444 ticks; o limite e para o caso travar
     // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 0,21 s
     // isolado (2026-09-29); 5x daria menos, e o limite fica no piso, o padrao do Vitest.
   }, 5_000);
@@ -267,7 +271,7 @@ describe('F-T2a — perna 2: o lugar passa a importar, e o numero prova', () => 
     let s = cenarioEm(NO_LAJEDO, umPorTile, 'q1');
     s = comEstradas(comProdutorOcupado(
       s, { tipo: 'quarry', id: 'q2', unidade: 'pedreiro-q2', ...NA_BORDA }, umPorTile,
-    ), RUA);
+    ), [...RUA, ...ruaDaPedreiraDaVila(umPorTile, NA_BORDA)]);
     let menor = Infinity;
     const depositos: Record<string, number> = { q1: 0, q2: 0 };
     for (let i = 1; i <= ULTIMO_DEPOSITO.sobrepostas + 1; i++) {
@@ -289,7 +293,7 @@ describe('F-T2a — perna 2: o lugar passa a importar, e o numero prova', () => 
     expect(menor).toBeGreaterThanOrEqual(0);
     expect(disponivelDe(s, 'q1', umPorTile)).toBe(0);
     expect(disponivelDe(s, 'q2', umPorTile)).toBe(0);
-    // LOTE3-c: 6812 ticks, e nao 2804; o limite e para o caso travar, nao aceite de tempo
+    // Lajedo transladado: 6868 ticks, e nao 2804; o limite e para o caso travar, nao aceite de tempo
     // `timeout` NAO e assercao de tempo (§8): existe para o caso travar. Medido: 1,4 / 1,5 s
     // isolado (2026-09-29); o limite e ~5x.
   }, 10_000);
@@ -428,7 +432,7 @@ it('F-T2a — evidencia', () => {
       _nota: 'nenhum tipo do dado de hoje usa `porTempo` — o cardume e `nunca` por decisao do operador. O regime esta implementado e coberto por dado injetado.',
     },
     perna1_exploitDaF16aMorre: {
-      jazida: `1 tile (25,32) valendo ${2 * LOTE} pedras (2 lotes)`,
+      jazida: `1 tile (${ROCHA.join(',')}) valendo ${2 * LOTE} pedras (2 lotes)`,
       produzidoAntesDeDemolir: 2 * LOTE,
       disponivelDepoisDeEsgotar: disponivelDe(esgotada, 'q1', curto),
       camadaSobreviveuADemolicao: JSON.stringify(demolida.recursos) === JSON.stringify(esgotada.recursos),

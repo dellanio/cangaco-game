@@ -27,6 +27,7 @@ import {
   avancar, cenarioDePedreira, cenarioDeSerraria, comJazida, comSaida, disponivelDe, fsmDe, progressoDe, saidaDe,
   pedreiraDaVila, rochaDaPedreiraDaVila,
 } from './helpers/producao-cenario';
+import { ruaDaPedreiraDaVila } from './helpers/producao-cenario';
 import { violacoesDaFsmDoEspecialista } from './helpers/especialista-invariantes';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { compararComESemSave } from './helpers/determinism';
@@ -36,10 +37,10 @@ import { linhaHDe, naVila } from './helpers/ancoras';
 const inicial = createInitialState(1);
 const ESCOLA = escolaDoCenario(inicial).id;
 const PEDREIRO = trabalhadorDoTipo('quarry') ?? '';
-const QUARRY = pedreiraDaVila(); // (26,34) hoje, ao lado do lajedo
+const QUARRY = pedreiraDaVila(); // (25,31) hoje, com um tile de vao do armazem
 /** y=33 liga a porta do armazem a da escola; a perna em x=29 desce ate a porta
  *  da pedreira (28,36). */
-const RUAS = [...linhaHDe(naVila, 0, 7, 3), naVila(0, 4), naVila(0, 5), naVila(0, 6), naVila(-1, 6)];
+const RUAS = [...linhaHDe(naVila, 0, 7, 3), ...ruaDaPedreiraDaVila()];
 /**
  * 1300, e nao 1000: o ciclo da quarry custa 167 ticks e o teto da gaveta e 5, ou
  * seja 835 ticks SO de producao, depois de treinar (t=179), levantar a obra
@@ -54,7 +55,8 @@ const TETO_DA_GAVETA = gameData.producao.estoqueInternoPorPredio.saida;
  *  (medido). NAO e faixa: a faixa foi recusada porque aceitaria deriva futura sem avisar. */
 // I-MOVIMENTO-FILA-DE-CIVIS (2026-10-04): com a fila (a reserva do tile no inicio do passo, sem
 // empurrao), remedido: 2 ticks.
-const ATRASO_DA_COLISAO = colisaoCivilLigada(gameData) ? 2 : 0;
+// Lajedo ao norte, pedreira recuada: o trajeto novo tem quatro ticks de fila.
+const ATRASO_DA_COLISAO = colisaoCivilLigada(gameData) ? 4 : 0;
 const CICLO = gameData.producao.receitas.quarry?.ticksDoCiclo ?? 0;
 /**
  * F-T3 — entre um deposito e o seguinte ha agora a IDA ao tile e a VOLTA. O
@@ -242,8 +244,8 @@ describe('F15a — aceite headless do BUILD_PLAN', () => {
         receitaDaSawmill: gameData.producao.receitas.sawmill,
       },
       caminhoReal: {
-        cenario: { estradas: 'linhaH(29,36,33) + perna x=29 ate a porta (28,36)', quarry: QUARRY, escola: ESCOLA },
-        comandos: ['PlaceBlueprint quarry (26,34)', `EnqueueTraining ${PEDREIRO}`],
+      cenario: { estradas: RUAS, quarry: QUARRY, escola: ESCOLA },
+      comandos: [`PlaceBlueprint quarry (${QUARRY.gx},${QUARRY.gy})`, `EnqueueTraining ${PEDREIRO}`],
         ticks: TICKS,
         tickDaObraConcluida: r.tickDaObra,
         tickDaOcupacao: r.tickDaOcupacao,

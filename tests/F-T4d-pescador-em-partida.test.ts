@@ -26,7 +26,7 @@ import { createInitialState } from '../src/sim/state';
 import type { GameState, PredioCompleto } from '../src/sim/state';
 import type { Command } from '../src/sim/commands';
 import { step } from '../src/sim/tick';
-import { gameData } from '../src/sim/data';
+import { gameData as gameDataDoJogo } from '../src/sim/data';
 import type { GameData } from '../src/sim/data/types';
 import { alertasDoEstado, estoqueDosArmazens } from '../src/sim/selectors';
 import { canPlace } from '../src/sim/placement';
@@ -49,6 +49,10 @@ const TIPO = 'fishermans';
 const CIVIL = 'fisherman';
 /** Sonda de 2026-09-25: seco no tick 10745; a abertura perde os civis no 12 000. */
 const TETO = 11_800;
+// Emenda do operador, precedente I-CLIMA-ESTACAO: o teto mede o caminho real
+// da pesca/esgotamento, nao a estacao. Com seca: 16/17 cardumes no teto;
+// com o mesmo dado sem clima: os 17 esgotam no tick 11756. Teto e regras intactos.
+const gameData: GameData = { ...gameDataDoJogo, clima: { ...gameDataDoJogo.clima, ligado: false } };
 const chebyshev = (a: TileDeGrid, b: TileDeGrid): number =>
   Math.max(Math.abs(a.gx - b.gx), Math.abs(a.gy - b.gy));
 

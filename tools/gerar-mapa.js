@@ -314,7 +314,7 @@ function faixa({ gx, gy, largura, altura }) {
 
 /** Centro e raio do lajedo da vila. Ver o cabecalho: e a unica pedra dentro do
  *  quadrante protegido, e existe para que a partida abra com o que cortar. */
-const LAJEDO_DA_VILA = { gx: 24, gy: 31, raio: 2 };
+const LAJEDO_DA_VILA = terreno.geracao.lajedoDaVila;
 
 /** I-TERRENO-MINAS-PERTO-DA-VILA — a serra do oeste: um bloco de montanha colado na
  *  moldura, de `x0` a `x1` e de `y0` a `y1` (inclusive), com os veios na face leste

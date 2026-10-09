@@ -25,7 +25,7 @@ import { createInitialState } from '../src/sim/state';
 import type { GameState, Unidade } from '../src/sim/state';
 import type { GameData } from '../src/sim/data/types';
 import { step } from '../src/sim/tick';
-import { gameData } from '../src/sim/data';
+import { gameData as gameDataDoJogo } from '../src/sim/data';
 import { POSICAO_DO_ESTADO, civisNoTile, ocupaTile } from '../src/sim/colisao';
 import { salvar } from '../src/sim/save';
 import { unidadesInvisiveis } from '../src/render/visibilidade';
@@ -36,6 +36,10 @@ import { comandosDaVilaNoTick, vilaDaCalibracao } from './helpers/cal-vila';
 import { gravarEvidencia } from './helpers/evidence';
 
 const TICKS = 8_000;
+// Emenda do operador, precedente I-CLIMA-ESTACAO: mede colisao e visibilidade,
+// nao ritmo das estacoes. A seca deixava a serraria sem ocupante no teto de 8000.
+// Sonda por step comprovou ocupacao no mesmo teto com clima desligado neste dado.
+const gameData: GameData = { ...gameDataDoJogo, clima: { ...gameDataDoJogo.clima, ligado: false } };
 const LIGADA: GameData = {
   ...gameData, movimento: { ...gameData.movimento, colisaoCivil: { ...gameData.movimento.colisaoCivil, ligada: true } },
 };
@@ -57,7 +61,7 @@ interface Medida {
 }
 
 function medir(dados: GameData): Medida {
-  let s: GameState = createInitialState(dados.economia.estadoInicial.semente);
+  let s: GameState = createInitialState(dados.economia.estadoInicial.semente, dados);
   const vila = vilaDaCalibracao(s, dados);
   let encontros = 0;
   let bloqueios = 0;

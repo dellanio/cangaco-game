@@ -259,14 +259,18 @@ describe('F06 — canPlace', () => {
     // de sobrepor. O encosto VERTICAL saiu daqui na F16a — nao virou sobreposicao,
     // virou `porta-sem-saida`, e esta no describe proprio mais abaixo.
     it('encostado (meio-aberto) pela esquerda: ok', () => {
-      // BUG-F (2026-09-24): o encosto pela esquerda do armazem cai em cima de um
-      // tile de rocha do mapa de abertura (26,31 — medido), e rocha passou a
-      // recusar construcao. O caso e sobre o limite do meio-aberto, nao sobre
-      // recurso, entao ele roda sem a camada; e o par abaixo afirma que a recusa
-      // por recurso e o que acontece no mapa de verdade, no MESMO ponto.
+      // O encosto mede meio-aberto e espacamento, independentemente do recurso.
+      // O par com bloqueio explicito conserva a precedencia recurso > espacamento.
       const semRecursos: GameState = { ...inicial, recursos: {} };
       expect(canPlace(semRecursos, 'quarry', armazem.gx - pedreiraL, armazem.gy, SEM_VAO)).toEqual({ ok: true });
-      expect(canPlace(inicial, 'quarry', armazem.gx - pedreiraL, armazem.gy))
+      // Lajedo deslocado: o bloqueio deste caso e explicito na fixture,
+      // preservando a precedencia recurso > colado sem mudar o mapa publicado.
+      const pontoBloqueado = { gx: armazem.gx - pedreiraL, gy: armazem.gy };
+      const comRocha: GameState = {
+        ...inicial,
+        recursos: { ...inicial.recursos, [`${pontoBloqueado.gx},${pontoBloqueado.gy}`]: { tipo: 'rock', quantidade: 1 } },
+      };
+      expect(canPlace(comRocha, 'quarry', armazem.gx - pedreiraL, armazem.gy))
         .toEqual({ ok: false, motivo: 'recurso' });
       // I-OBRA-UM-TILE-ENTRE-PREDIOS: com o vao do dado, o encosto e `colado`, e a um tile passa
       expect(canPlace(semRecursos, 'quarry', armazem.gx - pedreiraL, armazem.gy)).toEqual({ ok: false, motivo: 'colado' });
