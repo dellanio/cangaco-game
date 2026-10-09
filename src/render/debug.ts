@@ -283,6 +283,9 @@ export interface EstadoDebug {
    *  ou `presente` sem a arte da mascara), lido de volta da imagem e nao recalculado.
    *  O roteiro confere contra a mascara que ele mesmo tira do conjunto de rochas. */
   lajedoDesenhado: Readonly<Record<string, string>>;
+  serra: { readonly recalculos: number; readonly repinturas: number; readonly trechos: Readonly<Record<string, {
+    readonly volume: number; readonly mascara: number; readonly altura: number; readonly estado: string; readonly textura: string;
+  }>> };
   /** F-TR — a fonte de cada variante do chao, por tipo de terreno: o arquivo da arte que
    *  a tira recebeu, ou `cor:<hex>` onde ficou o placeholder. Lida uma vez no `create`.
    *  O roteiro afirma que dois tipos nao dividem fonte. */
@@ -495,6 +498,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     recursosVarridosPeloChao: 0,
     mascarasDoLajedo: {},
     lajedoDesenhado: {},
+    serra: { recalculos: 0, repinturas: 0, trechos: {} },
     texturaDoTerreno: {},
     transicoesVisiveis: {},
     crescimentoDasArvores: {},

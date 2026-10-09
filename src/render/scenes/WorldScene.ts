@@ -3,6 +3,8 @@ import { transformacaoDoClima } from '../cobertura-clima';
 import { candidatosAEnfeite, MemoriaDosEnfeites } from '../enfeites';
 import { sementeDoMapa, centroDaVilaInicial } from '../mapa';
 import { panoDaBandeira } from '../bandeira';
+import { configDaSerra, MemoriaDaSerra, texturaDaSerra } from '../serra';
+import { rendimentoDaRocha } from '../mapa';
 // A cena so le o estado (aqui, so gameData/tema e o GameState via ponte) e
 // desenha. Nada de logica de jogo (CLAUDE.md §10): nenhuma decisao de regra
 // mora aqui, so apresentacao.
@@ -216,6 +218,8 @@ export class WorldScene extends Phaser.Scene {
   private degrauSazonal = -1;
   private recalculosDaCaatinga = 0;
   private repinturasDaCaatinga = 0;
+  private readonly memoriaDaSerra = new MemoriaDaSerra();
+  private repinturasDaSerra = 0;
   private ventoLigado = true;
   private readonly panosDasBandeiras = new Map<string, {
     pano: Phaser.GameObjects.Polygon; mastro: Phaser.GameObjects.Rectangle; gx: number; gy: number;
@@ -898,6 +902,12 @@ export class WorldScene extends Phaser.Scene {
       estado.custo = somarCusto(estado.custo, 'chaoDaCana', inicioDoChao, estado.chaoDaCanaDesenhado, agora);
       estado.mascarasDoLajedo = this.mascarasDoLajedo();
       estado.lajedoDesenhado = this.lajedoDesenhado();
+      estado.serra = {
+        recalculos: this.memoriaDaSerra.recalculos, repinturas: this.repinturasDaSerra,
+        trechos: Object.fromEntries([...this.memoriaDaSerra.trechos].map(([chave, trecho]) => [chave, {
+          ...trecho, textura: this.vegetacaoDesenhada.get(chave)?.texture.key ?? '(sem sprite)',
+        }])),
+      };
       estado.transicoesVisiveis = this.lerTransicoesVisiveis(camadasDeTransicao);
     estado.vegetacaoRenderizada = this.vegetacaoDesenhada.size;
     const vistaDaMata = this.cameras.main.worldView;
@@ -1633,6 +1643,7 @@ export class WorldScene extends Phaser.Scene {
   private atualizarRecursos(camada: Phaser.Tilemaps.TilemapLayer): Record<string, number> {
     const recursos = this.ponte.atual?.recursos ?? {};
     const repintar = new Set<string>();
+    for (const chave of this.memoriaDaSerra.atualizar(recursos, this.ponte.atual?.tick ?? 0, rendimentoDaRocha)) repintar.add(chave);
     const degrau = degrauDaCaatinga(faseNoTick(this.ponte.atual?.tick ?? 0));
     if (degrau !== this.degrauSazonal) {
       this.degrauSazonal = degrau;
@@ -1707,11 +1718,13 @@ export class WorldScene extends Phaser.Scene {
       ? null : chaveDeTextura('vegetacao', desenho.entrada.id, crescimento);
     const comPng = chaveDoEstado !== null && this.textures.exists(chaveDoEstado);
     const textura = comPng && chaveDoEstado !== null ? chaveDoEstado : this.texturaDaVegetacao(desenho, chave);
-    const escala = crescimento === null || comPng ? 1 : escalaDoPlaceholder(crescimento);
+    const escala = textura.startsWith('vegetacao:rock:v') ? configDaSerra.escala
+      : crescimento === null || comPng ? 1 : escalaDoPlaceholder(crescimento);
     if (crescimento === null) this.crescimentoDesenhado.delete(chave);
     else this.crescimentoDesenhado.set(chave, { estado: crescimento, fonte: comPng ? 'png' : 'placeholder', escala });
     if (atual?.texture.key === textura && atual.scaleX === escala) return;
     if (desenho.entrada.id === 'tree' && atual !== undefined && atual.texture.key !== textura) this.repinturasDaCaatinga++;
+    if (desenho.entrada.id === 'rock') this.repinturasDaSerra++;
     atual?.destroy();
     this.vegetacaoNova = true;
     this.ultimoTickDaVegetacao.delete(chave);
@@ -1852,7 +1865,8 @@ export class WorldScene extends Phaser.Scene {
         return vizinho?.tipo === 'rock' && vizinho.quantidade > 0;
       });
       const chaveDaMascara = chaveDeTextura('vegetacao', 'rock', `m${mascara}`);
-      return this.textures.exists(chaveDaMascara) ? chaveDaMascara : desenho.chave;
+      const anterior = this.textures.exists(chaveDaMascara) ? chaveDaMascara : desenho.chave;
+      return texturaDaSerra(this.memoriaDaSerra.trechos.get(chave) ?? null, (textura) => this.textures.exists(textura), anterior) ?? anterior;
     }
     const estados = this.especiesCarregadasDaVegetacao(desenho.entrada);
     if (estados.length === 0) return desenho.chave;

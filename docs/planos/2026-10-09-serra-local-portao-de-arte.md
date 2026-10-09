@@ -22,3 +22,6 @@
 ## Verificacao da branch sem a candidata
 
 `npm run verify` no HEAD866921eb, depois de guardar o WIP, saiu1. Typecheck/lint/validate:data passaram (31arquivos/0erros). A suite normal reprovou F05a-estado-inicial: o comando ponta a ponta `npm run sim -- inicial --ticks 0` excedeu o timeout existente de30000ms. O selo .verify-ok nao foi criado; a suite transladada nao foi executada. Log:test-output/serra-preservada-verify-20261009.log. Nao alterei o timeout, teste ou codigo para contornar esta falha. Este teste nao homologa nem verifica a integracao da serra guardada. Nenhum merge permitido.
+
+## Atualizacao de2026-10-09: bloqueio artistico corrigido
+Nova rodada nativa passou no validador original nos80PNGs e na revisao independente. Os104achados da candidata inicial sao historicos; nenhum limite mudou. A integracao retomada passou nos dirigidos42testes, nos seis roteiros exigidos e no verify:rapido(94arquivos/1055testes). Derivacao versionada reproduz80PNGs identicos. Fechamento completo do novo pacote/homologacao visual ainda pendentes; nao inferir merge pelo verde rapido. Evidencia atual em PROGRESS e docs/planos/2026-10-09-pedreira-e-recursos-naturais.md.

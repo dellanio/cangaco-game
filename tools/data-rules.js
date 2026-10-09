@@ -2130,6 +2130,16 @@ function validarSom(som, erros, opcoes = {}) {
   }
 }
 
+function validarSerra(config, erros) {
+  const e = (msg) => erros.push(`interface/serra: ${msg}`);
+  if (!config || typeof config !== 'object') { e('data/serra.json precisa existir e ser objeto'); return; }
+  if (!Array.isArray(config.limiares) || config.limiares.length !== 4
+    || config.limiares.some((v, i) => !Number.isFinite(v) || v <= 0 || v >= 1 || (i > 0 && v >= config.limiares[i - 1]))) e('quatro limiares estritamente decrescentes em (0,1)');
+  if (!Array.isArray(config.volumes) || config.volumes.length !== 5
+    || config.volumes.some((v, i) => !Number.isInteger(v) || v <= 0 || (i > 0 && v >= config.volumes[i - 1]))) e('cinco volumes inteiros positivos estritamente decrescentes');
+  if (!Number.isFinite(config.escala) || config.escala <= 0) e('escala precisa ser positiva');
+}
+
 function validarInterface(dados, interfaceUi) {
   const erros = [];
   const animacao = interfaceUi && interfaceUi['animacao-unidade'];
@@ -2159,6 +2169,7 @@ function validarInterface(dados, interfaceUi) {
   const tema = interfaceUi && interfaceUi['theme-sertao'];
   validarRotulosDeModo(dados, tema, erros);
   validarRelevo(dados, interfaceUi && interfaceUi.relevo, erros);
+  validarSerra(interfaceUi && interfaceUi.serra, erros);
   validarBandeira(interfaceUi && interfaceUi.bandeira, erros);
   validarVento(interfaceUi && interfaceUi.vento, erros);
   validarAguaPeixe(interfaceUi && interfaceUi['agua-peixe'], erros);
@@ -2264,4 +2275,4 @@ function validarTudo(dados) {
   return erros;
 }
 
-module.exports = { validarSom, validarCargaNasMaos, validarBandeira, validarFumaca, validarTudo, validarInterface, validarVento, validarPoeira, getByPath };
+module.exports = { validarSerra, validarSom, validarCargaNasMaos, validarBandeira, validarFumaca, validarTudo, validarInterface, validarVento, validarPoeira, getByPath };

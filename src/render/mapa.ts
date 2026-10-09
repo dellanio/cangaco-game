@@ -9,6 +9,8 @@ import arquivoDoMapa from '../../data/maps/sertao-128.json';
 
 /** Semente versionada do mapa: o loader da sim nao a inclui no GameState. */
 export const sementeDoMapa: number = arquivoDoMapa.semente;
+/** Rendimento lido pelo render; unico funil para a regra visual da serra. */
+export const rendimentoDaRocha = gameData.recursos.tipos.rock!.rendimentoPorTile;
 export const centroDaVilaInicial = gameData.economia.estadoInicial.spawnDeUnidades;
 import type { RecursoNoTile } from '../sim/state';
 import { TERRENOS_DE_MAPA } from '../sim/data/terrenos';

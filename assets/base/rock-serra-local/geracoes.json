@@ -1,0 +1,577 @@
+{
+  "registros": [
+    {
+      "prompt": "Edit ONLY the lighting and alpha-edge quality of this original game-art atlas. Keep the exact 4x4 layout, same 16 rock modules and their existing silhouettes, geometry, height, pixelated geological stratum material, transparent canvas and corresponding locations. This is volume15 intact sertao quarry; it must still connect as a single geological ridge. Remove ALL red/yellow fringe pixels. Native repaint, not a filter: world light comes from above and slightly from SOUTH, meaning the camera-facing/front/lower stone planes are noticeably illuminated in warm pale ochre while north/back/upper planes are midtone ochre. IMPORTANT quantitative art contract: in EACH of the 16 cells the visible LOWER HALF must be brighter on average than the visible UPPER HALF, by clearly 15 to 25 luminance levels, with three readable material values. Foreground/south-facing vertical walls currently too dark: repaint them light warm ochre; upper/rear slabs should be a quieter/darker neutral earth midtone. Occlusion stays in thin fissures, NOT a blanket dark band across the bottom or the foot. Sun has NO east-west component: left and right comparable faces equally lit. Preserve natural broad irregular connected benches and rock volume without suspended caps, detached pebble piles, borders, letters, numbers, grid or ground. Crisp alpha, fully transparent background. No cast-shadow disk at the bottom. Preserve dimensions and all16modules exactly. This lighting correction must not turn it into plastic/gold or change its geological identity.",
+      "source": "C:\\Users\\della\\.codex\\generated_images\\01a114a8-cf6f-7a41-8d70-8a03a4f941ad\\exec-1870bc45-f7b6-4220-abe0-9310d105b961.png",
+      "geracao": "exec-1870bc45-f7b6-4220-abe0-9310d105b961",
+      "referencia": "../serra-local-20261008/volume-15-atlas-revisao2.png",
+      "situacao": "portao tecnico0; revisao independente aprovada; homologacao do operador pendente",
+      "volume": 15,
+      "base": "base/rock-serra-local/volume-15.png",
+      "referenciaVersionada": "base/rock-serra-local/referencias/volume-15.png",
+      "sha256": "e33056c1445e8e215005d135fb37c67dd45dd960e2a3153de14a020aca9bb2ea"
+    },
+    {
+      "prompt": "Edit ONLY the lighting and alpha-edge quality of this original game-art atlas. Keep the exact 4x4 layout, same 16 rock modules and their existing silhouettes, geometry, height, pixelated geological stratum material, transparent canvas and corresponding locations. This is volume12 partly extracted sertao quarry; it must still connect as a single geological ridge. Remove ALL red/yellow fringe pixels. Native repaint, not a filter: world light comes from above and slightly from SOUTH, meaning the camera-facing/front/lower stone planes are noticeably illuminated in warm pale ochre while north/back/upper planes are midtone ochre. IMPORTANT quantitative art contract: in EACH of the 16 cells the visible LOWER HALF must be brighter on average than the visible UPPER HALF, by clearly 15 to 25 luminance levels, with three readable material values. Foreground/south-facing vertical walls currently too dark: repaint them light warm ochre; upper/rear slabs should be a quieter/darker neutral earth midtone. Occlusion stays in thin fissures, NOT a blanket dark band across the bottom or the foot. Sun has NO east-west component: left and right comparable faces equally lit. Preserve natural broad irregular connected benches and rock volume without suspended caps, detached pebble piles, borders, letters, numbers, grid or ground. Crisp alpha, fully transparent background. No cast-shadow disk at the bottom. Preserve dimensions and all16modules exactly. The FIRST attached atlas is the volume12 geometry to edit; the SECOND attached atlas is approved illumination only, never copy its taller geometry. Keep the twelve-volume atlas's exact module silhouettes and smaller cliffs. This lighting correction must not turn it into plastic/gold or change its geological identity.",
+      "source": "C:\\Users\\della\\.codex\\generated_images\\01a114a8-cf6f-7a41-8d70-8a03a4f941ad\\exec-3c80a4ce-8ed3-4586-a871-29f6297770e3.png",
+      "geracao": "exec-3c80a4ce-8ed3-4586-a871-29f6297770e3",
+      "referencias": [
+        "../serra-local-20261008/volume-12-atlas.png",
+        "volume-15-atlas.png"
+      ],
+      "situacao": "portao tecnico0; revisao independente aprovada; homologacao do operador pendente",
+      "volume": 12,
+      "base": "base/rock-serra-local/volume-12.png",
+      "referenciaVersionada": "base/rock-serra-local/referencias/volume-12.png",
+      "sha256": "84262668e9f77eee1e41b269f3bc5d98d7769c4f56fccd0e646d4fe41203ae4a"
+    },
+    {
+      "prompt": "Edit ONLY the lighting and alpha-edge quality of this original game-art atlas. Keep the exact 4x4 layout, same 16 rock modules and their existing silhouettes, geometry, height, pixelated geological stratum material, transparent canvas and corresponding locations. This is volume9 halfway extracted sertao quarry; it must still connect as a single geological ridge. Remove ALL red/yellow fringe pixels. Native repaint, not a filter: world light comes from above and slightly from SOUTH, meaning the camera-facing/front/lower stone planes are noticeably illuminated in warm pale ochre while north/back/upper planes are midtone ochre. IMPORTANT quantitative art contract: in EACH of the 16 cells the visible LOWER HALF must be brighter on average than the visible UPPER HALF, by clearly 15 to 25 luminance levels, with three readable material values. Foreground/south-facing vertical walls currently too dark: repaint them light warm ochre; upper/rear slabs should be a quieter/darker neutral earth midtone. Occlusion stays in thin fissures, NOT a blanket dark band across the bottom or the foot. Sun has NO east-west component: left and right comparable faces equally lit. Preserve natural broad irregular connected benches and rock volume without suspended caps, detached pebble piles, borders, letters, numbers, grid or ground. Crisp alpha, fully transparent background. No cast-shadow disk at the bottom. Preserve dimensions and all16modules exactly. FIRST reference is the volume9 geometry to edit. SECOND reference is illumination only. Retain volume9's lower benches and silhouettes; never add volume15's tall cliffs. Lower half should be distinctly lighter than upper half in every cell, from south sunlight. This lighting correction must not turn it into plastic/gold or change its geological identity.",
+      "source": "C:\\Users\\della\\.codex\\generated_images\\01a114a8-cf6f-7a41-8d70-8a03a4f941ad\\exec-247c0e0d-411f-454e-8704-f136ebea1dad.png",
+      "geracao": "exec-247c0e0d-411f-454e-8704-f136ebea1dad",
+      "referencias": [
+        "../serra-local-20261008/volume-9-atlas.png",
+        "volume-15-atlas.png"
+      ],
+      "situacao": "portao tecnico0; revisao independente aprovada; homologacao do operador pendente",
+      "volume": 9,
+      "base": "base/rock-serra-local/volume-9.png",
+      "referenciaVersionada": "base/rock-serra-local/referencias/volume-9.png",
+      "sha256": "a5cfadae080061e4eb1388037b95956359d86930920c33080de0c4e58f2f3d78"
+    },
+    {
+      "prompt": "Edit ONLY the lighting and alpha-edge quality of this original game-art atlas. Keep the exact 4x4 layout, same 16 rock modules and their existing silhouettes, geometry, height, pixelated geological stratum material, transparent canvas and corresponding locations. This is volume6 low almost-extracted sertao quarry; it must still connect as a single geological ridge. Remove ALL red/yellow fringe pixels. Native repaint, not a filter: world light comes from above and slightly from SOUTH, meaning the camera-facing/front/lower stone planes are noticeably illuminated in warm pale ochre while north/back/upper planes are midtone ochre. IMPORTANT quantitative art contract: in EACH of the 16 cells the visible LOWER HALF must be brighter on average than the visible UPPER HALF, by clearly 15 to 25 luminance levels, with three readable material values. Foreground/south-facing vertical walls currently too dark: repaint them light warm ochre; upper/rear slabs should be a quieter/darker neutral earth midtone. Occlusion stays in thin fissures, NOT a blanket dark band across the bottom or the foot. Sun has NO east-west component: left and right comparable faces equally lit. Preserve natural broad irregular connected benches and rock volume without suspended caps, detached pebble piles, borders, letters, numbers, grid or ground. Crisp alpha, fully transparent background. No cast-shadow disk at the bottom. Preserve dimensions and all16modules exactly. FIRST reference is the volume6 geometry to edit. SECOND reference is illumination only. Keep the low ledges and irregular shallow faces of volume6; never increase its height to match volume15. South foreground is lighter and upper rear neutral midtone in EACH cell, retaining three values and natural granite material. This lighting correction must not turn it into plastic/gold or change its geological identity.",
+      "source": "C:\\Users\\della\\.codex\\generated_images\\01a114a8-cf6f-7a41-8d70-8a03a4f941ad\\exec-baf12246-9e4d-4b21-8c11-d09d155125db.png",
+      "geracao": "exec-baf12246-9e4d-4b21-8c11-d09d155125db",
+      "referencias": [
+        "../serra-local-20261008/volume-6-atlas.png",
+        "volume-15-atlas.png"
+      ],
+      "situacao": "portao tecnico0; revisao independente aprovada; homologacao do operador pendente",
+      "volume": 6,
+      "base": "base/rock-serra-local/volume-6.png",
+      "referenciaVersionada": "base/rock-serra-local/referencias/volume-6.png",
+      "sha256": "83569699803b79404be3b6649a1a68af7f50fa550aa5d046662355d8c11342fa"
+    },
+    {
+      "prompt": "Edit ONLY the lighting and alpha-edge quality of this original game-art atlas. Keep the exact 4x4 layout, same 16 rock modules and their existing silhouettes, geometry, height, pixelated geological stratum material, transparent canvas and corresponding locations. This is volume3 exhausted low lajedo remnants sertao quarry; it must still connect as a single geological ridge. Remove ALL red/yellow fringe pixels. Native repaint, not a filter: world light comes from above and slightly from SOUTH, meaning the camera-facing/front/lower stone planes are noticeably illuminated in warm pale ochre while north/back/upper planes are midtone ochre. IMPORTANT quantitative art contract: in EACH of the 16 cells the visible LOWER HALF must be brighter on average than the visible UPPER HALF, by clearly 15 to 25 luminance levels, with three readable material values. Foreground/south-facing vertical walls currently too dark: repaint them light warm ochre; upper/rear slabs should be a quieter/darker neutral earth midtone. Occlusion stays in thin fissures, NOT a blanket dark band across the bottom or the foot. Sun has NO east-west component: left and right comparable faces equally lit. Preserve natural broad irregular connected benches and rock volume without suspended caps, detached pebble piles, borders, letters, numbers, grid or ground. Crisp alpha, fully transparent background. No cast-shadow disk at the bottom. Preserve dimensions and all16modules exactly. FIRST reference is the volume3 geometry to edit. SECOND reference is illumination only. THIS MUST STAY NEARLY FLAT TO THE GROUND with tiny irregular rock ledges and shallow fissures; do not reintroduce any high cliffs, towers or volume6 heights. Keep its original almost-ground-level silhouette. The sunlit southern/front half of each slab must be noticeably brighter than the northern/rear half, but with naturally shaded facets rather than an artificial background gradient. Light beige/ochre front facet, subdued grey-ochre rear facet; deep fissures remain small and dark. This lighting correction must not turn it into plastic/gold or change its geological identity.",
+      "source": "C:\\Users\\della\\.codex\\generated_images\\01a114a8-cf6f-7a41-8d70-8a03a4f941ad\\exec-c6cf3d63-aff2-456a-b58a-093155f480f4.png",
+      "geracao": "exec-c6cf3d63-aff2-456a-b58a-093155f480f4",
+      "referencias": [
+        "../serra-local-20261008/volume-3-atlas.png",
+        "volume-15-atlas.png"
+      ],
+      "situacao": "portao tecnico0; revisao independente aprovada; homologacao do operador pendente",
+      "volume": 3,
+      "base": "base/rock-serra-local/volume-3.png",
+      "referenciaVersionada": "base/rock-serra-local/referencias/volume-3.png",
+      "sha256": "c9cdbe6aa9d5ced988cbf62743d9b9de15d1e380bae9033011cba06571500b35"
+    }
+  ],
+  "derivacao": "Escala comum128x160, limpeza alfa<24, pe157, rampa fixa W22/N16 somente para juncao; bleed invisivel via tools/png-bleed.mjs. Volumes e luz desenhados nativamente.",
+  "medidas": {
+    "hashes": {
+      "3": "c9cdbe6aa9d5ced988cbf62743d9b9de15d1e380bae9033011cba06571500b35",
+      "6": "83569699803b79404be3b6649a1a68af7f50fa550aa5d046662355d8c11342fa",
+      "9": "a5cfadae080061e4eb1388037b95956359d86930920c33080de0c4e58f2f3d78",
+      "12": "84262668e9f77eee1e41b269f3bc5d98d7769c4f56fccd0e646d4fe41203ae4a",
+      "15": "e33056c1445e8e215005d135fb37c67dd45dd960e2a3153de14a020aca9bb2ea"
+    },
+    "medidas": {
+      "3": [
+        {
+          "mascara": 0,
+          "altura": 94,
+          "pe": 157,
+          "area": 7257
+        },
+        {
+          "mascara": 1,
+          "altura": 94,
+          "pe": 157,
+          "area": 7998
+        },
+        {
+          "mascara": 2,
+          "altura": 89,
+          "pe": 157,
+          "area": 8333
+        },
+        {
+          "mascara": 3,
+          "altura": 94,
+          "pe": 157,
+          "area": 9180
+        },
+        {
+          "mascara": 4,
+          "altura": 112,
+          "pe": 157,
+          "area": 9563
+        },
+        {
+          "mascara": 5,
+          "altura": 112,
+          "pe": 157,
+          "area": 10124
+        },
+        {
+          "mascara": 6,
+          "altura": 110,
+          "pe": 157,
+          "area": 10360
+        },
+        {
+          "mascara": 7,
+          "altura": 116,
+          "pe": 157,
+          "area": 11930
+        },
+        {
+          "mascara": 8,
+          "altura": 99,
+          "pe": 157,
+          "area": 8590
+        },
+        {
+          "mascara": 9,
+          "altura": 102,
+          "pe": 157,
+          "area": 8068
+        },
+        {
+          "mascara": 10,
+          "altura": 98,
+          "pe": 157,
+          "area": 8670
+        },
+        {
+          "mascara": 11,
+          "altura": 96,
+          "pe": 157,
+          "area": 9554
+        },
+        {
+          "mascara": 12,
+          "altura": 111,
+          "pe": 157,
+          "area": 10467
+        },
+        {
+          "mascara": 13,
+          "altura": 114,
+          "pe": 157,
+          "area": 10873
+        },
+        {
+          "mascara": 14,
+          "altura": 111,
+          "pe": 157,
+          "area": 11074
+        },
+        {
+          "mascara": 15,
+          "altura": 113,
+          "pe": 157,
+          "area": 12493
+        }
+      ],
+      "6": [
+        {
+          "mascara": 0,
+          "altura": 96,
+          "pe": 157,
+          "area": 7818
+        },
+        {
+          "mascara": 1,
+          "altura": 95,
+          "pe": 157,
+          "area": 9165
+        },
+        {
+          "mascara": 2,
+          "altura": 97,
+          "pe": 157,
+          "area": 9057
+        },
+        {
+          "mascara": 3,
+          "altura": 96,
+          "pe": 157,
+          "area": 9407
+        },
+        {
+          "mascara": 4,
+          "altura": 112,
+          "pe": 157,
+          "area": 10086
+        },
+        {
+          "mascara": 5,
+          "altura": 112,
+          "pe": 157,
+          "area": 11644
+        },
+        {
+          "mascara": 6,
+          "altura": 113,
+          "pe": 157,
+          "area": 11240
+        },
+        {
+          "mascara": 7,
+          "altura": 112,
+          "pe": 157,
+          "area": 11789
+        },
+        {
+          "mascara": 8,
+          "altura": 110,
+          "pe": 157,
+          "area": 10368
+        },
+        {
+          "mascara": 9,
+          "altura": 105,
+          "pe": 157,
+          "area": 10405
+        },
+        {
+          "mascara": 10,
+          "altura": 106,
+          "pe": 157,
+          "area": 9389
+        },
+        {
+          "mascara": 11,
+          "altura": 105,
+          "pe": 157,
+          "area": 10522
+        },
+        {
+          "mascara": 12,
+          "altura": 109,
+          "pe": 157,
+          "area": 10832
+        },
+        {
+          "mascara": 13,
+          "altura": 112,
+          "pe": 157,
+          "area": 11331
+        },
+        {
+          "mascara": 14,
+          "altura": 111,
+          "pe": 157,
+          "area": 10575
+        },
+        {
+          "mascara": 15,
+          "altura": 110,
+          "pe": 157,
+          "area": 11734
+        }
+      ],
+      "9": [
+        {
+          "mascara": 0,
+          "altura": 96,
+          "pe": 157,
+          "area": 7627
+        },
+        {
+          "mascara": 1,
+          "altura": 93,
+          "pe": 157,
+          "area": 9001
+        },
+        {
+          "mascara": 2,
+          "altura": 96,
+          "pe": 157,
+          "area": 8981
+        },
+        {
+          "mascara": 3,
+          "altura": 98,
+          "pe": 157,
+          "area": 9817
+        },
+        {
+          "mascara": 4,
+          "altura": 106,
+          "pe": 157,
+          "area": 9504
+        },
+        {
+          "mascara": 5,
+          "altura": 104,
+          "pe": 157,
+          "area": 10134
+        },
+        {
+          "mascara": 6,
+          "altura": 103,
+          "pe": 157,
+          "area": 10130
+        },
+        {
+          "mascara": 7,
+          "altura": 106,
+          "pe": 157,
+          "area": 11013
+        },
+        {
+          "mascara": 8,
+          "altura": 104,
+          "pe": 157,
+          "area": 8851
+        },
+        {
+          "mascara": 9,
+          "altura": 100,
+          "pe": 157,
+          "area": 9209
+        },
+        {
+          "mascara": 10,
+          "altura": 98,
+          "pe": 157,
+          "area": 9023
+        },
+        {
+          "mascara": 11,
+          "altura": 98,
+          "pe": 157,
+          "area": 9679
+        },
+        {
+          "mascara": 12,
+          "altura": 105,
+          "pe": 157,
+          "area": 9901
+        },
+        {
+          "mascara": 13,
+          "altura": 102,
+          "pe": 157,
+          "area": 10192
+        },
+        {
+          "mascara": 14,
+          "altura": 96,
+          "pe": 157,
+          "area": 9386
+        },
+        {
+          "mascara": 15,
+          "altura": 104,
+          "pe": 157,
+          "area": 11049
+        }
+      ],
+      "12": [
+        {
+          "mascara": 0,
+          "altura": 109,
+          "pe": 157,
+          "area": 8911
+        },
+        {
+          "mascara": 1,
+          "altura": 107,
+          "pe": 157,
+          "area": 9881
+        },
+        {
+          "mascara": 2,
+          "altura": 108,
+          "pe": 157,
+          "area": 10057
+        },
+        {
+          "mascara": 3,
+          "altura": 109,
+          "pe": 157,
+          "area": 11216
+        },
+        {
+          "mascara": 4,
+          "altura": 114,
+          "pe": 157,
+          "area": 10649
+        },
+        {
+          "mascara": 5,
+          "altura": 118,
+          "pe": 157,
+          "area": 11458
+        },
+        {
+          "mascara": 6,
+          "altura": 117,
+          "pe": 157,
+          "area": 11468
+        },
+        {
+          "mascara": 7,
+          "altura": 119,
+          "pe": 157,
+          "area": 12343
+        },
+        {
+          "mascara": 8,
+          "altura": 108,
+          "pe": 157,
+          "area": 9842
+        },
+        {
+          "mascara": 9,
+          "altura": 103,
+          "pe": 157,
+          "area": 9868
+        },
+        {
+          "mascara": 10,
+          "altura": 106,
+          "pe": 157,
+          "area": 9420
+        },
+        {
+          "mascara": 11,
+          "altura": 106,
+          "pe": 157,
+          "area": 10585
+        },
+        {
+          "mascara": 12,
+          "altura": 110,
+          "pe": 157,
+          "area": 10560
+        },
+        {
+          "mascara": 13,
+          "altura": 117,
+          "pe": 157,
+          "area": 11506
+        },
+        {
+          "mascara": 14,
+          "altura": 112,
+          "pe": 157,
+          "area": 10736
+        },
+        {
+          "mascara": 15,
+          "altura": 117,
+          "pe": 157,
+          "area": 12642
+        }
+      ],
+      "15": [
+        {
+          "mascara": 0,
+          "altura": 126,
+          "pe": 157,
+          "area": 10327
+        },
+        {
+          "mascara": 1,
+          "altura": 118,
+          "pe": 157,
+          "area": 11868
+        },
+        {
+          "mascara": 2,
+          "altura": 119,
+          "pe": 157,
+          "area": 11404
+        },
+        {
+          "mascara": 3,
+          "altura": 121,
+          "pe": 157,
+          "area": 12646
+        },
+        {
+          "mascara": 4,
+          "altura": 131,
+          "pe": 157,
+          "area": 12154
+        },
+        {
+          "mascara": 5,
+          "altura": 129,
+          "pe": 157,
+          "area": 13152
+        },
+        {
+          "mascara": 6,
+          "altura": 130,
+          "pe": 157,
+          "area": 12724
+        },
+        {
+          "mascara": 7,
+          "altura": 131,
+          "pe": 157,
+          "area": 13780
+        },
+        {
+          "mascara": 8,
+          "altura": 121,
+          "pe": 157,
+          "area": 11158
+        },
+        {
+          "mascara": 9,
+          "altura": 143,
+          "pe": 157,
+          "area": 11699
+        },
+        {
+          "mascara": 10,
+          "altura": 122,
+          "pe": 157,
+          "area": 10821
+        },
+        {
+          "mascara": 11,
+          "altura": 119,
+          "pe": 157,
+          "area": 11985
+        },
+        {
+          "mascara": 12,
+          "altura": 127,
+          "pe": 157,
+          "area": 12323
+        },
+        {
+          "mascara": 13,
+          "altura": 128,
+          "pe": 157,
+          "area": 12995
+        },
+        {
+          "mascara": 14,
+          "altura": 129,
+          "pe": 157,
+          "area": 12291
+        },
+        {
+          "mascara": 15,
+          "altura": 128,
+          "pe": 157,
+          "area": 13956
+        }
+      ]
+    }
+  },
+  "validacao": {
+    "success": true,
+    "erros": []
+  }
+}
