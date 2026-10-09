@@ -4,6 +4,10 @@ Pedido e esclarecimento do operador: aprovou as artes e quer mover o lajedo inte
 
 ## Aceite antes do codigo
 
+### Emenda do operador de 2026-10-09 — pedreira dos cenarios
+
+Antes de alterar o codigo, o operador autoriza reposicionar a pedreira dos cenarios de teste em lote valido depois da translacao do lajedo, respeitando o espacamento do dado, os recursos e as portas. Esta emenda substitui a conservacao dos deslocamentos exatos do item 3 somente onde a nova geometria os altera: as expectativas exatas de deslocamento acompanham o trajeto novo, comprovado pelo step. Ciclo de producao, regras da simulacao e rigor das assercoes permanecem iguais. A pedreira continua derivada da feicao do mapa e a ligacao da rua, das portas reais, inclusive na suite transladada. Nao deslocar outros predios para esconder sobreposicoes; se houver outro contrato incompativel, reportar.
+
 1. Os 13 tiles do lajedo da vila passam de (gx,gy) para (gx,gy-3), conservando forma, quantidade/rendimento, desgaste e conexoes. Centro anterior (24,31), centro novo (24,28), raio 2. Numeros de autoria em data/terrain.json, consumidos por tools/gerar-mapa.js. Terrenos, relevo, outros recursos e vila inicial permanecem exatamente iguais. Nada em src/sim, GameState, formato de save, PNGs ou manifesto muda.
 2. Em cada um dos 13 tiles novos, canPlaceRoad recusa por recurso. Pelo step, PlaceRoad em um desses tiles nao escreve estrada nem canteiro e emite rejeicao. Depois da extracao total, a regra existente permite rua. Teste permanente tests/I-TERRENO-LAJEDO-TRES-TILES.test.ts cobre o mapa real e a traducao do mundo, sem coordenada absoluta para as sondas da sim.
 3. Testes existentes de geografia/obstaculo/producao/transporte rodam dirigidos antes do portao. Nenhuma assercao, limite ou src/sim sera alterado para ocultar uma regressao. Emenda autorizada pelo operador: a rua dos cenarios acompanha a porta da pedreira deslocada, por geometria derivada, conservando a ligacao ao armazem e todas as assercoes e prazos atuais. Nao deslocar outros predios para esconder sobreposicoes; se houver outro contrato incompativel, reportar.
