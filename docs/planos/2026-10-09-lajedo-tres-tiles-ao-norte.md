@@ -1,0 +1,11 @@
+# I-TERRENO-LAJEDO-TRES-TILES — lajedo da vila tres tiles ao norte
+
+Pedido e esclarecimento do operador: aprovou as artes e quer mover o lajedo inteiro da pedreira inicial, mantendo os tres tiles do pedido original. Nao deslocar apenas os sprites. As demais serras ficam no lugar.
+
+## Aceite antes do codigo
+
+1. Os 13 tiles do lajedo da vila passam de (gx,gy) para (gx,gy-3), conservando forma, quantidade/rendimento, desgaste e conexoes. Centro anterior (24,31), centro novo (24,28), raio 2. Numeros de autoria em data/terrain.json, consumidos por tools/gerar-mapa.js. Terrenos, relevo, outros recursos e vila inicial permanecem exatamente iguais. Nada em src/sim, GameState, formato de save, PNGs ou manifesto muda.
+2. Em cada um dos 13 tiles novos, canPlaceRoad recusa por recurso. Pelo step, PlaceRoad em um desses tiles nao escreve estrada nem canteiro e emite rejeicao. Depois da extracao total, a regra existente permite rua. Teste permanente tests/I-TERRENO-LAJEDO-TRES-TILES.test.ts cobre o mapa real e a traducao do mundo, sem coordenada absoluta para as sondas da sim.
+3. Testes existentes de geografia/obstaculo/producao/transporte rodam dirigidos antes do portao. Nenhuma assercao, limite, fixture ou src/sim sera alterado para ocultar uma regressao; se o deslocamento expuser incompatibilidade com esses contratos, parar e reportar.
+4. Roteiro I-TERRENO-LAJEDO-TRES-TILES abre o mapa novo na vila, afirma a posicao desenhada e captura. Preservar F-SPR/F-TR. verify:rapido0 antes do commit de implementacao; verify completo no fechamento, com saida e evidencias no PROGRESS da branch.
+5. Esta mudanca autoriza somente a translacao do recurso da vila e seus dados/ferramenta de autoria. Nao reaplicar o rio nem atualizar saves antigos por troca de hash; se a compatibilidade de saves bloquear, reportar o contrato concreto antes de uma nova decisao.
