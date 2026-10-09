@@ -4,6 +4,17 @@ Pedido e esclarecimento do operador: aprovou as artes e quer mover o lajedo inte
 
 ## Aceite antes do codigo
 
+### Emenda adicional do operador de 2026-10-09 — cenarios restantes
+
+O operador autorizou corrigir os cenarios restantes de abertura, posicionamento e pesca, preservando regras e rigor das verificacoes. Antes do codigo, fica registrado:
+
+- F06 conserva a precedencia de recurso sobre espacamento por um tile bloqueante explicito na fixture de encosto; os testes de lote livre e espacamento continuam com as mesmas assercoes. O mapa do jogo nao recebe esse tile.
+- A guarda de geometria da F-T4b usa um bloqueio controlado em lote calculado para provar que remover somente o predicado altera a geometria. As comparacoes entre headless e roteiro no mapa real permanecem integrais.
+- O lenhador so encerra antes do teto existente quando comprovou ambas as entregas (tronco e tabua); nenhum teto de ticks aumenta. Cenarios de vila e pesca continuam por comandos reais, com lotes validos e expectativas integrais de ocupacao, colheita e esgotamento.
+- A autorizacao anterior sobre testes de prazo e clima permanece: se o diagnostico comprovar interferencia da estacao em teste de mecanica, apenas o dado desse teste usa clima.ligado=false, com registro da causa. Nenhuma penalidade do jogo muda.
+- Timeouts nao aumentam; nao se excluem testes nem verificacoes. Se necessario, agregar violacoes ao longo de todos os mesmos ticks conserva a cobertura, com sondas que comprovem a recusa do caso invalido. Otimizacao e somente do harness/teste; src/sim, GameState, rendimentos, terrenos e demais recursos permanecem intactos.
+- Rodar os testes afetados dirigidos normais e transladados, capturas de nao regressao e verify:rapido antes do commit de implementacao; depois verify completo. Merge depende do verify completo com saida 0 e main limpa, conforme autorizacao vigente. Registrar separado o que passou e o que ainda nao foi verificado.
+
 ### Emenda do operador de 2026-10-09 — pedreira dos cenarios
 
 Antes de alterar o codigo, o operador autoriza reposicionar a pedreira dos cenarios de teste em lote valido depois da translacao do lajedo, respeitando o espacamento do dado, os recursos e as portas. Esta emenda substitui a conservacao dos deslocamentos exatos do item 3 somente onde a nova geometria os altera: as expectativas exatas de deslocamento acompanham o trajeto novo, comprovado pelo step. Ciclo de producao, regras da simulacao e rigor das assercoes permanecem iguais. A pedreira continua derivada da feicao do mapa e a ligacao da rua, das portas reais, inclusive na suite transladada. Nao deslocar outros predios para esconder sobreposicoes; se houver outro contrato incompativel, reportar.
