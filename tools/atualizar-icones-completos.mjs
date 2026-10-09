@@ -1,10 +1,13 @@
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
+import process from 'node:process';
 import {decodePng} from '../skills/pianco-sprite-tools/scripts/png-rgba.mjs';
 const texto=readFileSync('assets/manifest.json','utf8');
 const m=JSON.parse(texto);
-for(const id of ['woodcutters','quarry','church']) {
+// Um id explicito deriva apenas esse icone; sem argumento conserva o lote original.
+const pedidos=process.argv.slice(2);
+for(const id of pedidos.length > 0 ? pedidos : ['woodcutters','quarry','church']) {
   const e=m.assets.find(a=>a.id===id&&a.tipo==='predio');
   const fonte=e.estados.completo;
   const png=decodePng(readFileSync(`assets/${fonte}`));

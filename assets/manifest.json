@@ -4478,16 +4478,18 @@
     }
   },
   "sawmill": {
-    "arquivo": "sprites/sawmill/icone.png",
+    "arquivo": "sprites/sawmill/icone-atual.png",
     "tamanho": [
       72,
       72
     ],
-    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "licenca": "arte propria do projeto, variante D aprovada pelo operador em 2026-09-30",
     "origem": {
-      "base": "base/sawmill/sawmill_06_completo.png",
+      "base": "base/sawmill/sawmill-D-master-2x.png",
       "semente": null,
-      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+      "fonteCompleta": "sprites/sawmill/sawmill_completo-D.png",
+      "sha256": "b85dabf4ec9044eb8ee825b056e256395814b0f1bea42aadd916618009098459",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
     }
   },
   "schoolhouse": {
