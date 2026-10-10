@@ -9568,6 +9568,23 @@ O bloco de arte foi para o Codex, na branch `codex-artes`.
      Avançado 1 tick antes dos 5 min, o ícone do jornal continua escondido; nos 5 min, ele aparece. Aberto,
      o jornal tem a manchete com o nome da serraria e do carpinteiro. A captura é aberta.
 
+#### I-ARTE-SOM-DA-VITORIA — a vitória toca um som
+- **O que existe (verificado):** o `match-ended` com `fim: vitoria` já aponta para o som `victory`
+  (`data/som.json`). O som aprovado em `docs/sons-candidatos.md` (chripei, Freesound 165491) não é CC0, e o
+  `tools/baixar-sons.js` o deixa de fora: a vitória toca nada. A derrota tem som.
+- **Como (leitura conservadora; a homologação auditiva é do operador):** o `aprovado` da linha `victory`
+  passa ao candidato 1, "Medieval: Victory Theme", da RandomMind no OpenGameArt, que é CC0. Se a licença
+  na página não for CC0, o candidato 2. A escolha antiga fica registrada na linha. O recorte segue a regra
+  da derrota (só o silêncio inicial).
+- **Aceite:**
+  1. o `victory` entra na seção `sons` do manifesto com CC0, o link da página, a base e o derivado. O
+     `H-ARTE-SONS-APROVADOS` passa, e o `victory` sai da lista `NAO_CC0` do teste (a asserção fica mais
+     estrita: todo aprovado é CC0);
+  2. pela regra do som (`src/render/som.ts`): um `match-ended` com `fim: vitoria` toca o `victory` uma vez
+     só. Repetido no tick seguinte (a partida já terminou), não toca de novo. A derrota continua tocando o
+     `defeat`;
+  3. o operador ouve o arquivo (o caminho vai no relatório) e homologa.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
