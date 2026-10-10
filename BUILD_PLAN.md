@@ -9894,6 +9894,11 @@ Execucao na codex-artes, antes do bloco autonomo de artes. Nenhuma mudanca em sr
 - Açude pintado em câmera top-down 3/4, footprint 4x3, barragem de pedra e terra, água contida no leito. Luz única de cima levemente do sul, sem eixo leste-oeste. Sem trabalhador, pilhas, fumaça, animais ou texto incorporados. O nível de água é a atividade visual da casa; a entrada sul fica livre.
 - Aceite: base canônica versionada em assets/base/reservoir/, derivados em assets/sprites/reservoir/; entrada reservoir com os oito campos do manifesto, anchor [0.5,1], estados vazio, baixo, medio, cheio e madeira, completo como alias de cheio. Os cinco PNGs usam o mesmo canvas e pé, com barragem e contorno iguais entre níveis; a área de água cresce estritamente de vazio a cheio. Madeira deriva do completo preservando registro e silhueta. Teste tests/I-ARTE-ACUDE.test.ts mede dimensões, pé, estados, caminhos, origem e progressão da área de água; validar dados não muda contratos existentes. Roteiro I-ARTE-ACUDE captura os quatro níveis e obra em jogo, nos zooms 0,5/1/2, e as capturas são abertas; prévias RGBx0,8 sobre os três terrenos e revisão independente. verify:rapido saída 0 antes do commit. Arte aguarda homologação; nenhuma mudança em src/sim/ ou GameState.
 
+#### I-ARTE-PILOTO-DE-CONJUNTO — A01, comparação do conjunto atual
+
+- Piloto conservador de diagnóstico, sem gerar ou converter unidades: Carregador (`serf`), árvore (`tree/presente`) e Armazém (`storehouse/completo`) atuais, sobre grama, areia e rocha.
+- Aceite: (1) teste mede os PNGs reais, dimensões declaradas e linha dos pés, valida anchor e limites de recorte do quadro atual do atlas do serf; (2) pranchas com os três elementos em escala de render, nos zooms 0,5/1/2, em cor normal e RGB×0,8, geradas pelo roteiro e abertas; (3) o mesmo roteiro captura a vila real nos três zooms e afirma uso dos sprites pelo debug; (4) nenhuma alteração nos PNGs, atlas, manifesto ou sim; hashes dos arquivos usados registrados na evidência; (5) verify:rapido saída0 antes do commit. O piloto mede e expõe diferenças de detalhe, não presume homologação nem aplica filtro global.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
