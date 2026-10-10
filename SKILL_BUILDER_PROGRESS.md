@@ -56,3 +56,9 @@ O controle antigo da noru foi consultado somente em leitura; aquela worktree e s
 
 
 O CSV tem 90 itens; esta reconciliado em 381529af. Primeiro minerais, depois Acude, conferencia da caatinga e P0/P1/P2. Nenhuma chamada de geracao deste novo lote foi realizada ainda. Ouro 0/2; ferro 0/2; carvao 0/2. Novos lotes recebem orcamento explicito antes da primeira chamada, respeitando as duas tentativas honestas por item.
+
+## 2026-10-10 — I-ARTE-ACUDE: cheio e vazio (candidatas)
+- Aceite anterior à geração: d881ee8. Ficha: reservoir, prédio 4x3, front top-down 3/4; sem trabalhador, estoque, fumaça, bandeira ou animal; atividade visual = nível da água. Entrada sul livre. Luz superior/sul sem eixo lateral. Referência verbal de materiais: pedreira atual, sem usar referências antigas rejeitadas.
+- Cheio: exec-ac140032-8988-4be4-aaed-6865377c246d, SHA256 3A743A0B976F2372236169011C1211519057E7A941A357D9D8F1BBA96FABAAC6. Prompt: açude de terra e pedra do sertão dos anos 1930, bacia irregular cheia e sangradouro, margens marrons secas, pintura texturizada, transparência, sem texto/pessoas. Revisão independente aprovou candidata; derivados ainda pendentes.
+- Vazio: edição precisa do cheio, exec-204feb43-064c-46c6-8b0a-07cbd4dda49f, SHA256 9FE8631FF9AAF0F2D79573D2980FAD7E4D146CCBDF6458FA477A00B623A5691F. Prompt: alterar só água para fundo de barro rachado e sangradouro seco, conservar barragem, silhueta, luz e registro. Aberta. Próximo: níveis baixo/medio e obra, derivação registrada, medição e prova em jogo.
+- Arquivos preservados externamente em D:/projetos-pessoal/cangaco-game-candidatos/arte/2026-10-autonomo/reservoir/{cheio,vazio}-original.png. Arte ainda não aplicada; nenhuma aprovação do operador presumida.
