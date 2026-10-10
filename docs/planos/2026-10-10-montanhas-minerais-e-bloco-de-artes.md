@@ -16,6 +16,8 @@ Pedido do operador: primeiro entregar ouro/ferro em montanhas perto das vilas e 
 ## Execucao autonoma
 
 ### Registro de execucao: montanhas minerais
+
+I-TERRENO-MINERAIS-PERTO-DAS-VILAS: **bloqueado pelo contrato de identidade integral do mapa** em I-TERRENO-LAJEDO-TRES-TILES. Testes dirigidos passaram; verify:rapido reprovou a guarda e o save de referência incompatível, além de timeout em F24a. Tentativa retirada da branch e preservada externamente em geografia-minerais/tentativa.patch. Nenhuma guarda ou prazo flexibilizado. I-TELA-MONTANHAS-MINERAIS-CONTINUAS fica bloqueado pela arte reprovada; seguir Açude e auditoria da caatinga.
 I-ARTE-JAZIDA-DE-CARVAO-NO-CHAO: **bloqueado** depois de duas tentativas; segunda passa luz/PNG/contraste, mas montagem3x3 mostra circulos separados por solo claro nos tres zooms (zoom2 x650-952/y53-351). Arte e manifesto originais restaurados, sem terceira geracao. Distribuicao/passagem podem seguir como item separado; a aparencia continua aguardando arte aprovada.
 
 I-ARTE-MONTANHAS-DE-OURO-E-FERRO: **bloqueado** apos duas tentativas nativas do ouro e revisao independente; costuras verticais retas da grade continuam visiveis (pleno x219-222/y130-282, reduzido x553-557/y156-322). Ferro tentativa1 tambem reprovado. Nenhuma candidata aplicada ao jogo. O item de render continuo espera arte que passe no aceite; distribuicao/carvao podem seguir independentes. Evidencia externa em cangaco-game-candidatos/arte/2026-10-autonomo/{gold_ore,iron_ore}-montanha/.
