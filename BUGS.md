@@ -66,6 +66,13 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   sozinho por `npm run shot -- <nome>`
 - observado (medido em 2026-10-10): 12 de 172 saem 1. Um é o BUG-F18F acima. Os outros 11:
   - `C-IA-03c`: "os tres predios da IA deveriam cair, sobraram 3" (380 s);
+    medido em 2026-10-10: com o clima LIGADO a luta cai na seca (ticks 3600 a 7200) e a tropa de 24 do
+    jogador morre inteira ate o tick 8128 (a IA fica com 13); com o clima DESLIGADO (so na sonda) o
+    jogador vence a luta nas duas corridas, e numa delas derruba os predios um a um (o AttackBuilding
+    funciona). Na outra, 8 sobreviventes ficaram `ocioso` com os predios intactos ate a rodada 200:
+    hipotese, nao reproduzida (o passo despausado do roteiro varia a corrida). O que falta e decisao
+    do operador: o cenario de teste deixa de ser ganhavel com a seca (a tropa, o comeco da partida na
+    estacao, ou o roteiro jogar fora da seca).
 - verificado: os 10 rápidos (todos menos o `C-IA-03c`) falham IGUAIS em `73833b0`, a `main` de antes do
   trabalho de 2026-10-10. Não vieram do Açude, das dicas, do som nem do roteiro do machado.
 - hipótese (não conferida): vieram das levas de 2026-10-06 a 2026-10-09 (o jornal só com a última, os
@@ -85,7 +92,7 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   modelo proprio pela planta do jogo, numa janela maior); `D-TELA-AGUA-PEIXE` tirava o sha256 da
   pagina, e a borda do HTML do relogio do sol variou 7 px com o mesmo texto: o sha256 e do canvas, e o
   texto do relogio e afirmado igual a parte.
-- status: aberto
+- status: aberto, 10 de 11 consertados; falta o `C-IA-03c`, que espera a decisao do operador
 
 ## Polimento
 
