@@ -9535,6 +9535,23 @@ BALANCE_LOG como [proposta].
   abertas; (4) o custo: a troca só refaz a camada quando a fração muda de degrau, e não a cada quadro
   (afirme pela contagem de repinturas, nunca por tempo de relógio).
 
+### Blocos 1 e 2 do fechamento (operador, 2026-10-10): fechar a versão jogável e os sistemas que faltam
+O plano está no PROGRESS (2026-10-10). Cada item recebe o aceite aqui, num commit só dele, antes do código.
+O bloco de arte foi para o Codex, na branch `codex-artes`.
+
+#### BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE — o roteiro provoca a mercadoria sem arte
+- **Causa (medida, 2026-10-10):** o `hand_axe` ganhou ícone (`8529594`), e nenhuma mercadoria ficou sem
+  arte. O roteiro D-TELA-03 procurava o caso em vez de provocá-lo.
+- **Como:** o `?semArte=<ids>` (hoje só de prédio, `prediosSemArteDaBusca`) passa a valer também para a
+  mercadoria: o loader não traz o ícone nem a pilha dela. O roteiro abre a partida sem o parâmetro e,
+  depois, com `?semArte=hand_axe`, pelo helper `tools/shots/_sem-arte.js`.
+- **Aceite:**
+  1. a regra pura: com `hand_axe` no conjunto, `texturasDosIcones` e `texturasParaCarregar` não trazem o
+     ícone nem a pilha dele, e trazem os das outras mercadorias;
+  2. o roteiro D-TELA-03 sai 0. Sem o parâmetro, a pilha do machado tem `fonte: icone` (o machado real
+     continua com arte). Com ele, a pilha é `quadrado` e a carga do serf é texto, e a tábua continua com
+     ícone (o controle). As capturas são abertas.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
