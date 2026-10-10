@@ -196,6 +196,8 @@ export interface EstadoDebug {
    *  mesma estrutura: e assim que o roteiro prova que sprite e placeholder
    *  convivem, sem olhar pixel (§8). */
   spritesDePredio: Readonly<Record<string, string | null>>;
+  /** I-TELA-ACUDE-NA-TELA — cada Acude completo desenhado: a agua, o estado do nivel e o sprite usado. */
+  acudes: Readonly<Record<string, { readonly agua: number; readonly estado: string; readonly sprite: string | null }>>;
   /** Os predios que `?semArte=` tirou do loader (`prediosSemArteDaBusca`): o
    *  roteiro confere que a pagina leu o parametro, em vez de passar calado. */
   prediosSemArte: readonly string[];
@@ -465,6 +467,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     medidoresDeObra: {},
     canteirosDeObra: {},
     spritesDePredio: {},
+    acudes: {},
     prediosSemArte: [],
     pilhasDesenhadas: {},
     quadrosDeTrabalho: {},

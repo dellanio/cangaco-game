@@ -10,7 +10,12 @@ import Phaser from 'phaser';
 import type { GameState } from '../sim/state';
 import { canPlace } from '../sim/placement';
 import type { MotivoDeRecusa } from '../sim/placement';
-import { aparenciaDoPredio } from './predios';
+import { aparenciaDoPredio, raioDaIrrigacao } from './predios';
+import { ID_DO_ACUDE } from '../sim/state';
+import dadosDoAcudeVisualCru from '../../data/acude-visual.json';
+import type { ConfigDoAcudeVisual } from './acude-visual';
+
+const dadosDoAcudeVisual = dadosDoAcudeVisualCru as ConfigDoAcudeVisual;
 import { previaDeAlcance } from './alcance-de-colheita';
 import type { PreviaDeAlcance } from './alcance-de-colheita';
 import { gridToScreen, ESCALA_DO_MUNDO } from './grid';
@@ -50,6 +55,9 @@ export interface EstadoDaPlanta {
    * do jogador — o item so pede que ele veja o que esta escolhendo.
    */
   readonly alcance: PreviaDeAlcance | null;
+  /** I-TELA-ACUDE-NA-TELA — o raio da irrigacao (em tiles, do centro) que a planta do Acude desenha; `null`
+   *  em quem nao e Acude. */
+  readonly irrigacao: { readonly raio: number } | null;
 }
 
 export interface PlantaFantasma {
@@ -68,10 +76,25 @@ export function criarPlantaFantasma(cena: Phaser.Scene, tilePx: number): PlantaF
   let ultimaChave = '';
   let ultimoEstado: GameState | null = null;
   let ultimoResultado: EstadoDaPlanta | null = null;
+  let circulo: Phaser.GameObjects.Arc | null = null;
 
   function esconderAlcance(): void {
     moldura?.setVisible(false);
     rotulo?.setVisible(false);
+    circulo?.setVisible(false);
+  }
+
+  /** I-TELA-ACUDE-NA-TELA — o circulo da irrigacao, centrado na planta do Acude. */
+  function desenharIrrigacao(cantoDaPlanta: Ponto, largura: number, altura: number): void {
+    const r = dadosDoAcudeVisual.raio;
+    const cor = Phaser.Display.Color.HexStringToColor(r.cor).color;
+    if (circulo === null) {
+      circulo = cena.add.circle(0, 0, raioDaIrrigacao * tilePx, cor, r.preenchimentoAlfa);
+      circulo.setStrokeStyle(r.espessuraPx, cor, r.alfa);
+      circulo.setDepth(DEPTH_DA_MOLDURA);
+    }
+    circulo.setPosition(cantoDaPlanta.x + (largura * tilePx) / 2, cantoDaPlanta.y + (altura * tilePx) / 2);
+    circulo.setVisible(true);
   }
 
   function esconder(): null {
@@ -160,6 +183,11 @@ export function criarPlantaFantasma(cena: Phaser.Scene, tilePx: number): PlantaF
       const alcance = previaDeAlcance(estado, predioAtivo, tile.gx, tile.gy);
       if (alcance === null) esconderAlcance();
       else desenharAlcance(alcance, canto);
+      const ehAcude = predioAtivo === ID_DO_ACUDE;
+      if (ehAcude) {
+        const { largura, altura } = aparenciaDoPredio(predioAtivo);
+        desenharIrrigacao(canto, largura, altura);
+      } else circulo?.setVisible(false);
 
       ultimaChave = chave;
       ultimoEstado = estado;
@@ -167,6 +195,7 @@ export function criarPlantaFantasma(cena: Phaser.Scene, tilePx: number): PlantaF
         tipo: predioAtivo, gx: tile.gx, gy: tile.gy,
         valida: resposta.ok, motivo: resposta.ok ? null : resposta.motivo,
         alcance,
+        irrigacao: ehAcude ? { raio: raioDaIrrigacao } : null,
       };
       return ultimoResultado;
     },

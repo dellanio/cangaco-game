@@ -235,6 +235,16 @@ function validarClimaVisual(config, erros) {
   if (!Number.isInteger(ca.maximo) || ca.maximo < 0 || !(ca.velocidadePxPorTick > 0) || !(ca.raioPx > 0) || !cor(ca.cor)) e('calor precisa de maximo inteiro >= 0, velocidadePxPorTick > 0, raioPx > 0 e cor');
 }
 
+// I-TELA-ACUDE-NA-TELA — os cortes do nivel e o raio na planta
+function validarAcudeVisual(config, erros) {
+  const e = (msg) => erros.push(`interface/acude-visual: ${msg}`);
+  if (!config || typeof config !== 'object') { e('data/acude-visual.json precisa existir e ser objeto'); return; }
+  const c = config.cortes || {};
+  if (!(c.baixo > 0 && c.baixo < c.medio && c.medio < c.cheio && c.cheio <= 1)) e('cortes precisam ser 0 < baixo < medio < cheio <= 1');
+  const r = config.raio || {};
+  if (typeof r.cor !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(r.cor) || !(r.alfa >= 0 && r.alfa <= 1) || !(r.espessuraPx > 0) || !(r.preenchimentoAlfa >= 0 && r.preenchimentoAlfa <= 1)) e('raio precisa de cor #rrggbb, alfa e preenchimentoAlfa em [0, 1] e espessuraPx > 0');
+}
+
 // I-ARTE-PADRE — a aura da bencao, o brilho, o facho e o clarao do padre
 function validarPadreVisual(config, erros) {
   const e = (msg) => erros.push(`interface/padre-visual: ${msg}`);
@@ -2227,6 +2237,7 @@ function validarInterface(dados, interfaceUi) {
   }
   validarClimaVisual(interfaceUi && interfaceUi['clima-visual'], erros);
   validarPadreVisual(interfaceUi && interfaceUi['padre-visual'], erros);
+  validarAcudeVisual(interfaceUi && interfaceUi['acude-visual'], erros);
   validarPoeira(interfaceUi && interfaceUi.poeira, erros);
   validarFumaca(interfaceUi && interfaceUi.fumaca, erros);
   validarSom(interfaceUi && interfaceUi.som, erros);

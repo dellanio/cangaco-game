@@ -1230,3 +1230,8 @@ body[data-menu] #ajuda { z-index: 30; }
 /* I-COMBATE-PADRE-SEM-INVESTIDA — o Converter armado: o botao aceso e a mira sobre o mapa */
 #painel-grupo button[data-acao="converter"].armado { background: #f2c94c; color: #2c1d12; }
 body.mirando-conversao #jogo canvas { cursor: crosshair; }
+
+/* I-TELA-ACUDE-NA-TELA — a barra do nivel do Acude e a linha da fazenda irrigada */
+#painel-predio .barra-da-agua { height: 8px; border: 1px solid var(--tinta); background: var(--papel); margin: 2px 0 4px; }
+#painel-predio .barra-da-agua > div { height: 100%; background: #4aa3df; }
+#painel-predio .linha.irrigada { color: #2e6f9e; font-weight: bold; }

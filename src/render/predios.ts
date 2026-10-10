@@ -41,6 +41,10 @@ export const ordemDasMercadorias: readonly string[] = gameData.economia.mercador
 /** I-ARTE-PADRE — o raio da bencao em tiles, para o anel da aura (a regra e de `sim/systems/padre.ts`). */
 export const raioDaBencao: number = gameData.combate.padre.raioDaBencao_tiles;
 
+/** I-TELA-ACUDE-NA-TELA — a capacidade do Acude e o raio da irrigacao (a regra e de `sim/acude.ts`). */
+export const capacidadeDoAcude: number = gameData.acude.capacidade;
+export const raioDaIrrigacao: number = gameData.acude.raio_tiles;
+
 /**
  * F-TP: o retangulo em tiles de um TIPO posto em (gx, gy). Mesma razao de
  * `ordemDasMercadorias` — quem em `render/` nao pode importar `sim/data` pega o

@@ -60,7 +60,11 @@ import type { MarcadorDeDestino } from '../marcador-de-destino';
 import type {
   AnimalNoDebug, CaixaDesenhada, CamadasEmPx, CrescimentoNoDebug, EstadoDebug, OciosoNoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel, SinalDePausadoNoDebug,
 } from '../debug';
-import { aparenciaDoPredio, corDaPilha, dadosDasPilhas, dadosDosAnimais, dadosDoTrabalho, ordemDasMercadorias, raioDaBencao } from '../predios';
+import { aparenciaDoPredio, capacidadeDoAcude, corDaPilha, dadosDasPilhas, dadosDosAnimais, dadosDoTrabalho, ordemDasMercadorias, raioDaBencao } from '../predios';
+import dadosDoAcudeVisualCru from '../../../data/acude-visual.json';
+import { estadoDoAcude } from '../acude-visual';
+import type { ConfigDoAcudeVisual, EstadoDoAcude } from '../acude-visual';
+const dadosDoAcudeVisual = dadosDoAcudeVisualCru as ConfigDoAcudeVisual;
 import { animaisDoCurral, curralDesenhado, quadroDoAnimal } from '../animais';
 import { MAX_PASSOS_POR_QUADRO } from '../../laco';
 import type { AnimalDoCurral } from '../animais';
@@ -80,7 +84,8 @@ import type { EstagioDaObra, Fracao, RevelacaoDaObra } from '../estagio-obra';
 import { centroDaVila } from '../../sim/selectors';
 import { corDoBando } from '../cor-do-bando';
 import { tileDeChave } from '../../sim/estradas';
-import type { EstadoDePredio, GameState, Predio, RecursoNoTile } from '../../sim/state';
+import type { EstadoDePredio, GameState, Predio, PredioCompleto, RecursoNoTile } from '../../sim/state';
+import { ID_DO_ACUDE } from '../../sim/state';
 import type { PonteDeEstado } from '../ponte';
 import type { Ferramenta } from '../../input/ferramenta';
 import type { EntradaDoMapa } from '../../input/colocar';
@@ -2155,6 +2160,7 @@ export class WorldScene extends Phaser.Scene {
     // F17f: com que textura cada predio foi desenhado, ou null quando caiu no
     // retangulo. O roteiro afirma sobre isto, nunca por pixel.
     const sprites: Record<string, string | null> = {};
+    const acudesNoDebug: Record<string, { readonly agua: number; readonly estado: string; readonly sprite: string | null }> = {};
     // F-VIVO-a: o que cada pilha desenhou, da MESMA lista que vai para `criarPredio`.
     const pilhasNoDebug: Record<string, readonly PilhaNoDebug[]> = {};
     // F-VIVO-b: o quadro de trabalho de cada predio animando, da MESMA chamada do desenho.
@@ -2209,7 +2215,7 @@ export class WorldScene extends Phaser.Scene {
         );
       if (par === null || revelacao === null) {
         porEstagio[estagio] += 1;
-        sprites[id] = this.spriteDoPredio(predio.tipo, estagio)?.chave ?? null;
+        sprites[id] = this.spriteDesenhado(predio, estagio)?.chave ?? null;
       } else {
         revelacoes[id] = revelacao;
         sprites[id] = par.madeira.chave;
@@ -2304,7 +2310,10 @@ export class WorldScene extends Phaser.Scene {
       }
       // F17g: cada martelada muda a revelacao sem mudar o estagio de fallback.
       const chaveDoCorpo = revelacao === null ? '-' : chaveDaRevelacao(revelacao);
-      const assinatura = `${linhas.map((l) => l.entregue).join(',')}|${chaveDoCanteiro(canteiro)}|${chaveDasPilhas}|${chaveDoTrabalho}|${chaveDosAnimais}|${chaveDoCorpo}|${sinal ? 'P' : '-'}`;
+      // I-TELA-ACUDE-NA-TELA: o nivel muda sem mexer em estado nem em estagio; entra na chave pelo mesmo motivo da pilha
+      const nivel = this.nivelDoAcude(predio);
+      if (nivel !== null) acudesNoDebug[id] = { agua: (predio as PredioCompleto).agua ?? 0, estado: nivel, sprite: sprites[id] ?? null };
+      const assinatura = `${linhas.map((l) => l.entregue).join(',')}|${chaveDoCanteiro(canteiro)}|${chaveDasPilhas}|${chaveDoTrabalho}|${chaveDosAnimais}|${chaveDoCorpo}|${sinal ? 'P' : '-'}|${nivel ?? '-'}`;
       const existente = this.desenhados.get(id);
       if (existente && existente.estado === predio.estado && existente.estagio === estagio
         && existente.assinatura === assinatura) continue;
@@ -2338,6 +2347,7 @@ export class WorldScene extends Phaser.Scene {
     debug.medidoresDeObra = medidores;
     debug.canteirosDeObra = canteiros;
     debug.spritesDePredio = sprites;
+    debug.acudes = acudesNoDebug;
     debug.pilhasDesenhadas = pilhasNoDebug;
     debug.quadrosDeTrabalho = quadrosNoDebug;
     debug.quadrosOciosos = ociososNoDebug;
@@ -2383,13 +2393,25 @@ export class WorldScene extends Phaser.Scene {
    *  nao mostra.
    */
   private spriteDoPredio(
-    tipo: string, estagio: EstagioDaObra | ChaveDaRevelacao,
+    tipo: string, estagio: EstagioDaObra | ChaveDaRevelacao | EstadoDoAcude,
   ): { readonly chave: string; readonly entrada: EntradaDeAsset } | null {
     const entrada = assetDoPredio(manifestoDoJogo, tipo);
     if (!entrada) return null;
     if (!arquivoDoEstagio(entrada, estagio)) return null;
     const chave = chaveDaTextura(entrada.id, estagio);
     return this.textures.exists(chave) ? { chave, entrada } : null;
+  }
+
+  /** I-TELA-ACUDE-NA-TELA — o nivel do Acude completo escolhe o estado do sprite (`vazio`...`cheio`), quando o
+   *  manifesto o tem; senao fica o `estagio` de sempre. `null` em quem nao e Acude completo. */
+  private nivelDoAcude(predio: Predio): EstadoDoAcude | null {
+    return predio.estado === 'completo' && predio.tipo === ID_DO_ACUDE
+      ? estadoDoAcude(predio.agua ?? 0, capacidadeDoAcude, dadosDoAcudeVisual) : null;
+  }
+
+  private spriteDesenhado(predio: Predio, estagio: EstagioDaObra): { readonly chave: string; readonly entrada: EntradaDeAsset } | null {
+    const nivel = this.nivelDoAcude(predio);
+    return (nivel === null ? null : this.spriteDoPredio(predio.tipo, nivel)) ?? this.spriteDoPredio(predio.tipo, estagio);
   }
 
   /** Ajuste 10: par proprio quando existe, completo por partes quando nao.
@@ -2497,7 +2519,7 @@ export class WorldScene extends Phaser.Scene {
     const larguraPx = largura * tilePx;
     const alturaPx = altura * tilePx;
 
-    const sprite = this.spriteDoPredio(predio.tipo, estagio);
+    const sprite = this.spriteDesenhado(predio, estagio);
     // F17g: com revelacao, madeira embaixo e pedra (o `completo`) por cima.
     const par = revelacao === null ? null : this.parDeRevelacao(predio.tipo);
     // BUG-M: o lote vai por baixo do corpo revelado. Sem ele, a obra de poucas

@@ -1,0 +1,5 @@
+{
+  "_doc": "I-TELA-ACUDE-NA-TELA (2026-10-10). So TELA: o estado do sprite do Acude pelo nivel de agua (src/render/acude-visual.ts) e o raio da irrigacao na planta fantasma. `cortes`: a fracao agua/capacidade a partir da qual vale cada estado (abaixo de `baixo` e `vazio`). O sprite usa o estado quando o manifesto o tem, e cai no `completo` (ou no placeholder) quando nao. `raio`: a cor, a opacidade e a espessura do circulo da irrigacao na planta.",
+  "cortes": { "baixo": 0.01, "medio": 0.34, "cheio": 0.67 },
+  "raio": { "cor": "#4aa3df", "alfa": 0.8, "espessuraPx": 3, "preenchimentoAlfa": 0.08 }
+}

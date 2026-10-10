@@ -21726,3 +21726,25 @@ sem-trabalhador   peça o trabalhador na Casa do Coronel                escola.t
   - o consumo na seca bate com a regra, e no inverno não há consumo.
 - O campo `irrigado` (e o `semeadoEm`) foram nomeados na guarda dos opcionais (`OPCIONAIS_DO_RECURSO`, do
   sistema).
+
+### I-TELA-ACUDE-NA-TELA — o Açude e a irrigação na tela (verificado)
+- **O sprite pelo nível:** `src/render/acude-visual.ts` (`estadoDoAcude`) usa os cortes de
+  `data/acude-visual.json` (0,01 / 0,34 / 0,67 da capacidade) para escolher `vazio`, `baixo`, `medio` ou
+  `cheio`. O `WorldScene` usa o estado quando o manifesto o tem, e cai no `completo` ou no placeholder
+  quando não. O nível entra na chave do redesenho. A ponte publica `acudes`.
+- **O painel:** a linha "Água n/cap" com a barra azul, e "Irrigada pelo Açude" na fazenda. Os números
+  vão em `data-`.
+- **A planta:** o círculo da irrigação no raio, centrado na planta do Açude. A ponte publica
+  `plantaFantasma.irrigacao.raio`.
+- **O caminho dos números:** a capacidade e o raio chegam ao render pelo funil `predios.ts`, por causa
+  da guarda F04.
+- **Teste:** `tests/I-TELA-ACUDE-NA-TELA.test.ts` (3):
+  - a tabela do nível e a monotonia;
+  - o validador;
+  - a partida do roteiro.
+- **Roteiro `I-TELA-ACUDE-NA-TELA` (sai 0, as três capturas abertas):** com o jogo andando:
+  - o painel do Açude lê 100/100, com a barra;
+  - o da fazenda lê "Irrigada pelo Açude";
+  - a planta do Açude, armada pelo menu, publica o raio 7 e desenha o círculo.
+- **Visto na captura:** o Açude ainda é o placeholder (a arte é o I-ARTE-ACUDE, do Codex). A planta sai
+  vermelha onde o ponteiro estava, porque o lugar não é válido; o círculo aparece igual.

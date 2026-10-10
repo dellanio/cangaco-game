@@ -430,6 +430,25 @@ function desenharCompleto(
   desenharModo(gente, acoes, dados.predio, modos, emitir);
   if (dados.encomenda !== null) desenharEncomenda(gente, dados.predio, dados.encomenda, emitir);
 
+  // I-TELA-ACUDE-NA-TELA — o nivel do Acude (numero e barra) e a fazenda irrigada. Os numeros em `data-`.
+  if (dados.acude !== null) {
+    const l = linha('acude', rotulos.aguaDoAcude, `${dados.acude.agua}/${dados.acude.capacidade}`);
+    l.dataset.agua = String(dados.acude.agua);
+    l.dataset.capacidade = String(dados.acude.capacidade);
+    const barra = document.createElement('div');
+    barra.className = 'barra-da-agua';
+    const cheio = document.createElement('div');
+    cheio.style.width = `${Math.round((100 * dados.acude.agua) / Math.max(1, dados.acude.capacidade))}%`;
+    barra.append(cheio);
+    gente.append(l, barra);
+  }
+  if (dados.irrigada === true) {
+    const l = document.createElement('div');
+    l.className = 'linha irrigada';
+    l.textContent = rotulos.irrigada;
+    gente.append(l);
+  }
+
   // F28b — a torre: quantas pedras, e POR QUE nao atira (o aceite pede que o painel
   // diga). Os numeros e o motivo vao em `data-`, para o roteiro afirmar sem recortar texto.
   if (dados.torre !== null) {
