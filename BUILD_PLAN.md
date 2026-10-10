@@ -9904,6 +9904,11 @@ Execucao na codex-artes, antes do bloco autonomo de artes. Nenhuma mudanca em sr
 - Derivar o estado `madeira` do completo atual de `farm`: mesma arquitetura, porta, plataforma vazia do milho, canvas269x200, footprint4x3 e anchor[0.5,1]. Não redesenhar o completo, não pintar trabalhadores ou estoque permanente.
 - Aceite: (1) original gerado e master em assets/base/farm/, derivado em assets/sprites/farm/; entrada existente preserva todos os estados/anchors/origem e acrescenta madeira com procedência registrada; (2) teste mede canvas, linha inferior não transparente igual ao completo e preservação dos caminhos/anchors do completo; (3) construção reconhecível como a mesma Fazenda, mostrando estrutura de madeira e alvenaria ainda incompleta, mesma posição da porta e base; (4) roteiro captura a obra e o completo em jogo nos zooms0,5/1/2, pranchas normal/RGBx0,8 sobre grama/areia/rocha abertas; (5) verify:rapido saída0. Após duas tentativas visuais reprovadas, retirar somente mudanças não commitadas do item, registrar bloqueio e seguir a fila. Sem src/sim/.
 
+#### I-ARTE-CANAVIAL-EM-OBRA — A03, madeira do Canavial
+
+- Derivar `wineyard/madeira` do completo atual, preservando arquitetura da casa verde, posição da porta, área de atividade, plataforma de barris e identidade de cana/cachaça; sem uva ou videira.
+- Aceite: (1) base original/master versionados, derivado250x180, footprint3x2/anchor[0.5,1], pé igual ao completo; (2) teste de PNG e guarda dos caminhos do completo/origem/anchors existentes, sem alterar completo; (3) obra mostra postes/caibros e cobertura/paredes incompletas na mesma geometria, áreas de atividade e estoque vazias, sem trabalhador/barril/texto fixo; (4) captura em jogo de madeira/completo em0,5/1/2 e pranchas nos três solos, normal/RGBx0,8, abertas; (5) verify:rapido saída0 antes do commit. Duas tentativas honestas como limite, sem modificar sim ou afrouxar verificações.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a

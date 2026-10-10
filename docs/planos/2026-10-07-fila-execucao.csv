@@ -1,6 +1,6 @@
 ﻿"task","prioridade","entrega","aceite_dependencia","status_inicial","status"
 "A01","P0","Piloto de conjunto: unidade, árvore e prédio atuais com chão","Selecionar referência canônica e testar 0,5/1/2 e RGB×0,8. A folha aberta mostra graus diferentes de detalhe entre vegetação, prédio e personagem; [Provável] harmonização precisa de piloto, não filtro global","a executar","feito (64b4246f), aguarda homologação"
-"A02","P0","farm/madeira","Mesmo canvas, silhueta, porta, milho e anchors do completo; obra não muda de geometria ao concluir","a executar","a executar"
+"A02","P0","farm/madeira","Mesmo canvas, silhueta, porta, milho e anchors do completo; obra não muda de geometria ao concluir","a executar","feito (5f1a7ea7), aguarda homologação"
 "A03","P0","wineyard/madeira","Derivar do completo; manter identidade de cana/cachaça, sem uvas ou videira","a executar","a executar"
 "A04","P0","fishermans/madeira","Derivar do completo; entrada e margem de água alinhadas","a executar","a executar"
 "A05","P0","mill/madeira","Roda e edificação na mesma posição entre estados; mecanismo não salta","a executar","a executar"
