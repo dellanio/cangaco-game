@@ -21616,3 +21616,38 @@ O bloco de arte foi para o Codex (branch `codex-artes`), com o prompt da sessão
 - **Teste:** `tests/D-TELA-03-icones.test.ts` ganhou o caso do `semArte`: o machado sai, a tábua fica,
   e a pilha do vinho sai sem tocar a do peixe.
 - O bug saiu do `BUGS.md`.
+
+### I-MOVIMENTO-OBREIRO-OCUPA-O-CANTEIRO — sonda reprovada, espera desenho (verificado pela sonda, já revertida)
+- **A sonda:** só trocar `nivelando`, `esperando_material` e `martelando` de `dentro` para `fora`, em
+  `POSICAO_DO_ESTADO` (`src/sim/colisao.ts:40-42`), reprova 7 testes. Entre eles:
+  - o anti-travamento do F11c;
+  - a pedreira não completa;
+  - o "jogo livre: ninguém sai do próprio caminho" e o "quem quer andar avança no prazo", da fila de civis.
+- **A causa:** os até 4 obreiros (`laborersMaximosPorObra`) e o serf com o material vão todos para a
+  porta (`tilesDaPorta`, a borda sul). Com o obreiro ocupando o tile, o material não chega e a obra trava.
+- **A decisão "ocupa" (registrada em 2026-10-07) pede um desenho que ela não traz:** onde cada obreiro
+  fica. A proposta vai ao operador: um posto de trabalho por obreiro num tile livre em volta da obra,
+  reservado no claim, com a porta para o serf. O BUG-F18F-PILHA-DE-TRES-NO-CANTEIRO continua aberto até lá.
+
+### I-TELA-DICAS-REVISADAS — as dicas conferidas contra o jogo (verificado)
+```text
+dica              o que afirma                                         confere com                          texto
+ordem-recusada    "o aviso no alto da tela sempre diz por quê"         #aviso-de-ordem (estilo.css:394, no   mantido
+                                                                       alto, centrado)
+fim-da-paz        a paz acabou, os dois lados podem atacar             paz.ts (recusaNaPaz)                 mantido
+inimigo-a-vista   só se vê o que os seus enxergam                      a névoa (F-TERRENO-NEVOA)            mantido
+fome              o povo come na Bodega com comida vinda do Armazém;   delivery.json comida-para-inn;       mantido
+                  a tropa, com o Alimentar                             FeedUnits do painel do grupo
+sem-estrada       "o carregador só anda pela estrada"                  ERRADO: o material de obra vai em    reescrito: "só leva e busca a
+                                                                       modo livre (delivery.json)           mercadoria dela pela estrada"
+sem-trabalhador   peça o trabalhador na Casa do Coronel                escola.ts:54 custoOuroPorUnidade:    acrescido: "o treino gasta ouro,
+                                                                       sem ouro não treina                  que o carregador leva do Armazém"
+```
+- **O validador** (`tools/data-rules.js`) recusa a dica sem texto e a da ordem recusada sem o `{motivo}`.
+  O teste prova que as duas regras acusam.
+- **O roteiro novo `I-TELA-JORNAL-PREDIO-SEM-TRABALHADOR` (sai 0, captura aberta):**
+  - carrega a serraria vaga no tick 3601 (o começo da seca, achado pelo ciclo do dado, para nenhuma
+    notícia de estação sair no meio);
+  - no tick 6601 o ícone continua escondido; no 6602, aparece;
+  - a folha traz "Parado: Serraria sem Carpina".
+  `I-TELA-DICAS-NA-PRIMEIRA-VEZ` também sai 0.

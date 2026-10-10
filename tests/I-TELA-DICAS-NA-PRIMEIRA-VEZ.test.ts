@@ -10,7 +10,7 @@
  * grava (`<evidencia>/I-TELA-DICAS-NA-PRIMEIRA-VEZ.save.txt`): a escola com fila e sem estrada, e
  * uma pedreira pronta, ligada e sem pedreiro. Duas dicas, uma depois da outra.
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { gameData } from '../src/sim/data';
 import { ID_DA_ESCOLA, LADO_DA_IA, LADO_DO_JOGADOR } from '../src/sim/state';
@@ -26,6 +26,8 @@ import { textoDaRecusa } from '../src/ui/aviso-de-ordem';
 import { CHAVE_DAS_DICAS, criarDicasVivas, DICAS_PADRAO, lerDicas } from '../src/preferencias-de-dicas';
 import type { Gaveta } from '../src/arquivo-da-partida';
 import temaSertao from '../data/theme-sertao.json';
+import { ARQUIVOS, ARQUIVOS_DA_INTERFACE } from '../tools/data-schema.js';
+import { validarInterface } from '../tools/data-rules.js';
 import { aberturaDaFaseA } from './helpers/abertura';
 import { comPredio, comRua, predioDoTipo } from './helpers/vila-da-fase-i';
 import { gravarEvidencia } from './helpers/evidence';
@@ -92,6 +94,16 @@ describe('I-TELA-DICAS-NA-PRIMEIRA-VEZ — o jogo explica quando acontece', () =
   it('toda dica tem texto no tema, e todo texto tem dica (ida e volta)', () => {
     expect(Object.keys(temaSertao.dicas.textos).sort()).toEqual([...DICAS].sort());
     expect(pazAte).toBeGreaterThan(0);
+  });
+
+  it('I-TELA-DICAS-REVISADAS: o validador recusa a dica sem texto e a ordem recusada sem o {motivo}', () => {
+    const ler = (nomes: readonly string[]) => Object.fromEntries(nomes.map((nome) => [nome, JSON.parse(readFileSync(`data/${nome}.json`, 'utf8'))]));
+    const dados = ler(ARQUIVOS), interfaceUi = ler(ARQUIVOS_DA_INTERFACE);
+    expect(validarInterface(dados, interfaceUi)).toEqual([]);
+    const tema = interfaceUi['theme-sertao'];
+    const com = (textos: Record<string, string>) => ({ ...interfaceUi, 'theme-sertao': { ...tema, dicas: { ...tema.dicas, textos: { ...tema.dicas.textos, ...textos } } } });
+    expect(validarInterface(dados, com({ fome: '  ' }))).toContain("interface/dicas: a dica 'fome' precisa de texto");
+    expect(validarInterface(dados, com({ 'ordem-recusada': 'A ordem nao foi.' }))).toContain("interface/dicas: a dica 'ordem-recusada' precisa do {motivo}");
   });
 
   it('(a) estado + o que ja vi -> dica a mostrar, por tabela', () => {

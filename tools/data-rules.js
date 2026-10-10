@@ -2196,6 +2196,15 @@ function validarInterface(dados, interfaceUi) {
   validarObraRevelacao(interfaceUi && interfaceUi['obra-revelacao'], erros);
   validarBarraRapida(dados, interfaceUi && interfaceUi['barra-rapida'], tema, erros);
   validarJornal(interfaceUi && interfaceUi.jornal, tema, erros, dados);
+  // I-TELA-DICAS-REVISADAS: toda dica do tema tem texto (os ids sao os de src/ui/dicas.ts DICAS, conferidos
+  // no teste I-TELA-DICAS-NA-PRIMEIRA-VEZ); a da ordem recusada leva o {motivo}
+  const textosDasDicas = (tema && tema.dicas && tema.dicas.textos) || {};
+  for (const [id, texto] of Object.entries(textosDasDicas)) {
+    if (typeof texto !== 'string' || texto.trim().length === 0) erros.push(`interface/dicas: a dica '${id}' precisa de texto`);
+  }
+  if (typeof textosDasDicas['ordem-recusada'] === 'string' && !textosDasDicas['ordem-recusada'].includes('{motivo}')) {
+    erros.push("interface/dicas: a dica 'ordem-recusada' precisa do {motivo}");
+  }
   validarClimaVisual(interfaceUi && interfaceUi['clima-visual'], erros);
   validarPadreVisual(interfaceUi && interfaceUi['padre-visual'], erros);
   validarPoeira(interfaceUi && interfaceUi.poeira, erros);

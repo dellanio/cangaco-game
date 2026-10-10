@@ -816,8 +816,8 @@
       "fim-da-paz": "A paz acabou. Daqui em diante o outro bando pode atacar a sua vila, e você pode atacar a dele.",
       "inimigo-a-vista": "Gente de outro bando à vista. Só se vê o que os seus enxergam: o resto do mapa fica na névoa.",
       "fome": "Tem gente com fome. O povo come na Bodega, se houver comida no Armazém; a tropa come quando você manda Alimentar no painel do grupo.",
-      "sem-estrada": "Esta casa não tem estrada até o Armazém, e o carregador só anda pela estrada. Puxe uma da porta (o lado de baixo da casa) até a rede.",
-      "sem-trabalhador": "Esta casa está pronta, mas ninguém trabalha nela. Clique na Casa do Coronel e peça o trabalhador dela."
+      "sem-estrada": "Esta casa não tem estrada até o Armazém, e o carregador só leva e busca a mercadoria dela pela estrada. Puxe uma da porta (o lado de baixo da casa) até a rede.",
+      "sem-trabalhador": "Esta casa está pronta, mas ninguém trabalha nela. Clique na Casa do Coronel e peça o trabalhador dela: o treino gasta ouro, que o carregador leva do Armazém."
     }
   },
   "relato": {

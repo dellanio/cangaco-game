@@ -14,6 +14,9 @@ import type { ConfigDoJornal, MemoriaDosVagos, TextoDaNoticia } from '../src/ui/
 import { ARQUIVOS, ARQUIVOS_DA_INTERFACE } from '../tools/data-schema.js';
 import { validarInterface } from '../tools/data-rules.js';
 import { gravarEvidencia } from './helpers/evidence';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { salvar } from '../src/sim/save';
+import { faseNoTick } from '../src/sim/clima';
 
 const config = JSON.parse(readFileSync('data/jornal.json', 'utf8')) as ConfigDoJornal;
 const tema = JSON.parse(readFileSync('data/theme-sertao.json', 'utf8')) as {
@@ -88,5 +91,21 @@ describe('I-TELA-JORNAL-PREDIO-SEM-TRABALHADOR', () => {
     expect(validarInterface(dados, { ...interfaceUi, jornal: { ...config, predioSemTrabalhador: { minutos: 0 } } }))
       .toContain('interface/jornal: predioSemTrabalhador.minutos precisa ser numero > 0');
     gravarEvidencia('I-TELA-JORNAL-PREDIO-SEM-TRABALHADOR', { manchete: n.manchete, texto: n.texto, limiteTicks: Math.round((config.predioSemTrabalhador.minutos * 60 * 1000) / gameData.tempo.tickMs) });
+  });
+it('grava a partida do roteiro: uma serraria vaga, num trecho do ciclo sem troca de estacao ate o aviso', () => {
+    // o roteiro afirma o icone ESCONDIDO ate o aviso: nenhuma outra noticia pode sair no meio. O tick de
+    // partida e o primeiro de uma fase longa o bastante (o limite + folga), achado pelo proprio ciclo do dado
+    const limite = Math.round((config.predioSemTrabalhador.minutos * 60 * 1000) / gameData.tempo.tickMs);
+    let inicio = -1;
+    for (let t = 1; t < 40_000 && inicio < 0; t++) {
+      const f = faseNoTick(t);
+      if (f !== null && faseNoTick(t - 1)?.id !== f.id && faseNoTick(t + limite + 50)?.id === f.id) inicio = t + 1;
+    }
+    expect(inicio).toBeGreaterThan(0);
+    const s = { ...comPredio(base, 'sawmill', 'serraria'), tick: inicio };
+    const dir = process.env['CANGACO_EVIDENCIA_DIR'] ?? 'test-output';
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(`${dir}/I-TELA-JORNAL-PREDIO-SEM-TRABALHADOR.save.txt`, salvar(s));
+    gravarEvidencia('I-TELA-JORNAL-PREDIO-SEM-TRABALHADOR.roteiro', { tickDoSave: inicio, limite });
   });
 });
