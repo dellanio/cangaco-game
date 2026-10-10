@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import manifesto from '../assets/manifest.json';
 import config from '../data/fishermans-obra-arte.json';
@@ -38,11 +38,12 @@ describe('I-ARTE-PESCADOR-EM-OBRA', () => {
       if(livre && canPlace(inicial,'fishermans',gx,gy).ok) { local={gx,gy}; break; }
     }
     if(!local) throw new Error('sem lote legal para fishermans');
+    const dir=process.env['CANGACO_EVIDENCIA_DIR'] ?? 'test-output'; mkdirSync(dir,{recursive:true});
     for(const s of config.estados) {
       const obra={id:'fishermans-arte',tipo:'fishermans',...local,lado:LADO_DO_JOGADOR,estado:'obra' as const,hp:Math.round(def.hp*def.timber/(def.timber+def.stone)),obra:{faltam:{},nivelamento:0}};
       const p=s==='madeira'?obra:completarObra(obra,gameData);
       const state={...inicial,predios:{ordem:[...inicial.predios.ordem,p.id],porId:{...inicial.predios.porId,[p.id]:p}}};
-      writeFileSync(`test-output/I-ARTE-PESCADOR-EM-OBRA-${s}.save.txt`,salvar(state));
+      writeFileSync(`${dir}/I-ARTE-PESCADOR-EM-OBRA-${s}.save.txt`,salvar(state));
     }
   });
 });
