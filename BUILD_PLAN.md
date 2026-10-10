@@ -9585,6 +9585,78 @@ O bloco de arte foi para o Codex, na branch `codex-artes`.
      `defeat`;
   3. o operador ouve o arquivo (o caminho vai no relatório) e homologa.
 
+#### O Açude (o plano `docs/planos/2026-10-05-acude-e-clima.md`, etapas 3 a 6)
+**Decisões conservadoras desta sessão** (as propostas do plano; o operador não respondeu às perguntas 3, 4, 7
+e 8, e pode revê-las):
+- o prédio tem 4×3 tiles, 4 de madeira, 6 de pedra e 400 de HP, é liberado pela Pedreira e fica na
+  sub-aba "De Comer";
+- não tem trabalhador, e pode ficar em qualquer lugar onde um prédio pode ficar (não exige beira d'água);
+- a ligação é pela distância (a opção A): sem serf levando água;
+- o crescimento continua com o ritmo fixado na semeadura (a pergunta 5 já decidida no I-CLIMA-CRESCIMENTO),
+  e a irrigação entra no mesmo instante, pela marca do tile semeado.
+
+Todos os números ficam em `data/acude.json`, com a etiqueta `[proposta]`, e em segundos na escala 1.0,
+convertidos para ticks no carregamento:
+- a capacidade;
+- a entrada no inverno (uma unidade a cada S s);
+- a evaporação, sempre (uma unidade a cada S s);
+- o consumo por fazenda irrigada, só quando a estação está abaixo do teto (uma unidade a cada S s);
+- o raio e o mínimo para irrigar;
+- o bônus e o teto da irrigação.
+
+##### I-PRODUCAO-ACUDE-PREDIO — o Açude no dado, no menu e no mapa
+- **Como:** o `reservoir` entra em `buildings.json`, no `menu-build.json` (comida) e no tema (Açude). Sem arte,
+  ele cai no placeholder (§9). A arte é do Codex (I-ARTE-ACUDE, branch `codex-artes`).
+- **Aceite:**
+  1. pelo `step`: com a Pedreira completa, o Açude é plantado, construído e completado; sem a Pedreira, a
+     planta é recusada pelo desbloqueio;
+  2. ele não pede trabalhador, e o painel não oferece um;
+  3. as contagens dos testes de catálogo (30 prédios) e a sub-aba "De Comer" com o Açude.
+
+##### I-PRODUCAO-ACUDE-AGUA — o nível de água
+- **Como:** o `PredioCompleto.agua?: number` (inteiro, opcional, só do `reservoir`; ausente vale 0). Um sistema
+  no `step`:
+  - no inverno, +1 a cada `ticksPorUnidadeDeEntrada`;
+  - sempre, −1 a cada `ticksPorUnidadeDeEvaporacao`;
+  - o consumo das fazendas, no item seguinte;
+  - o nível fica entre 0 e a capacidade.
+- **Aceite:**
+  1. pelo `step`: o Açude completo no começo do inverno enche, e o nível depois de N ticks de inverno é o
+     esperado pela regra (entrada − evaporação, com o teto). Na seca, sem fazenda, só evapora, sem passar
+     de 0 nem da capacidade;
+  2. o campo novo entra na guarda `GUARDA-step-preserva-opcionais`;
+  3. o determinismo, e o save carrega o nível de volta igual;
+  4. o painel (`painelDoPredio`) publica `agua` e a capacidade.
+
+##### I-PRODUCAO-ACUDE-IRRIGACAO — a fazenda perto do Açude cresce melhor na seca
+- **Como:** uma fazenda (o prédio cuja colheita é cultura do clima) está irrigada quando há um Açude
+  completo do mesmo lado, com `agua >= minimo`, a até `raio` tiles de distância (euclidiana, centro a
+  centro). Com dois, vale o mais perto, e o empate se desfaz pelo id. Na semeadura, o tile de fazenda
+  irrigada recebe `irrigado: true` (o `RecursoNoTile.irrigado?`, opcional), e o
+  `ticksParaAmadurecer` usa `max(m, min(teto, m + bonus))`, sendo `m` o multiplicador da estação da
+  semeadura. Cada fazenda irrigada e ocupada consome do Açude dela quando `m < teto`.
+- **Aceite (a razão, e não o total; ver a memória "aceite de modelo afirma razão"):**
+  1. pelo `step`: o milho semeado na seca por uma fazenda irrigada amadurece em
+     `round(t / min(teto, m_seca + bonus))` ticks, e o de uma fazenda sem Açude, em `round(t / m_seca)`.
+     A razão entre os dois é a do dado;
+  2. o Açude vazio (`agua < minimo`) não irriga, e dois Açudes perto não somam bônus;
+  3. a fazenda fora do raio não irriga, e o Açude do outro lado também não;
+  4. a fazenda irrigada consome na seca e não consome no inverno, e o nível cai pela regra;
+  5. o painel da fazenda publica `irrigada`, e o campo `irrigado` do tile entra na guarda dos opcionais.
+
+##### I-TELA-ACUDE-NA-TELA — o Açude e a irrigação na tela
+- **Como:**
+  - o painel do Açude mostra o nível (barra e número);
+  - o da fazenda mostra "Irrigada pelo Açude" ou nada;
+  - a planta fantasma do Açude desenha o raio da irrigação;
+  - o sprite do Açude escolhe o estado pelo nível (`vazio`, `baixo`, `medio`, `cheio`), quando o manifesto
+    os tiver, e cai no `completo`/placeholder quando não.
+- **Aceite:**
+  1. a regra pura "nível → estado do sprite", por tabela;
+  2. o roteiro carrega uma partida com o Açude perto de uma fazenda, abre o painel do Açude (com o jogo
+     andando, §8) e lê o nível. Abre o da fazenda e lê "Irrigada". Arma a planta do Açude e lê o raio
+     publicado. As capturas são abertas.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
