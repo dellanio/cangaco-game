@@ -1,0 +1,13 @@
+{
+  "_doc": "I-PRODUCAO-ACUDE-AGUA e I-PRODUCAO-ACUDE-IRRIGACAO (plano docs/planos/2026-10-05-acude-e-clima.md; decisoes conservadoras no BUILD_PLAN.md, 2026-10-10). O Acude (`reservoir`) guarda `agua` inteira, de 0 a `capacidade`. Nas `estacoesDeEntrada` (ids de data/clima.json) ganha 1 unidade a cada `entrada_segundosPorUnidade_base`; sempre perde 1 a cada `evaporacao_segundosPorUnidade_base`; e cada fazenda irrigada e ocupada tira 1 a cada `consumo_segundosPorUnidadePorFazenda_base`, so quando a estacao esta abaixo do teto da irrigacao. A fazenda (o predio cuja colheita e cultura do clima) esta irrigada com um Acude completo do mesmo lado, com `agua >= aguaMinimaParaIrrigar`, a ate `raio_tiles` (euclidiano, centro a centro). O tile semeado por ela cresce com o multiplicador max(m, min(`tetoDoMultiplicador`, m + `bonusDeCrescimento`)), sendo m o da estacao da semeadura. Duracoes em segundos na escala 1.0 do grupo `escala`: o carregador DIVIDE pela escala e converte em ticks uma vez. Todos os numeros sao [proposta], para o BALANCE_LOG: cheio, o Acude atravessa a seca com 3 rocas.",
+  "escala": "economia",
+  "capacidade": 100,
+  "estacoesDeEntrada": ["inverno"],
+  "entrada_segundosPorUnidade_base": 4,
+  "evaporacao_segundosPorUnidade_base": 60,
+  "consumo_segundosPorUnidadePorFazenda_base": 30,
+  "raio_tiles": 7,
+  "aguaMinimaParaIrrigar": 1,
+  "bonusDeCrescimento": 0.25,
+  "tetoDoMultiplicador": 1.0
+}

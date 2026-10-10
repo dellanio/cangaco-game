@@ -600,6 +600,12 @@ export interface PredioCompleto extends PredioBase {
    * Recruta dentro nao e unidade: nao anda, nao come, nao aparece em `unidades`.
    */
   readonly recrutas?: number;
+  /**
+   * I-PRODUCAO-ACUDE-AGUA — a agua guardada no Acude (`ID_DO_ACUDE`), inteira, de 0 a
+   * `acude.capacidade`. So o Acude tem o campo; AUSENTE e lido como zero. Quem mexe e
+   * `systems/acude.ts`, e o campo nunca some depois de criado.
+   */
+  readonly agua?: number;
   /** F28b — ticks ate a torre atirar de novo. So a torre tem o campo; AUSENTE e pronta. */
   readonly recarga?: number;
   /** F35 — a ordem da feira: trocar A (`da`) por B (`para`) ate `quantidade` de B, e
@@ -1701,6 +1707,10 @@ export const ID_DO_ARMAZEM = 'storehouse';
  *  estrutural, como `ID_DO_ARMAZEM`: os numeros (custo, slots, duracao)
  *  continuam vindo do dado. */
 export const ID_DA_ESCOLA = 'schoolhouse';
+
+/** I-PRODUCAO-ACUDE-PREDIO — o Acude, que guarda agua e irriga as rocas perto (`data/acude.json`). Id
+ *  estrutural, como `ID_DA_ESCOLA`: os numeros vem do dado. */
+export const ID_DO_ACUDE = 'reservoir';
 
 /** F20a — a Bodega, onde os civis comem (chave de `condition.json:inn`). Id
  *  estrutural, como `ID_DA_ESCOLA`: o teto de comida e a lista de comidas

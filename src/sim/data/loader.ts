@@ -951,6 +951,21 @@ export function loadGameData(raw: RawGameData): GameData {
     economia,
     escaramuca: { ...raw.escaramuca, ticksDePaz, opcoesDePaz },
     conversoes,
+    // I-PRODUCAO-ACUDE-AGUA: os tempos do Acude em ticks, uma vez, aqui
+    acude: {
+      capacidade: raw.acude.capacidade,
+      estacoesDeEntrada: raw.acude.estacoesDeEntrada,
+      raio_tiles: raw.acude.raio_tiles,
+      aguaMinimaParaIrrigar: raw.acude.aguaMinimaParaIrrigar,
+      bonusDeCrescimento: raw.acude.bonusDeCrescimento,
+      tetoDoMultiplicador: raw.acude.tetoDoMultiplicador,
+      ticksPorEntrada: registrar('acude.entrada_segundosPorUnidade_base', raw.acude.escala, raw.acude.entrada_segundosPorUnidade_base, 'segundos',
+        paraTicksDeDuracao(raw.acude.entrada_segundosPorUnidade_base, 'segundos', escalaDe(escalas, raw.acude.escala), tickHz)),
+      ticksPorEvaporacao: registrar('acude.evaporacao_segundosPorUnidade_base', raw.acude.escala, raw.acude.evaporacao_segundosPorUnidade_base, 'segundos',
+        paraTicksDeDuracao(raw.acude.evaporacao_segundosPorUnidade_base, 'segundos', escalaDe(escalas, raw.acude.escala), tickHz)),
+      ticksPorConsumo: registrar('acude.consumo_segundosPorUnidadePorFazenda_base', raw.acude.escala, raw.acude.consumo_segundosPorUnidadePorFazenda_base, 'segundos',
+        paraTicksDeDuracao(raw.acude.consumo_segundosPorUnidadePorFazenda_base, 'segundos', escalaDe(escalas, raw.acude.escala), tickHz)),
+    },
     // I-CLIMA-ESTACAO: cada fase do ciclo em ticks, uma vez, aqui
     clima: {
       ligado: raw.clima.ligado,

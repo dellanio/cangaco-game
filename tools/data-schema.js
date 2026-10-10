@@ -24,6 +24,8 @@ const ARQUIVOS = [
   'escaramuca',
   // I-CLIMA-ESTACAO — o ciclo das estacoes.
   'clima',
+  // I-PRODUCAO-ACUDE-AGUA — a agua do Acude e a irrigacao.
+  'acude',
   // F-T1 — a camada de terreno base. Um arquivo por mapa; `maps/` e diretorio
   // porque a campanha vai ter varios (GDD Anexo B).
   'maps/sertao-128',
@@ -106,6 +108,13 @@ const CAMPOS_ESCALONADOS = [
     unidade: 'segundos', declaraEscalaEm: 'escala' },
   // I-CLIMA-ESTACAO — a duracao de cada fase do ciclo. `[]` casa qualquer indice do array.
   { arquivo: 'clima', caminho: 'ciclo[].duracao_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  // I-PRODUCAO-ACUDE-AGUA — a entrada, a evaporacao e o consumo do Acude.
+  { arquivo: 'acude', caminho: 'entrada_segundosPorUnidade_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'acude', caminho: 'evaporacao_segundosPorUnidade_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'acude', caminho: 'consumo_segundosPorUnidadePorFazenda_base',
     unidade: 'segundos', declaraEscalaEm: 'escala' },
   { arquivo: 'units', caminho: 'velocidadeBase_tilesPorSegundo.aPe',
     unidade: 'tilesPorSegundo', declaraEscalaEm: 'escalaVelocidade' },

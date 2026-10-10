@@ -49,6 +49,8 @@ const OPCIONAIS_DO_PREDIO = {
   naoAceita: 'persiste',
   // so a entrega escreve, e nenhum tick sem entrega apaga
   ultimaEntrega: 'persiste',
+  // I-PRODUCAO-ACUDE-AGUA: o sistema muda o valor, mas o campo nunca some depois de criado
+  agua: 'persiste',
 } as const satisfies Record<ChavesOpcionais<PredioCompleto>, Regime>;
 
 const OPCIONAIS_DA_PRODUCAO = {
@@ -95,6 +97,7 @@ function estadoCheio(): { readonly state: Required<GameState>; readonly ids: Rea
   s = comPredioNovo(s, { ...novo('g-feira', 'marketplace', 6, 2), troca: { da: 'stone', para: 'timber', quantidade: 999, feitas: 0 } });
   s = comPredioNovo(s, { ...novo('g-oficina', 'weapons_workshop', 10, 2), ultimaEntrega: { timber: 0 } });
   s = comPredioNovo(s, novo('g-lenhador', 'woodcutters', 14, 2));
+  s = comPredioNovo(s, { ...novo('g-acude', 'reservoir', 18, 2), agua: 50 });
   s = { ...s, predios: { ...s.predios, porId: { ...s.predios.porId, [armazem.id]: { ...armazem, naoAceita: ['stone'] } } } };
 
   // pelo helper do comando, e nao pelo `step`: o fixture nao pode depender do que a guarda cobra
@@ -116,7 +119,7 @@ function estadoCheio(): { readonly state: Required<GameState>; readonly ids: Rea
       voo: TICKS * 4, restantes: TICKS * 4,
     }],
   };
-  return { state: cheio, ids: { armazem: armazem.id, quartel: 'g-quartel', feira: 'g-feira', oficina: 'g-oficina', lenhador: 'g-lenhador' } };
+  return { state: cheio, ids: { armazem: armazem.id, quartel: 'g-quartel', feira: 'g-feira', oficina: 'g-oficina', lenhador: 'g-lenhador', acude: 'g-acude' } };
 }
 
 /** O que existia em `antes` e sumiu em `depois`, com o caminho. */
@@ -157,6 +160,7 @@ describe('GUARDA — o step nao perde campo opcional', () => {
     expect(campo(ids.oficina).producao?.escolha).toBeDefined();
     expect(campo(ids.oficina).ultimaEntrega).toEqual({ timber: 0 });
     expect(campo(ids.lenhador).producao?.modo).toBeDefined();
+    expect(campo(ids.acude).agua).toBe(50);
   });
 
   it(`cada opcional persistente sobrevive a ${TICKS} ticks sem comando`, () => {

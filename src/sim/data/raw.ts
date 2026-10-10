@@ -13,6 +13,8 @@ import resourcesJson from '../../../data/resources.json';
 import escaramucaJson from '../../../data/escaramuca.json';
 // I-CLIMA-ESTACAO — o ciclo das estacoes e o efeito no crescimento.
 import climaJson from '../../../data/clima.json';
+// I-PRODUCAO-ACUDE-AGUA — a agua do Acude e a irrigacao.
+import acudeJson from '../../../data/acude.json';
 // F-T1 — a camada de terreno base. Um arquivo por mapa; o jogo carrega ESTE, e
 // `tools/gerar-mapa.js` e quem o emite (autoria, nunca runtime).
 import mapaSertaoJson from '../../../data/maps/sertao-128.json';
@@ -46,6 +48,7 @@ export const rawGameData = {
   resources: resourcesJson,
   escaramuca: escaramucaJson,
   clima: climaJson,
+  acude: acudeJson,
   mapa: mapaSertaoJson,
 };
 

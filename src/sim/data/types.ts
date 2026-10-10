@@ -561,6 +561,8 @@ export interface GameData {
   readonly conversoes: readonly ConversaoRegistrada[];
   /** I-CLIMA-ESTACAO — o ciclo das estacoes, ja em ticks (`data/clima.json`). Leia por `sim/clima.ts`. */
   readonly clima: ClimaData;
+  /** I-PRODUCAO-ACUDE-AGUA — a agua do Acude e a irrigacao, com os tempos ja em ticks (`data/acude.json`). */
+  readonly acude: AcudeData;
 }
 
 /** I-CLIMA-ESTACAO — uma fase do ciclo, com a duracao ja em ticks. */
@@ -571,6 +573,19 @@ export interface FaseDoCicloData {
   readonly multiplicadorVelocidade?: number;
   /** Custos em ticks, convertidos pelo loader, indexados pelo custo base. */
   readonly custosDeMovimento?: Readonly<Record<number, { readonly normal: number; readonly investida: number }>>;
+}
+
+/** I-PRODUCAO-ACUDE-AGUA — o Acude (`data/acude.json`), com os tempos em ticks. */
+export interface AcudeData {
+  readonly capacidade: number;
+  readonly estacoesDeEntrada: readonly string[];
+  readonly ticksPorEntrada: Ticks;
+  readonly ticksPorEvaporacao: Ticks;
+  readonly ticksPorConsumo: Ticks;
+  readonly raio_tiles: number;
+  readonly aguaMinimaParaIrrigar: number;
+  readonly bonusDeCrescimento: number;
+  readonly tetoDoMultiplicador: number;
 }
 
 export interface ClimaData {

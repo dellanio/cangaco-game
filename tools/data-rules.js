@@ -1154,6 +1154,25 @@ function validarPedidoDeComida(dados, erros) {
 
 // I-CLIMA-ESTACAO — o ciclo nao e vazio, cada fase tem id unico, duracao > 0 e multiplicador > 0, e as
 // culturas sao tipos de recurso
+// I-PRODUCAO-ACUDE-AGUA — a agua do Acude e a irrigacao
+function validarAcude(dados, erros) {
+  const e = (msg) => erros.push(`acude: ${msg}`);
+  const a = dados.acude;
+  if (!a || typeof a !== 'object') { e('data/acude.json precisa existir'); return; }
+  if (!Number.isInteger(a.capacidade) || a.capacidade <= 0) e('capacidade precisa ser inteiro > 0');
+  if (!Number.isInteger(a.aguaMinimaParaIrrigar) || a.aguaMinimaParaIrrigar < 1 || a.aguaMinimaParaIrrigar > a.capacidade) e('aguaMinimaParaIrrigar precisa ser inteiro entre 1 e a capacidade');
+  if (!(typeof a.raio_tiles === 'number' && a.raio_tiles > 0)) e('raio_tiles precisa ser > 0');
+  if (!(typeof a.bonusDeCrescimento === 'number' && a.bonusDeCrescimento >= 0)) e('bonusDeCrescimento precisa ser >= 0');
+  if (!(typeof a.tetoDoMultiplicador === 'number' && a.tetoDoMultiplicador > 0)) e('tetoDoMultiplicador precisa ser > 0');
+  for (const campo of ['entrada_segundosPorUnidade_base', 'evaporacao_segundosPorUnidade_base', 'consumo_segundosPorUnidadePorFazenda_base']) {
+    if (!(typeof a[campo] === 'number' && a[campo] > 0)) e(`${campo} precisa ser > 0`);
+  }
+  const fases = new Set(((dados.clima && dados.clima.ciclo) || []).map((f) => f.id));
+  if (!Array.isArray(a.estacoesDeEntrada) || a.estacoesDeEntrada.length === 0) e('estacoesDeEntrada precisa ser uma lista nao vazia');
+  else for (const id of a.estacoesDeEntrada) if (!fases.has(id)) e(`estacoesDeEntrada: '${id}' nao e fase de data/clima.json`);
+  if (!(dados.buildings && dados.buildings.predios || []).some((p) => p.id === 'reservoir')) e("o predio 'reservoir' precisa existir em buildings.json");
+}
+
 function validarClima(dados, erros) {
   const e = (msg) => erros.push(`clima: ${msg}`);
   const c = dados.clima;
@@ -2296,6 +2315,7 @@ function validarTudo(dados) {
   validarPedidoDeComida(dados, erros);
   validarAvisoDaTropaComFome(dados, erros);
   validarClima(dados, erros);
+  validarAcude(dados, erros);
   validarPrazoDeProgresso(dados, erros);
   validarPrioridadesDaIA(dados, erros);
   validarEscaramuca(dados, erros);

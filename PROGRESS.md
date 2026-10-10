@@ -21682,3 +21682,22 @@ sem-trabalhador   peça o trabalhador na Casa do Coronel                escola.t
   - nenhuma tarefa de ocupar.
 
   A suíte inteira passa: 2 933 testes.
+
+### I-PRODUCAO-ACUDE-AGUA — o nível de água do Açude (verificado)
+- **O dado:** `data/acude.json` (34º arquivo, com validador). Os números `[proposta]`:
+  - capacidade 100;
+  - entrada de 1 unidade a cada 4 s base no inverno (2 s de relógio, com economia 2,0);
+  - evaporação de 1 a cada 60 s base;
+  - o consumo, o raio e o bônus, para a irrigação.
+
+  O carregador converte os tempos em ticks uma vez, com `registrar`.
+- **O estado:** `PredioCompleto.agua?: number`, só do Açude (`ID_DO_ACUDE = 'reservoir'`). Ele entrou na
+  guarda dos opcionais como `persiste`, com o fixture `agua: 50`.
+- **O sistema:** `sim/systems/acude.ts` roda no `step` depois dos especialistas, com o tick NOVO (o mesmo do
+  evento da estação). A entrada e a evaporação vão pelo resto do tick, sem acumulador no estado:
+  inteiro e determinístico.
+- **O painel:** `painelDoPredio(...).acude = { agua, capacidade }`, e `null` em quem não é Açude.
+- **Teste:** `tests/I-PRODUCAO-ACUDE-AGUA.test.ts` (3), com a regra escrita de novo no teste, só com o dado:
+  - o inverno enche pela regra e para no teto;
+  - a seca só evapora até 0;
+  - o determinismo, o save e o painel.

@@ -9,7 +9,7 @@ import type { MotivoDeRecusaDeSoldado } from './quartel';
 import type { PorQueNaoTroca } from './feira';
 import type { PorQueATorreNaoAtira } from './torre';
 import type { GameState, Predio, PredioCompleto, PredioEmObra, Unidade } from './state';
-import { ID_DO_ARMAZEM, ID_DO_RECRUTA, LADO_DO_JOGADOR } from './state';
+import { ID_DO_ACUDE, ID_DO_ARMAZEM, ID_DO_RECRUTA, LADO_DO_JOGADOR } from './state';
 import type { GameData, PredioData } from './data/types';
 import { gameData } from './data';
 import { classeDaUnidade, emAlertaDeFome, fracaoDeCondicao } from './condicao';
@@ -626,6 +626,8 @@ export interface PainelDoPredio {
     readonly emCurso: string | null;
     readonly saidas: readonly { readonly mercadoria: string; readonly falta: number }[];
   } | null;
+  /** I-PRODUCAO-ACUDE-AGUA — o nivel do Acude e a capacidade; `null` em quem nao e Acude completo. */
+  readonly acude: { readonly agua: number; readonly capacidade: number } | null;
   /** F28b — a munição da torre e por que ela não atira; `null` em quem não é torre. */
   readonly torre: {
     readonly pedras: number;
@@ -723,6 +725,7 @@ export function painelDoPredio(
       reparo: null,
       armazem: null,
       encomenda: null,
+      acude: null,
     };
   }
 
@@ -773,6 +776,7 @@ export function painelDoPredio(
       }
       : null,
     encomenda: encomendaDoPainel(predio, dados),
+    acude: predio.tipo === ID_DO_ACUDE ? { agua: predio.agua ?? 0, capacidade: dados.acude.capacidade } : null,
     reparo: {
       ligado: predio.reparo,
       danificado: predio.hp < def.hp,

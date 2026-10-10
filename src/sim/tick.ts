@@ -20,6 +20,7 @@ import { aplicarStormAttack, sistemaDaCarga } from './systems/carga';
 import { aplicarFeedUnits } from './systems/alimentar';
 import { aplicarAttackUnit, sistemaDoCombate } from './systems/combate';
 import { aplicarConvertUnit, sistemaDoPadre } from './systems/padre';
+import { sistemaDoAcude } from './systems/acude';
 import { sistemaDaTorre } from './systems/torre';
 import { sistemaDaIA } from './systems/ia';
 import { resultadoDaPartida } from './partida';
@@ -275,7 +276,8 @@ export function step(
   // F13: a escola DEPOIS dos serfs (o ouro entregue neste tick ja comeca o treino
   // neste tick) e ANTES de `gerarTarefas` (o ouro cobrado neste tick ja abre a
   // demanda do proximo pedido antes de o gerador olhar o quadro).
-  const escolas = sistemaDasEscolas(especialistas.state, dados);
+  // I-PRODUCAO-ACUDE-AGUA: a agua do Acude, depois do plantio do tick (quem semeou viu o nivel de antes)
+  const escolas = sistemaDasEscolas(sistemaDoAcude(especialistas.state, tick, dados), dados);
   // F35: a feira fecha a troca DEPOIS das entregas do tick (o A que chegou agora ja
   // conta) e ANTES do gerador (o B novo ja ganha a tarefa de escoar neste tick)
   // D-MOVIMENTO-01c (empilhamento de fora do passo) — a porta: quem nasceu ou saiu de "dentro" para um tile ocupado espera ele vagar
