@@ -9552,6 +9552,22 @@ O bloco de arte foi para o Codex, na branch `codex-artes`.
      continua com arte). Com ele, a pilha é `quadrado` e a carga do serf é texto, e a tábua continua com
      ícone (o controle). As capturas são abertas.
 
+#### I-TELA-DICAS-REVISADAS — as dicas conferidas contra o jogo, e o aviso do prédio vago visto na tela
+- **Como:** cada dica de `theme-sertao.json` (`dicas.textos`) é conferida contra o código. O que ela afirma e
+  o jogo não faz é reescrito. Hoje são duas:
+  - a `sem-estrada` diz "o carregador só anda pela estrada", mas só a mercadoria da casa exige estrada
+    (`delivery.json`, modo `estrada`); o material de obra vai em modo `livre`;
+  - a `sem-trabalhador` não diz que o treino gasta ouro, e sem ouro a escola não treina (o
+    `ouro-para-escola`).
+- **Aceite:**
+  1. a tabela da revisão vai para o PROGRESS: cada dica, o que ela afirma e o `arquivo:linha` que confirma
+     (ou o texto novo);
+  2. o teste de que nenhum texto de dica cita "só anda pela estrada" deixa de ser preciso, porque o texto
+     sai. A asserção vai na estrutura: cada id de `DICAS` tem texto no tema, e o validador recusa o que falta;
+  3. o roteiro novo `I-TELA-JORNAL-PREDIO-SEM-TRABALHADOR` carrega uma partida com uma serraria vaga.
+     Avançado 1 tick antes dos 5 min, o ícone do jornal continua escondido; nos 5 min, ele aparece. Aberto,
+     o jornal tem a manchete com o nome da serraria e do carpinteiro. A captura é aberta.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
