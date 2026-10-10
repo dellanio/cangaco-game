@@ -59,6 +59,33 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   o serf espera na fila e a pilha some; se não, o roteiro deve contar só quem ocupa.
 - status: aberto, esperando a decisão
 
+## BUG-SHOT-TODOS-ONZE-ROTEIROS-VERMELHOS — 11 roteiros saem 1 no fechamento de 2026-10-10
+- feature: o fechamento do bloco (I-ENTREGA-VERSAO-PUBLICAVEL); cada roteiro é o aceite da sua feature
+- severidade: errado (o bloco não fecha, e a tag `teste-jogo-2` espera)
+- repro: `npm run shot:todos` em `1d974d2` (resumo em `test-output/shot-todos.json`), e cada um de novo
+  sozinho por `npm run shot -- <nome>`
+- observado (medido em 2026-10-10): 12 de 172 saem 1. Um é o BUG-F18F acima. Os outros 11:
+  - `C-IA-03c`: "os tres predios da IA deveriam cair, sobraram 3" (380 s);
+  - `D-TELA-AGUA-PEIXE`: o sha256 da captura difere entre as duas corridas do peixe;
+  - `D-TELA-LUZ-RELEVO-recorte`: "a pedreira deveria estar plantada em (26,29)";
+  - `F07`: "deveria haver 2 obras, veio 1";
+  - `F25b`: "os nove botoes e o Derrubar deveriam caber sem rolar (fora da vista: demolir)";
+  - `G-TELA-GESTO-DO-TRABALHO`: "Cannot read properties of undefined (reading 'gx')";
+  - `I-ARTE-PREDIOS-MAIORES`: "a Casa de Carne do save deveria estar no estado: undefined";
+  - `I-TELA-CLIMA-VISUAL`: "o jornal deveria ter as noticias da seca", com o jornal mostrando só
+    a última (o I-TELA-JORNAL-SO-A-ULTIMA de 2026-10-06 mudou o texto que o roteiro afirma);
+  - `I-TELA-OBRAS-COM-ARTE-ATUAL`: "quarry usa arte no progresso 25";
+  - `I-TELA-QUARTEL-MAIS-IMPONENTE`: "Cannot read properties of undefined (reading 'w')";
+  - `I-TELA-SELECAO-NO-PE`: `mouse.move` com parâmetro inválido (coordenada que não existe).
+- verificado: os 10 rápidos (todos menos o `C-IA-03c`) falham IGUAIS em `73833b0`, a `main` de antes do
+  trabalho de 2026-10-10. Não vieram do Açude, das dicas, do som nem do roteiro do machado.
+- hipótese (não conferida): vieram das levas de 2026-10-06 a 2026-10-09 (o jornal só com a última, os
+  enfeites, a caatinga, a serra, as fontes naturais, a seca mais lenta), porque nenhum `shot:todos` rodou
+  entre elas. Ressalva: na corrida da `73833b0` as partidas salvas (`test-output/*.save.txt`) foram
+  copiadas da árvore atual, e um save mais novo pode ter falhado por formato.
+- correção prevista: um por um, como roteiro desatualizado ou defeito de jogo, sem afrouxar asserção.
+- status: aberto
+
 ## Polimento
 
 Os três bugs de oscilação de tempo que moravam aqui (BUG-D na F-T1, BUG-E na F-T2b e,
