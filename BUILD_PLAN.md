@@ -9643,6 +9643,10 @@ convertidos para ticks no carregamento:
   3. a fazenda fora do raio não irriga, e o Açude do outro lado também não;
   4. a fazenda irrigada consome na seca e não consome no inverno, e o nível cai pela regra;
   5. o painel da fazenda publica `irrigada`, e o campo `irrigado` do tile entra na guarda dos opcionais.
+- **Nota de integração (CLAUDE.md §10, escrita antes do código):** esta feature toca `src/sim/` e UMA linha
+  de `src/render/scenes/WorldScene.ts`, onde o estágio da cultura chama `ticksParaAmadurecer`. O render
+  passa o `irrigado` do tile, para o `pronto` da tela começar no mesmo tick do `tileMaduro` da sim (a
+  equivalência do BUG-W). O mesmo motivo da nota de integração do I-CLIMA-CRESCIMENTO (`5b07eac`).
 
 ##### I-TELA-ACUDE-NA-TELA — o Açude e a irrigação na tela
 - **Como:**
