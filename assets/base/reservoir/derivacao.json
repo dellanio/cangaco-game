@@ -1,0 +1,72 @@
+{
+  "source": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\reservoir",
+  "crop": [
+    0,
+    0,
+    1508,
+    1039
+  ],
+  "method": "RGB nativo no interior; exterior e alfa canônicos do cheio; Lanczos e padding comum",
+  "files": [
+    {
+      "state": "cheio",
+      "suffix": "master-2x",
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\reservoir\\cheio-master-2x.png",
+      "sha256": "a7d2c7a27ed450b3ace0996d246c8415fb67a24e67610d17b9624b6e45998cbc"
+    },
+    {
+      "state": "cheio",
+      "suffix": "sprite",
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\reservoir\\cheio-sprite.png",
+      "sha256": "92700662b97fe75dc474d227314bf7d3f9cb27126c7031c23bb5f1b26aa12b60"
+    },
+    {
+      "state": "vazio",
+      "suffix": "master-2x",
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\reservoir\\vazio-master-2x.png",
+      "sha256": "86aa3927908eab0955a46c3b66195a37e55e019fc68162dd371fb33b2812a49b"
+    },
+    {
+      "state": "vazio",
+      "suffix": "sprite",
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\reservoir\\vazio-sprite.png",
+      "sha256": "7df9ae039ee3dafa87ff1a7d4a03a792492bf1b81019ffd04b921b44387dca78"
+    },
+    {
+      "state": "baixo",
+      "suffix": "master-2x",
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\reservoir\\baixo-master-2x.png",
+      "sha256": "a86040e5924bbe66b165ebf1afadf62e3d884ecb77fe65f01affdaccd3079787"
+    },
+    {
+      "state": "baixo",
+      "suffix": "sprite",
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\reservoir\\baixo-sprite.png",
+      "sha256": "aaeec11c28997cb1f3c368230f21c34323e51cebe33b659740f7412b0148688a"
+    },
+    {
+      "state": "medio",
+      "suffix": "master-2x",
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\reservoir\\medio-master-2x.png",
+      "sha256": "72bc26119adae37b69b57f22b3e216b54c7c8d9e7d48db584da6b23bb5840d43"
+    },
+    {
+      "state": "medio",
+      "suffix": "sprite",
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\reservoir\\medio-sprite.png",
+      "sha256": "1d0f31687ee51bb418f1f0deaab5cc8468a4f1b3e2f32ad61b596bf5aa6ccef0"
+    },
+    {
+      "state": "madeira",
+      "suffix": "master-2x",
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\reservoir\\madeira-master-2x.png",
+      "sha256": "d40ad891475334eac213732264b765d67f27e147a95f9f9a3abf685a016b90c2"
+    },
+    {
+      "state": "madeira",
+      "suffix": "sprite",
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\reservoir\\madeira-sprite.png",
+      "sha256": "d9b79d25d0a94a7286c85d5a88deb98940ac7e8559fb5b2a0fc265a89c7d479b"
+    }
+  ]
+}

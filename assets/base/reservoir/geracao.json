@@ -1,0 +1,98 @@
+{
+  "ferramenta": "OpenAI image_gen nativa",
+  "autor": "OpenAI / direção do operador",
+  "licenca": "arte original gerada para Piancó",
+  "origem": "cheio canônico; demais estados editam essa base, derivação registrada preserva alfa e barragem",
+  "files": [
+    {
+      "estado": "cheio",
+      "id": "exec-ac140032-8988-4be4-aaed-6865377c246d",
+      "arquivo": "assets/base/reservoir/cheio-original.png",
+      "sha256": "3a743a0b976f2372236169011c1211519057e7a941a357d9d8f1bba96fabaac6"
+    },
+    {
+      "estado": "cheio",
+      "id": "exec-ac140032-8988-4be4-aaed-6865377c246d",
+      "arquivo": "assets/base/reservoir/cheio-master-2x.png",
+      "sha256": "a7d2c7a27ed450b3ace0996d246c8415fb67a24e67610d17b9624b6e45998cbc"
+    },
+    {
+      "estado": "cheio",
+      "id": "exec-ac140032-8988-4be4-aaed-6865377c246d",
+      "arquivo": "assets/sprites/reservoir/cheio.png",
+      "sha256": "92700662b97fe75dc474d227314bf7d3f9cb27126c7031c23bb5f1b26aa12b60"
+    },
+    {
+      "estado": "vazio",
+      "id": "exec-204feb43-064c-46c6-8b0a-07cbd4dda49f",
+      "arquivo": "assets/base/reservoir/vazio-original.png",
+      "sha256": "9fe8631ff9aaf0f2d79573d2980fad7e4d146ccbdf6458fa477a00b623a5691f"
+    },
+    {
+      "estado": "vazio",
+      "id": "exec-204feb43-064c-46c6-8b0a-07cbd4dda49f",
+      "arquivo": "assets/base/reservoir/vazio-master-2x.png",
+      "sha256": "86aa3927908eab0955a46c3b66195a37e55e019fc68162dd371fb33b2812a49b"
+    },
+    {
+      "estado": "vazio",
+      "id": "exec-204feb43-064c-46c6-8b0a-07cbd4dda49f",
+      "arquivo": "assets/sprites/reservoir/vazio.png",
+      "sha256": "7df9ae039ee3dafa87ff1a7d4a03a792492bf1b81019ffd04b921b44387dca78"
+    },
+    {
+      "estado": "baixo",
+      "id": "exec-904f46d2-1fe6-4cea-8f48-ec57962a0086",
+      "arquivo": "assets/base/reservoir/baixo-original.png",
+      "sha256": "a6ecf4a6ee358e1ce1f5dfc6b5273e555bb72635fd5345d18360b0dc6a097b66"
+    },
+    {
+      "estado": "baixo",
+      "id": "exec-904f46d2-1fe6-4cea-8f48-ec57962a0086",
+      "arquivo": "assets/base/reservoir/baixo-master-2x.png",
+      "sha256": "a86040e5924bbe66b165ebf1afadf62e3d884ecb77fe65f01affdaccd3079787"
+    },
+    {
+      "estado": "baixo",
+      "id": "exec-904f46d2-1fe6-4cea-8f48-ec57962a0086",
+      "arquivo": "assets/sprites/reservoir/baixo.png",
+      "sha256": "aaeec11c28997cb1f3c368230f21c34323e51cebe33b659740f7412b0148688a"
+    },
+    {
+      "estado": "medio",
+      "id": "exec-7dc03768-bf2b-4038-88aa-2b7eec28bba9",
+      "arquivo": "assets/base/reservoir/medio-original.png",
+      "sha256": "9ea039f412262006fe732b1ab94fa84edaa9ee5c79e4e7ab9c818dc4bbfda367"
+    },
+    {
+      "estado": "medio",
+      "id": "exec-7dc03768-bf2b-4038-88aa-2b7eec28bba9",
+      "arquivo": "assets/base/reservoir/medio-master-2x.png",
+      "sha256": "72bc26119adae37b69b57f22b3e216b54c7c8d9e7d48db584da6b23bb5840d43"
+    },
+    {
+      "estado": "medio",
+      "id": "exec-7dc03768-bf2b-4038-88aa-2b7eec28bba9",
+      "arquivo": "assets/sprites/reservoir/medio.png",
+      "sha256": "1d0f31687ee51bb418f1f0deaab5cc8468a4f1b3e2f32ad61b596bf5aa6ccef0"
+    },
+    {
+      "estado": "madeira",
+      "id": "exec-1a937f0a-c6a3-4dcf-99f8-807376feb934",
+      "arquivo": "assets/base/reservoir/madeira-original.png",
+      "sha256": "d1b187a978eaefdfcb134f36105249a844fb99a7750f20c164415d4d0356ecb9"
+    },
+    {
+      "estado": "madeira",
+      "id": "exec-1a937f0a-c6a3-4dcf-99f8-807376feb934",
+      "arquivo": "assets/base/reservoir/madeira-master-2x.png",
+      "sha256": "d40ad891475334eac213732264b765d67f27e147a95f9f9a3abf685a016b90c2"
+    },
+    {
+      "estado": "madeira",
+      "id": "exec-1a937f0a-c6a3-4dcf-99f8-807376feb934",
+      "arquivo": "assets/sprites/reservoir/madeira.png",
+      "sha256": "d9b79d25d0a94a7286c85d5a88deb98940ac7e8559fb5b2a0fc265a89c7d479b"
+    }
+  ]
+}

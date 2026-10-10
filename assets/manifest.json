@@ -3773,8 +3773,40 @@
     {"id":"flat_slab","tipo":"enfeite","footprint":[1,1],"tamanho":[64,64],"anchor":[0.5,1],"estados":{"normal":"sprites/props/flat_slab/normal.png"},"licenca":"Arte original gerada por OpenAI para o projeto Pianco","origem":{"base":"base/flat_slab/original.png","semente":null,"nota":"OpenAI image_gen; SHA256 7c4aa2c0aa27eb8ab44bd8a516bb4fa647bc5647d84331ba33adbc92b22f6c04; contrato e prompt em base/sertao-mapa-geracao.json. Homologacao pendente."}},
     {"id":"newspaper_paper","tipo":"interface","footprint":[1,1],"tamanho":[768,512],"anchor":[0.5,0.5],"estados":{"normal":"sprites/ui/newspaper_paper/normal.png"},"licenca":"Arte original gerada por OpenAI para Pianco","origem":{"base":"base/newspaper_paper/original.png","semente":null,"nota":"OpenAI image_gen nativa, geracao exec-2625a7f6-8dcf-4e18-b58a-a379a5c46f41, SHA256 2073d204be3299ea37f92dd376e07f7d5885a61953d76436712fcd6e454f9506. Prompt em base/newspaper_paper/geracao.json"}},
     {"id":"wine","tipo":"pilha","footprint":[1,1],"tamanho":[32,40],"anchor":[0.5,1],"estados":{"unidade":"sprites/stock/wine/unidade-20261008.png"},"licenca":"Arte original gerada por OpenAI para Pianco, 2026-10-08","origem":{"base":"base/wine-stock/original-20261008.png","semente":null,"nota":"Barril de carvalho de cachaca pronta; prompt, geracao e SHA256 em base/wine-stock/geracao.json"}},
-    {"id":"fish","tipo":"pilha","footprint":[1,1],"tamanho":[32,80],"anchor":[0.5,1],"estados":{"unidade":"sprites/stock/fish/unidade-20261008.png"},"licenca":"Arte OpenAI 2026-10-08","origem":{"base":"base/fish-stock/original-20261008.png","semente":null,"nota":"Peixe pendurado da Bodega; registro e hash em base/fish-stock/geracao.json"}}
+    {"id":"fish","tipo":"pilha","footprint":[1,1],"tamanho":[32,80],"anchor":[0.5,1],"estados":{"unidade":"sprites/stock/fish/unidade-20261008.png"},"licenca":"Arte OpenAI 2026-10-08","origem":{"base":"base/fish-stock/original-20261008.png","semente":null,"nota":"Peixe pendurado da Bodega; registro e hash em base/fish-stock/geracao.json"}},
+{
+  "id": "reservoir",
+  "tipo": "predio",
+  "footprint": [
+    4,
+    3
   ],
+  "tamanho": [
+    256,
+    224
+  ],
+  "anchor": [
+    0.5,
+    1
+  ],
+  "ancoras": { "bandeira": [0.5, 0.43] },
+  "estados": {
+    "cheio": "sprites/reservoir/cheio.png",
+    "vazio": "sprites/reservoir/vazio.png",
+    "baixo": "sprites/reservoir/baixo.png",
+    "medio": "sprites/reservoir/medio.png",
+    "madeira": "sprites/reservoir/madeira.png",
+    "completo": "sprites/reservoir/cheio.png"
+  },
+  "licenca": "arte original OpenAI para Piancó, 2026-10-10",
+  "origem": {
+    "base": "base/reservoir/cheio-master-2x.png",
+    "semente": null,
+    "geracao": "exec-ac140032-8988-4be4-aaed-6865377c246d",
+    "nota": "Barragem de terra e pedra do sertão; níveis editados da base cheia. Origens e SHA256 em base/reservoir/geracao.json. Obra deriva do mesmo desenho; alfa e registro canônicos. Aguarda homologação."
+  }
+}
+],
   "icones": {
     "colheitas": {
       "_doc": "G-TELA-ROCEIRO-NO-CAMPO (2026-10-04): o que o roceiro leva nas maos voltando de um campo cuja colheita nao e mercadoria. A cana (o recurso grapes do canavial) vira cachaca dentro do predio, entao nao tem icone de mercadoria. A chave e o id neutro do recurso (`grapes`), que o tema ja chama de Cana: o texto da carga sai do tema, e `cana` nao tinha nome (BUG-ROCEIRO-CANA-SEM-NOME). So render.",

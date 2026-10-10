@@ -1,0 +1,12 @@
+{
+  "_doc": "Registro da arte do reservoir; só pipeline visual, sem regra da simulação. Sangradouro em coordenadas normalizadas do PNG nativo cheio.",
+  "estados": ["cheio", "vazio", "baixo", "medio", "madeira"],
+  "derivados": [
+    { "sufixo": "master-2x", "canvas": [512, 448], "larguraDoConteudo": 496, "margemInferior": 6 },
+    { "sufixo": "sprite", "canvas": [256, 224], "larguraDoConteudo": 248, "margemInferior": 3 }
+  ],
+  "sangradouro": [0.84, 0.46, 0.99, 0.79],
+  "anchor": [0.5, 1],
+  "bandeira": [0.5, 0.43],
+  "detectorDeAgua": { "azulMenosVermelhoMinimo": 8, "verdeMenosVermelhoMinimo": 4 }
+}

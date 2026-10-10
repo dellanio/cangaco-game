@@ -21,6 +21,7 @@ import type { ContextoDasCamadas } from '../src/render/manifesto-camadas';
 import { contextoDasCamadas } from '../src/render/predios';
 import { ORDEM_DOS_ESTAGIOS } from '../src/render/estagio-obra';
 import { CHAVES_DA_REVELACAO } from '../src/render/manifesto';
+import { ESTADOS_DO_ACUDE } from '../src/render/acude-visual';
 import { entradasDosIcones, errosDosIconesDeMercadoria } from '../src/render/icone-da-mercadoria';
 import type { IconesDeMercadoria } from '../src/render/icone-da-mercadoria';
 import { gravarEvidencia } from './helpers/evidence';
@@ -109,6 +110,7 @@ function entradaSintetica(id: string, estados: Record<string, string>): EntradaD
  *  arte que nunca aparece na tela. */
 function chavesForaDosEstagios(entrada: EntradaDeAsset): string[] {
   const validas = new Set<string>([...ORDEM_DOS_ESTAGIOS, ...CHAVES_DA_REVELACAO]);
+  if (entrada.id === 'reservoir') for (const estado of ESTADOS_DO_ACUDE) validas.add(estado);
   return Object.keys(entrada.estados).filter((k) => !validas.has(k));
 }
 
@@ -186,6 +188,9 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
       pedra: 'sprites/x/pedra.png',
     });
     expect(chavesForaDosEstagios(comChaveErrada)).toEqual(['pedra']);
+    expect(chavesForaDosEstagios(entradaSintetica('storehouse', { cheio: 'sprites/x/cheio.png' }))).toEqual(['cheio']);
+    expect(chavesForaDosEstagios(entradaSintetica('reservoir', { outono: 'sprites/x/outono.png' }))).toEqual(['outono']);
+    expect(chavesForaDosEstagios(entradaSintetica('reservoir', Object.fromEntries(ESTADOS_DO_ACUDE.map(e => [e, `sprites/x/${e}.png`]))))).toEqual([]);
   });
 
   // O outro lado do §9: placeholder e comportamento normal, nao e falha.
