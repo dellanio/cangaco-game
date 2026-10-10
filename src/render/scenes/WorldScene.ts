@@ -396,7 +396,7 @@ export class WorldScene extends Phaser.Scene {
       this.load.image(textura.chave, textura.url);
     }
     // D-TELA-03a/03b: os icones de mercadoria, para a carga do serf e a pilha sem PNG
-    for (const textura of texturasDosIcones()) this.load.image(textura.chave, textura.url);
+    for (const textura of texturasDosIcones(undefined, undefined, this.prediosSemArte)) this.load.image(textura.chave, textura.url);
     // I-TELA-BALAO-COM-MARTELO: o martelo do balao de obra
     const urlDoMartelo = urlsDeSprites[(dadosDoPensamento as { iconeDeObra: string }).iconeDeObra];
     if (urlDoMartelo !== undefined) this.load.image(CHAVE_DO_MARTELO, urlDoMartelo);

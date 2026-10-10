@@ -57,7 +57,8 @@ export function texturasParaCarregar(
   const fila: TexturaParaCarregar[] = [];
   for (const entrada of manifesto.assets) {
     if (entrada.tipo === 'unidade' && tiposPresentes && !tiposPresentes.has(entrada.id)) continue;
-    if (entrada.tipo === 'predio' && prediosSemArte.has(entrada.id)) continue;
+    // BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE: o `?semArte` vale tambem para a pilha da mercadoria
+    if ((entrada.tipo === 'predio' || entrada.tipo === 'pilha') && prediosSemArte.has(entrada.id)) continue;
     for (const [estado, rel] of Object.entries(entrada.estados)) {
       const url = urls[rel];
       if (!url) continue;
@@ -73,6 +74,8 @@ export function texturasParaCarregar(
  * para o roteiro (F17e, F17f) exercitar o fallback sem depender de qual predio o
  * manifesto deixou sem arte: a arte nova deu PNG aos 28, e os dois roteiros
  * quebraram duas vezes por isso. Como o `?pausado`, nao e superficie de jogador.
+ * BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE: o id de MERCADORIA tambem vale (o loader nao traz o icone nem
+ * a pilha dela), pelo mesmo motivo: as 28 mercadorias ganharam icone.
  */
 export function prediosSemArteDaBusca(busca: string): ReadonlySet<string> {
   const valor = new URLSearchParams(busca).get('semArte') ?? '';
@@ -92,8 +95,10 @@ export const iconesDoJogo: IconesDeMercadoria | undefined = (() => {
 export function texturasDosIcones(
   icones: IconesDeMercadoria | undefined = iconesDoJogo,
   urls: Readonly<Record<string, string>> = urlsDeSprites,
+  /** BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE: as mercadorias do `?semArte`, sem icone (o fallback do §9). */
+  semArte: ReadonlySet<string> = new Set(),
 ): TexturaParaCarregar[] {
-  return entradasDosIcones(icones).flatMap(([id, icone]) => {
+  return entradasDosIcones(icones).filter(([id]) => !semArte.has(id)).flatMap(([id, icone]) => {
     const url = urls[icone.arquivo];
     return url ? [{ chave: chaveDoIcone(id), url }] : [];
   });

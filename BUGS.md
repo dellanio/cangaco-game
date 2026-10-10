@@ -59,20 +59,6 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   o serf espera na fila e a pilha some; se não, o roteiro deve contar só quem ocupa.
 - status: aberto, esperando a decisão
 
-## BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE — o roteiro da D-TELA-03 supoe que o machado nao tem icone
-- feature: D-TELA-03 (logistica na tela)
-- severidade: errado
-- repro: `npm run shot:todos` no `5b5f933` (fechamento da leva de 2026-10-04), depois do merge da `main`
-- esperado: o roteiro escolhe uma mercadoria SEM PNG nem icone para afirmar o quadrado de reserva
-- observado: "o machado nao tem PNG nem icone: deveria ser quadrado, veio {...\"fonte\":\"icone\"}".
-  **Verificado:** o `8529594` (D-ARTE-PIXEL-ART-CIVIS, "as 28 mercadorias em pixel art"), que chegou
-  pela `main`, deu icone ao `hand_axe`. O aceite (o quadrado para quem nao tem arte) continua valendo;
-  o exemplo do roteiro e que ficou sem caso. Hipotese, nao conferida: com as 28 mercadorias com icone,
-  nao sobra mercadoria sem arte, e o roteiro precisa provocar o caso (um id sem arte) em vez de
-  procura-lo.
-- evidência: test-output/shot-todos.json (corrida do `5b5f933`)
-- status: aberto
-
 ## Polimento
 
 Os três bugs de oscilação de tempo que moravam aqui (BUG-D na F-T1, BUG-E na F-T2b e,

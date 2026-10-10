@@ -8,12 +8,13 @@
 // diminuindo quando ele retira.
 //   1. um passo com o jogo ANDANDO (§8), e depois o relogio pela ponte (`avancar`);
 //   2. o serf com tabua: a carga e o ICONE (`marcaDaCarga` 'icone'), captura;
-//   3. o serf com o machado: a carga e TEXTO (o machado nao tem icone; o quadrado no lugar e a
+//   3. o serf com o machado: a carga e TEXTO (com `?semArte=hand_axe` o machado fica sem icone; o quadrado no lugar e a
 //      pergunta 2 do §12 do plano), com o nome do tema; a pilha de machado da oficina caiu de 3
 //      para 2 e e quadrado (sem PNG nem icone), captura;
 //   4. a tabua entregue na entrada da oficina e pilha com ICONE, captura.
 const { readFileSync, existsSync } = require('node:fs');
 const { retanguloDoCanvas } = require('./_canvas');
+const { abrirSemArte } = require('./_sem-arte');
 const tema = require('../../data/theme-sertao.json');
 const terreno = require('../../data/terrain.json');
 
@@ -38,19 +39,30 @@ async function roteiro(ctx) {
 
   const arquivo = 'test-output/D-TELA-03.save.txt';
   afirmar(existsSync(arquivo), `${arquivo} nao existe: rode \`npm run test\` antes`);
-  await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync(arquivo, 'utf8')]);
-  await page.keyboard.press('h');
-  await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
-  await esperarFrame();
-  await page.keyboard.press('Escape');
-  await esperarFrame();
+  const carregar = async () => {
+    await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync(arquivo, 'utf8')]);
+    await page.keyboard.press('h');
+    await esperarFrame();
+    await page.click('#ajuda [data-acao="carregar"]');
+    await esperarFrame();
+    await page.keyboard.press('Escape');
+    await esperarFrame();
+  };
+  const pilhaDeArma = (st) => (st.pilhasDesenhadas[OFICINA] ?? []).find((p) => p.gaveta === 'saida' && p.mercadoria === ARMA);
 
+  // BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE: o machado REAL tem icone (o 8529594). O caso sem arte e
+  // provocado a seguir, pelo `?semArte`, e nao procurado no manifesto
+  await carregar();
   let s = await estado();
+  const real = pilhaDeArma(s);
+  afirmar(real !== undefined && real.fonte === 'icone', `sem o parametro, o machado deveria ter o icone: ${JSON.stringify(real)}`);
+  await abrirSemArte(ctx, [ARMA]);
+  await carregar();
+
+  s = await estado();
   const oficina = s.prediosDoEstado[OFICINA];
   afirmar(oficina !== undefined && oficina.tipo === 'weapons_workshop', 'a partida deveria ter a oficina de armas');
   afirmar(s.prediosDoEstado[QUARTEL]?.tipo === 'barracks', 'a partida deveria ter o quartel');
-  const pilhaDeArma = (st) => (st.pilhasDesenhadas[OFICINA] ?? []).find((p) => p.gaveta === 'saida' && p.mercadoria === ARMA);
   const antes = pilhaDeArma(s);
   afirmar(antes !== undefined && antes.n === 3, `a oficina deveria abrir com 3 machados na pilha: ${JSON.stringify(s.pilhasDesenhadas[OFICINA])}`);
   afirmar(antes.fonte === 'quadrado' && antes.sprite === false, `o machado nao tem PNG nem icone: deveria ser quadrado, veio ${JSON.stringify(antes)}`);

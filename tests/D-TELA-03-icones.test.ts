@@ -9,10 +9,10 @@ import {
   chaveDoIcone, entradasDosIcones, fonteDaPilha, marcaDaCarga,
 } from '../src/render/icone-da-mercadoria';
 import type { IconesDeMercadoria } from '../src/render/icone-da-mercadoria';
-import { chaveDeTextura } from '../src/render/manifesto';
+import { chaveDeTextura, type Manifesto } from '../src/render/manifesto';
 import { ESTADO_DA_PILHA } from '../src/render/manifesto-camadas';
 import { rotuloDaCarga } from '../src/render/rotulo-da-carga';
-import { texturasDosIcones } from '../src/render/sprites';
+import { texturasDosIcones, texturasParaCarregar } from '../src/render/sprites';
 import { gravarEvidencia } from './helpers/evidence';
 
 const icones = (JSON.parse(readFileSync('assets/manifest.json', 'utf8')) as { icones: { mercadorias: IconesDeMercadoria } })
@@ -48,6 +48,23 @@ describe('D-TELA-03a — a marca da carga', () => {
     const fila = texturasDosIcones(icones, urls);
     expect(fila.map((t) => t.chave).sort()).toEqual(comIcone.map(chaveDoIcone).sort());
     expect(texturasDosIcones(icones, {})).toEqual([]);
+  });
+
+  it('BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE: o `?semArte` tira o icone e a pilha da mercadoria, e so dela', () => {
+    const urls = Object.fromEntries(entradasDosIcones(icones).map(([, i]) => [i.arquivo, `/url/${i.arquivo}`]));
+    const semMachado = texturasDosIcones(icones, urls, new Set(['hand_axe'])).map((t) => t.chave);
+    expect(comIcone).toContain('hand_axe');
+    expect(semMachado).not.toContain(chaveDoIcone('hand_axe'));
+    expect(semMachado).toContain(chaveDoIcone('timber'));
+    expect(semMachado).toHaveLength(comIcone.length - 1);
+    // a pilha (o PNG proprio da mercadoria) sai pelo mesmo conjunto; o vinho e a mercadoria que tem pilha
+    const manifesto = JSON.parse(readFileSync('assets/manifest.json', 'utf8')) as Manifesto;
+    const todasAsUrls = new Proxy({}, { get: (_a, k) => `/url/${String(k)}` }) as Readonly<Record<string, string>>;
+    const comVinho = texturasParaCarregar(manifesto, todasAsUrls).map((t) => t.chave);
+    const semVinho = texturasParaCarregar(manifesto, todasAsUrls, new Set(['wine'])).map((t) => t.chave);
+    expect(comVinho.filter((c) => c.startsWith('pilha:wine:')).length).toBeGreaterThan(0);
+    expect(semVinho.filter((c) => c.startsWith('pilha:wine:'))).toEqual([]);
+    expect(semVinho.filter((c) => c.startsWith('pilha:fish:'))).toEqual(comVinho.filter((c) => c.startsWith('pilha:fish:')));
   });
 });
 

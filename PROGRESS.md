@@ -21586,3 +21586,33 @@ VERIFICACAO COMPLETA no commit 8a7087fd: npm run verify saiu 0. Typecheck/lint/v
 O operador solicitou terminar a codex-pacote-serraria. Main e branch estavam limpas e main era ancestral da branch na conferencia inicial. A entrega do icone e seu diagnostico ja estao commitados: b24f7fe1 (aceites), 8a7087fd (implementacao), 38b6c4de (resultado completo). Nenhuma alteracao adicional de codigo foi necessaria neste fechamento. O gate completo sera repetido no HEAD final antes da integracao e retirada da junction e da worktree. Logs e capturas serao preservados em D:/projetos-pessoal/cangaco-evidencias-codex-pacote-serraria-2026-10-10/ (test-output/ e screenshots/); log deste gate: test-output/serraria-fechamento-verify.log.
 
 Pendencia explicitamente conservada: relato de travamento/canal de mensagem assincrono sem reproducao, sem navegador, acao anterior, stack ou save fornecidos. Os testes de navegador existentes passaram sem extensoes e sem erro de console, conforme registro anterior; isso nao prova uma correcao do travamento. Nenhum listener para ocultar erros, nenhuma alteracao de gameplay, nenhum push e nenhuma escrita em test-results.json. A worktree noru-novos-sprites e os stashes de outras entregas ficam intocados.
+
+## 2026-10-10 — Blocos 1 e 2 do fechamento (pedido do operador)
+O plano, na ordem:
+1. o roteiro D-TELA-03;
+2. o obreiro ocupando o canteiro (fecha o BUG-F18F);
+3. as dicas revisadas;
+4. o som da vitória;
+5. o Açude (prédio, água, irrigação, tela);
+6. a medição do clima na economia;
+7. a versão publicável: verify completo, test:longo, shot:todos, tag, dist e o comando de publicação.
+
+Esperam o operador, e os outros itens seguem:
+- a carga infinita (envelhecimento ou teto de vez);
+- a barra de comida (total ou só o armazém);
+- o fim da D-TELA-LUZ-RELEVO.
+
+O bloco de arte foi para o Codex (branch `codex-artes`), com o prompt da sessão.
+
+### BUG-ROTEIRO-D-TELA-03-MACHADO-COM-ICONE — o roteiro provoca a mercadoria sem arte (verificado)
+- **A causa (medida):** o roteiro reprovava em "o machado não tem PNG nem ícone", com `fonte: icone`,
+  porque desde o `8529594` as 28 mercadorias têm ícone.
+- **O que mudou:** o `?semArte=<ids>` agora vale também para a mercadoria. O `texturasDosIcones` e o
+  `texturasParaCarregar` (este pela pilha) pulam o id.
+- **O roteiro:** abre a partida sem o parâmetro e afirma o machado real com `fonte: icone`. Depois
+  reabre com `?semArte=hand_axe`, pelo helper `_sem-arte.js`, que confere que a página leu o
+  parâmetro, e segue o fluxo antigo. Sai 0, com 3 capturas. Abri a do serf com o machado: a carga
+  aparece como texto, "Facão".
+- **Teste:** `tests/D-TELA-03-icones.test.ts` ganhou o caso do `semArte`: o machado sai, a tábua fica,
+  e a pilha do vinho sai sem tocar a do peixe.
+- O bug saiu do `BUGS.md`.
