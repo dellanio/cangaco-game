@@ -10,6 +10,14 @@ O controle antigo da noru foi consultado somente em leitura; aquela worktree e s
 
 ## Fila e contadores
 
+### coal-chao — tentativa 1/2
+- Geracao nativa exec-c494753e-dac2-4501-b97c-a550d97fb264; candidata externa coal-chao/atlas-1.png.
+- SHA256 6758DC7CE5A491DED8955E1D8F7FB5CFFCAD81492438CB6B6F2064B4D4F60CE3.
+- Prompt: original pintado, tres celulas iguais, solo escuro com fragmentos angulares embutidos e relevo baixo; tres densidades da mesma jazida no chao, pe/escala comuns, luz cima levemente sul, alfa com borda natural; sem montanha, pilha alta, pixel art, texto ou assets historicos.
+- Derivacao 64x64, todas as tres silhuetas60x48, pe62. Validador artistico original reprova luz sul nos estados reduzido (delta -0,8) e remanescente (-0,7). Nenhuma regra alterada. Segunda tentativa corrige luz nativa.
+- Teste/roteiro/flag de derivacao em stash exclusivamente desta tarefa enquanto o controle e commitado; nao sao entrega nem exclusao de verificacao existente.
+
+
 ### Ouro — tentativa 2/2, bloqueio do item de montanhas
 - Edicao nativa da atlas-1 limpa: remover linhas retas/quadros nas bordas conectadas, continuidade geologica, manter 48 celulas, camera, tres alturas e luz; nao escalar globalmente.
 - ID exec-dab928b5-84d2-4ad7-9434-b80c0e913a8a; arquivo externo gold_ore-montanha/atlas-2.png; SHA256 46CA8F65E953417DF90C03E2DB597BC69EDB5E7F4A9812FD3E0B1E5468AEAE9E.
