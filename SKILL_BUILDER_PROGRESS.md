@@ -10,6 +10,14 @@ O controle antigo da noru foi consultado somente em leitura; aquela worktree e s
 
 ## Fila e contadores
 
+### coal-chao — tentativa 2/2, bloqueado na montagem
+- Edicao nativa da tentativa1: corrigir luz sul nos tres estados, norte mais escuro e facetas sul claras; conservar chao plano/camera/escala/contorno; sem eixo leste-oeste ou halo. ID exec-3e8ad0e0-e677-41f1-81db-35c682152845.
+- Candidata externa coal-chao/atlas-2.png; SHA256 917770033E2C86BFF4EC1B78FDEE09AC8D32A177BD54A631D486F02C5977221C.
+- Validador original passa (errors[]), quatro testes novos/legados passam. Roteiro sai0, duas capturas abertas em screenshots/I-ARTE-JAZIDA-DE-CARVAO-NO-CHAO-{1-prancha-tres-estados-tres-zooms,2-jazidas-adjacentes-e-desgaste-misto}.png.
+- Revisao independente reprova montagem3x3: zoom2 x650-952/y53-351 mostra nove circulos separados por solo claro; mesmo defeito em0,5/1. Contraste passa, continuidade nao. Nenhuma terceira chamada.
+- Item bloqueado. Mudancas nao commitadas de arte/manifesto/teste/roteiro/derivador desfeitas apenas nesta worktree; evidencias/testes candidatos preservados externamente. Nenhuma guarda existente alterada. Contadores finais deste lote: ouro2/2, ferro1/2, carvao2/2.
+
+
 ### coal-chao — tentativa 1/2
 - Geracao nativa exec-c494753e-dac2-4501-b97c-a550d97fb264; candidata externa coal-chao/atlas-1.png.
 - SHA256 6758DC7CE5A491DED8955E1D8F7FB5CFFCAD81492438CB6B6F2064B4D4F60CE3.
