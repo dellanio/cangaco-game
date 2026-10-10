@@ -9899,6 +9899,11 @@ Execucao na codex-artes, antes do bloco autonomo de artes. Nenhuma mudanca em sr
 - Piloto conservador de diagnóstico, sem gerar ou converter unidades: Carregador (`serf`), árvore (`tree/presente`) e Armazém (`storehouse/completo`) atuais, sobre grama, areia e rocha.
 - Aceite: (1) teste mede os PNGs reais, dimensões declaradas e linha dos pés, valida anchor e limites de recorte do quadro atual do atlas do serf; (2) pranchas com os três elementos em escala de render, nos zooms 0,5/1/2, em cor normal e RGB×0,8, geradas pelo roteiro e abertas; (3) o mesmo roteiro captura a vila real nos três zooms e afirma uso dos sprites pelo debug; (4) nenhuma alteração nos PNGs, atlas, manifesto ou sim; hashes dos arquivos usados registrados na evidência; (5) verify:rapido saída0 antes do commit. O piloto mede e expõe diferenças de detalhe, não presume homologação nem aplica filtro global.
 
+#### I-ARTE-FAZENDA-EM-OBRA — A02, madeira da Fazenda
+
+- Derivar o estado `madeira` do completo atual de `farm`: mesma arquitetura, porta, plataforma vazia do milho, canvas269x200, footprint4x3 e anchor[0.5,1]. Não redesenhar o completo, não pintar trabalhadores ou estoque permanente.
+- Aceite: (1) original gerado e master em assets/base/farm/, derivado em assets/sprites/farm/; entrada existente preserva todos os estados/anchors/origem e acrescenta madeira com procedência registrada; (2) teste mede canvas, linha inferior não transparente igual ao completo e preservação dos caminhos/anchors do completo; (3) construção reconhecível como a mesma Fazenda, mostrando estrutura de madeira e alvenaria ainda incompleta, mesma posição da porta e base; (4) roteiro captura a obra e o completo em jogo nos zooms0,5/1/2, pranchas normal/RGBx0,8 sobre grama/areia/rocha abertas; (5) verify:rapido saída0. Após duas tentativas visuais reprovadas, retirar somente mudanças não commitadas do item, registrar bloqueio e seguir a fila. Sem src/sim/.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
