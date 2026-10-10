@@ -9868,6 +9868,25 @@ convertidos para ticks no carregamento:
   4. o `npm run selo:longo` sai 0 no commit da tag;
   5. o relatório ao operador traz o comando de publicação e o que falta dele (a chave, a página, os
      jogadores).
+### Pedido do operador de 2026-10-10: montanhas minerais e carvao atravessavel
+
+Execucao na codex-artes, antes do bloco autonomo de artes. Nenhuma mudanca em src/sim/ ou no formato do GameState. Unidades podem atravessar a jazida de carvao; jazida ativa impede construcao e rua. Arte pintada original, luz unica de cima levemente do sul, referencias nos predios aprovados atuais. Homologacao visual posterior pelo operador.
+
+#### I-ARTE-MONTANHAS-DE-OURO-E-FERRO — montanhas geologicas conectadas
+- Ouro e ferro deixam de parecer montinhos soltos. Cada mineral possui modulos de uma formacao conectada com veios identificaveis e tres estados (presente, reduzido, remanescente), conservando camera, escala, canvas e linha de apoio. Desgaste local nao reduz globalmente a imagem nem deixa topo flutuante.
+- Aceite: bases originais versionadas e derivados registrados com os oito campos do manifesto; PNGs medidos por teste permanente (dimensoes, linha dos pes e estados); vizinhancas cardinais conectadas, incluindo composicao 3x3, demonstradas em prancha nos zooms 0,5/1/2 e tint 0,8; captura em jogo aberta e revisao independente. Zero recurso remove sua arte, conservando a geologia do terreno.
+
+#### I-ARTE-JAZIDA-DE-CARVAO-NO-CHAO — solo escuro reconhecivel
+- Carvao usa mancha de solo escuro com fragmentos angulares, sem montanha ou pilha alta. Tres estados conservam canvas, anchor e apoio; nenhuma copia ou referencia raster do jogo de 1998.
+- Aceite: base/derivados e manifesto com oito campos; teste mede PNGs, estados e apoio; prancha sobre solos reais nos tres zooms com tint 0,8 e captura em jogo abertas, revisao independente. Jazidas vizinhas formam area de chao, sem moldura por tile.
+
+#### I-TERRENO-MINERAIS-PERTO-DAS-VILAS — distribuicao e passagem
+- Dados autorais posicionam jazidas de ouro, ferro e carvao a no maximo 20 tiles de distancia Chebyshev dos armazens iniciais de cada vila. Preservar totais (ouro 13, ferro 22, carvao 28) e rendimentos (8, 12, 15). Preservar veios do oeste sempre que compativeis; mover fontes distantes para aproximar as da AI sem adicionar riqueza.
+- Aceite: teste do mapa gerado/referencia afirma totais, rendimentos, proximidade das duas vilas e ausencia de sobreposicao com lotes/portas/spawns iniciais; montanhas de metais conservam bloqueio de passagem e acesso por borda para mineracao; carvao em solo atravessavel, passagem comprovada pelo step, construcao e rua recusadas enquanto ativo. A guarda da serra do oeste passa a distinguir os tres tiles de carvao em solo dos demais tiles montanhosos, preservando coordenadas dos veios e exigindo explicitamente essa excecao. Testes existentes de mapa/geografia/mineracao/save continuam passando; nenhuma verificacao e afrouxada.
+
+#### I-TELA-MONTANHAS-MINERAIS-CONTINUAS — conexao e retirada local
+- Render seleciona conexoes e volume pela vizinhanca lida; numeros em data/*.json, sem mutacao do estado. Sem arte carregada, fallback atual. Cache por tick/partida, repintura apenas de trechos cujo estado/conexao mudou.
+- Aceite: teste puro por tabela mede conexoes nos quatro lados, desgaste restrito ao trecho extraido e vizinhos afetados, ausencia em zero, fallback e cache sem recalculo em quadros repetidos; debug publica estados/quantidades visiveis; roteiro captura ambas as vilas e tres zooms e as capturas sao abertas; verify:rapido zero e testes dirigidos existentes verdes.
 
 ## Backlog com gatilho
 
