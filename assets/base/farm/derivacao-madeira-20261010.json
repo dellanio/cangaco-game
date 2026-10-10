@@ -1,0 +1,40 @@
+{
+  "source": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\farm-madeira\\madeira-original.png",
+  "sourceHash": "9e983a15f735dbb834b16015d2e54798d3adbab8f1c51a04a8ebc3ac7db8852a",
+  "canonical": "assets/sprites/farm/farm_completo-D-yellow-tall.png",
+  "from": {
+    "x0": 37,
+    "y0": 158,
+    "x1": 1445,
+    "y1": 1048
+  },
+  "to": {
+    "x0": 4,
+    "y0": 28,
+    "x1": 266,
+    "y1": 197
+  },
+  "method": "crop alfa; registro no envelope do completo; Lanczos; padding e RGB bleed",
+  "files": [
+    {
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\farm-madeira\\derivados\\farm-madeira.png",
+      "sha256": "670cce6ed2786c73c8482d95fdaeb4a8a18e6c8630769b9c2b4218d30252023e",
+      "bounds": {
+        "x0": 4,
+        "y0": 28,
+        "x1": 266,
+        "y1": 197
+      }
+    },
+    {
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\farm-madeira\\derivados\\farm-madeira-master-2x.png",
+      "sha256": "4b131ad0624f37148f068c0695873df025ae55b5eb6372867a91e6dbe76eb4e1",
+      "bounds": {
+        "x0": 8,
+        "y0": 56,
+        "x1": 533,
+        "y1": 395
+      }
+    }
+  ]
+}

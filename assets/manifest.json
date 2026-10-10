@@ -2649,13 +2649,14 @@
         1
       ],
       "estados": {
+        "madeira": "sprites/farm/farm-madeira-20261010.png",
         "completo": "sprites/farm/farm_completo-D-yellow-tall.png"
       },
       "licenca": "arte propria do projeto, candidata D gerada em 2026-09-30",
       "origem": {
         "base": "base/farm/farm-D-yellow-tall-master-2x.png",
         "semente": null,
-        "nota": "Candidato D derivado de candidatos/D/farm/generation-02-yellow-raw.png. Parede amarelo-milho; silhueta cerca de 4% mais larga e 11% mais alta que o derivado anterior. Plataforma de milho permanece vazia."
+        "nota": "Candidato D derivado de candidatos/D/farm/generation-02-yellow-raw.png. Parede amarelo-milho; silhueta cerca de 4% mais larga e 11% mais alta que o derivado anterior. Plataforma de milho permanece vazia. Madeira 2026-10-10 deriva deste completo: base/farm/geracao-madeira-20261010.json, OpenAI exec-99a375aa-385c-47fc-9dee-f9f3cb9a1a7e, mesmo registro; nao altera o completo."
       },
       "ancoras": {"bandeira": [0.51301, 0.215], 
         "estoque": { "entrada": [], "saida": [[0.78, 0.80]] }

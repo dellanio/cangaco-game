@@ -1,0 +1,25 @@
+{
+  "id": "exec-99a375aa-385c-47fc-9dee-f9f3cb9a1a7e",
+  "ferramenta": "OpenAI imagegen nativo",
+  "referencia": "assets/base/farm/farm-D-yellow-tall-master-2x.png",
+  "prompt": "Editar somente a Fazenda atual para madeira: mesma porta, plataforma, escada, fundacao e duas aguas do telhado; caibros expostos, palha parcial, paredes ocre incompletas. Luz superior sul, transparencia, sem pessoas/estoque/texto.",
+  "review": "revisao_minerais: aprovada tecnicamente; homologacao do operador pendente",
+  "arquivos": [
+    {
+      "path": "assets/base/farm/farm-D-yellow-tall-master-2x.png",
+      "sha256": "34c5b0488ea67dc872ed25441bd417c27068231494f81c69eb8a7457ccf380e0"
+    },
+    {
+      "path": "assets/base/farm/madeira-original-20261010.png",
+      "sha256": "9e983a15f735dbb834b16015d2e54798d3adbab8f1c51a04a8ebc3ac7db8852a"
+    },
+    {
+      "path": "assets/base/farm/farm-madeira-20261010-master-2x.png",
+      "sha256": "4b131ad0624f37148f068c0695873df025ae55b5eb6372867a91e6dbe76eb4e1"
+    },
+    {
+      "path": "assets/sprites/farm/farm-madeira-20261010.png",
+      "sha256": "670cce6ed2786c73c8482d95fdaeb4a8a18e6c8630769b9c2b4218d30252023e"
+    }
+  ]
+}
