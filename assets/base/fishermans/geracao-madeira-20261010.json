@@ -1,0 +1,24 @@
+{
+  "id": "exec-f2150259-a88e-4373-ac7a-e6c2fef0460f",
+  "ferramenta": "OpenAI imagegen nativo",
+  "referencia": "base/fishermans/fishermans-D-blue-master-2x.png",
+  "prompt": "prompt-madeira-20261010.txt",
+  "arquivos": [
+    {
+      "path": "assets/base/fishermans/fishermans-D-blue-master-2x.png",
+      "sha256": "03810fb30fcd4d03e876c25c1e2092fe371375e7eccba6342d3a04a857586756"
+    },
+    {
+      "path": "assets/base/fishermans/madeira-original-20261010.png",
+      "sha256": "94a03901950b4b0f6fff7f846fca1216057b5c3988cf014ecd1d2f6853064bc3"
+    },
+    {
+      "path": "assets/base/fishermans/fishermans-madeira-20261010-master-2x.png",
+      "sha256": "c2f67fc13d900972dd13e2ced96739743a3959add6fcccbe33ad7bd1fddcf88b"
+    },
+    {
+      "path": "assets/sprites/fishermans/fishermans-madeira-20261010.png",
+      "sha256": "d422ad8a3e7b0c13577a06de9db21b507f0d7745bca47887fbff55fc215f7f63"
+    }
+  ]
+}

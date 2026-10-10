@@ -2710,13 +2710,14 @@
   ],
   "alturaMaxPorLargura": 0.8,
   "estados": {
-    "completo": "sprites/fishermans/fishermans_completo-D-blue.png"
+    "madeira": "sprites/fishermans/fishermans-madeira-20261010.png",
+        "completo": "sprites/fishermans/fishermans_completo-D-blue.png"
   },
   "licenca": "arte propria do projeto, candidata D azul em 2026-10-01",
   "origem": {
     "base": "base/fishermans/fishermans-D-blue-master-2x.png",
     "semente": null,
-    "nota": "Casa do Pescador azul da geracao 02, derivada no mesmo quadro 192x176 da Pedreira. Zona de trabalho fica reservada na arte, mas sem ancora de trabalho: a simulacao realiza pesca fora da casa. Ancora de estoque e hipotese ate revisao visual."
+    "nota": "Casa do Pescador azul da geracao 02, derivada no mesmo quadro 192x176 da Pedreira. Zona de trabalho fica reservada na arte, mas sem ancora de trabalho: a simulacao realiza pesca fora da casa. Ancora de estoque e hipotese ate revisao visual. Madeira deriva do completo atual; OpenAI exec-f2150259-a88e-4373-ac7a-e6c2fef0460f, base/fishermans/geracao-madeira-20261010.json."
   },
   "ancoras": {"bandeira": [0.41146, 0.01136], 
     "estoque": {
