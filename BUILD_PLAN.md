@@ -9682,6 +9682,25 @@ convertidos para ticks no carregamento:
      juntos e em que direção, com o porquê;
   3. nenhum número de `data/` muda neste item. O lote só se aplica com a aprovação do operador.
 
+#### I-ENTREGA-VERSAO-PUBLICAVEL — o fechamento do bloco e a versão pronta para o operador publicar
+- **Como, na ordem do CLAUDE.md §13:**
+  1. `npm run verify` completo (com a transladada);
+  2. `npm run shot:todos`. Roteiro que reprova por mudança deste bloco é corrigido num commit próprio, e o
+     que reprova por causa antiga vai para o `BUGS.md`;
+  3. `npm run build` (com o `conferir-dist`);
+  4. a tag local `teste-jogo-2` no commit verificado;
+  5. por último, `npm run test:longo`, sozinho (o selo).
+- **Quem publica é o operador:** `npm run publicar` com a chave dele, e o playtest com gente de fora. A
+  sessão não envia nada nem faz push.
+- **Aceite:**
+  1. o verify completo sai 0;
+  2. o `shot:todos` sai 0, ou cada falha fica explicada (corrigida, ou registrada como anterior a este
+     bloco, com a prova);
+  3. o `dist/` é do mesmo commit da tag;
+  4. o `npm run selo:longo` sai 0 no commit da tag;
+  5. o relatório ao operador traz o comando de publicação e o que falta dele (a chave, a página, os
+     jogadores).
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
