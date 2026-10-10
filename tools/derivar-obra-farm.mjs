@@ -8,7 +8,8 @@ import console from 'node:console';
 import { decodePng, encodePng } from '../skills/pianco-sprite-tools/scripts/png-rgba.mjs';
 const source = resolve(process.argv[2]), output = resolve(process.argv[3]);
 mkdirSync(output, { recursive: true });
-const canonical = 'assets/sprites/farm/farm_completo-D-yellow-tall.png';
+const canonical = process.argv[4] ?? 'assets/sprites/farm/farm_completo-D-yellow-tall.png';
+const id = process.argv[5] ?? 'farm';
 function bounds(p, minAlpha = 1) {
   let x0 = p.width, y0 = p.height, x1 = -1, y1 = -1;
   for (let y = 0; y < p.height; y++) for (let x = 0; x < p.width; x++) if (p.data[(y * p.width + x) * 4 + 3] >= minAlpha) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
@@ -18,7 +19,7 @@ const p = decodePng(readFileSync(source)), ref = decodePng(readFileSync(canonica
 const from = bounds(p, 128), to = bounds(ref), files = [];
 for (const k of [1, 2]) {
   const w = (to.x1 - to.x0 + 1) * k, h = (to.y1 - to.y0 + 1) * k;
-  const path = join(output, k === 1 ? 'farm-madeira.png' : 'farm-madeira-master-2x.png');
+  const path = join(output, k === 1 ? `${id}-madeira.png` : `${id}-madeira-master-2x.png`);
   const filter = `crop=${from.x1 - from.x0 + 1}:${from.y1 - from.y0 + 1}:${from.x0}:${from.y0},scale=${w}:${h}:flags=lanczos,pad=${ref.width * k}:${ref.height * k}:${to.x0 * k}:${to.y0 * k}:color=black@0,format=rgba`;
   const run = spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-i', source, '-vf', filter, '-frames:v', '1', path], { encoding: 'utf8' });
   if (run.status !== 0) throw new Error(run.stderr);

@@ -1,0 +1,40 @@
+{
+  "source": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\wineyard-madeira\\madeira-original.png",
+  "sourceHash": "4f2de844deabd70654863813c7cd7a0ac9c7b601ccbf35b04fc442c6b8f0204b",
+  "canonical": "assets/sprites/wineyard/wineyard_completo-D-green-cane-tall10.png",
+  "from": {
+    "x0": 26,
+    "y0": 41,
+    "x1": 1416,
+    "y1": 1026
+  },
+  "to": {
+    "x0": 2,
+    "y0": 5,
+    "x1": 249,
+    "y1": 177
+  },
+  "method": "crop alfa; registro no envelope do completo; Lanczos; padding e RGB bleed",
+  "files": [
+    {
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\wineyard-madeira\\derivados\\wineyard-madeira.png",
+      "sha256": "9129977dad868f973455e7ce09deb358d8daaf37beb971920e23acded68f4dc6",
+      "bounds": {
+        "x0": 2,
+        "y0": 5,
+        "x1": 249,
+        "y1": 177
+      }
+    },
+    {
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\wineyard-madeira\\derivados\\wineyard-madeira-master-2x.png",
+      "sha256": "89551d39ab9822e34afc0ac63b77e633ea65dc3e19cd457d887bc0c68d64e04f",
+      "bounds": {
+        "x0": 4,
+        "y0": 10,
+        "x1": 499,
+        "y1": 355
+      }
+    }
+  ]
+}

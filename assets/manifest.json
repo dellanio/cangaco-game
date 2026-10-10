@@ -2679,13 +2679,14 @@
         1
       ],
       "estados": {
+        "madeira": "sprites/wineyard/wineyard-madeira-20261010.png",
         "completo": "sprites/wineyard/wineyard_completo-D-green-cane-tall10.png"
       },
       "licenca": "arte propria do projeto, candidata D gerada em 2026-09-30",
       "origem": {
         "base": "base/wineyard/wineyard-D-green-cane-tall10-master-2x.png",
         "semente": null,
-        "nota": "Mesmo bruto generation-02-green-cane rederivado em 2026-10-01: largura 250 px preservada, altura 164 para 180 px (+9,76% no canvas) e silhueta 242x152 para 242x168 (+10,53% vertical), base e anchor [0.5,1] preservados. Parede verde-cana, teto de caules, prensa esquerda e patio de cachaca vazio a direita."
+        "nota": "Mesmo bruto generation-02-green-cane rederivado em 2026-10-01: largura 250 px preservada, altura 164 para 180 px (+9,76% no canvas) e silhueta 242x152 para 242x168 (+10,53% vertical), base e anchor [0.5,1] preservados. Parede verde-cana, teto de caules, prensa esquerda e patio de cachaca vazio a direita. Madeira deriva do completo atual; OpenAI exec-8915c854-7ed4-458f-97eb-333a48422db7, base/wineyard/geracao-madeira-20261010.json."
       },
       "ancoras": {"bandeira": [0.256, 0.04444], 
         "trabalho": { "area": [0.10, 0.43, 0.35, 0.83] },

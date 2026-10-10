@@ -1,0 +1,24 @@
+{
+  "id": "exec-8915c854-7ed4-458f-97eb-333a48422db7",
+  "ferramenta": "OpenAI imagegen nativo",
+  "referencia": "base/wineyard/wineyard-D-green-cane-tall10-master-2x.png",
+  "prompt": "prompt-madeira-20261010.txt",
+  "arquivos": [
+    {
+      "path": "assets/base/wineyard/wineyard-D-green-cane-tall10-master-2x.png",
+      "sha256": "16cf68f9abd3d623ca25620eb8bff80dba4ad23f760153883fbd6d83e806f94d"
+    },
+    {
+      "path": "assets/base/wineyard/madeira-original-20261010.png",
+      "sha256": "4f2de844deabd70654863813c7cd7a0ac9c7b601ccbf35b04fc442c6b8f0204b"
+    },
+    {
+      "path": "assets/base/wineyard/wineyard-madeira-20261010-master-2x.png",
+      "sha256": "89551d39ab9822e34afc0ac63b77e633ea65dc3e19cd457d887bc0c68d64e04f"
+    },
+    {
+      "path": "assets/sprites/wineyard/wineyard-madeira-20261010.png",
+      "sha256": "9129977dad868f973455e7ce09deb358d8daaf37beb971920e23acded68f4dc6"
+    }
+  ]
+}
