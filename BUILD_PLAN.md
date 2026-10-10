@@ -9661,6 +9661,27 @@ convertidos para ticks no carregamento:
      andando, §8) e lê o nível. Abre o da fazenda e lê "Irrigada". Arma a planta do Açude e lê o raio
      publicado. As capturas são abertas.
 
+#### I-PRODUCAO-BALANCO-DO-CLIMA — o clima medido na economia, e o lote proposto (só medida)
+- **Como:** uma sonda (apagada depois, como manda a memória "sonda entregue é sonda apagada") roda a vila da
+  calibração (`tests/helpers/cal-vila.ts`, a mesma do F-CAL-b) por 36 000 ticks, uns quatro ciclos e meio
+  de estações, em três corridas:
+  - (A) o clima desligado;
+  - (B) o clima ligado;
+  - (C) o clima ligado e um Açude ao lado do roçado, injetado cheio no tick em que a vila fecha (a medida
+    da mitigação; injetado, e não por comando, e dito assim).
+- **O que mede**, em cada corrida:
+  - o milho e o pão produzidos;
+  - a fração de ticks do moinho e da padaria em `esperando_insumo`;
+  - as mortes de fome;
+  - a comida no armazém no fim;
+  - o número de ciclos.
+- **Aceite:**
+  1. as três medidas em `test-output/I-PRODUCAO-BALANCO-DO-CLIMA.json`, com o commit. É número da
+     corrida, e nunca asserção (§8);
+  2. a entrada no `BALANCE_LOG.md` com a tabela A/B/C e a **proposta de um lote**: quais números giram
+     juntos e em que direção, com o porquê;
+  3. nenhum número de `data/` muda neste item. O lote só se aplica com a aprovação do operador.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
