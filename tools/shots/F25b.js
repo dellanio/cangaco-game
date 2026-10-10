@@ -95,7 +95,7 @@ async function roteiro(ctx) {
     const fundo = c.getBoundingClientRect().bottom;
     const nos = [...window.document.querySelectorAll('#painel-predio button.formar, #painel-predio button.demolir')];
     const fora = nos.filter((b) => b.getBoundingClientRect().bottom > fundo + 0.5).map((b) => b.dataset.tipo || b.className);
-    return { ok: nos.length === 10 && fora.length === 0 && c.scrollTop === 0, porque: `botoes ${nos.length}, fora da vista: ${fora.join(',')}` };
+    return { ok: nos.length === 10 && fora.length === 0 && c.scrollTop === 0, porque: `botoes ${nos.length}, fora da vista: ${fora.join(',')}; fundo ${Math.round(fundo)}, ultimo ${Math.round(Math.max(...nos.map((b) => b.getBoundingClientRect().bottom)))}, altura do corpo ${Math.round(c.getBoundingClientRect().height)}, rolagem ${c.scrollTop}` };
   });
   afirmar(cabe.ok, `os nove botoes e o Derrubar deveriam caber sem rolar (${cabe.porque})`);
   const opacidades = await page.evaluate(() => {

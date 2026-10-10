@@ -69,11 +69,8 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   - `D-TELA-AGUA-PEIXE`: o sha256 da captura difere entre as duas corridas do peixe;
   - `D-TELA-LUZ-RELEVO-recorte`: "a pedreira deveria estar plantada em (26,29)";
   - `F07`: "deveria haver 2 obras, veio 1";
-  - `F25b`: "os nove botoes e o Derrubar deveriam caber sem rolar (fora da vista: demolir)";
   - `G-TELA-GESTO-DO-TRABALHO`: "Cannot read properties of undefined (reading 'gx')";
   - `I-ARTE-PREDIOS-MAIORES`: "a Casa de Carne do save deveria estar no estado: undefined";
-  - `I-TELA-CLIMA-VISUAL`: "o jornal deveria ter as noticias da seca", com o jornal mostrando só
-    a última (o I-TELA-JORNAL-SO-A-ULTIMA de 2026-10-06 mudou o texto que o roteiro afirma);
   - `I-TELA-OBRAS-COM-ARTE-ATUAL`: "quarry usa arte no progresso 25";
   - `I-TELA-QUARTEL-MAIS-IMPONENTE`: "Cannot read properties of undefined (reading 'w')";
   - `I-TELA-SELECAO-NO-PE`: `mouse.move` com parâmetro inválido (coordenada que não existe).
@@ -84,6 +81,8 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   entre elas. Ressalva: na corrida da `73833b0` as partidas salvas (`test-output/*.save.txt`) foram
   copiadas da árvore atual, e um save mais novo pode ter falhado por formato.
 - correção prevista: um por um, como roteiro desatualizado ou defeito de jogo, sem afrouxar asserção.
+- consertados: `I-TELA-CLIMA-VISUAL` (o roteiro afirmava o jornal antigo) e `F25b` (a moldura do
+  menu da proposta, `14b2d58d`, achado por bisect, empurrou o Derrubar 6 px para fora).
 - status: aberto
 
 ## Polimento

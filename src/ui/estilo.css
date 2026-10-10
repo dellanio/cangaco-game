@@ -668,11 +668,12 @@ body:not([data-corpo="opcoes"]) #opcoes { display: none; }
    escola; o nome em cima e, no que nao cabe, o motivo embaixo em letra menor. Assim os
    nove tipos do quartel e o Derrubar cabem sem rolar a 1280x720. */
 #painel-predio .grade-de-botoes {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px 4px; width: 100%;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 4px; width: 100%;
 }
 #painel-predio .grade-de-botoes button {
   min-width: 0; display: flex; flex-direction: column; align-items: flex-start;
-  font-size: 11px; padding: 2px 5px; line-height: 1.2; text-align: left;
+  /* line-height 1.1 e gap 2px: com a moldura do menu da proposta (14b2d58d) o Derrubar passava 6 px */
+  font-size: 11px; padding: 2px 5px; line-height: 1.1; text-align: left;
   box-shadow: 1px 1px 0 var(--tinta);
 }
 #painel-predio .grade-de-botoes button .nome,

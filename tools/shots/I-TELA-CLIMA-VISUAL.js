@@ -36,6 +36,22 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   afirmar(s.clima && s.clima.estacao === 'inverno' && s.clima.gotas > 0 && s.clima.calor === 0, `no inverno chove: ${JSON.stringify(s.clima)}`);
   await capturar('inverno');
 
+  // o jornal mostra so a ultima noticia (I-TELA-JORNAL-SO-A-ULTIMA, 2026-10-06): no meio da transicao
+  // ela e o aviso "a seca vem ai", e no meio da seca, "e seca no sertao", sozinha na folha
+  const lerJornal = () => page.evaluate(() => {
+    const icone = window.document.getElementById('jornal-icone');
+    if (icone === null || icone.hidden) return null;
+    icone.click();
+    const manchetes = [...window.document.querySelectorAll('#jornal h2')].map((h) => h.textContent);
+    window.document.querySelector('#jornal .fechar').click();
+    return manchetes;
+  });
+  await avancarAte(inicioDe(1) + Math.floor(ticksDe(1) / 2));
+  await esperar();
+  const naTransicao = await lerJornal();
+  afirmar(JSON.stringify(naTransicao) === JSON.stringify([tema.jornal.noticias['estacao:transicaoSeca'].manchete]),
+    `na transicao o jornal deveria mostrar so o aviso da seca: ${JSON.stringify(naTransicao)}`);
+
   // a seca
   await avancarAte(inicioDe(2) + Math.floor(ticksDe(2) / 2));
   await esperar();
@@ -43,14 +59,9 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   r = await relogio();
   afirmar(r.estacao === 'seca' && r.angulo > 180 && r.angulo < 270, `o relogio deveria dizer seca, no terceiro setor: ${JSON.stringify(r)}`);
   afirmar(s.clima && s.clima.estacao === 'seca' && s.clima.gotas === 0 && s.clima.calor > 0, `na seca nao chove e o calor sobe: ${JSON.stringify(s.clima)}`);
-  // o jornal avisou a seca
-  const manchetes = await page.evaluate(() => {
-    window.document.getElementById('jornal-icone').click();
-    return [...window.document.querySelectorAll('#jornal h2')].map((h) => h.textContent);
-  });
-  afirmar(manchetes.includes(tema.jornal.noticias['estacao:transicaoSeca'].manchete) && manchetes.includes(tema.jornal.noticias['estacao:seca'].manchete),
-    `o jornal deveria ter as noticias da seca: ${JSON.stringify(manchetes)}`);
-  await page.evaluate(() => window.document.querySelector('#jornal .fechar').click());
+  const naSeca = await lerJornal();
+  afirmar(JSON.stringify(naSeca) === JSON.stringify([tema.jornal.noticias['estacao:seca'].manchete]),
+    `na seca o jornal deveria mostrar so a noticia da seca: ${JSON.stringify(naSeca)}`);
   await esperar();
   console.log(`I-TELA-CLIMA-VISUAL — seca no tick ${await tickAgora()}: ${JSON.stringify(s.clima)}; relogio ${JSON.stringify(r)}`);
   await capturar('seca');
