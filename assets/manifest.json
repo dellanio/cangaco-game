@@ -5026,6 +5026,22 @@
         "fade": 0.3
       }
     },
+    "victory": {
+      "arquivo": "sons/victory.mp3",
+      "base": "base/sons/victory/original.mp3",
+      "licenca": "CC0 1.0",
+      "origem": "https://opengameart.org/content/medieval-victory-theme",
+      "autor": "RandomMind",
+      "titulo": "Medieval: Victory Theme",
+      "baixadoDe": "https://opengameart.org/sites/default/files/victory_0.mp3",
+      "nota": "arquivo da pagina do OpenGameArt",
+      "aprovado": "1",
+      "duracaoOriginal": 32.438,
+      "duracao": 32.438,
+      "recorte": {
+        "silencioInicial": true
+      }
+    },
     "defeat": {
       "arquivo": "sons/defeat.mp3",
       "base": "base/sons/defeat/original.wav",

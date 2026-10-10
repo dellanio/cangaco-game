@@ -21651,3 +21651,18 @@ sem-trabalhador   peça o trabalhador na Casa do Coronel                escola.t
   - no tick 6601 o ícone continua escondido; no 6602, aparece;
   - a folha traz "Parado: Serraria sem Carpina".
   `I-TELA-DICAS-NA-PRIMEIRA-VEZ` também sai 0.
+
+### I-ARTE-SOM-DA-VITORIA — a vitória toca um som (verificado; a homologação auditiva é do operador)
+- **O que existia:** o `match-ended` com `fim: vitoria` já pedia o `victory`, mas o som aprovado (chripei,
+  Freesound 165491) não é CC0, e o `tools/baixar-sons.js` o deixava de fora. A vitória ficava em silêncio.
+- **O que mudou:**
+  - `docs/sons-candidatos.md`: o `aprovado` da linha `victory` passou ao candidato 1, "Medieval: Victory
+    Theme", da RandomMind no OpenGameArt. A licença foi conferida na página pelo próprio
+    `baixar-sons.js`: CC0;
+  - o recorte segue o da derrota, só o silêncio inicial;
+  - o `H-ARTE-SONS-APROVADOS` tirou o `victory` do `NAO_CC0`.
+- **Teste:** `tests/I-ARTE-SOM-DA-VITORIA.test.ts`. Pelo `step`, a escaramuça sem o lado da IA vence: o
+  `victory` é pedido uma vez em 5 ticks, e o quadro o toca (tem arquivo, e não fica em silêncio).
+- **Para o operador ouvir:** `assets/sons/victory.mp3`, com 32 s, uma fanfarra medieval inteira (a derrota
+  tem 8,6 s). Se achar longo, dá para recortar com fade (como o `inn-bell`), ou trocar pelo candidato 2,
+  "Win Jingle", da Fupi.

@@ -28,7 +28,7 @@ const SONS = Object.fromEntries(
 ) as Record<string, SomDoManifesto>;
 const LINHAS = lerSonsCandidatos(readFileSync('docs/sons-candidatos.md', 'utf8'));
 /** Aprovados pelo operador com link que NAO e CC0 (conferido na pagina em 2026-10-03). */
-const NAO_CC0 = ['victory', 'music-peace'];
+const NAO_CC0 = ['music-peace'];
 const sha = (arquivo: string): string => createHash('sha256').update(readFileSync(arquivo)).digest('hex');
 
 describe('H-ARTE-SONS-APROVADOS — (a) licenca e link', () => {
