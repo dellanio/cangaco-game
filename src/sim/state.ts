@@ -717,6 +717,9 @@ export interface RecursoNoTile {
    *  Opcional, e nao `number | null` obrigatorio: obrigatorio custava 41 erros
    *  de compilacao (5 na sim, 36 em teste), medido na noite 18. */
   readonly semeadoEm?: number;
+  /** I-PRODUCAO-ACUDE-IRRIGACAO — semeado por fazenda irrigada pelo Acude: cresce com o bonus da
+   *  irrigacao (`ticksParaAmadurecer`). So `true`, e so junto do `semeadoEm`; sai com ele. */
+  readonly irrigado?: true;
 }
 
 /**

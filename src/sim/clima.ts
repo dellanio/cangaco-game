@@ -58,9 +58,14 @@ export function multiplicadorNoTick(tick: number, dados: GameData = gameData): n
  */
 export function ticksParaAmadurecer(
   tipo: string, ticksDeCrescer: number, semeadoEm: number, dados: GameData = gameData,
+  /** I-PRODUCAO-ACUDE-IRRIGACAO — o tile foi semeado por fazenda irrigada (`RecursoNoTile.irrigado`). */
+  irrigado = false,
 ): number {
   if (!dados.clima.ligado || !dados.clima.culturas.includes(tipo)) return ticksDeCrescer;
-  return Math.round(ticksDeCrescer / multiplicadorNoTick(semeadoEm, dados));
+  const m = multiplicadorNoTick(semeadoEm, dados);
+  // a mesma conta de `multiplicadorComIrrigacao` (sim/acude.ts), aqui sem import para nao fechar ciclo
+  const efetivo = irrigado ? Math.max(m, Math.min(dados.acude.tetoDoMultiplicador, m + dados.acude.bonusDeCrescimento)) : m;
+  return Math.round(ticksDeCrescer / efetivo);
 }
 
 /** O evento do tick: `season-changed` quando a estacao do tick e outra que a do tick anterior. */

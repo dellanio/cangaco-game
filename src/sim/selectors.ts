@@ -20,6 +20,7 @@ import { custoDeTreino, ehEscolaCompleta, filaDaEscola, ouroQueAFilaEspera } fro
 import { custoDoPassoDaUnidade } from './carga';
 import { alvoDeNivelamento, custoDoPredio } from './obra';
 import { receitaDoTipo, saidasDaReceita, semTrabalhoAoAlcance } from './producao';
+import { acudeDaFazenda, ehFazendaDoClima } from './acude';
 import { colheitaAoAlcanceDaCaixa } from './recursos';
 import { plantaNoModo } from './modo';
 import { ehPredioOcupavel, tiposQueOcupam, trabalhadorDoTipo } from './ocupacao';
@@ -628,6 +629,9 @@ export interface PainelDoPredio {
   } | null;
   /** I-PRODUCAO-ACUDE-AGUA — o nivel do Acude e a capacidade; `null` em quem nao e Acude completo. */
   readonly acude: { readonly agua: number; readonly capacidade: number } | null;
+  /** I-PRODUCAO-ACUDE-IRRIGACAO — a fazenda (colheita de cultura do clima) esta irrigada por um Acude agora;
+   *  `null` em quem nao e essa fazenda. */
+  readonly irrigada: boolean | null;
   /** F28b — a munição da torre e por que ela não atira; `null` em quem não é torre. */
   readonly torre: {
     readonly pedras: number;
@@ -726,6 +730,7 @@ export function painelDoPredio(
       armazem: null,
       encomenda: null,
       acude: null,
+      irrigada: null,
     };
   }
 
@@ -777,6 +782,7 @@ export function painelDoPredio(
       : null,
     encomenda: encomendaDoPainel(predio, dados),
     acude: predio.tipo === ID_DO_ACUDE ? { agua: predio.agua ?? 0, capacidade: dados.acude.capacidade } : null,
+    irrigada: ehFazendaDoClima(predio, dados) ? acudeDaFazenda(state, predio, dados) !== null : null,
     reparo: {
       ligado: predio.reparo,
       danificado: predio.hp < def.hp,

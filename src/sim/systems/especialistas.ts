@@ -70,6 +70,7 @@ import { plantaNoModo } from '../modo';
 import { andar, chegou, comPredio, comUnidade, dadosDaFsm, ficarOcioso, noTile, passoDeLado } from '../units/movimento';
 import type { ResultadoDeSistema } from './jobs';
 import { comPassoComecadoTerminado } from '../colisao';
+import { acudeDaFazenda } from '../acude';
 
 type Passo = ResultadoDeSistema;
 
@@ -496,7 +497,9 @@ function passoSemeando(state: GameState, u: Unidade, dados: GameData): Passo {
       ...predio, producao: { ...predio.producao, plantio: { ...plantio, progresso } },
     }));
   }
-  const semeado: GameState = { ...state, recursos: semearNoTile(state, chaveDeTile(plantio.tile), dados) };
+  // I-PRODUCAO-ACUDE-IRRIGACAO: a fazenda irrigada pelo Acude marca o tile na semeadura
+  const irrigado = acudeDaFazenda(state, predio, dados) !== null;
+  const semeado: GameState = { ...state, recursos: semearNoTile(state, chaveDeTile(plantio.tile), dados, irrigado) };
   return voltarSemTarefa(semeado, u, predio, dados);
 }
 

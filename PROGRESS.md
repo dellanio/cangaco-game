@@ -21701,3 +21701,28 @@ sem-trabalhador   peça o trabalhador na Casa do Coronel                escola.t
   - o inverno enche pela regra e para no teto;
   - a seca só evapora até 0;
   - o determinismo, o save e o painel.
+
+### I-PRODUCAO-ACUDE-IRRIGACAO — a roça perto do Açude cresce melhor na seca (verificado)
+- **A regra** (`src/sim/acude.ts`, puro):
+  - a fazenda é o prédio cuja colheita é cultura do clima;
+  - o `acudeDaFazenda` dá o Açude completo do mesmo lado, com água ≥ mínimo, a até 7 tiles (centro a
+    centro). Com dois, vale o mais perto, e o empate se desfaz pelo id: os dois não somam;
+  - o `multiplicadorComIrrigacao(m) = max(m, min(1,0, m + 0,25))`: a seca vai de 0,65 a 0,90, e o
+    inverno (1,2) não muda.
+- **O tile:** o `RecursoNoTile.irrigado?: true` é marcado na semeadura (`passoSemeando`), mantido na
+  colheita parcial e some com o último. O `ticksParaAmadurecer` ganhou o parâmetro `irrigado`, e o
+  `tileMaduro` o passa.
+- **O render:** passa o `irrigado` no estágio da cultura, pela nota de integração `0b93aede`, para o
+  `pronto` da tela bater com o da sim.
+- **O consumo:** só com a estação abaixo do teto (na seca). É 1 unidade por fazenda irrigada e ocupada a
+  cada `ticksPorConsumo`.
+- **O painel:** `irrigada: boolean | null` (`null` em quem não é fazenda do clima).
+- **Teste:** `tests/I-PRODUCAO-ACUDE-IRRIGACAO.test.ts` (4):
+  - a razão: o milho semeado na seca amadurece em 2 538 ticks sem o Açude e em 1 833 com ele, uma razão
+    de 1,38 (0,90/0,65). No inverno, os dois tempos são iguais;
+  - pelo `step`, no cenário da fazenda de um tile: com o Açude perto (lugar achado pelo `canPlace`), o
+    roceiro semeia com `irrigado: true`; sem ele, o campo não existe;
+  - vazio, longe e do outro lado não irrigam, e dois dão o mais perto; o painel;
+  - o consumo na seca bate com a regra, e no inverno não há consumo.
+- O campo `irrigado` (e o `semeadoEm`) foram nomeados na guarda dos opcionais (`OPCIONAIS_DO_RECURSO`, do
+  sistema).

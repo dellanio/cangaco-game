@@ -1844,7 +1844,7 @@ export class WorldScene extends Phaser.Scene {
       // I-CLIMA-CRESCIMENTO: o tempo de crescer e o da estacao da semeadura, a mesma conta da sim
       : estagioDaCultura(recurso, tick, recurso.semeadoEm === undefined
         ? recursosDeRender.ticksDeCrescer[recurso.tipo] ?? 0
-        : ticksParaAmadurecer(recurso.tipo, recursosDeRender.ticksDeCrescer[recurso.tipo] ?? 0, recurso.semeadoEm));
+        : ticksParaAmadurecer(recurso.tipo, recursosDeRender.ticksDeCrescer[recurso.tipo] ?? 0, recurso.semeadoEm, undefined, recurso.irrigado === true));
     const desenho = this.desenhoPorCodigo[codigo];
     const geometria = geometriaDaCultura(recurso.tipo, estagio, configDoMapa.tilePx);
     const emPe = geometria.emPe && desenho?.como === 'textura';

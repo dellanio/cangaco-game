@@ -15,7 +15,7 @@
 import { describe, expect, it } from 'vitest';
 import { gameData } from '../src/sim/data';
 import { completarObra, LADO_DO_JOGADOR } from '../src/sim/state';
-import type { EscolhaDeSaida, GameState, Predio, PredioCompleto, Producao } from '../src/sim/state';
+import type { EscolhaDeSaida, GameState, Predio, PredioCompleto, Producao, RecursoNoTile } from '../src/sim/state';
 import { comDistribuicao } from '../src/sim/distribuicao';
 import { criarEscaramuca } from '../src/sim/cenario';
 import { step } from '../src/sim/tick';
@@ -59,6 +59,14 @@ const OPCIONAIS_DA_PRODUCAO = {
   cursor: 'do-sistema',
   modo: 'persiste',
 } as const satisfies Record<ChavesOpcionais<Producao>, Regime>;
+
+/** I-PRODUCAO-ACUDE-IRRIGACAO: os opcionais do tile. Os dois sao do sistema: a semeadura cria, a colheita
+ *  do ultimo apaga. Nomeados aqui para o campo novo do tile nao passar sem decisao. */
+const OPCIONAIS_DO_RECURSO = {
+  semeadoEm: 'do-sistema',
+  irrigado: 'do-sistema',
+} as const satisfies Record<ChavesOpcionais<RecursoNoTile>, Regime>;
+void OPCIONAIS_DO_RECURSO;
 
 const OPCIONAIS_DA_ESCOLHA = {
   // D-PRODUCAO-03a — o comeco do ciclo grava a saida em curso e o deposito a apaga

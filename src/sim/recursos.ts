@@ -264,7 +264,7 @@ export function tileMaduro(
   if (recurso.semeadoEm === undefined) return true;
   const crescer = dados.recursos.tipos[recurso.tipo]?.reposicao?.ticksDeCrescer ?? 0;
   // I-CLIMA-CRESCIMENTO: a cultura do clima cresce no ritmo da estacao da semeadura
-  return state.tick >= recurso.semeadoEm + ticksParaAmadurecer(recurso.tipo, crescer, recurso.semeadoEm, dados);
+  return state.tick >= recurso.semeadoEm + ticksParaAmadurecer(recurso.tipo, crescer, recurso.semeadoEm, dados, recurso.irrigado === true);
 }
 
 /** F-CAMPO-a — semeado, com o que colher, e ainda nao maduro. */
@@ -463,12 +463,14 @@ export function melhorTileParaPlantio(
  */
 export function semearNoTile(
   state: GameState, chaveDoTile: string, dados: GameData = gameData,
+  /** I-PRODUCAO-ACUDE-IRRIGACAO — a fazenda que semeia esta irrigada pelo Acude. */
+  irrigado = false,
 ): Readonly<Record<string, RecursoNoTile>> {
   const atual = state.recursos[chaveDoTile];
   if (atual === undefined) return state.recursos;
   const cheio = dados.recursos.tipos[atual.tipo]?.rendimentoPorTile;
   if (cheio === undefined || atual.quantidade >= cheio) return state.recursos;
-  return { ...state.recursos, [chaveDoTile]: { tipo: atual.tipo, quantidade: cheio, semeadoEm: state.tick } };
+  return { ...state.recursos, [chaveDoTile]: { tipo: atual.tipo, quantidade: cheio, semeadoEm: state.tick, ...(irrigado ? { irrigado: true as const } : {}) } };
 }
 
 /**
@@ -534,7 +536,7 @@ export function colherDoTile(
   // F-CAMPO-a — o `semeadoEm` fica enquanto ha o que colher (o render deriva
   // "maduro" dele) e sai com o ultimo: tile zerado e terra em pousio, sem relogio.
   else if (restante > 0 && atual.semeadoEm !== undefined) {
-    recursos[chaveDoTile] = { tipo: atual.tipo, quantidade: restante, semeadoEm: atual.semeadoEm };
+    recursos[chaveDoTile] = { tipo: atual.tipo, quantidade: restante, semeadoEm: atual.semeadoEm, ...(atual.irrigado === true ? { irrigado: true as const } : {}) };
   } else recursos[chaveDoTile] = { tipo: atual.tipo, quantidade: restante };
   return recursos;
 }
