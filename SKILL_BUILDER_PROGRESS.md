@@ -10,6 +10,14 @@ O controle antigo da noru foi consultado somente em leitura; aquela worktree e s
 
 ## Fila e contadores
 
+### Ouro — tentativa 2/2, bloqueio do item de montanhas
+- Edicao nativa da atlas-1 limpa: remover linhas retas/quadros nas bordas conectadas, continuidade geologica, manter 48 celulas, camera, tres alturas e luz; nao escalar globalmente.
+- ID exec-dab928b5-84d2-4ad7-9434-b80c0e913a8a; arquivo externo gold_ore-montanha/atlas-2.png; SHA256 46CA8F65E953417DF90C03E2DB597BC69EDB5E7F4A9812FD3E0B1E5468AEAE9E.
+- Revisao independente reprova: pleno x219-222/y130-282, reduzido x553-557/y156-322, remanescente x840 e x904/y150-302 expoem a grade.
+- I-ARTE-MONTANHAS-DE-OURO-E-FERRO bloqueado apos duas tentativas honestas. Ferro tentativa1 tambem reprova grade em x154/x218 e faixa de solo y261-285. Arte/manifesto originais intactos. Teste novo e derivador nao commitados foram retirados da branch e preservados na candidata externa; nenhuma guarda existente foi removida ou alterada.
+- Proximo: I-ARTE-JAZIDA-DE-CARVAO-NO-CHAO. Contador ouro2/2, ferro1/2, carvao0/2.
+
+
 ### iron_ore-montanha — tentativa 1/2
 - Geracao nativa em 2026-10-10; referencia limpa volume-15.png da serra.
 - Prompt: 48 modulos em 12x4, tres blocos 4x4 com mascaras N1/E2/S4/W8; ferro em rocha cinza-avermelhada, hematita/magnetita escura e manchas ferruginosas, luz superior/sul sem eixo lateral; pleno, bancada extraida, remanescente redesenhados, pe/envelope comuns; margens transparentes, sem texto, predios ou referencia de 1998.

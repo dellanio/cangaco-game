@@ -22153,3 +22153,8 @@ fase                     pedra  árvore  inimigo   (custo do A* em ticks, do in�
   selo completo do commit final e main limpa. Evidencia final em
   `test-output/diagnostico-timeouts/verify-entrega-final.log` e `.verify-ok`.
   O operador continua sendo quem marca feature; test-results.json foi preservado.
+## Perguntas em aberto (para a homologação)
+
+### 2026-10-10 — montanhas minerais e bloco autônomo de artes
+Verificado: CSV de 90 tarefas reconciliado (381529af); aceites e plano da fila autônoma commitados antes da arte. I-ARTE-MONTANHAS-DE-OURO-E-FERRO — montanhas conectadas: bloqueado após duas gerações honestas de ouro e revisão independente. Pleno ainda divide colunas em x219–222/y130–282; reduzido x553–557/y156–322; remanescente x840/x904/y150–302. Ferro candidato também expõe grade e faixa de solo entre linhas. PNGs derivados medidos: 48 por mineral,128x160, pé157 e todas as16 alturas decrescentes; isso não compensa a reprovação visual. Pranchas externas abertas: D:/projetos-pessoal/cangaco-game-candidatos/arte/2026-10-autonomo/gold_ore-montanha/prancha.png e iron_ore-montanha/prancha.png. Nenhuma base, sprite ou entrada do manifesto foi alterada. Teste novo em vermelho confirmou ausência da implementação; teste e derivador não commitados retirados conforme regra de desfazer o item bloqueado, preservados externamente. Nenhum teste existente modificado.
+Não verificado/entregue: aplicação de montanhas minerais, distribuição próxima das vilas, carvão no chão/atravessável e restante da fila. Próxima atividade: carvão, depois distribuição independente, Açude, auditoria da caatinga e CSV. Main permanece sob outra sessão; nada dela foi alterado. Sem push/merge.

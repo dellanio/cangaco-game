@@ -15,6 +15,10 @@ Pedido do operador: primeiro entregar ouro/ferro em montanhas perto das vilas e 
 
 ## Execucao autonoma
 
+### Registro de execucao: montanhas minerais
+I-ARTE-MONTANHAS-DE-OURO-E-FERRO: **bloqueado** apos duas tentativas nativas do ouro e revisao independente; costuras verticais retas da grade continuam visiveis (pleno x219-222/y130-282, reduzido x553-557/y156-322). Ferro tentativa1 tambem reprovado. Nenhuma candidata aplicada ao jogo. O item de render continuo espera arte que passe no aceite; distribuicao/carvao podem seguir independentes. Evidencia externa em cangaco-game-candidatos/arte/2026-10-autonomo/{gold_ore,iron_ore}-montanha/.
+
+
 Sem perguntas ao operador durante a execucao. Opcoes nao cobertas: escolher conservadora, registrar em PROGRESS.md sob Perguntas em aberto (para a homologacao), seguir. Duas tentativas honestas por item; falha medida leva a desfazer somente mudancas nao commitadas desse item, registrar bloqueio no CSV/PROGRESS e seguir. Nunca afrouxar guardas, prazos, hashes, lint ou typecheck. Rebase sobre main a cada cinco tarefas concluidas, preservando entradas de ambos os lados no manifesto. Nao rebasear sobre alteracoes nao commitadas da outra sessao.
 
 Arte: diretor + uma especialidade por lote + contrato + ferramentas; estilo pintado, luz de cima levemente do sul. Referencias aprovadas atuais; nunca restaurar os dois assets _estilo apagados, nem usar escola rural rejeitada ou arte de 1998. Geracao nativa, candidatas externas, base/derivado versionados na entrega. Cada item recebe aceite em BUILD_PLAN, teste que mede PNG, captura em jogo aberta, verify:rapido zero antes do commit e status do CSV com hash e aguarda homologacao. Toda nova candidata tem prompt, hash, origem, validacao, tentativas e proximo passo no controle.
