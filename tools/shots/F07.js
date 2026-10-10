@@ -107,8 +107,16 @@ async function roteiro(ctx) {
   afirmar(s.prediosRenderizados === inicio.prediosRenderizados + 1 && s.obrasRenderizadas === 1,
     `o segundo clique no mesmo tile deveria ser rejeitado, veio ${s.prediosRenderizados} predios / ${s.obrasRenderizadas} obras`);
 
-  // 5. outro tile livre, encostado na primeira obra: a segunda obra nasce
-  const vizinho = { gx: livre.gx + larguraDoPredio, gy: livre.gy };
+  // 5. encostada na primeira obra, a planta recusa ('colado', I-OBRA-UM-TILE-ENTRE-PREDIOS);
+  //    um tile adiante, livre, a segunda obra nasce
+  const encostado = { gx: livre.gx + larguraDoPredio, gy: livre.gy };
+  const pontoEncostado = await pontoDoTile(encostado.gx, encostado.gy);
+  await page.mouse.move(pontoEncostado.x, pontoEncostado.y);
+  await esperarFrame();
+  const colada = (await estado()).plantaFantasma;
+  afirmar(colada !== null && colada.valida === false && colada.motivo === 'colado',
+    `encostada na obra a planta deveria recusar por 'colado', veio ${JSON.stringify(colada)}`);
+  const vizinho = { gx: livre.gx + larguraDoPredio + 1, gy: livre.gy };
   const pontoVizinho = await pontoDoTile(vizinho.gx, vizinho.gy);
   await page.mouse.click(pontoVizinho.x, pontoVizinho.y);
   await avancar(1);

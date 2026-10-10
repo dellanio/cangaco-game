@@ -49,17 +49,26 @@ async function roteiro({ page, estado, afirmar, capturar }) {
   s = await conferir();
   const tickDoPeixe = s.tick;
   afirmar(s.aneisDaAgua.some((a) => a.tipo === 'peixe'), 'Anel do peixe ainda vivo.');
-  const primeira = await capturar('peixe-primeira-corrida');
-  const sha = (arquivo) => createHash('sha256').update(fs.readFileSync(arquivo)).digest('hex');
-  const hashPrimeira = sha(primeira);
+  // O sha256 e do CANVAS, o desenho do jogo que este roteiro afirma determinista. A pagina inteira
+  // tem por cima o HTML do relogio do sol (I-TELA-RELOGIO-DO-SOL, depois deste roteiro), cuja borda
+  // variou 7 px de antisserrilhado entre duas cargas com o mesmo texto (medido em 2026-10-10); o
+  // texto do relogio e afirmado igual a parte, e a captura da pagina segue como evidencia.
+  const sha = (buffer) => createHash('sha256').update(buffer).digest('hex');
+  const doCanvas = () => page.locator('canvas').first().screenshot();
+  const doRelogio = () => page.evaluate(() => window.document.querySelector('#relogio-do-sol .legenda')?.textContent ?? null);
+  await capturar('peixe-primeira-corrida');
+  const hashPrimeira = sha(await doCanvas());
+  const relogioPrimeira = await doRelogio();
   await page.reload();
   await page.waitForFunction(() => window.__cangaco?.pronto);
   await camera(tile);
   await avancar(tickDoPeixe);
   await frame();
   await conferir();
-  const segunda = await capturar('peixe-segunda-corrida');
-  afirmar(sha(segunda) === hashPrimeira, 'Sha256 igual nas duas corridas do peixe.');
+  await capturar('peixe-segunda-corrida');
+  afirmar(sha(await doCanvas()) === hashPrimeira, 'Sha256 do canvas igual nas duas corridas do peixe.');
+  afirmar(relogioPrimeira !== null && (await doRelogio()) === relogioPrimeira,
+    `o relogio do sol diz o mesmo nas duas corridas: ${relogioPrimeira} / ${await doRelogio()}`);
 
   const texto = fs.readFileSync('test-output/D-TELA-AGUA-PEIXE.save.txt', 'utf8');
   const partida = JSON.parse(texto).estado;

@@ -115,9 +115,9 @@ async function roteiro(ctx) {
   const yVila = armazem.gy + tamanhoDe('storehouse')[1];
   const transitavel = (gx, gy) => ehChao(tipoDo(gx, gy)) && !bloqueiaConstrucao(gx, gy) && !ocupado.has(`${gx},${gy}`);
   const meio = { gx: Math.round((camVila.scrollX + canvas.width / 2) / T), gy: Math.round((camVila.scrollY + canvas.height / 2) / T) };
-  let escolha = null;
-  for (let gy = meio.gy - 8; gy + altQu < yVila; gy += 1) {
-    for (let gx = meio.gx - 12; gx <= meio.gx + 12; gx += 1) {
+  const lugares = [];
+  for (let gy = meio.gy - 12; gy + altQu < yVila; gy += 1) {
+    for (let gx = meio.gx - 16; gx <= meio.gx + 16; gx += 1) {
       const pe = { vx: gx + Math.floor(largQu / 2), vy: gy + altQu };
       const luz = h(pe.vx, pe.vy - 1) - h(pe.vx, pe.vy + 1); // > 0: desce para o sul, encosta de luz
       if (luz <= 0 || !caixaLivre(gx, gy, largQu, altQu)) continue;
@@ -132,9 +132,28 @@ async function roteiro(ctx) {
       ok = ok && [...rua, ...ruaDaVila].every((t) => transitavel(t.gx, t.gy));
       const custo = rua.length + ruaDaVila.length;
       if (!ok || custo > RUA_MAXIMA) continue;
-      if (escolha === null || luz > escolha.luz || (luz === escolha.luz && custo < escolha.custo)) escolha = { gx, gy, luz, custo, rua, ruaDaVila };
+      lugares.push({ gx, gy, luz, custo, rua, ruaDaVila });
     }
   }
+  // a encosta de luz mais forte e, no empate, a rua mais curta; quem decide se a pedreira cabe e a
+  // PLANTA DO JOGO (o predicado do runtime, com o vao entre predios), nao um modelo do roteiro
+  lugares.sort((x, y) => (y.luz - x.luz) || (x.custo - y.custo));
+  await page.click('[data-predio="quarry"]');
+  await esperarFrame();
+  let escolha = null;
+  let recusadas = 0;
+  for (const cand of lugares) {
+    const pt = pontoDoTileNaTela(canvas, { gx: cand.gx, gy: cand.gy }, (await estado()).camera, T);
+    if (pt.x < canvas.left || pt.y < canvas.top || pt.x >= canvas.left + canvas.width || pt.y >= canvas.top + canvas.height) { recusadas += 1; continue; }
+    await page.mouse.move(pt.x, pt.y);
+    await esperarFrame();
+    const planta = (await estado()).plantaFantasma;
+    if (planta !== null && planta.gx === cand.gx && planta.gy === cand.gy && planta.valida === true) { escolha = cand; break; }
+    recusadas += 1;
+  }
+  await page.keyboard.press('Escape');
+  await esperarFrame();
+  console.log(`D-TELA-LUZ-RELEVO-recorte: ${lugares.length} lugares, ${recusadas} recusadas pela planta antes da escolhida`);
   afirmar(escolha !== null, 'a vila deveria ter uma encosta de luz onde a pedreira cabe, com rua ate a vila');
   const ruaToda = new Set([...escolha.rua, ...escolha.ruaDaVila].map((t) => `${t.gx},${t.gy}`));
 

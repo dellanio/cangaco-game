@@ -66,9 +66,6 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   sozinho por `npm run shot -- <nome>`
 - observado (medido em 2026-10-10): 12 de 172 saem 1. Um é o BUG-F18F acima. Os outros 11:
   - `C-IA-03c`: "os tres predios da IA deveriam cair, sobraram 3" (380 s);
-  - `D-TELA-AGUA-PEIXE`: o sha256 da captura difere entre as duas corridas do peixe;
-  - `D-TELA-LUZ-RELEVO-recorte`: "a pedreira deveria estar plantada em (26,29)";
-  - `F07`: "deveria haver 2 obras, veio 1";
 - verificado: os 10 rápidos (todos menos o `C-IA-03c`) falham IGUAIS em `73833b0`, a `main` de antes do
   trabalho de 2026-10-10. Não vieram do Açude, das dicas, do som nem do roteiro do machado.
 - hipótese (não conferida): vieram das levas de 2026-10-06 a 2026-10-09 (o jornal só com a última, os
@@ -82,7 +79,12 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   `I-TELA-OBRAS-COM-ARTE-ATUAL`, `I-TELA-QUARTEL-MAIS-IMPONENTE`, `I-TELA-SELECAO-NO-PE`): o teste
   gravava em `test-output/` direto, e a corrida transladada do verify sobrescrevia a partida com o
   mundo de +32. Passam pelo `CANGACO_EVIDENCIA_DIR`, e a guarda global da corrida transladada reprova
-  quem tocar numa partida do mundo normal (provado: sem o conserto, sai 1 e diz o arquivo).
+  quem tocar numa partida do mundo normal (provado: sem o conserto, sai 1 e diz o arquivo). E mais
+  tres: `F07` e `D-TELA-LUZ-RELEVO-recorte` plantavam predio encostado em predio, que a
+  I-OBRA-UM-TILE-ENTRE-PREDIOS recusa por 'colado' (o F07 passa a afirmar a recusa; o recorte troca o
+  modelo proprio pela planta do jogo, numa janela maior); `D-TELA-AGUA-PEIXE` tirava o sha256 da
+  pagina, e a borda do HTML do relogio do sol variou 7 px com o mesmo texto: o sha256 e do canvas, e o
+  texto do relogio e afirmado igual a parte.
 - status: aberto
 
 ## Polimento
