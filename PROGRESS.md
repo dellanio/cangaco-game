@@ -21666,3 +21666,19 @@ sem-trabalhador   peça o trabalhador na Casa do Coronel                escola.t
 - **Para o operador ouvir:** `assets/sons/victory.mp3`, com 32 s, uma fanfarra medieval inteira (a derrota
   tem 8,6 s). Se achar longo, dá para recortar com fade (como o `inn-bell`), ou trocar pelo candidato 2,
   "Win Jingle", da Fupi.
+
+### I-PRODUCAO-ACUDE-PREDIO — o Açude no dado, no menu e no mapa (verificado)
+- `reservoir` em `buildings.json`: 4×3, 4 de madeira, 6 de pedra, liberado pela Pedreira, sem trabalhador.
+  **O HP é 500, e não os 400 do aceite:** a regra do dado (`hp = (timber + stone) × 50`, F03) manda, e o
+  aceite cede a ela.
+- Na sub-aba "De Comer", entre o Pescador e o Moinho (o validador exige a ordem do `buildings.json`). O nome
+  "Açude" e a descrição vêm do tema. Sem arte, ele cai no placeholder; a arte é do Codex.
+- As contagens passaram de 29 para 30 prédios (`tools/data-rules.js` e `tests/F03-dados-validados.test.ts`),
+  e a sub-aba comida ganhou o Açude (`tests/I-TELA-SUBABAS-DO-CONSTRUIR.test.ts`).
+- **Teste:** `tests/I-PRODUCAO-ACUDE-PREDIO.test.ts` (2) cobre:
+  - o dado;
+  - sem a Pedreira, `bloqueado`;
+  - com ela, a planta, a obra e o completo pelo `step`;
+  - nenhuma tarefa de ocupar.
+
+  A suíte inteira passa: 2 933 testes.

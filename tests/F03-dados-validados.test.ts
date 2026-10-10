@@ -234,14 +234,15 @@ function verificarGrafoDeDesbloqueio(
 
 describe('F03 — carregamento e regras', () => {
   // I-PREDIO-IGREJA (2026-10-06): a Igreja e o 29o
-  it('carrega exatamente 29 predios, todos com hp = (timber+stone)*50', () => {
-    expect(gameData.predios).toHaveLength(29);
+  // I-PRODUCAO-ACUDE-PREDIO (2026-10-10): o Acude e o 30o
+  it('carrega exatamente 30 predios, todos com hp = (timber+stone)*50', () => {
+    expect(gameData.predios).toHaveLength(30);
     for (const p of gameData.predios) {
       expect(p.hp).toBe((p.timber + p.stone) * 50);
     }
   });
 
-  it('todo desbloqueadoPor resolve, e os 29 predios sao alcancaveis a partir da abertura', () => {
+  it('todo desbloqueadoPor resolve, e os 30 predios sao alcancaveis a partir da abertura', () => {
     const semente = [
       ...gameData.economia.estadoInicial.predios.map((p) => p.id),
       ...gameData.economia.estadoInicial.menuBuildInicial,

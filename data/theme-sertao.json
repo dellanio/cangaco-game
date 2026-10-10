@@ -207,6 +207,10 @@
       "nome": "Igreja",
       "desc": "A capela da vila. Forma o padre, que abençoa a tropa e converte o inimigo."
     },
+    "reservoir": {
+      "nome": "Açude",
+      "desc": "A barragem que junta a água das chuvas. Na seca, a roça perto dele cresce quase como no inverno."
+    },
     "iron_smithy": {
       "nome": "Forja",
       "desc": "Minério vira ferro."
