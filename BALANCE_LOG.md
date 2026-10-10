@@ -1542,3 +1542,33 @@ Medi o mesmo roteiro, o da C-IA-03c (jogar pela tela), contra a mesma IA:
 - Igreja 3×3, 5 de madeira e 5 de pedra (hp 500), desbloqueada pela Escola; o padre custa 2 de ouro, hp 2,
   não luta. A bênção (+20 % de resistência, 8 tiles) e a conversão (7 tiles, intervalos de 1,2 s, do 5º ao
   9º com 38 %, recarga de 30 s) seguem em itens próprios.
+
+## 2026-10-10 — o clima e o Açude medidos na economia (I-PRODUCAO-BALANCO-DO-CLIMA), e o lote proposto
+**Medido**, numa sonda já apagada:
+- a vila da calibração (a do F-CAL-b, tudo por comando), por 36 000 ticks (≈ 4,6 ciclos de estação), no
+  commit `39a1d50f`. A evidência da corrida está em `test-output/I-PRODUCAO-BALANCO-DO-CLIMA.json`;
+- na corrida C, o Açude foi **injetado** cheio no tick 5 555 (quando a vila fechou), no lugar válido mais
+  perto da roça, fora dos tiles de cultura;
+- 0 mortes de fome e 26 unidades no fim, nas três.
+
+```text
+corrida                       milho   farinha  pão   moinho esperando   padaria esperando   no seco irrigado
+A  clima desligado             128     121     119        5,3 %              3,2 %                —
+B  clima ligado                114     112     111       11,6 %              9,6 %             0 %
+C  clima + Açude perto         128     122     120        4,3 %              2,4 %            87 % (13 646 de 15 601)
+```
+- **B contra A:** o clima custa cerca de 11 % de milho e 7 % de pão, e dobra a espera do moinho. A seca é
+  sentida, mas é branda: ninguém passa fome.
+- **C contra A:** o Açude **apaga a seca inteira**. A produção volta à de sem clima (o inverno ×1,2
+  compensa o resto), e a água quase não é gasta: sobram 84 de 100 no fim, com uma roça. A restrição de
+  água nunca aperta numa vila de uma roça só.
+
+**Proposta de lote** (os números giram juntos, só com a aprovação do operador; nada mudou em `data/`):
+- `clima.json` seca `multiplicadorDeCrescimento` 0,65 → **0,55**: a seca passa a pedir preparo (estoque do
+  inverno ou Açude), em vez de ser um desconto de 7 % no pão;
+- `acude.json` `tetoDoMultiplicador` 1,0 → **0,85** e `bonusDeCrescimento` 0,25 → **0,30**: a roça
+  irrigada na seca vai de 0,55 a 0,85. O Açude **alivia** a seca sem anulá-la, e continua valendo a pena;
+- o consumo (`consumo_segundosPorUnidadePorFazenda_base` 30) e a capacidade (100) **ficam**. Pela conta,
+  três roças tiram ~72 da água na seca, mais ~12 de evaporação, e cabem num Açude cheio, que é o "2 a 3
+  roças" do plano. A sonda só tinha uma roça e não exercita esse teto;
+- depois de aplicado, roda-se a mesma medida (A/B/C) uma vez e o F-CAL-b, que segue com o clima desligado.

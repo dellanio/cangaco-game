@@ -21748,3 +21748,15 @@ sem-trabalhador   peça o trabalhador na Casa do Coronel                escola.t
   - a planta do Açude, armada pelo menu, publica o raio 7 e desenha o círculo.
 - **Visto na captura:** o Açude ainda é o placeholder (a arte é o I-ARTE-ACUDE, do Codex). A planta sai
   vermelha onde o ponteiro estava, porque o lugar não é válido; o círculo aparece igual.
+
+### I-PRODUCAO-BALANCO-DO-CLIMA — o clima e o Açude medidos na economia (verificado; só medida)
+- **A sonda** (apagada) rodou a vila da calibração por 36 000 ticks em três corridas: sem clima, com clima,
+  e com clima mais um Açude injetado perto da roça. A tabela e a proposta estão no `BALANCE_LOG.md`
+  (2026-10-10). **Nenhum número de `data/` mudou.**
+- **Resultado:** o clima custa ~11 % de milho e 7 % de pão, sem fome. O Açude apaga a seca inteira e quase
+  não gasta água. **A proposta:** seca 0,55, teto da irrigação 0,85 e bônus 0,30, à espera da aprovação do
+  operador.
+- **Um tropeço da sonda, registrado:** na primeira corrida C, o Açude caiu em cima do próprio roçado. O
+  `canPlace` aceita prédio sobre tile de cultura, e a vila morreu de fome (26 mortes, 13 de milho). A sonda
+  passou a escolher um lugar fora dos tiles de cultura. **Hipótese, não verificada:** o jogador também pode
+  plantar um prédio em cima da roça sem aviso. Isso vale como pergunta de design, e não como bug do Açude.
