@@ -69,11 +69,6 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   - `D-TELA-AGUA-PEIXE`: o sha256 da captura difere entre as duas corridas do peixe;
   - `D-TELA-LUZ-RELEVO-recorte`: "a pedreira deveria estar plantada em (26,29)";
   - `F07`: "deveria haver 2 obras, veio 1";
-  - `G-TELA-GESTO-DO-TRABALHO`: "Cannot read properties of undefined (reading 'gx')";
-  - `I-ARTE-PREDIOS-MAIORES`: "a Casa de Carne do save deveria estar no estado: undefined";
-  - `I-TELA-OBRAS-COM-ARTE-ATUAL`: "quarry usa arte no progresso 25";
-  - `I-TELA-QUARTEL-MAIS-IMPONENTE`: "Cannot read properties of undefined (reading 'w')";
-  - `I-TELA-SELECAO-NO-PE`: `mouse.move` com parâmetro inválido (coordenada que não existe).
 - verificado: os 10 rápidos (todos menos o `C-IA-03c`) falham IGUAIS em `73833b0`, a `main` de antes do
   trabalho de 2026-10-10. Não vieram do Açude, das dicas, do som nem do roteiro do machado.
 - hipótese (não conferida): vieram das levas de 2026-10-06 a 2026-10-09 (o jornal só com a última, os
@@ -82,7 +77,12 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   copiadas da árvore atual, e um save mais novo pode ter falhado por formato.
 - correção prevista: um por um, como roteiro desatualizado ou defeito de jogo, sem afrouxar asserção.
 - consertados: `I-TELA-CLIMA-VISUAL` (o roteiro afirmava o jornal antigo) e `F25b` (a moldura do
-  menu da proposta, `14b2d58d`, achado por bisect, empurrou o Derrubar 6 px para fora).
+  menu da proposta, `14b2d58d`, achado por bisect, empurrou o Derrubar 6 px para fora); e os cinco que
+  carregavam partida salva (`G-TELA-GESTO-DO-TRABALHO`, `I-ARTE-PREDIOS-MAIORES`,
+  `I-TELA-OBRAS-COM-ARTE-ATUAL`, `I-TELA-QUARTEL-MAIS-IMPONENTE`, `I-TELA-SELECAO-NO-PE`): o teste
+  gravava em `test-output/` direto, e a corrida transladada do verify sobrescrevia a partida com o
+  mundo de +32. Passam pelo `CANGACO_EVIDENCIA_DIR`, e a guarda global da corrida transladada reprova
+  quem tocar numa partida do mundo normal (provado: sem o conserto, sai 1 e diz o arquivo).
 - status: aberto
 
 ## Polimento

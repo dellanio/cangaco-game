@@ -12,6 +12,9 @@ import type {Unidade} from '../src/sim/state';
 import {condicaoCheiaDoTipo} from '../src/sim/condicao';
 import {salvar} from '../src/sim/save';
 import {naVila} from './helpers/ancoras';
+
+// a corrida transladada grava noutro diretorio (F18c-1c): a partida do roteiro e a do mundo normal
+const DIR_DA_EVIDENCIA = process.env['CANGACO_EVIDENCIA_DIR'] ?? 'test-output';
 const require=createRequire(import.meta.url);
 const {decodePng}=require('../skills/pianco-sprite-tools/scripts/png-rgba.mjs') as {decodePng:(p:Buffer)=>{width:number;height:number;data:Uint8Array}};
 describe('I-TELA-SELECAO-NO-PE',()=>{
@@ -55,8 +58,8 @@ describe('I-TELA-SELECAO-NO-PE',()=>{
     });
     s={...s,unidades:{porId,ordem}};
     const {descoberto,...visual}=s;void descoberto;
-    mkdirSync('test-output',{recursive:true});
-    writeFileSync('test-output/I-TELA-SELECAO-NO-PE.save.txt',salvar(visual));
+    mkdirSync(DIR_DA_EVIDENCIA, { recursive: true });
+    writeFileSync(`${DIR_DA_EVIDENCIA}/I-TELA-SELECAO-NO-PE.save.txt`,salvar(visual));
     expect(ordem.filter(id=>id.startsWith('galeria-'))).toHaveLength(medidas.fontes.length);
   });
 });

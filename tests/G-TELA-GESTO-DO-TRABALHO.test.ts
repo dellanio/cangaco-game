@@ -16,10 +16,13 @@ import { iconesDoJogo } from '../src/render/sprites';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { salvar } from '../src/sim/save';
 
+// a corrida transladada grava noutro diretorio (F18c-1c): a partida do roteiro e a do mundo normal
+const DIR_DA_EVIDENCIA = process.env['CANGACO_EVIDENCIA_DIR'] ?? 'test-output';
+
 /** O roteiro G-TELA-GESTO-DO-TRABALHO carrega estes saves (o roceiro no meio de cada fase). */
 function gravarSave(nome: string, s: GameState): void {
-  mkdirSync('test-output', { recursive: true });
-  writeFileSync(`test-output/G-TELA-ROCEIRO-${nome}.save.txt`, salvar(s));
+  mkdirSync(DIR_DA_EVIDENCIA, { recursive: true });
+  writeFileSync(`${DIR_DA_EVIDENCIA}/G-TELA-ROCEIRO-${nome}.save.txt`, salvar(s));
 }
 
 const config = dados as unknown as GestoDoTrabalho;

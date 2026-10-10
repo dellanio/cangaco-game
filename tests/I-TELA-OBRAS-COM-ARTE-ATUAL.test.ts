@@ -11,6 +11,9 @@ import {step} from '../src/sim/tick';
 import {salvar} from '../src/sim/save';
 import {comPredioCompletoEm} from './helpers/jobs-cenario';
 import {naVila} from './helpers/ancoras';
+
+// a corrida transladada grava noutro diretorio (F18c-1c): a partida do roteiro e a do mundo normal
+const DIR_DA_EVIDENCIA = process.env['CANGACO_EVIDENCIA_DIR'] ?? 'test-output';
 const require=createRequire(import.meta.url);
 const {decodePng}=require('../skills/pianco-sprite-tools/scripts/png-rgba.mjs') as {decodePng:(p:Buffer)=>{width:number;height:number;data:Uint8Array}};
 const pe=(png:ReturnType<typeof decodePng>):number=>{
@@ -46,7 +49,7 @@ describe('I-TELA-OBRAS-COM-ARTE-ATUAL',()=>{
     expect(createHash('sha256').update(readFileSync(`assets/${origem.base}`)).digest('hex')).toBe(origem.sha256);
   });
   it('prepara quadro de pares e predios com somente completo em quatro progressos',()=>{
-    mkdirSync('test-output',{recursive:true});
+    mkdirSync(DIR_DA_EVIDENCIA, { recursive: true });
     const lista:[string,number,number][]=[['quarry',4,9],['mill',-3,9],['barracks',4,14],['church',-3,14]];
     for(const n of [25,50,60,75,100]){
       let s=createInitialState(1);
@@ -59,7 +62,7 @@ describe('I-TELA-OBRAS-COM-ARTE-ATUAL',()=>{
       // Cena comparativa de arte: sem nevoa no save, pelo contrato legado.
       const {descoberto,...visual}=s;
       void descoberto;
-      writeFileSync(`test-output/I-TELA-OBRAS-COM-ARTE-ATUAL-${n}.save.txt`,salvar(visual));
+      writeFileSync(`${DIR_DA_EVIDENCIA}/I-TELA-OBRAS-COM-ARTE-ATUAL-${n}.save.txt`,salvar(visual));
       expect(lista.every(([id])=>s.predios.porId[id]!==undefined)).toBe(true);
     }
   });

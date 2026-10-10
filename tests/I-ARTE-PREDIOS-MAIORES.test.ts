@@ -13,6 +13,9 @@ import { salvar } from '../src/sim/save';
 import { comPredioCompletoEm } from './helpers/jobs-cenario';
 import { naVila } from './helpers/ancoras';
 
+// a corrida transladada grava noutro diretorio (F18c-1c): a partida do roteiro e a do mundo normal
+const DIR_DA_EVIDENCIA = process.env['CANGACO_EVIDENCIA_DIR'] ?? 'test-output';
+
 const manifesto = JSON.parse(readFileSync('assets/manifest.json', 'utf8')) as Manifesto;
 const regraA = regraDoManifesto(manifesto);
 const regraL = regraDeLarguraDoManifesto(manifesto);
@@ -44,8 +47,8 @@ describe('I-ARTE-PREDIOS-MAIORES', () => {
     let s = createInitialState(1);
     const lista: [string, string, number][] = [['butchers', 'cc', 0], ['armory_workshop', 'cg', 5], ['tannery', 'ct', 10], ['stables', 'co', 15], ['mill', 'mo', 21]];
     for (const [tipo, id, dx] of lista) s = comPredioCompletoEm(s, id, { tipo, ...naVila(dx - 6, 9) });
-    mkdirSync('test-output', { recursive: true });
-    writeFileSync('test-output/I-ARTE-PREDIOS-MAIORES.save.txt', salvar(s));
+    mkdirSync(DIR_DA_EVIDENCIA, { recursive: true });
+    writeFileSync(`${DIR_DA_EVIDENCIA}/I-ARTE-PREDIOS-MAIORES.save.txt`, salvar(s));
     expect(s.predios.ordem.filter((id) => ['cc', 'cg', 'ct', 'co', 'mo'].includes(id))).toHaveLength(5);
   });
 });

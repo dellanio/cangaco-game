@@ -68,6 +68,8 @@ export default mergeConfig(base, defineConfig({
   plugins: [mundoTransladado],
   test: {
     setupFiles: ['tests/helpers/mundo-transladado.ts'],
+    // a corrida transladada nao toca as partidas salvas do mundo normal (os roteiros as carregam)
+    globalSetup: ['tests/helpers/guarda-partidas-do-mundo-normal.ts'],
     testNamePattern: new RegExp(`^(?!(?:${FORA_DO_MUNDO_TRANSLADADO.map(escapar).join('|')})$)`),
     env: {
       CANGACO_TRANSLADO_K: String(K),

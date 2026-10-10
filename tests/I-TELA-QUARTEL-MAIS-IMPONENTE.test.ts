@@ -10,6 +10,9 @@ import {comPredioCompletoEm} from './helpers/jobs-cenario';
 import {naVila} from './helpers/ancoras';
 import terreno from '../data/terrain.json';
 
+// a corrida transladada grava noutro diretorio (F18c-1c): a partida do roteiro e a do mundo normal
+const DIR_DA_EVIDENCIA = process.env['CANGACO_EVIDENCIA_DIR'] ?? 'test-output';
+
 describe('I-TELA-QUARTEL-MAIS-IMPONENTE',()=>{
   it('aumenta ambos os eixos 20%, mantendo footprint e ancora',()=>{
     const m=manifesto as unknown as Manifesto;
@@ -27,8 +30,8 @@ describe('I-TELA-QUARTEL-MAIS-IMPONENTE',()=>{
     s=comPredioCompletoEm(s,'quartel',{tipo:'barracks',...naVila(2,9)});
     s=comPredioCompletoEm(s,'igreja',{tipo:'church',...naVila(-3,9)});
     s=step(s,[]);
-    mkdirSync('test-output',{recursive:true});
-    writeFileSync('test-output/I-TELA-QUARTEL-MAIS-IMPONENTE.save.txt',salvar(s));
+    mkdirSync(DIR_DA_EVIDENCIA, { recursive: true });
+    writeFileSync(`${DIR_DA_EVIDENCIA}/I-TELA-QUARTEL-MAIS-IMPONENTE.save.txt`,salvar(s));
     expect(s.predios.porId.quartel?.tipo).toBe('barracks');
     expect(s.predios.porId.igreja?.tipo).toBe('church');
   });
