@@ -9909,6 +9909,11 @@ Execucao na codex-artes, antes do bloco autonomo de artes. Nenhuma mudanca em sr
 - Derivar `wineyard/madeira` do completo atual, preservando arquitetura da casa verde, posição da porta, área de atividade, plataforma de barris e identidade de cana/cachaça; sem uva ou videira.
 - Aceite: (1) base original/master versionados, derivado250x180, footprint3x2/anchor[0.5,1], pé igual ao completo; (2) teste de PNG e guarda dos caminhos do completo/origem/anchors existentes, sem alterar completo; (3) obra mostra postes/caibros e cobertura/paredes incompletas na mesma geometria, áreas de atividade e estoque vazias, sem trabalhador/barril/texto fixo; (4) captura em jogo de madeira/completo em0,5/1/2 e pranchas nos três solos, normal/RGBx0,8, abertas; (5) verify:rapido saída0 antes do commit. Duas tentativas honestas como limite, sem modificar sim ou afrouxar verificações.
 
+#### I-ARTE-PESCADOR-EM-OBRA — A04, madeira da Casa do Pescador
+
+- Derivar `fishermans/madeira` do completo azul atual, mesma casa/porta/escada/plataforma e acesso à margem; não acrescentar lago pintado ao sprite, trabalhador ou peixe fixo.
+- Aceite: base/original/master versionados, derivado192x176/footprint3x2/anchor[0.5,1] e mesma linha dos pés do completo; teste mede PNG e preserva caminho/origem/anchors/escala do completo; estrutura e cobertura incompletas preservam arquitetura, saída de estoque vazia; roteiro mostra madeira/completo nos três zooms e comparação normal/RGBx0,8 sobre grama/areia/rocha, evidências abertas; verify:rapido saída0. Duas tentativas honestas no máximo; sem src/sim/.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
