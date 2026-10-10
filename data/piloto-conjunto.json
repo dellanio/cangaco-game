@@ -1,0 +1,11 @@
+{
+  "zooms": [0.5, 1, 2],
+  "fatoresRGB": [1, 0.8],
+  "terrenos": ["grama", "areia", "rocha"],
+  "elementos": [
+    { "id": "serf", "estado": "parado:s", "quadro": "serf/parado/s/0000" },
+    { "id": "tree", "estado": "presente" },
+    { "id": "storehouse", "estado": "completo" }
+  ],
+  "prancha": { "larguraCelula": 540, "alturaCelula": 310, "margem": 22, "rodape": 36 }
+}
