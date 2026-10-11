@@ -21797,3 +21797,28 @@ tropa  roteiro C-IA-03c (pelo mouse)          teste longo C-IA-03b (sem tela)
 - **Testes:** `tests/I-COMBATE-ESCARAMUCA-GANHAVEL-NA-SECA.test.ts` (a tabela do destino e o caso pelo
   `step`). A reprovação sem o conserto é a da sonda (`destino-inandavel`, 24 ociosos), e não foi
   repetida contra o teste.
+
+### I-MOVIMENTO-OBREIRO-OCUPA-O-CANTEIRO — parado: a decisão "ocupa" esbarra em duas regras da colisão civil (verificado pela sonda, código revertido)
+- **O que se tentou:** o posto de trabalho do aceite. O anel de 1 tile em volta da obra, menos a porta,
+  as portas dos outros prédios, a estrada, a estrada planejada e o campo planejado. O obreiro o
+  reserva no claim (`fsmData.posto`) e, parado nele, ocupa o tile.
+- **Medido (suíte normal):** 54 testes reprovaram com o posto na estrada (o obreiro na rua ao lado da
+  porta trancou o material da Igreja). Tirando estrada e campo do posto, 26 reprovaram, entre eles F11c,
+  F12, F10, a pedreira, a Igreja, o Açude e a fila de civis. Na sonda da Igreja, dois serfs ficaram
+  bloqueados mais de 900 ticks atrás dos obreiros parados nos postos 37,32 e 41,33. O anel em volta da
+  obra é o corredor de 1 tile entre prédios (a regra do espaçamento), e é por ali que o serf anda a pé.
+- **A causa é de modelo, não de número:** a colisão civil diz que o civil que anda ESPERA o parado no
+  próprio tile e não contorna (`tests/D-MOVIMENTO-01a-colisao-civil.test.ts`, "o mesmo parado em campo
+  aberto"), e que um parado que nunca sai tranca a rua e a invariante acusa. O obreiro fica centenas de
+  ticks no posto: é esse parado.
+- O código foi revertido. O BUG-F18F-PILHA-DE-TRES-NO-CANTEIRO continua aberto.
+
+## Perguntas em aberto
+- **(2026-10-10) O obreiro no canteiro ocupa o tile: como os outros passam?** A decisão "ocupa" (com
+  posto em volta da obra) pede uma regra a mais. Opções:
+  (a) **o obreiro no posto cede o lugar:** com um civil esperando o tile dele há `ticksEmpurrar`, ele
+      troca para outro posto livre andando, ou, sem posto livre, troca de lugar com quem espera (como o
+      ocioso empurrado). Recomendada: mantém "ocupa" e a regra "não contorna";
+  (b) **o civil passa a contornar o parado** depois de uma espera (como o militar, C5). Revoga a regra
+      da fila de civis e mexe no teste dela;
+  (c) **voltar ao "não ocupa"**, e o roteiro F18f conta só quem ocupa o tile.

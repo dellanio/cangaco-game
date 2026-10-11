@@ -57,7 +57,7 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   a sim não tem dois civis "fora" no tile. É o caso exato da pergunta em aberto do `c13b168`.
 - correção prevista: depende da decisão do operador. Se o obreiro no canteiro passar a ocupar o tile,
   o serf espera na fila e a pilha some; se não, o roteiro deve contar só quem ocupa.
-- status: aberto, esperando a decisão
+- status: aberto, esperando a decisão; a decisão "ocupa" de 2026-10-10 foi medida e pede uma regra a mais (PROGRESS, Perguntas em aberto)
 
 ## Polimento
 
