@@ -10,6 +10,7 @@
 // reprova.
 
 const { retanguloDoCanvas } = require('./_canvas');
+const { aneisEmVolta, lotePelaPlanta } = require('./_lote-pela-planta');
 const economia = require('../../data/economy.json');
 const { predios } = require('../../data/buildings.json');
 
@@ -63,11 +64,21 @@ async function roteiro(ctx) {
   await esperarFrame();
   afirmar((await estado()).ferramentaAtiva === id, `a ferramenta deveria estar em ${id}`);
 
-  // 2. planta VERDE sobre um tile livre logo abaixo do armazem do cenario
+  // 2. planta VERDE sobre o lote livre mais perto do armazem do cenario, escolhido pela propria planta
+  //    (`_lote-pela-planta`). Ate 2026-10-11 era "logo abaixo do armazem"; ali agora e o rocado de
+  //    partida, e predio nao se planta na roca (I-OBRA-SEM-PREDIO-NA-ROCA). O candidato so vale se o
+  //    vizinho da segunda obra (passo 5) e o tile do clique sem ferramenta (passo 6) tambem forem lote
+  //    valido: assim o passo 6 prova que so a falta da ferramenta impediu a obra.
   const armazem = economia.estadoInicial.predios.find((p) => p.id === 'storehouse');
   const [larguraDoPredio] = defDe(id).tamanho;
-  const [, alturaDoArmazem] = defDe('storehouse').tamanho;
-  const livre = { gx: armazem.gx, gy: armazem.gy + alturaDoArmazem + 1 };
+  const { escolhido, recusados } = await lotePelaPlanta({
+    page, estado, canvas, tilePx: TILE_PX, esperar: esperarFrame,
+    candidatos: aneisEmVolta({ gx: armazem.gx, gy: armazem.gy }, 8)
+      .map((t) => [t, { gx: t.gx + larguraDoPredio + 1, gy: t.gy }, { gx: t.gx - 4, gy: t.gy }]),
+  });
+  afirmar(escolhido !== null, `a planta deveria aprovar um lote perto do armazem (recusados: ${recusados})`);
+  const livre = escolhido[0];
+  console.log(`F07: lote (${livre.gx},${livre.gy}), ${recusados} candidatos recusados pela planta antes`);
   const pontoLivre = await pontoDoTile(livre.gx, livre.gy);
   await page.mouse.move(pontoLivre.x, pontoLivre.y);
   await esperarFrame();

@@ -4,6 +4,8 @@
 // absent from the world: quarry and woodcutter must read from their sprites.
 
 const { retanguloDoCanvas, pontoDoTileNaTela } = require('./_canvas');
+const { caixaLivre } = require('./_recursos');
+const { predios: DEFS } = require('../../data/buildings.json');
 const economy = require('../../data/economy.json');
 
 const TILE_PX = 64;
@@ -19,6 +21,12 @@ async function roteiro(ctx) {
     { tipo: 'quarry', gx: schoolhouse.gx + 4, gy: schoolhouse.gy + 1 },
     { tipo: 'woodcutters', gx: schoolhouse.gx + 4, gy: schoolhouse.gy + 4 },
   ];
+  // Predio nao se planta na roca (I-OBRA-SEM-PREDIO-NA-ROCA): o lote anda para leste ate a caixa caber
+  // fora do rocado de partida, na mesma linha.
+  for (const p of placements) {
+    const [largura, altura] = DEFS.find((d) => d.id === p.tipo).tamanho;
+    while (!caixaLivre(p.gx, p.gy, largura, altura)) p.gx += 1;
+  }
   const ids = [];
 
   for (const placement of placements) {

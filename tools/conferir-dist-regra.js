@@ -23,9 +23,23 @@ function conferirDist({ dist, base, manifesto }) {
   if (dist.length === 0) problemas.push('o dist/ esta vazio ou nao existe: rode `npm run build`');
   if (manifesto === null) problemas.push('falta dist/.vite/manifest.json: o build precisa de --manifest');
   const daBase = new Map(base.map((b) => [b.sha256, b.caminho]));
+  // A origem de cada saida, pelo manifesto (`file` -> `src`). Emenda de 2026-10-11: a saida igual a uma
+  // base so passa quando o manifesto diz que ela veio de assets/sprites/ (a base e copia do sprite).
+  const fonteDaSaida = new Map();
+  for (const e of Object.values(manifesto ?? {})) {
+    const entrada = /** @type {{file?: unknown, src?: unknown}} */ (e);
+    if (typeof entrada?.file === 'string' && typeof entrada.src === 'string') fonteDaSaida.set(`dist/${entrada.file}`, entrada.src);
+  }
   for (const d of dist) {
+    const fonte = fonteDaSaida.get(d.caminho);
+    if (fonte !== undefined && fonte.startsWith('assets/base/')) {
+      problemas.push(`${d.caminho} vem de ${fonte}, em assets/base/`);
+      continue;
+    }
     const origem = daBase.get(d.sha256);
-    if (origem !== undefined) problemas.push(`${d.caminho} e o arquivo ${origem} de assets/base/`);
+    if (origem !== undefined && !(fonte ?? '').startsWith('assets/sprites/')) {
+      problemas.push(`${d.caminho} e o arquivo ${origem} de assets/base/`);
+    }
   }
   for (const modulo of MODULOS_DE_DEPURACAO) {
     if (manifesto !== null && Object.prototype.hasOwnProperty.call(manifesto, modulo)) {

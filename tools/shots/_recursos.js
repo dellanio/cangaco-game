@@ -15,6 +15,29 @@ const BLOQUEADOS = new Set(
     .flatMap(([tipo]) => (mapa.recursos[tipo] ?? []).map(([gx, gy]) => `${gx},${gy}`)),
 );
 
+// I-OBRA-SEM-PREDIO-NA-ROCA (2026-10-11): predio nao se planta em cima da roca. A roca e todo tile de
+// recurso com `aradura` (a cultura que o jogador planta), venha da lista do mapa ou do terreno de que o
+// recurso deriva (`tipos.<t>.terreno`, como o `derivarRecursosDoTerreno` do loader). E motivo proprio
+// (`roca`), e nao a bandeira `bloqueiaConstrucao`: a estrada continua atravessando a roca.
+const ROCA = new Set(
+  Object.entries(tipos)
+    .filter(([, def]) => def.aradura !== undefined && def.aradura !== null)
+    .flatMap(([tipo, def]) => {
+      const daLista = (mapa.recursos[tipo] ?? []).map(([gx, gy]) => `${gx},${gy}`);
+      if (def.terreno === undefined) return daLista;
+      const doTerreno = [];
+      mapa.linhas.forEach((linha, gy) => {
+        for (let gx = 0; gx < linha.length; gx += 1) if (mapa.legenda[linha[gx]] === def.terreno) doTerreno.push(`${gx},${gy}`);
+      });
+      return [...daLista, ...doTerreno];
+    }),
+);
+
+/** Este tile e roca do mapa (o predio recusa; a estrada nao)? So o mapa do tick 0: roca plantada depois nao entra. */
+function ehRocaDoMapa(gx, gy) {
+  return ROCA.has(`${gx},${gy}`);
+}
+
 /** Os tiles de UM tipo de recurso, como o arquivo de mapa os publica. */
 const PORTIPO = new Map();
 function temRecurso(tipo, gx, gy) {
@@ -29,11 +52,11 @@ function bloqueiaConstrucao(gx, gy) {
   return BLOQUEADOS.has(`${gx},${gy}`);
 }
 
-/** O footprint deste retangulo esta livre de recurso que bloqueia? */
+/** O footprint deste retangulo (de PREDIO) esta livre de recurso que bloqueia e de roca? */
 function caixaLivre(gx0, gy0, largura, altura) {
   for (let gy = gy0; gy < gy0 + altura; gy += 1) {
     for (let gx = gx0; gx < gx0 + largura; gx += 1) {
-      if (bloqueiaConstrucao(gx, gy)) return false;
+      if (bloqueiaConstrucao(gx, gy) || ehRocaDoMapa(gx, gy)) return false;
     }
   }
   return true;
@@ -100,5 +123,5 @@ function arrastosDaRua(tiles, maximo = 12) {
 }
 
 module.exports = {
-  bloqueiaConstrucao, temRecurso, caixaLivre, ruaComDesvio, arrastosDaRede, arrastosDaRua,
+  bloqueiaConstrucao, ehRocaDoMapa, temRecurso, caixaLivre, ruaComDesvio, arrastosDaRede, arrastosDaRua,
 };

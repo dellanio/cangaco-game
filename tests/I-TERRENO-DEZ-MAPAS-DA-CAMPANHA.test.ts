@@ -105,17 +105,23 @@ describe('I-TERRENO-DEZ-MAPAS-DA-CAMPANHA', () => {
     const porNome = Object.fromEntries(FASES.map((f) => [f.id, f]));
     expect(validarCampanha(DADOS, comoMapa(porNome))).toEqual([]);
     const base = FASES[0] as Fase;
+    // As coordenadas dos defeitos saem do mapa, e nao de literal: a suite tambem roda no mundo
+    // transladado (F18c-1c), onde a fase anda +K. Agua: os dois primeiros tiles de agua da fase 1.
+    const aguas: [number, number][] = [];
+    base.mapa.linhas.forEach((l, gy) => { for (let gx = 0; gx < l.length; gx++) if (base.mapa.legenda[l[gx] as string] === 'agua') aguas.push([gx, gy]); });
+    const [pa, ta] = [aguas[0] as [number, number], aguas[1] as [number, number]];
+    const { largura: L, altura: A } = (DADOS['terrain'] as { mapaPadrao: { largura: number; altura: number } }).mapaPadrao;
     const casos: [string, (f: Fase) => void, RegExp][] = [
       ['peixe na terra', (f) => { f.mapa.recursos['fish']?.push([5, 5]); }, /'fish' em 'grama' em \(5,5\)/],
       ['pedra no chao', (f) => { f.mapa.recursos['rock'] = [...(f.mapa.recursos['rock'] ?? []), [6, 6]]; }, /'rock' em 'grama'/],
-      ['predio na agua', (f) => { f.lados[0]?.predios.push({ id: 'quarry', gx: 63, gy: 61 }); }, /'quarry' em \(63,61\) tem o tile/],
+      ['predio na agua', (f) => { f.lados[0]?.predios.push({ id: 'quarry', gx: pa[0], gy: pa[1] }); }, new RegExp(`'quarry' em \\(${pa[0]},${pa[1]}\\) tem o tile`)],
       ['predio que nao existe', (f) => { f.lados[1]?.predios.push({ id: 'castelo', gx: 100, gy: 100 }); }, /predio 'castelo' nao existe/],
       ['tropa que nao existe', (f) => { f.lados[1]?.unidades.push({ tipo: 'dragao', quantidade: 1, gx: 90, gy: 90 }); }, /unidade 'dragao' nao existe/],
-      ['tropa nascendo na agua', (f) => { f.lados[1]?.unidades.push({ tipo: 'militia', quantidade: 1, gx: 64, gy: 62 }); }, /nasce em \(64,62\)/],
+      ['tropa nascendo na agua', (f) => { f.lados[1]?.unidades.push({ tipo: 'militia', quantidade: 1, gx: ta[0], gy: ta[1] }); }, new RegExp(`nasce em \\(${ta[0]},${ta[1]}\\)`)],
       ['dois recursos no tile', (f) => { const [x, y] = f.mapa.recursos['tree']?.[0] ?? [0, 0]; f.mapa.recursos['grapes'] = [[x, y]]; }, /dois recursos/],
       ['objetivo fora do vocabulario', (f) => { f.objetivos.vitoria.push({ tipo: 'explorar' }); }, /objetivo 'explorar' fora do vocabulario/],
       ['onda de lado que nao existe', (f) => { f.ondas.push({ aos_segundos: 10, lado: 7, de: { gx: 100, gy: 100 }, tropas: [] }); }, /onda do lado 7/],
-      ['mapa de outro tamanho', (f) => { f.mapa.largura = 64; }, /mapa precisa ser 128x128/],
+      ['mapa de outro tamanho', (f) => { f.mapa.largura = 64; }, new RegExp(`mapa precisa ser ${L}x${A}`)],
     ];
     for (const [nome, estragar, erro] of casos) {
       const f = structuredClone(base);
@@ -171,13 +177,18 @@ describe('I-TERRENO-DEZ-MAPAS-DA-CAMPANHA', () => {
     const f4 = FASES[3] as Fase;
     const andavel = (gx: number, gy: number): boolean => ['g', 'c', 'a'].includes(f4.mapa.linhas[gy]?.[gx] ?? 'w');
     const agua = (gx: number, gy: number): boolean => f4.mapa.linhas[gy]?.[gx] === 'w';
-    // o anel da serra tem centro (64,82) e raio 18 a 25: percorre o meio dele (21,5) e conta as passagens
+    // o anel da serra tem centro 12 tiles a leste e 10 ao sul do armazem da vila (64,82 no mapa gerado)
+    // e raio 18 a 25: percorre o meio dele (21,5) e conta as passagens. O centro sai do armazem, e nao
+    // de literal: a suite tambem roda no mundo transladado (F18c-1c).
+    const armazem = f4.lados[0]?.predios.find((p) => p.id === 'storehouse');
+    if (armazem === undefined) throw new Error('a fase 4 precisa do armazem do jogador');
+    const [cx, cy] = [armazem.gx + 12, armazem.gy + 10];
     const corridas: { inicio: number; tiles: Set<string>; agua: boolean }[] = [];
     let atual: { inicio: number; tiles: Set<string>; agua: boolean } | null = null;
     for (let passo = 0; passo < 3600; passo++) {
       const a = (passo / 3600) * 2 * Math.PI;
-      const gx = Math.round(64 + 21.5 * Math.cos(a));
-      const gy = Math.round(82 + 21.5 * Math.sin(a));
+      const gx = Math.round(cx + 21.5 * Math.cos(a));
+      const gy = Math.round(cy + 21.5 * Math.sin(a));
       const aberto = andavel(gx, gy) || agua(gx, gy);
       if (aberto) {
         if (atual === null) { atual = { inicio: passo, tiles: new Set(), agua: false }; corridas.push(atual); }

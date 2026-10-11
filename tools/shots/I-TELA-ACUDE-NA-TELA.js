@@ -4,6 +4,7 @@
 // arma a planta do Acude pelo menu e le o raio que ela publica. Tres capturas.
 const { readFileSync, existsSync } = require('node:fs');
 const { retanguloDoCanvas } = require('./_canvas');
+const { aneisEmVolta, lotePelaPlanta } = require('./_lote-pela-planta');
 const terreno = require('../../data/terrain.json');
 const acudeJson = require('../../data/acude.json');
 const tema = require('../../data/theme-sertao.json');
@@ -75,10 +76,14 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   await page.keyboard.press('p');
   await segurar({ x: botao.x + botao.width / 2, y: botao.y + botao.height / 2 });
   await page.keyboard.press('p');
-  const alvo = naPagina(fazenda.gx + 7, fazenda.gy + 1);
-  await page.mouse.move(alvo.x + 3, alvo.y + 3);
-  await page.mouse.move(alvo.x, alvo.y);
-  await esperar();
+  // O lote da planta e o que a propria planta aprova, perto da fazenda e na vista (`_lote-pela-planta`).
+  // Ate 2026-10-11 era um tile fixo a leste da fazenda; com predio proibido na roca
+  // (I-OBRA-SEM-PREDIO-NA-ROCA) o Acude do teste mudou de lado, e aquele tile saiu da vista.
+  const { escolhido, recusados } = await lotePelaPlanta({
+    page, estado, canvas, tilePx: TILE_PX, esperar: () => esperar(),
+    candidatos: aneisEmVolta({ gx: fazenda.gx, gy: fazenda.gy }, acudeJson.raio_tiles).map((t) => [t]),
+  });
+  afirmar(escolhido !== null, `a planta deveria aprovar um lote para o Acude perto da fazenda (recusados: ${recusados})`);
   s = await estado();
   afirmar(s.plantaFantasma !== null && s.plantaFantasma.tipo === 'reservoir' && s.plantaFantasma.irrigacao !== null
     && s.plantaFantasma.irrigacao.raio === acudeJson.raio_tiles, `a planta do Acude deveria publicar o raio ${acudeJson.raio_tiles}: ${JSON.stringify(s.plantaFantasma)}`);

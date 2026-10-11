@@ -34,7 +34,7 @@ const { retanguloDoCanvas, arrastarDentroDoCanvas, pontoParaApertar } = require(
 const economia = require('../../data/economy.json');
 const tema = require('../../data/theme-sertao.json');
 const { predios } = require('../../data/buildings.json');
-const { bloqueiaConstrucao, temRecurso, arrastosDaRede } = require('./_recursos');
+const { bloqueiaConstrucao, ehRocaDoMapa, temRecurso, arrastosDaRede } = require('./_recursos');
 const terreno = require('../../data/terrain.json');
 const producao = require('../../data/production.json');
 
@@ -197,7 +197,7 @@ async function roteiro(ctx) {
   // A Bodega encosta na rua, o mais a leste que der: pela borda sul, e se ali nao couber,
   // pela borda norte. Ate a D-PRODUCAO-02 era sempre em cima da ponta leste da rua; com o
   // alcance do lenhador 6 -> 12 a mata do par mudou de lugar, a ponta caiu em cima da
-  // escola, e acima da rua sobra lajedo. A caixa nao pisa predio, planta, rua nem o que
+  // escola, e acima da rua sobra lajedo. A caixa nao pisa predio, planta, rua, roca nem o que
   // bloqueia construcao.
   const pisa = (caixa, gx, gy) => gx >= caixa.gx && gx < caixa.gx + caixa.largura && gy >= caixa.gy && gy < caixa.gy + caixa.altura;
   const ocupadas = [
@@ -209,7 +209,7 @@ async function roteiro(ctx) {
       for (let gx = gx0; gx < gx0 + larguraDaBodega; gx += 1) {
         if (ocupadas.some((c) => pisa(c, gx, gy))) return false;
         if (tilesDaRuaLista.some((t) => t.gx === gx && t.gy === gy)) return false;
-        if (bloqueiaConstrucao(gx, gy)) return false;
+        if (bloqueiaConstrucao(gx, gy) || ehRocaDoMapa(gx, gy)) return false;
       }
     }
     return true;

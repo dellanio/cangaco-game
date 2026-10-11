@@ -20,6 +20,8 @@
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
+const { escreverFase } = require('./fase-formato.mjs');
+const { exportar } = require('./mapa-tiled.mjs');
 
 const RAIZ = path.resolve(__dirname, '..');
 const ARQ = {
@@ -30,6 +32,17 @@ const ARQ = {
   // translacao, a vila do jogador andava +K e caia em cima da vila da IA.
   escaramuca: path.join(RAIZ, 'data', 'escaramuca.json'),
 };
+// I-TERRENO-DEZ-MAPAS-DA-CAMPANHA (emenda de 2026-10-11): as fases tem mapa do tamanho do `mapaPadrao`
+// e coordenada de missao. Fora da translacao, eram recusadas pelo tamanho no mundo de N+K.
+const PASTA_DA_CAMPANHA = path.join(RAIZ, 'data', 'campanha');
+if (fs.existsSync(PASTA_DA_CAMPANHA)) {
+  for (const nome of fs.readdirSync(PASTA_DA_CAMPANHA).filter((n) => n.endsWith('.json')).sort()) {
+    ARQ[`campanha:${nome}`] = path.join(PASTA_DA_CAMPANHA, nome);
+    // e o .tmj publicado de cada fase, que o teste compara com o `exportar` da fase
+    const tmj = path.join(RAIZ, 'tools', 'tiled', 'fases', nome.replace(/.json$/, '.tmj'));
+    if (fs.existsSync(tmj)) ARQ[`tiled:${nome}`] = tmj;
+  }
+}
 
 function argumentos(argv) {
   const sep = argv.indexOf('--');
@@ -86,10 +99,29 @@ function transladarTextos(originais, k) {
   esc.producao.civis.ponto.gx += k;
   esc.producao.civis.ponto.gy += k;
 
+  const fases = {};
+  for (const id of Object.keys(originais).filter((i) => i.startsWith('campanha:'))) {
+    // o formato canonico da fase (cada par [gx,gy] numa linha), o mesmo do gerador e do Tiled
+    const fase = transladarFase(JSON.parse(originais[id]), k);
+    fases[id] = escreverFase(fase);
+    const tiled = id.replace(/^campanha:/, 'tiled:');
+    if (originais[tiled] !== undefined) fases[tiled] = JSON.stringify(exportar(fase));
+  }
   return {
     economia: `${JSON.stringify(e, null, 2)}\n`, mapa: JSON.stringify(m), terreno,
-    escaramuca: `${JSON.stringify(esc, null, 2)}\n`,
+    escaramuca: `${JSON.stringify(esc, null, 2)}\n`, ...fases,
   };
+}
+/** Uma fase da campanha deslocada de +K: o mapa (com a faixa de grama), os predios, as unidades e as ondas. */
+function transladarFase(original, k) {
+  const f = JSON.parse(JSON.stringify(original));
+  f.mapa = transladarMapa(f.mapa, k);
+  for (const lado of f.lados ?? []) {
+    for (const p of lado.predios ?? []) { p.gx += k; p.gy += k; }
+    for (const u of lado.unidades ?? []) { u.gx += k; u.gy += k; }
+  }
+  for (const o of f.ondas ?? []) { o.de.gx += k; o.de.gy += k; }
+  return f;
 }
 
 function transladar(originais, k) {

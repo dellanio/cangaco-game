@@ -5,6 +5,7 @@
 // vem dos JSON — nada digitado aqui que o jogo tambem saiba.
 
 const { retanguloDe, retanguloDoCanvas } = require('./_canvas');
+const { aneisEmVolta, lotePelaPlanta } = require('./_lote-pela-planta');
 const economia = require('../../data/economy.json');
 const { predios } = require('../../data/buildings.json');
 const tema = require('../../data/theme-sertao.json');
@@ -278,10 +279,16 @@ async function roteiro(ctx) {
     return { x, y };
   }
 
-  // 4. planta VERDE: um tile livre logo abaixo do armazem do cenario.
+  // 4. planta VERDE: o lote livre mais perto do armazem do cenario, escolhido pela propria planta
+  //    (`_lote-pela-planta`). Ate 2026-10-11 era "logo abaixo do armazem"; ali agora e o rocado de
+  //    partida, e predio nao se planta na roca (I-OBRA-SEM-PREDIO-NA-ROCA).
   const armazem = economia.estadoInicial.predios.find((p) => p.id === 'storehouse');
-  const [, armazemAltura] = defDe('storehouse').tamanho;
-  const livre = { gx: armazem.gx, gy: armazem.gy + armazemAltura + 1 };
+  const { escolhido, recusados } = await lotePelaPlanta({
+    page, estado, canvas, tilePx: TILE_PX, esperar: () => page.waitForTimeout(200),
+    candidatos: aneisEmVolta({ gx: armazem.gx, gy: armazem.gy }, 8).map((t) => [t]),
+  });
+  afirmar(escolhido !== null, `a planta deveria aprovar um lote perto do armazem (recusados: ${recusados})`);
+  const livre = escolhido[0];
   const pontoLivre = await pontoDoTile(livre.gx, livre.gy);
   await page.mouse.move(pontoLivre.x, pontoLivre.y);
   await page.waitForTimeout(200);

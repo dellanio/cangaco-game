@@ -29,6 +29,25 @@ describe('E-ENTREGA-BUILD — a regra do dist/ limpo', () => {
     expect(r.problemas).toEqual([`${copiado.caminho} e o arquivo ${daBase.caminho} de assets/base/`]);
   });
 
+  // Emenda de 2026-10-11: a origem no manifesto do build (`src`).
+  it('igual a uma base, mas o manifesto diz que veio de assets/sprites/: passa (a base e copia do sprite)', () => {
+    const doSprite = { caminho: 'dist/assets/cidade-1.png', sha256: daBase.sha256, bytes: 9 };
+    const m = { ...manifesto, 'assets/sprites/ui/menu/cidade.png': { file: 'assets/cidade-1.png', src: 'assets/sprites/ui/menu/cidade.png' } };
+    expect(conferirDist({ dist: [doSprite], base: [daBase], manifesto: m }).problemas).toEqual([]);
+  });
+
+  it('igual a uma base, com origem fora de assets/sprites/ no manifesto: reprova', () => {
+    const outro = { caminho: 'dist/assets/x-1.png', sha256: daBase.sha256, bytes: 9 };
+    const m = { ...manifesto, 'src/x.png': { file: 'assets/x-1.png', src: 'src/x.png' } };
+    expect(conferirDist({ dist: [outro], base: [daBase], manifesto: m }).problemas).toEqual([`${outro.caminho} e o arquivo ${daBase.caminho} de assets/base/`]);
+  });
+
+  it('origem em assets/base/ no manifesto reprova, mesmo com conteudo diferente de toda base', () => {
+    const daPasta = { caminho: 'dist/assets/base-1.png', sha256: 'eee', bytes: 9 };
+    const m = { ...manifesto, 'assets/base/storehouse/base.png': { file: 'assets/base-1.png', src: 'assets/base/storehouse/base.png' } };
+    expect(conferirDist({ dist: [daPasta], base: [daBase], manifesto: m }).problemas).toEqual([`${daPasta.caminho} vem de assets/base/storehouse/base.png, em assets/base/`]);
+  });
+
   it('o mesmo NOME de um arquivo da base, com outro conteudo, nao reprova', () => {
     const homonimo = { caminho: 'dist/assets/base.png', sha256: 'ddd', bytes: 9 };
     expect(conferirDist({ dist: [homonimo], base: [daBase], manifesto }).problemas).toEqual([]);

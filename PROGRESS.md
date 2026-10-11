@@ -21947,3 +21947,30 @@ fase                     pedra  árvore  inimigo   (custo do A* em ticks, do in�
     acima e uma abaixo) e I-TERRENO-LAJEDO (o lote lajedo(10,8)).
 - **Não verificado:** os roteiros de tela que plantam prédio pela interface perto do roçado, a suíte
   transladada e a longa. Rodam no fechamento.
+
+### Fechamento do bloco (I-ENTREGA-VERSAO-PUBLICAVEL), 2026-10-11 — a primeira corrida e os consertos (verificado)
+- **A corrida no `d84eb12e`:** o `verify` completo reprovou na transladada (3 testes da campanha), o
+  `npm run build` reprovou na conferência do `dist/` (13 arquivos) e o `shot:todos` deu 165/172. O
+  `test:longo` da fila foi interrompido por mim: rodaria com a árvore suja e o selo não valeria.
+- **A campanha no mundo transladado (emenda do I-TERRENO-DEZ-MAPAS-DA-CAMPANHA, `038baddb`):** as fases
+  ficavam 128 e o `mapaPadrao` virava 160. `tools/transladar-mundo.js` passa a andar +K cada fase (mapa
+  com a faixa de grama, prédios, unidades e origem das ondas) e o `.tmj` publicado dela (o `exportar` da
+  fase andada), no formato canônico. O teste tirou as coordenadas fixas: a água dos defeitos sai do mapa,
+  o tamanho sai do `terrain.json` e o centro do anel da fase 4 sai do armazém (+12, +10). Nenhum teste
+  entrou em `FORA_DO_MUNDO_TRANSLADADO`. Medido: 15/15 na transladada, 7/7 na normal.
+- **O `dist/` (emenda do E-ENTREGA-BUILD, `038baddb`):** os 13 eram sprites de `assets/sprites/`
+  iguais byte a byte a uma cópia guardada na base (as peças do menu entregues pelo operador, os
+  `inverno.png` da caatinga, a régua da padaria). A regra lê a origem no manifesto do Vite (`src`):
+  origem na base reprova, igualdade com a base reprova a não ser que a origem seja `assets/sprites/`.
+  Três casos novos na tabela (9/9).
+- **Os 7 roteiros (F-ESC, F06, F07, F17, F23b, I-TELA-ACUDE-NA-TELA, MATERIAIS):** todos pela regra
+  da roça de hoje, que eu não tinha rodado na tela. O modelo de lote dos roteiros (`_recursos.js`,
+  `caixaLivre`) passa a saber da roça (`ehRocaDoMapa`, a mesma leitura do dado que a sim faz: recurso
+  com `aradura`, pela lista do mapa ou pelo terreno derivado). Onde o lote era fixo, ele passa a ser o
+  que a própria planta aprova (`tools/shots/_lote-pela-planta.js`): F06, F07 (o candidato só vale com
+  o vizinho da segunda obra e o tile do clique sem ferramenta também válidos) e o Açude. MATERIAIS
+  anda o lenhador para leste até sair da cana. Os 7 saem 0 rodados um a um.
+- **Premissa morta no dado:** o `_docBloqueiaConstrucao` do milho e da cana em `data/resources.json`
+  ainda dizia que construir na roça era permitido. Agora diz que a bandeira fica `false` pela estrada e
+  que o prédio é recusado pelo motivo `roca`.
+- **Não verificado ainda:** a segunda corrida do fechamento (verify completo, build, `test:longo`).
