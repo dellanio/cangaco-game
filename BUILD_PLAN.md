@@ -9750,6 +9750,19 @@ convertidos para ticks no carregamento:
   4. o roteiro F18f sai 0 sem mudar a asserção dele (nenhuma pilha de 3);
   5. os testes da fila de civis ("ninguém sai do próprio caminho", "quem quer andar avança no prazo")
      passam.
+- **Emenda (2026-10-11, antes do código; decisão do operador, opção (a) da pergunta de 2026-10-10):** a
+  primeira tentativa (medida e revertida em `8071fcd3`) trancou o serf atrás do obreiro parado no posto,
+  porque o anel em volta da obra é o corredor de 1 tile entre prédios, e a colisão civil manda quem anda
+  esperar o parado. **Regra a mais: o obreiro no posto cede o lugar.** Com um civil esperando o tile do
+  posto há `ticksEmpurrar` (o mesmo prazo do ocioso empurrado), o obreiro troca para outro posto livre da
+  mesma obra e anda até ele, sem largar a tarefa nem a reserva; sem posto livre, ele troca de lugar com
+  quem espera (como o ocioso empurrado). O civil que anda continua sem contornar ninguém. **Aceite a
+  mais:**
+  6. pelo `step`: um serf cujo caminho passa pelo posto de um obreiro que trabalha atravessa antes do
+     prazo do anti-travamento, e o obreiro continua na tarefa (a mesma obra, o mesmo progresso de
+     trabalho), num posto livre da obra;
+  7. o caso sem posto livre: a troca de lugar acontece, e nenhum tile tem dois civis "fora";
+  8. a suíte normal inteira passa (a primeira tentativa reprovou 26).
 
 #### A campanha: as dez fases desenhadas e os mapas prontos para o Tiled (pedido do operador, 2026-10-10)
 - **Pedido:** "leia no KaM Remake 10 fases, como a fase é construída, os desafios, estilo de cenário,
