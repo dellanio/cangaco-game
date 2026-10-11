@@ -404,7 +404,15 @@ function passoDevolvendo(state: GameState, u: Unidade, dados: GameData): Passo {
   if (!alvoValido || (proximo !== undefined && !passoAndavel(state, noTile(u), proximo, 'livre', dados))) {
     // o armazem sumiu, ou algo entrou no caminho: escolhe de novo a partir de onde esta
     const novo = armazemMaisProximo(state, noTile(u), u.lado, dados);
-    if (novo === null) return semEventos(comUnidade(state, { ...u, fsmData: dadosDaFsm({ carga }) })); // sem armazem: espera
+    if (novo === null) {
+      // sem armazem: espera. Empurrado (I-MOVIMENTO-DEVOLVENDO-SEM-ARMAZEM-CEDE-O-TILE), anda o passo de
+      // lado que a colisao marcou, com a carga, e volta a esperar no tile novo
+      if (u.fsmData.armazem === undefined && proximo !== undefined && passoAndavel(state, noTile(u), proximo, 'livre', dados)) {
+        const andou = andar(state, u, dados);
+        return semEventos(comUnidade(state, chegou(andou) ? { ...andou, fsmData: dadosDaFsm({ carga }) } : andou));
+      }
+      return semEventos(comUnidade(state, { ...u, fsmData: dadosDaFsm({ carga }) }));
+    }
     atual = { ...u, fsmData: dadosDaFsm({ carga, armazem: novo.id, caminho: novo.caminho, progresso: 0 }) };
   }
   const andou = andar(state, atual, dados);

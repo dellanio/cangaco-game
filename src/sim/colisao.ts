@@ -70,6 +70,21 @@ export const POSICAO_DO_ESTADO: Readonly<Record<string, 'dentro' | 'fora'>> = {
 /** O unico estado que se empurra: quem nao tem tarefa nem lugar. */
 const EMPURRAVEL = 'ocioso';
 
+/**
+ * Quem se empurra: quem nao tem tarefa nem lugar, PARADO. O ocioso; e (I-MOVIMENTO-DEVOLVENDO-SEM-
+ * ARMAZEM-CEDE-O-TILE) o serf que espera para devolver a carga sem armazem nenhum (`armazem` ausente):
+ * medido, ele trancava a rua da vila sem armazem ate o anti-travamento reprovar. Ele e empurrado com a
+ * carga, e volta a procurar armazem quando houver um.
+ */
+export function ehEmpurravel(o: Unidade): boolean {
+  return semTarefaNemLugar(o) && (o.fsmData.caminho ?? []).length === 0;
+}
+
+/** O estado de quem nao tem tarefa nem lugar, parado ou dando o passo de lado. */
+function semTarefaNemLugar(o: Unidade): boolean {
+  return o.fsm === EMPURRAVEL || (o.fsm === 'devolvendo' && o.fsmData.armazem === undefined);
+}
+
 export function colisaoCivilLigada(dados: GameData): boolean {
   return dados.movimento.colisaoCivil.ligada;
 }
@@ -307,7 +322,6 @@ function empurrar(state: GameState, o: Unidade, para: TileDeGrid): GameState {
   return { ...state, unidades: { ...state.unidades, porId: { ...state.unidades.porId, [o.id]: movido } } };
 }
 
-const parado = (u: Unidade): boolean => (u.fsmData.caminho ?? []).length === 0;
 
 /**
  * I-MOVIMENTO-FILA-DE-CIVIS — o `fsmData` de um ocioso e vazio, ou e o PASSO DE LADO: um caminho de
@@ -346,7 +360,7 @@ export function sistemaDoEmpurrao(state: GameState, dados: GameData): GameState 
     const alvo = w.fsmData.caminho?.[0];
     if (alvo === undefined) continue;
     for (const o of civisNoTile(atual, alvo, w.id, dados)) {
-      if (o.fsm !== EMPURRAVEL || !parado(o)) continue;
+      if (!ehEmpurravel(o)) continue;
       const livre = vizinhoLivre(atual, o, w, dados);
       if (livre !== undefined) { atual = darPassoDeLado(atual, o, livre); continue; }
       // sem vizinho livre (a porta cercada): o ocioso e quem espera TROCAM de lugar, os dois andando,
@@ -371,7 +385,7 @@ export function sistemaDoEmpilhamento(state: GameState, dados: GameData, depoisD
   let atual = state;
   for (const id of state.unidades.ordem) {
     const o = atual.unidades.porId[id];
-    if (o === undefined || o.fsm !== EMPURRAVEL || !parado(o) || !ehCivilFora(o, dados)) continue;
+    if (o === undefined || !ehEmpurravel(o) || !ehCivilFora(o, dados)) continue;
     // conta quem espera a porta (`saindo`) no tile, como antes: o ocioso parado na porta de quem quer
     // sair e o que trancava (medido: dois obreiros na porta do lenhador, 400 ticks)
     const noTile: Unidade[] = [];
@@ -404,7 +418,7 @@ export function sistemaDoEmpilhamento(state: GameState, dados: GameData, depoisD
     }
     // o empilhado por NASCIMENTO (fixture, a vila inicial no spawn) se separa na hora, como antes:
     // nao e alguem andando na rua, e um estado que nao devia existir
-    const fica = noTile.find((x) => x.fsm !== EMPURRAVEL) ?? (noTile[0] as Unidade);
+    const fica = noTile.find((x) => !semTarefaNemLugar(x)) ?? (noTile[0] as Unidade);
     if (fica.id === o.id) continue;
     const livre = lugarLivre(atual, o, null, dados);
     if (livre !== undefined) atual = empurrar(atual, o, livre);
