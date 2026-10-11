@@ -8,7 +8,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { validarTudo, validarInterface } = require('./data-rules');
+const { validarTudo, validarInterface, validarCampanha } = require('./data-rules');
 const { ARQUIVOS, ARQUIVOS_DA_INTERFACE } = require('./data-schema');
 
 function lerArgs(argv) {
@@ -26,16 +26,28 @@ function carregarDados(dir, lista = ARQUIVOS) {
   return dados;
 }
 
+/** I-TERRENO-DEZ-MAPAS-DA-CAMPANHA — as fases da campanha, por nome de arquivo (sem a extensao). */
+function carregarCampanha(dir) {
+  const pasta = path.join(dir, 'campanha');
+  if (!fs.existsSync(pasta)) return {};
+  const fases = {};
+  for (const nome of fs.readdirSync(pasta).filter((n) => n.endsWith('.json')).sort()) {
+    fases[nome.slice(0, -'.json'.length)] = JSON.parse(fs.readFileSync(path.join(pasta, nome), 'utf8'));
+  }
+  return fases;
+}
+
 function main() {
   const { dir } = lerArgs(process.argv.slice(2));
   const dados = carregarDados(dir);
   // Os arquivos de interface (tema, menu) sao validados a parte: sim/ nao os
   // le, mas eles apontam ids de buildings, e id pendurado e erro de dado.
   const interfaceUi = carregarDados(dir, ARQUIVOS_DA_INTERFACE);
-  const erros = [...validarTudo(dados), ...validarInterface(dados, interfaceUi)];
+  const campanha = carregarCampanha(dir);
+  const erros = [...validarTudo(dados), ...validarInterface(dados, interfaceUi), ...validarCampanha(dados, campanha)];
 
   if (erros.length === 0) {
-    console.log(`validate:data — ${ARQUIVOS.length + ARQUIVOS_DA_INTERFACE.length} arquivos, 0 erros. OK.`);
+    console.log(`validate:data — ${ARQUIVOS.length + ARQUIVOS_DA_INTERFACE.length} arquivos e ${Object.keys(campanha).length} fases da campanha, 0 erros. OK.`);
     process.exit(0);
   }
 

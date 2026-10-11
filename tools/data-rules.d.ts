@@ -13,3 +13,5 @@ export function validarCargaNasMaos(config: unknown, erros: string[]): void;
 export function validarSom(
   som: unknown, erros: string[], opcoes?: { eventosDaSim?: readonly string[]; manifesto?: unknown },
 ): void;
+/** I-TERRENO-DEZ-MAPAS-DA-CAMPANHA — as fases de data/campanha/, por nome de arquivo (sem a extensao). */
+export function validarCampanha(dados: Record<string, unknown>, fases: Record<string, unknown>): string[];

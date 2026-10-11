@@ -2334,4 +2334,131 @@ function validarTudo(dados) {
   return erros;
 }
 
-module.exports = { validarLajedoDaVila, validarFontesNaturais, validarSerra, validarSom, validarCargaNasMaos, validarBandeira, validarFumaca, validarTudo, validarInterface, validarVento, validarPoeira, getByPath };
+
+// --- I-TERRENO-DEZ-MAPAS-DA-CAMPANHA: as fases da campanha (data/campanha/) ----------------------
+//
+// As fases nao entram no carregador da sim (ainda nao ha camada de missao): sao dado de autoria, e
+// por isso sao validadas a parte, com o vocabulario da sim. Um erro aqui apareceria tarde, na missao
+// rodando: peixe na terra, predio na agua, tropa de um tipo que nao existe.
+const MODOS_DA_FASE = ['construir', 'lutar'];
+const OBJETIVOS_DA_FASE = ['destruir', 'perder', 'sobreviver', 'manter', 'proteger', 'capturar', 'prazo'];
+const RECURSO_NA_ROCHA = new Set(['rock', 'coal', 'iron_ore', 'gold_ore']);
+
+/** Onde cada recurso pode ficar, pelo tipo de terreno (o padrao do `sertao-128`). */
+function recursoNoTerrenoCerto(tipo, terreno) {
+  if (tipo === 'fish') return terreno === 'agua';
+  if (RECURSO_NA_ROCHA.has(tipo)) return terreno === 'rocha' || terreno === 'montanha';
+  return terreno === 'grama' || terreno === 'campoArado';
+}
+
+function validarCampanha(dados, fases) {
+  const erros = [];
+  const nomes = Object.keys(fases).sort();
+  if (nomes.length === 0) return erros;
+  const vocabulario = vocabularioDeTerreno(dados);
+  const transponivel = new Set(vocabulario.transponiveis);
+  const mapaPadrao = (dados.terrain && dados.terrain.mapaPadrao) || {};
+  const predios = new Set(((dados.buildings && dados.buildings.predios) || []).map((p) => p.id));
+  const u = dados.units || {};
+  const tiposDeUnidade = new Set(['civis', 'militares', 'mercenarios'].flatMap((g) => ((u[g] && u[g].tipos) || []).map((t) => t.id)));
+  const militares = new Set(((u.militares && u.militares.tipos) || []).map((t) => t.id));
+  const recursosDoJogo = new Set(Object.keys((dados.resources && dados.resources.tipos) || {}));
+  const liberados = new Map(); // id -> fase que liberou
+
+  const porFase = nomes.map((nome) => ({ nome, fase: fases[nome] })).sort((a, b) => ((a.fase && a.fase.fase) || 0) - ((b.fase && b.fase.fase) || 0));
+  for (const { nome, fase } of porFase) {
+    const err = (m) => erros.push(`campanha/${nome}: ${m}`);
+    if (!fase || typeof fase !== 'object') { err('nao e um objeto'); continue; }
+    if (fase.id !== nome) err(`id '${fase.id}' difere do nome do arquivo`);
+    if (!Number.isInteger(fase.fase) || fase.fase < 1) err('fase precisa ser inteiro >= 1');
+    if (!MODOS_DA_FASE.includes(fase.modo)) err(`modo '${fase.modo}' nao e ${MODOS_DA_FASE.join(' nem ')}`);
+    if (fase.escala !== 'combate') err("escala precisa ser 'combate' (as duracoes da missao)");
+    const mapa = fase.mapa;
+    if (!mapa || mapa.largura !== mapaPadrao.largura || mapa.altura !== mapaPadrao.altura) {
+      err(`mapa precisa ser ${mapaPadrao.largura}x${mapaPadrao.altura} (terrain.mapaPadrao)`);
+      continue;
+    }
+    let torto = false;
+    for (const [ch, tipo] of Object.entries(mapa.legenda || {})) {
+      if (!vocabulario.todos.has(tipo)) { err(`legenda '${ch}' -> '${tipo}' fora do vocabulario de terreno`); torto = true; }
+    }
+    if (!Array.isArray(mapa.linhas) || mapa.linhas.length !== mapa.altura) { err(`linhas precisa ter ${mapa.altura} linhas`); continue; }
+    for (let gy = 0; gy < mapa.altura && !torto; gy++) {
+      const linha = mapa.linhas[gy];
+      if (typeof linha !== 'string' || linha.length !== mapa.largura) { err(`linhas[${gy}] precisa ter ${mapa.largura} chars`); torto = true; break; }
+      for (let gx = 0; gx < linha.length; gx++) {
+        if (!(linha[gx] in mapa.legenda)) { err(`char '${linha[gx]}' fora da legenda em (${gx},${gy})`); torto = true; break; }
+      }
+    }
+    if (torto) continue;
+    const terrenoEm = (gx, gy) => mapa.legenda[mapa.linhas[gy][gx]];
+    const dentro = (gx, gy) => Number.isInteger(gx) && Number.isInteger(gy) && gx >= 0 && gy >= 0 && gx < mapa.largura && gy < mapa.altura;
+    const recursoEm = new Map();
+    for (const [tipo, tiles] of Object.entries(mapa.recursos || {})) {
+      if (!recursosDoJogo.has(tipo)) { err(`recurso '${tipo}' nao existe em resources.json`); continue; }
+      for (const [gx, gy] of tiles) {
+        if (!dentro(gx, gy)) { err(`'${tipo}' fora do mapa em (${gx},${gy})`); continue; }
+        const k = `${gx},${gy}`;
+        if (recursoEm.has(k)) err(`dois recursos ('${recursoEm.get(k)}' e '${tipo}') em (${gx},${gy})`);
+        recursoEm.set(k, tipo);
+        if (!recursoNoTerrenoCerto(tipo, terrenoEm(gx, gy))) err(`'${tipo}' em '${terrenoEm(gx, gy)}' em (${gx},${gy})`);
+      }
+    }
+    const livre = (gx, gy) => dentro(gx, gy) && transponivel.has(terrenoEm(gx, gy)) && !recursoEm.has(`${gx},${gy}`);
+    const lados = Array.isArray(fase.lados) ? fase.lados : [];
+    const idsDeLado = new Set(lados.map((l) => l.lado));
+    if (!idsDeLado.has(0)) err('falta o lado 0 (o jogador)');
+    if (idsDeLado.size !== lados.length) err('lado repetido');
+    const caixas = [];
+    for (const lado of lados) {
+      for (const p of lado.predios || []) {
+        if (!predios.has(p.id)) { err(`lado ${lado.lado}: predio '${p.id}' nao existe`); continue; }
+        const r = retanguloDoPredio(p, dados);
+        for (let gy = r.y0; gy <= r.y1 + 1; gy++) {
+          for (let gx = r.x0; gx <= r.x1; gx++) {
+            if (!livre(gx, gy)) err(`lado ${lado.lado}: '${p.id}' em (${p.gx},${p.gy}) tem o tile (${gx},${gy}) ${gy > r.y1 ? 'da porta ' : ''}fora de chao livre`);
+          }
+        }
+        for (const c of caixas) if (retangulosSeSobrepoem(c, r)) err(`lado ${lado.lado}: '${p.id}' em (${p.gx},${p.gy}) sobre '${c.id}'`);
+        caixas.push(r);
+      }
+      for (const un of lado.unidades || []) {
+        if (!tiposDeUnidade.has(un.tipo)) err(`lado ${lado.lado}: unidade '${un.tipo}' nao existe`);
+        if (!Number.isInteger(un.quantidade) || un.quantidade < 1) err(`lado ${lado.lado}: '${un.tipo}' com quantidade invalida`);
+        if (!livre(un.gx, un.gy)) err(`lado ${lado.lado}: '${un.tipo}' nasce em (${un.gx},${un.gy}), fora de chao livre`);
+      }
+    }
+    // o armazem adicional (fase 5) e a unica liberacao repetida de proposito: e a permissao de ter
+    // mais de um, e nao o predio
+    for (const id of (fase.libera && fase.libera.predios) || []) {
+      if (!predios.has(id)) err(`libera o predio '${id}', que nao existe`);
+      else if (liberados.has(`p:${id}`) && id !== 'storehouse') err(`libera '${id}', ja liberado na fase ${liberados.get(`p:${id}`)}`);
+      liberados.set(`p:${id}`, fase.fase);
+    }
+    for (const id of (fase.libera && fase.libera.tropas) || []) {
+      if (!militares.has(id)) err(`libera a tropa '${id}', que nao e militar`);
+      else if (liberados.has(`t:${id}`)) err(`libera a tropa '${id}', ja liberada na fase ${liberados.get(`t:${id}`)}`);
+      liberados.set(`t:${id}`, fase.fase);
+    }
+    const objetivos = fase.objetivos || {};
+    for (const grupo of ['vitoria', 'derrota']) {
+      const lista = objetivos[grupo];
+      if (!Array.isArray(lista) || lista.length === 0) { err(`objetivos.${grupo} precisa de ao menos um`); continue; }
+      for (const o of lista) {
+        if (!OBJETIVOS_DA_FASE.includes(o.tipo)) err(`objetivo '${o.tipo}' fora do vocabulario`);
+        if (o.lado !== undefined && !idsDeLado.has(o.lado)) err(`objetivo '${o.tipo}' aponta o lado ${o.lado}, que nao existe`);
+        for (const id of o.predios || []) if (!predios.has(id)) err(`objetivo '${o.tipo}' aponta o predio '${id}', que nao existe`);
+        if (o.unidade !== undefined && !tiposDeUnidade.has(o.unidade)) err(`objetivo '${o.tipo}' aponta a unidade '${o.unidade}', que nao existe`);
+        if (o.segundos !== undefined && !(o.segundos > 0)) err(`objetivo '${o.tipo}' com segundos invalidos`);
+      }
+    }
+    for (const onda of fase.ondas || []) {
+      if (!(onda.aos_segundos > 0)) err('onda com aos_segundos invalido');
+      if (!idsDeLado.has(onda.lado)) err(`onda do lado ${onda.lado}, que nao existe`);
+      if (!onda.de || !livre(onda.de.gx, onda.de.gy)) err(`onda nasce em ${JSON.stringify(onda.de)}, fora de chao livre`);
+      for (const t of onda.tropas || []) if (!tiposDeUnidade.has(t.tipo)) err(`onda com a unidade '${t.tipo}', que nao existe`);
+    }
+  }
+  return erros;
+}
+module.exports = { validarCampanha, validarLajedoDaVila, validarFontesNaturais, validarSerra, validarSom, validarCargaNasMaos, validarBandeira, validarFumaca, validarTudo, validarInterface, validarVento, validarPoeira, getByPath };

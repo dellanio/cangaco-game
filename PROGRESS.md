@@ -21848,3 +21848,47 @@ tropa  roteiro C-IA-03c (pelo mouse)          teste longo C-IA-03b (sem tela)
 - **Não verificado:** abrir o `.tmj` no Tiled de verdade. O Tiled não está instalado nesta máquina. O
   formato segue o JSON do Tiled 1.10 (camadas, objetos de ponto, tileset externo), mas a abertura no
   editor é a primeira coisa que o operador confere.
+
+### I-TERRENO-DEZ-MAPAS-DA-CAMPANHA — as dez fases em dado, com mapa e .tmj (verificado)
+- `tools/gerar-fases.mjs` (semente fixa por fase; `--conferir`; `prancha`) emite `data/campanha/fase-NN-
+  <local>.json` (o mapa no formato do `sertao-128`, mais a missão) e `tools/tiled/fases/<id>.tmj`.
+  **Depois de emitido, o `.tmj` é a fonte**: quem edita no Tiled roda `node tools/mapa-tiled.mjs importar
+  tools/tiled/fases/<id>.tmj data/campanha/<id>.json`.
+- **A regra:** `validarCampanha` (`tools/data-rules.js`), chamada pelo `validate:data` a parte, porque
+  as fases não entram no carregador da sim. Ela confere:
+  - a dimensão e o vocabulário do mapa, e o recurso no terreno certo;
+  - um recurso por tile;
+  - o prédio e a porta em chão livre, sem sobreposição;
+  - a unidade num tile livre;
+  - os ids;
+  - o que cada fase libera, sem repetir o de outra fase;
+  - os objetivos e as ondas.
+- **Medido (o teste, 7 casos):** as dez fases passam e cada defeito da tabela é recusado; a ida e volta
+  pelo Tiled das dez é byte a byte (o aceite 1 do item anterior). Pelo A* da sim, o início do jogador
+  alcança o inimigo em toda fase, e a pedra e a árvore em toda fase de construir. A fase 4 tem
+  exatamente três passagens pela serra (3, 4 e 12 tiles) e o açude. O `--conferir` sai 0. Cada fase,
+  com o mapa no lugar do `sertao-128`, roda 600 ticks sem violação de invariante.
+```text
+fase                     pedra  árvore  inimigo   (custo do A* em ticks, do início do jogador)
+01 Piancó                  144      21      453
+02 Patos                   149      42      652
+03 Soledade                 95      21      353
+04 Boqueirão               101      21      270
+05 Campina Grande          152      25      586
+06 Areia                   180      21      716
+07 Itabaiana (lutar)       456      28      530
+08 Santa Rita              107      42      512
+09 João Pessoa (lutar)       -      35      444
+10 Cabedelo (lutar)          -      41      552
+```
+- **Ajustes pela medida:**
+  - a mancha de areia só pinta sobre grama. Antes ela abria o anel da serra da fase 4, que ficava com 6
+    passagens em vez de 3;
+  - os lajedos das fases 5, 6 e 8 foram para perto do início. Antes a pedra custava 217, 602 e 287
+    ticks, contra a convenção do desenho.
+- **Evidência:** `screenshots/I-TERRENO-DEZ-MAPAS-DA-CAMPANHA-prancha.png` (as dez miniaturas, aberta),
+  `test-output/I-TERRENO-DEZ-MAPAS-DA-CAMPANHA-{alcance,boqueirao,sim}.json`.
+- **Não verificado:**
+  - a abertura dos `.tmj` no Tiled de verdade (o editor não está instalado nesta máquina);
+  - se as fases estão balanceadas para jogar: a camada de missão (ondas, objetivos e desbloqueio por
+    fase em jogo) ainda não existe.
