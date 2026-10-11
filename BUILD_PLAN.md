@@ -9783,12 +9783,13 @@ convertidos para ticks no carregamento:
 - `tools/mapa-tiled.mjs`: `exportar <fase.json> <saida.tmj>` e `importar <entrada.tmj> <fase.json>`. O
   `.tmj` é o JSON do Tiled, ortogonal (CLAUDE.md §4), com uma camada de tiles `terreno`, uma camada de
   tiles `recursos` e uma camada de objetos `missao` (o início do jogador, os prédios e as tropas de
-  cada lado, os alvos). A paleta de edição (`tools/tiled/paleta.png` + `paleta.tsx`) é de cores chapadas
+  cada lado, os alvos). A paleta de edição (`tools/tiled/paleta.png` + `paleta.tsj`, o tileset em JSON do Tiled) é de cores chapadas
   com a letra do tipo, só para o editor: não é arte do jogo e não entra no bundle.
 - **Aceite:** (1) ida e volta: `importar(exportar(fase))` é igual à fase, byte a byte, nas dez fases;
   (2) uma edição no `.tmj` (um tile de terreno e um recurso trocados) volta no `importar`; (3) tile ou
   recurso desconhecido no `.tmj` é recusado com a posição; (4) o `.tmj` declara a paleta pelo caminho
   relativo e abre sem a pasta do jogo.
+- **Emenda (2026-10-10, antes do código):** o tileset é `.tsj` (JSON) e não `.tsx` (XML). O ESLint do projeto lê todo `.tsx` como TypeScript com JSX e reprova o XML do Tiled; ampliar os `ignores` do lint é mudança de escopo (CLAUDE.md §10). O Tiled abre os dois formatos.
 
 ##### I-TERRENO-DEZ-MAPAS-DA-CAMPANHA — as dez fases em dado, com mapa
 - `tools/gerar-fases.js` (semente fixa por fase, como o `gerar-mapa.js`) emite
