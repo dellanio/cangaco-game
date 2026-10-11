@@ -9764,6 +9764,23 @@ convertidos para ticks no carregamento:
   7. o caso sem posto livre: a troca de lugar acontece, e nenhum tile tem dois civis "fora";
   8. a suíte normal inteira passa (a primeira tentativa reprovou 26).
 
+#### I-OBRA-SEM-PREDIO-NA-ROCA — prédio não se planta em cima da roça
+- **Decisão do operador (2026-10-11):** "proibir prédio em cima da roça". Hoje o `canPlace` aceita,
+  porque milho e cana têm `bloqueiaConstrucao: false` no dado (o mesmo campo que deixa a estrada
+  atravessar a roça).
+- **Regra:** o `canPlace` recusa com o motivo novo `roca` quando um tile do FOOTPRINT é roça: tile com
+  recurso de um tipo que se ara (o dado tem `aradura`: milho e cana), em qualquer quantidade, inclusive
+  o pousio (quantidade 0), ou tile de campo planejado. A porta não entra (só precisa ser pisável, a
+  mesma razão do recurso). A estrada continua podendo atravessar a roça. O motivo vem logo depois de
+  `recurso` (os dois são sobre o chão), e a ordem das checagens segue fixada por teste.
+- **Aceite (antes do código):**
+  1. por tabela: o lote sobre milho maduro, sobre milho em pousio, sobre cana e sobre campo planejado
+     recusa com `roca`; o mesmo lote ao lado da roça aceita; a porta sobre a roça aceita;
+  2. pelo `step`: o `PlaceBuilding` sobre a roça é recusado (`command-rejected`) e nenhuma obra nasce;
+  3. o conjunto dos tipos de roça vem do dado (`aradura`), e não de uma lista no código: um tipo de
+     teste com `aradura` passa a recusar;
+  4. a suíte normal passa.
+
 #### A campanha: as dez fases desenhadas e os mapas prontos para o Tiled (pedido do operador, 2026-10-10)
 - **Pedido:** "leia no KaM Remake 10 fases, como a fase é construída, os desafios, estilo de cenário,
   posição da vegetação e recursos naturais, e crie 10 fases para o jogo. Adapte ao nosso cenário de
