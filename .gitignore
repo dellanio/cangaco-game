@@ -47,3 +47,6 @@ Thumbs.db
 
 .claude/.headroom_*
 .verify-rapido-ok
+
+# I-TERRENO-MAPA-NO-TILED: a paleta de edicao do Tiled (ferramenta, nao arte do jogo)
+!tools/tiled/*.png

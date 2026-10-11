@@ -21822,3 +21822,29 @@ tropa  roteiro C-IA-03c (pelo mouse)          teste longo C-IA-03b (sem tela)
   (b) **o civil passa a contornar o parado** depois de uma espera (como o militar, C5). Revoga a regra
       da fila de civis e mexe no teste dela;
   (c) **voltar ao "não ocupa"**, e o roteiro F18f conta só quem ocupa o tile.
+
+### I-TERRENO-CAMPANHA-DEZ-FASES-DESENHO — o desenho das dez fases (verificado)
+- `docs/planos/2026-10-10-campanha-dez-fases.md`. Da estrutura de missão do KaM, citada por
+  `arquivo:linha` do clone, vêm os comandos, os objetivos, os modos e a liberação. Depois vem o
+  vocabulário de missão nosso, e por último as dez fases do `pianco-campanha-10-missoes.md` em mapa e
+  dado.
+- **Verificado no clone:** ele não tem os mapas das campanhas (só o código), e o CLAUDE.md §9 proíbe
+  mapa do jogo de 1998. Os mapas são desenho nosso; o que é princípio de desenho e não vem do clone
+  está marcado.
+- **Propostas para o operador (marcadas no documento):** Açude e Torre de Pedra na fase 4, Canavial na
+  6, Igreja na 9. O documento da campanha não cita esses quatro prédios.
+
+### I-TERRENO-MAPA-NO-TILED — a fase abre no Tiled e volta (verificado)
+- `tools/mapa-tiled.mjs` (`paleta`, `exportar`, `importar`) e `tools/fase-formato.mjs` (o texto canônico
+  da fase, o mesmo do gerador). O `.tmj` é ortogonal, com as camadas `terreno`, `recursos` e `missao` (os
+  prédios e as tropas como pontos com `lado`). O resto da missão fica na propriedade `fase` do mapa.
+- A paleta (`tools/tiled/paleta.png` + `paleta.tsj`, 13 tiles: 6 terrenos e 7 recursos; `.tsj` e não `.tsx`,
+  porque o ESLint lê todo `.tsx` como TypeScript, emenda do aceite) é de cor chapada
+  e só serve ao editor. O `.gitignore` ganhou a negação `!tools/tiled/*.png`.
+- **Teste:** `tests/I-TERRENO-MAPA-NO-TILED.test.ts` (4): ida e volta byte a byte numa fase montada no
+  teste; a edição de terreno, de recurso e de posição de tropa volta; o tile e o objeto desconhecidos
+  são recusados com a posição; e a paleta é achada pelo caminho relativo. A ida e volta das dez fases
+  reais está no teste do item seguinte, que as emite.
+- **Não verificado:** abrir o `.tmj` no Tiled de verdade. O Tiled não está instalado nesta máquina. O
+  formato segue o JSON do Tiled 1.10 (camadas, objetos de ponto, tileset externo), mas a abertura no
+  editor é a primeira coisa que o operador confere.

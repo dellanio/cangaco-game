@@ -1,0 +1,212 @@
+{
+  "columns": 13,
+  "image": "paleta.png",
+  "imageheight": 32,
+  "imagewidth": 416,
+  "margin": 0,
+  "name": "paleta",
+  "spacing": 0,
+  "tilecount": 13,
+  "tiledversion": "1.10.2",
+  "tileheight": 32,
+  "tiles": [
+    {
+      "id": 0,
+      "properties": [
+        {
+          "name": "camada",
+          "type": "string",
+          "value": "terreno"
+        },
+        {
+          "name": "tipo",
+          "type": "string",
+          "value": "grama"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "properties": [
+        {
+          "name": "camada",
+          "type": "string",
+          "value": "terreno"
+        },
+        {
+          "name": "tipo",
+          "type": "string",
+          "value": "campoArado"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "properties": [
+        {
+          "name": "camada",
+          "type": "string",
+          "value": "terreno"
+        },
+        {
+          "name": "tipo",
+          "type": "string",
+          "value": "areia"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "properties": [
+        {
+          "name": "camada",
+          "type": "string",
+          "value": "terreno"
+        },
+        {
+          "name": "tipo",
+          "type": "string",
+          "value": "agua"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "properties": [
+        {
+          "name": "camada",
+          "type": "string",
+          "value": "terreno"
+        },
+        {
+          "name": "tipo",
+          "type": "string",
+          "value": "rocha"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "properties": [
+        {
+          "name": "camada",
+          "type": "string",
+          "value": "terreno"
+        },
+        {
+          "name": "tipo",
+          "type": "string",
+          "value": "montanha"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "properties": [
+        {
+          "name": "camada",
+          "type": "string",
+          "value": "recursos"
+        },
+        {
+          "name": "tipo",
+          "type": "string",
+          "value": "rock"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "properties": [
+        {
+          "name": "camada",
+          "type": "string",
+          "value": "recursos"
+        },
+        {
+          "name": "tipo",
+          "type": "string",
+          "value": "tree"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "properties": [
+        {
+          "name": "camada",
+          "type": "string",
+          "value": "recursos"
+        },
+        {
+          "name": "tipo",
+          "type": "string",
+          "value": "fish"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "properties": [
+        {
+          "name": "camada",
+          "type": "string",
+          "value": "recursos"
+        },
+        {
+          "name": "tipo",
+          "type": "string",
+          "value": "grapes"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "properties": [
+        {
+          "name": "camada",
+          "type": "string",
+          "value": "recursos"
+        },
+        {
+          "name": "tipo",
+          "type": "string",
+          "value": "coal"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "properties": [
+        {
+          "name": "camada",
+          "type": "string",
+          "value": "recursos"
+        },
+        {
+          "name": "tipo",
+          "type": "string",
+          "value": "iron_ore"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "properties": [
+        {
+          "name": "camada",
+          "type": "string",
+          "value": "recursos"
+        },
+        {
+          "name": "tipo",
+          "type": "string",
+          "value": "gold_ore"
+        }
+      ]
+    }
+  ],
+  "tilewidth": 32,
+  "type": "tileset",
+  "version": "1.10"
+}
