@@ -9709,6 +9709,26 @@ convertidos para ticks no carregamento:
   porta andável dá o tile clicado; (b) pelo `step`: a ordem gerada não é recusada e a tropa sai de
   `ocioso`; (c) o C-IA-03c sai 0.
 
+#### I-MOVIMENTO-DEVOLVENDO-SEM-ARMAZEM-CEDE-O-TILE — quem espera para devolver sem armazém sai do caminho
+- **Medido (2026-10-10, no teste longo da C-IA-03b com a tropa de 27):** o jogador derruba o armazém da
+  IA; o serf `u64`, com pão na mão, fica em `devolvendo` sem armazém (`src/sim/systems/serfs.ts:407`,
+  "sem armazem: espera"), parado no tile 87,72. Ele é `fora` e não é empurrável (só o `ocioso` é,
+  `src/sim/colisao.ts:71`), então o serf `u66`, que leva farinha pelo mesmo tile, fica bloqueado 458
+  ticks, e a invariante do anti-travamento (prazo 450) reprova. Com 24 a ordem da luta é outra e
+  ninguém passa por ali.
+- **Regra:** o empurrável deixa de ser só o `ocioso`. Passa a ser "quem não tem tarefa nem lugar": o
+  `ocioso` parado, e o `devolvendo` parado SEM armazém (`fsmData.armazem` ausente). Um predicado só,
+  usado nos três lugares que hoje comparam com `EMPURRAVEL`. A espera continua: ele só é empurrado
+  para o vizinho livre, com a carga, e volta a procurar armazém quando houver um.
+- **Aceite (antes do código):**
+  1. por tabela: `ocioso` parado é empurrável; `devolvendo` sem armazém e parado é; `devolvendo` COM
+     armazém não é; `devolvendo` sem armazém mas com caminho não é; `indo_entregar` não é;
+  2. pelo `step`: um serf em `devolvendo` sem armazém (o armazém demolido) parado no caminho de outro
+     serf é empurrado, o outro passa antes do prazo do anti-travamento, e o empurrado continua com a
+     carga;
+  3. o teste longo da C-IA-03b passa com a tropa de 27, sem violação de invariante;
+  4. os testes da colisão e da fila de civis continuam passando.
+
 #### I-MOVIMENTO-OBREIRO-OCUPA-O-CANTEIRO — cada obreiro num posto em volta da obra, a porta para o serf
 - **Decisão do operador (2026-10-10):** o obreiro que trabalha na obra ocupa um tile, num POSTO de
   trabalho em volta dela, e a porta fica livre para o serf que traz o material.
