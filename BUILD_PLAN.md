@@ -8140,6 +8140,14 @@ que o operador joga pelo link. Desde a E, cada fase fecha numa versão publicada
   - (b) nenhum arquivo de `assets/base/` no `dist/` (por listagem);
   - (c) o tamanho do `dist/` e o tempo até o menu vão para `test-output/E-ENTREGA-BUILD.json`,
     como número da corrida, nunca asserção (§8).
+  - **Emenda (2026-10-11, no fechamento; antes do código):** a (b) reprovou 13 arquivos do `dist/` que
+    vêm de `assets/sprites/` e são byte a byte iguais a uma cópia guardada em `assets/base/` (a peça do
+    operador usada como entregue, o `inverno.png` da caatinga, a régua da padaria). A base não entrou:
+    entrou o sprite. A regra passa a ler a origem no manifesto do build (`src` de cada saída): reprova a
+    saída cuja origem está em `assets/base/`; e reprova a saída igual a uma base **a não ser** que o
+    manifesto diga que ela veio de `assets/sprites/`. Por tabela: cópia sem origem no manifesto continua
+    reprovada; origem na base reprova mesmo com conteúdo diferente de toda base; origem em
+    `assets/sprites/` igual a uma base passa.
 
 ### E-ENTREGA-PUBLICACAO — O link para o operador jogar
 - **Escopo:** `npm run publicar` envia o `dist/` ao itch.io pelo `butler`, no canal `html5`, com a
@@ -9837,6 +9845,11 @@ convertidos para ticks no carregamento:
   para a vila (medido no mapa); (3) o gerador é determinístico (`--conferir` sai 0); (4) um teste
   carrega cada fase pela `criarEscaramuca`-like de teste (o mapa no lugar do `sertao-128`) e roda 600
   ticks sem violação de invariante; (5) a prancha das dez miniaturas em `screenshots/` é aberta.
+- **Emenda (2026-10-11, no fechamento; antes do código):** na corrida transladada (F18c-1c) o
+  `mapaPadrao` vira N+K e as fases, que ficavam 128, eram recusadas pelo próprio tamanho. As fases
+  andam +K junto do mundo, como a escaramuça (C-COMBATE-02): o mapa ganha a faixa de grama, e os
+  recursos, os prédios, as unidades e a origem das ondas andam +K (`tools/transladar-mundo.js`). Os
+  aceites (1), (2) e (4) rodam nos dois mundos; nenhum teste entra em `FORA_DO_MUNDO_TRANSLADADO`.
 #### I-ENTREGA-VERSAO-PUBLICAVEL — o fechamento do bloco e a versão pronta para o operador publicar
 - **Como, na ordem do CLAUDE.md §13:**
   1. `npm run verify` completo (com a transladada);
