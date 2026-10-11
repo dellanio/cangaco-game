@@ -45,20 +45,6 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   teto de vez para a saída cheia; o KaM não tem envelhecimento.
 - status: aberto; a corrida B passou a gravar a contagem em vez de afirmar entrega
 
-## BUG-F18F-PILHA-DE-TRES-NO-CANTEIRO — o roteiro F18f conta 3 no mesmo ponto na porta da obra
-- feature: I-MOVIMENTO-FILA-DE-CIVIS (`1f9c150`), com a pergunta em aberto "o obreiro no canteiro ocupa
-  o tile?" (`c13b168`)
-- severidade: errado (o roteiro F18f sai 1)
-- repro: `npm run shot -- F18f`, na `main` desde `1f9c150`
-- esperado (o roteiro): nenhuma pilha de 3 ou mais em 600 ticks
-- observado (medido no roteiro, 2026-10-05): ticks 172 a 257, no tile 38,33 (a porta da obra), dois
-  obreiros `nivelando` ou `esperando_material`, que são "dentro" e não ocupam o tile, mais um serf
-  `indo_entregar` ou `entregando`. Os três centros desenhados são distintos (o deslocamento da F18f), e
-  a sim não tem dois civis "fora" no tile. É o caso exato da pergunta em aberto do `c13b168`.
-- correção prevista: depende da decisão do operador. Se o obreiro no canteiro passar a ocupar o tile,
-  o serf espera na fila e a pilha some; se não, o roteiro deve contar só quem ocupa.
-- status: aberto, esperando a decisão; a decisão "ocupa" de 2026-10-10 foi medida e pede uma regra a mais (PROGRESS, Perguntas em aberto)
-
 ## Polimento
 
 Os três bugs de oscilação de tempo que moravam aqui (BUG-D na F-T1, BUG-E na F-T2b e,

@@ -56,7 +56,9 @@ const TETO_DA_GAVETA = gameData.producao.estoqueInternoPorPredio.saida;
 // I-MOVIMENTO-FILA-DE-CIVIS (2026-10-04): com a fila (a reserva do tile no inicio do passo, sem
 // empurrao), remedido: 2 ticks.
 // Lajedo ao norte, pedreira recuada: o trajeto novo tem quatro ticks de fila.
-const ATRASO_DA_COLISAO = colisaoCivilLigada(gameData) ? 4 : 0;
+// I-MOVIMENTO-OBREIRO-OCUPA-O-CANTEIRO (2026-10-11): o obreiro trabalha num posto em volta da obra e
+// o ocupa; remedido: 5 ticks (o intervalo entre depositos nao muda).
+const ATRASO_DA_COLISAO = colisaoCivilLigada(gameData) ? 5 : 0;
 const CICLO = gameData.producao.receitas.quarry?.ticksDoCiclo ?? 0;
 /**
  * F-T3 — entre um deposito e o seguinte ha agora a IDA ao tile e a VOLTA. O

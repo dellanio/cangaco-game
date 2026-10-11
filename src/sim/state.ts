@@ -1402,6 +1402,8 @@ export interface DadosDaFsm {
   readonly caminho?: readonly TileDeGrid[];
   readonly progresso?: number;
   readonly armazem?: string;
+  /** I-MOVIMENTO-OBREIRO-OCUPA-O-CANTEIRO — o tile em volta da obra onde o obreiro trabalha (e ocupa). */
+  readonly posto?: TileDeGrid;
   /** F-CERCO-a2 — o predio que a tropa recebeu ORDEM de atacar (`AttackBuilding`). */
   readonly alvo?: string;
   /** F-CERCO-a2 — ticks ate o proximo golpe no predio, na cadencia propria do dado. */

@@ -39,7 +39,7 @@ import { herdarNaoAceita } from '../armazem';
 import type { GameData } from '../data/types';
 import { gameData } from '../data';
 import {
-  caminhoDoLaborer, cancelarConstrucoesDe, liberar, reclamarMelhorDoLaborer, removerTarefa, TIPO_QUE_CONSTROI,
+  caminhoAteOPosto, caminhoDoLaborer, cancelarConstrucoesDe, postoLivreDaObra, liberar, reclamarMelhorDoLaborer, removerTarefa, TIPO_QUE_CONSTROI,
 } from '../jobs';
 import type { MotivoDeLiberacao } from '../jobs';
 import { alvoDeNivelamento, hpTotalDoTipo, obraNivelada, obraTrabalhavel, tetoDeHp } from '../obra';
@@ -48,7 +48,7 @@ import type { TileDeGrid } from '../estradas';
 import { andar, chegou, comPredio, comUnidade, dadosDaFsm, ficarOcioso, noTile, ocioso, passoDeLado } from '../units/movimento';
 import { ehEstadoDeFome } from '../condicao';
 import type { ResultadoDeSistema } from './jobs';
-import { comPassoComecadoTerminado } from '../colisao';
+import { colisaoCivilLigada, comPassoComecadoTerminado } from '../colisao';
 
 type Passo = ResultadoDeSistema;
 
@@ -79,9 +79,9 @@ function liberarTarefa(state: GameState, tarefaId: string, motivo: MotivoDeLiber
 /** Decide o proximo estado a partir da obra ATUAL — NUNCA libera (ver o comentario do
  *  topo do arquivo: a ordem no tick e o que torna isso seguro). */
 function reavaliar(obra: PredioEmObra, u: Unidade, tarefa: TarefaConstruir, dados: GameData): Unidade {
-  if (!obraNivelada(obra, dados)) return { ...u, fsm: 'nivelando', fsmData: dadosDaFsm({ tarefa: tarefa.id }) };
-  if (obra.hp < tetoDeHp(obra, dados)) return { ...u, fsm: 'martelando', fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso: 0 }) };
-  return { ...u, fsm: 'esperando_material', fsmData: dadosDaFsm({ tarefa: tarefa.id }) };
+  if (!obraNivelada(obra, dados)) return { ...u, fsm: 'nivelando', fsmData: dadosDaFsm({ posto: u.fsmData.posto, tarefa: tarefa.id }) };
+  if (obra.hp < tetoDeHp(obra, dados)) return { ...u, fsm: 'martelando', fsmData: dadosDaFsm({ posto: u.fsmData.posto, tarefa: tarefa.id, progresso: 0 }) };
+  return { ...u, fsm: 'esperando_material', fsmData: dadosDaFsm({ posto: u.fsmData.posto, tarefa: tarefa.id }) };
 }
 
 // --- os estados ---
@@ -106,14 +106,20 @@ function passoOciosoQuePega(state: GameState, u: Unidade, dados: GameData): Pass
   if (!r.ok) return semEventos(state);
   const bruta = r.state.jobs.tarefas.porId[r.tarefa];
   const tarefa = bruta !== undefined && ehTarefaDeLaborer(bruta) ? bruta : undefined;
-  const caminho = tarefa === undefined ? null : caminhoDoLaborer(r.state, tarefa, u.id, dados);
+  // I-MOVIMENTO-OBREIRO-OCUPA-O-CANTEIRO: com a colisao civil, o obreiro da obra vai a um POSTO em volta
+  // dela, e nao a porta; sem posto livre, ele nao fica com a tarefa (a mesma saida do caminho sumido)
+  const comPosto = tarefa !== undefined && !ehTarefaDeTile(tarefa) && !ehTarefaDeReparo(tarefa) && colisaoCivilLigada(dados);
+  const posto = comPosto ? postoLivreDaObra(r.state, tarefa.destino, u.id, dados) : undefined;
+  const caminho = tarefa === undefined || (comPosto && posto === undefined) ? null
+    : posto !== undefined ? caminhoAteOPosto(r.state, u.id, posto, dados)
+    : caminhoDoLaborer(r.state, tarefa, u.id, dados);
   if (tarefa === undefined || caminho === null) {
     // o claim ja exigiu o caminho; se ele sumiu, devolve a reserva em vez de segurar a tarefa
     const l = liberarTarefa(r.state, r.tarefa, 'pedido-da-unidade');
     return { state: l.state, events: l.events };
   }
   return semEventos(comUnidade(r.state, {
-    ...u, fsm: 'indo_a_obra', fsmData: dadosDaFsm({ tarefa: tarefa.id, caminho: caminho.tiles, progresso: 0 }),
+    ...u, fsm: 'indo_a_obra', fsmData: dadosDaFsm({ posto, tarefa: tarefa.id, caminho: caminho.tiles, progresso: 0 }),
   }));
 }
 
@@ -126,9 +132,10 @@ function avancar(
   const proximo = (u.fsmData.caminho ?? [])[0];
   if (proximo !== undefined && !passoAndavel(state, noTile(u), proximo, 'livre', dados)) {
     // um predio foi plantado no caminho: replaneja a partir de onde esta
-    const caminho = caminhoDoLaborer(state, tarefa, u.id, dados);
+    const posto = u.fsmData.posto;
+    const caminho = posto !== undefined ? caminhoAteOPosto(state, u.id, posto, dados) : caminhoDoLaborer(state, tarefa, u.id, dados);
     if (caminho === null) return null;
-    atual = { ...u, fsmData: dadosDaFsm({ tarefa: tarefa.id, caminho: caminho.tiles, progresso: 0 }) };
+    atual = { ...u, fsmData: dadosDaFsm({ posto: u.fsmData.posto, tarefa: tarefa.id, caminho: caminho.tiles, progresso: 0 }) };
   }
   const andou = andar(state, atual, dados);
   return { u: andou, chegou: chegou(andou) };
@@ -175,7 +182,7 @@ function passoIndoAoTile(
   if (!passo.chegou) return semEventos(comUnidade(state, passo.u));
   if (ehTarefaDeAssentamento(tarefa)) return reavaliarNoTile(state, passo.u, tarefa, dados);
   return semEventos(comUnidade(state, {
-    ...passo.u, fsm: 'martelando', fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso: 0 }),
+    ...passo.u, fsm: 'martelando', fsmData: dadosDaFsm({ posto: u.fsmData.posto, tarefa: tarefa.id, progresso: 0 }),
   }));
 }
 
@@ -192,11 +199,11 @@ function reavaliarNoTile(
 ): Passo {
   if (pedraNoTile(state, tarefa.destinoTile) >= dados.terreno.estrada.custoStonePorTile) {
     return semEventos(comUnidade(state, {
-      ...u, fsm: 'martelando', fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso: 0 }),
+      ...u, fsm: 'martelando', fsmData: dadosDaFsm({ posto: u.fsmData.posto, tarefa: tarefa.id, progresso: 0 }),
     }));
   }
   if (tileDeEstradaTrabalhavel(state, tarefa.destinoTile, dados)) {
-    return semEventos(comUnidade(state, { ...u, fsm: 'esperando_material', fsmData: dadosDaFsm({ tarefa: tarefa.id }) }));
+    return semEventos(comUnidade(state, { ...u, fsm: 'esperando_material', fsmData: dadosDaFsm({ posto: u.fsmData.posto, tarefa: tarefa.id }) }));
   }
   const l = liberarTarefa(state, tarefa.id, 'pedido-da-unidade');
   return ficarOcioso(l.state, u, l.events);
@@ -232,7 +239,7 @@ function passoEsperandoMaterial(state: GameState, u: Unidade, dados: GameData): 
   if (obra === null) return ficarOcioso(state, u);
 
   if (obra.hp < tetoDeHp(obra, dados)) {
-    return semEventos(comUnidade(state, { ...u, fsm: 'martelando', fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso: 0 }) }));
+    return semEventos(comUnidade(state, { ...u, fsm: 'martelando', fsmData: dadosDaFsm({ posto: u.fsmData.posto, tarefa: tarefa.id, progresso: 0 }) }));
   }
   if (!obraTrabalhavel(state, obra.id, dados)) {
     // SO este estado libera (ver o comentario do topo do arquivo): aqui "sem tarefa de
@@ -254,7 +261,7 @@ function passoMartelando(state: GameState, u: Unidade, dados: GameData): Passo {
 
   const progresso = (u.fsmData.progresso ?? 0) + 1;
   if (progresso < dados.construcao.ticksPorMartelada) {
-    return semEventos(comUnidade(state, { ...u, fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso }) }));
+    return semEventos(comUnidade(state, { ...u, fsmData: dadosDaFsm({ posto: u.fsmData.posto, tarefa: tarefa.id, progresso }) }));
   }
 
   const hpTotal = hpTotalDoTipo(obra.tipo, dados);
@@ -278,8 +285,8 @@ function passoMartelando(state: GameState, u: Unidade, dados: GameData): Passo {
   }
   const comAMartelada = comPredio(state, martelada);
   const proximo = martelada.hp >= tetoDeHp(martelada, dados)
-    ? { ...u, fsm: 'esperando_material' as const, fsmData: dadosDaFsm({ tarefa: tarefa.id }) }
-    : { ...u, fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso: 0 }) };
+    ? { ...u, fsm: 'esperando_material' as const, fsmData: dadosDaFsm({ posto: u.fsmData.posto, tarefa: tarefa.id }) }
+    : { ...u, fsmData: dadosDaFsm({ posto: u.fsmData.posto, tarefa: tarefa.id, progresso: 0 }) };
   return semEventos(comUnidade(comAMartelada, proximo));
 }
 
@@ -298,7 +305,7 @@ function passoAssentando(
 ): Passo {
   const progresso = (u.fsmData.progresso ?? 0) + 1;
   if (progresso < dados.construcao.ticksPorMartelada) {
-    return semEventos(comUnidade(state, { ...u, fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso }) }));
+    return semEventos(comUnidade(state, { ...u, fsmData: dadosDaFsm({ posto: u.fsmData.posto, tarefa: tarefa.id, progresso }) }));
   }
   const assentado = comOTileAssentado(state, tarefa.destinoTile, dados);
   if (assentado === null) {
@@ -354,7 +361,7 @@ function passoArando(
   }
   const progresso = (u.fsmData.progresso ?? 0) + 1;
   if (progresso < aradura.ticks) {
-    return semEventos(comUnidade(state, { ...u, fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso }) }));
+    return semEventos(comUnidade(state, { ...u, fsmData: dadosDaFsm({ posto: u.fsmData.posto, tarefa: tarefa.id, progresso }) }));
   }
   const arado = comOTileArado(state, tarefa.destinoTile, dados);
   if (arado === null) {
@@ -381,7 +388,7 @@ function passoIndoReparar(state: GameState, u: Unidade, tarefa: TarefaReparar, d
   }
   if (!passo.chegou) return semEventos(comUnidade(state, passo.u));
   return semEventos(comUnidade(state, {
-    ...passo.u, fsm: 'martelando', fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso: 0 }),
+    ...passo.u, fsm: 'martelando', fsmData: dadosDaFsm({ posto: u.fsmData.posto, tarefa: tarefa.id, progresso: 0 }),
   }));
 }
 
@@ -397,13 +404,13 @@ function passoReparando(state: GameState, u: Unidade, tarefa: TarefaReparar, dad
   if (predio === undefined || predio.estado !== 'completo') return ficarOcioso(state, u);
   const progresso = (u.fsmData.progresso ?? 0) + 1;
   if (progresso < dados.construcao.ticksPorMartelada) {
-    return semEventos(comUnidade(state, { ...u, fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso }) }));
+    return semEventos(comUnidade(state, { ...u, fsmData: dadosDaFsm({ posto: u.fsmData.posto, tarefa: tarefa.id, progresso }) }));
   }
   const hpTotal = hpTotalDoTipo(predio.tipo, dados);
   const hp = Math.min(predio.hp + dados.construcao.hpPorMartelada, hpTotal);
   const reparado = comPredio(state, { ...predio, hp });
   if (hp < hpTotal) {
-    return semEventos(comUnidade(reparado, { ...u, fsmData: dadosDaFsm({ tarefa: tarefa.id, progresso: 0 }) }));
+    return semEventos(comUnidade(reparado, { ...u, fsmData: dadosDaFsm({ posto: u.fsmData.posto, tarefa: tarefa.id, progresso: 0 }) }));
   }
   const semATarefa = removerTarefa(reparado, tarefa.id);
   const irmas = cancelarConstrucoesDe(semATarefa, predio.id, 'reparar');

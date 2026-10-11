@@ -21892,3 +21892,34 @@ fase                     pedra  árvore  inimigo   (custo do A* em ticks, do in�
   - a abertura dos `.tmj` no Tiled de verdade (o editor não está instalado nesta máquina);
   - se as fases estão balanceadas para jogar: a camada de missão (ondas, objetivos e desbloqueio por
     fase em jogo) ainda não existe.
+
+### I-MOVIMENTO-OBREIRO-OCUPA-O-CANTEIRO — o obreiro trabalha num posto em volta da obra e cede o lugar (verificado; fecha o BUG-F18F)
+- **Decisão do operador (2026-10-11): opção (a).** O obreiro no posto cede o lugar a quem espera.
+- **Regra (só com a colisão civil ligada):**
+  - `postosDaObra` (`jobs.ts`): o anel de 1 tile em volta do footprint, andável, menos a porta da obra,
+    as portas dos outros prédios, a estrada, a estrada planejada e o campo planejado.
+  - O obreiro recebe o primeiro posto livre no claim (`fsmData.posto`). Sem posto livre, larga a tarefa
+    (a mesma saída do caminho sumido).
+  - O posto não é reserva à parte: vive no `fsmData` de quem o tem e some em todo ramo de saída (ocioso,
+    morto, obra pronta ou demolida). Por isso não há `release` novo a esquecer.
+  - Parado no posto (`nivelando`, `esperando_material`, `martelando`), o obreiro ocupa o tile
+    (`ehObreiroNoPosto`, em `ocupaTile`).
+  - **Ceder** (`cederOPosto`, no empurrão): com um civil esperando o tile há `ticksEmpurrar`, o obreiro
+    vai a outro posto livre fora do caminho de quem espera, em `indo_a_obra`, com a mesma tarefa. Sem
+    posto livre, troca de lugar com quem espera e volta ao mesmo posto. A obra não perde progresso; a
+    martelada em curso recomeça.
+- **Medido:**
+  - o teste do aceite (6 casos) passa: 10 postos na quarry da fixture; 4 obreiros completam a obra no
+    tick 201, sem posto repetido e sem violação; o serf atravessa o posto em 9 ticks (com outro posto
+    livre) e em 8 (com a troca), contra o prazo de 450;
+  - **a guarda acusa:** com o `cederOPosto` desligado, os casos 6 e 7 reprovam;
+  - a suíte normal passa inteira (2964). A primeira tentativa, sem ceder, reprovou 26;
+  - o roteiro F18f sai 0 sem mudar a asserção (maior pilha 2). Abri a captura: os obreiros trabalham
+    nas laterais da obra, e a porta fica com os carregadores.
+- **Testes de linha do tempo remedidos** (o obreiro anda até o posto, não até a porta; valor por estado
+  da chave, como os vizinhos):
+  - F18d-1a: a obra completa no tick 262, era 247;
+  - F15a: o atraso da colisão é 5, era 4;
+  - F11c: a fixture "dois nivelam juntos" põe cada obreiro no posto que ele vai receber, e não os dois
+    na porta. A asserção (metade do tempo) é a mesma.
+- **Não verificado:** a suíte transladada e a longa (rodam no fechamento).

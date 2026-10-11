@@ -33,15 +33,16 @@ import { gameData } from './data';
 // entrar aqui nao fecha ciclo.
 import { ehCivil, precisaComer } from './condicao';
 import {
-  chaveDeTile, componenteDe, distanciaEntrePredios, ehEstrada,
+  chaveDeTile, componenteDe, distanciaEntrePredios, ehEstrada, ehPlanejada,
   MERCADORIA_DA_ESTRADA, tileDeEstradaTrabalhavel, tilesDaPorta,
 } from './estradas';
+import { caixaDoPredio } from './footprint';
 import type { TileDeGrid } from './estradas';
 import { ehCampoPlanejado } from './campos';
 import { obraTrabalhavel } from './obra';
 import { alvosDeAproximacao } from './aproximacao';
 import { alcancavelAPe } from './alcance';
-import { buscarCaminho } from './pathfinding';
+import { buscarCaminho, tileAndavel } from './pathfinding';
 import type { Caminho, ModoDeBusca } from './pathfinding';
 import {
   comensaisReservados, sobraNaOrigem, vagaDeConstrucao, vagaDeOcupacao, vagaDaTropa, vagaDoDestino, vagaNoTile,
@@ -738,6 +739,67 @@ export function caminhoAteAObra(
   const unidade = state.unidades.porId[unidadeId];
   if (!predio || predio.estado !== 'obra' || !unidade) return null;
   return buscarCaminho(state, { gx: unidade.gx, gy: unidade.gy }, tilesDaPorta(predio, dados), 'livre', dados);
+}
+
+/**
+ * I-MOVIMENTO-OBREIRO-OCUPA-O-CANTEIRO — os POSTOS de trabalho da obra: o anel de 1 tile em volta do
+ * footprint, andavel, menos a porta (que fica para o serf com o material), as portas dos outros
+ * predios, a estrada, a estrada planejada e o campo planejado (medido em 2026-10-10: o obreiro parado
+ * na rua ao lado da porta trancava o material). Ordem fixa: linha a linha, de cima para baixo.
+ */
+export function postosDaObra(state: GameState, predio: Predio, dados: GameData = gameData): TileDeGrid[] {
+  const caixa = caixaDoPredio(predio, dados);
+  if (caixa === null) return [];
+  const portas = new Set<string>();
+  for (const id of state.predios.ordem) {
+    const p = state.predios.porId[id];
+    if (p !== undefined) for (const t of tilesDaPorta(p, dados)) portas.add(chaveDeTile(t));
+  }
+  const r: TileDeGrid[] = [];
+  for (let gy = caixa.y0 - 1; gy <= caixa.y1; gy++) {
+    for (let gx = caixa.x0 - 1; gx <= caixa.x1; gx++) {
+      if (gx >= caixa.x0 && gx < caixa.x1 && gy >= caixa.y0 && gy < caixa.y1) continue;
+      const t = { gx, gy };
+      if (portas.has(chaveDeTile(t)) || ehEstrada(state.estradas, t) || ehPlanejada(state.estradasPlanejadas, t)
+        || ehCampoPlanejado(state.camposPlanejados, t) || !tileAndavel(state, t, 'livre', dados)) continue;
+      r.push(t);
+    }
+  }
+  return r;
+}
+
+/** Os postos da obra ja tomados por outro obreiro (o `fsmData.posto` de quem trabalha nela). */
+function postosTomados(state: GameState, predioId: string, quem: string): Set<string> {
+  const r = new Set<string>();
+  for (const id of state.unidades.ordem) {
+    if (id === quem) continue;
+    const u = state.unidades.porId[id];
+    const posto = u?.fsmData.posto;
+    const t = u?.fsmData.tarefa === undefined ? undefined : state.jobs.tarefas.porId[u.fsmData.tarefa];
+    if (posto !== undefined && t !== undefined && t.tipo === 'construir' && t.destino === predioId) r.add(chaveDeTile(posto));
+  }
+  return r;
+}
+
+/** O primeiro posto livre da obra para `quem`, fora de `evitar`. O posto nao e reserva a parte: vive
+ *  no `fsmData` de quem o tem, e sai com ele em todo ramo (ocioso, morto, tarefa liberada). */
+export function postoLivreDaObra(
+  state: GameState, predioId: string, quem: string, dados: GameData = gameData,
+  evitar: (t: TileDeGrid) => boolean = () => false,
+): TileDeGrid | undefined {
+  const predio = state.predios.porId[predioId];
+  if (predio === undefined || predio.estado !== 'obra') return undefined;
+  const tomados = postosTomados(state, predioId, quem);
+  return postosDaObra(state, predio, dados).find((t) => !tomados.has(chaveDeTile(t)) && !evitar(t));
+}
+
+/** O caminho a pe do obreiro ate o posto dele. */
+export function caminhoAteOPosto(
+  state: GameState, unidadeId: string, posto: TileDeGrid, dados: GameData = gameData,
+): Caminho | null {
+  const unidade = state.unidades.porId[unidadeId];
+  if (!unidade) return null;
+  return buscarCaminho(state, { gx: unidade.gx, gy: unidade.gy }, [posto], 'livre', dados);
 }
 
 /** F14 — o caminho a pe do especialista ate a porta do predio COMPLETO. Irmao de

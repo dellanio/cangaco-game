@@ -16,6 +16,7 @@ import type { TileDeGrid } from './estradas';
 import { passoAndavel } from './pathfinding';
 import type { ModoDeBusca } from './pathfinding';
 import { classeDaUnidade } from './condicao';
+import { caminhoAteOPosto, postoLivreDaObra } from './jobs';
 
 /**
  * Onde a unidade esta, para a colisao, em CADA estado de FSM do jogo. `dentro` e quem esta
@@ -93,7 +94,42 @@ export function colisaoCivilLigada(dados: GameData): boolean {
 export function ocupaTile(u: Unidade): boolean {
   const posicao = POSICAO_DO_ESTADO[u.fsm];
   if (posicao === undefined) throw new Error(`colisao: estado de FSM sem classificacao '${u.fsm}' na unidade ${u.id}`);
-  return posicao === 'fora';
+  // I-MOVIMENTO-OBREIRO-OCUPA-O-CANTEIRO: o obreiro que trabalha num posto em volta da obra o ocupa
+  return posicao === 'fora' || ehObreiroNoPosto(u);
+}
+
+/** I-MOVIMENTO-OBREIRO-OCUPA-O-CANTEIRO — o obreiro trabalhando (nivelando, esperando o material ou
+ *  martelando) parado no proprio posto. */
+const NO_CANTEIRO: ReadonlySet<string> = new Set(['nivelando', 'esperando_material', 'martelando']);
+export function ehObreiroNoPosto(u: Unidade): boolean {
+  const posto = u.fsmData.posto;
+  return posto !== undefined && NO_CANTEIRO.has(u.fsm) && posto.gx === u.gx && posto.gy === u.gy;
+}
+
+/**
+ * I-MOVIMENTO-OBREIRO-OCUPA-O-CANTEIRO (opcao (a) do operador, 2026-10-11) — o obreiro no posto CEDE o
+ * lugar a quem espera o tile dele: vai, andando, a outro posto livre da mesma obra (fora do caminho de
+ * quem espera), sem largar a tarefa; sem posto livre, troca de lugar com quem espera e volta ao mesmo
+ * posto depois. Em `indo_a_obra`, ao chegar, a FSM reavalia a obra (o progresso da obra fica).
+ */
+function cederOPosto(state: GameState, o: Unidade, w: Unidade, dados: GameData): GameState {
+  const obraId = o.fsmData.tarefa === undefined ? undefined : state.jobs.tarefas.porId[o.fsmData.tarefa];
+  if (obraId === undefined || obraId.tipo !== 'construir') return state;
+  const noCaminho = (t: TileDeGrid): boolean => (w.fsmData.caminho ?? []).some((c) => mesmoTile(c, t)) || mesmoTile(t, o)
+    || civisNoTile(state, t, o.id, dados).length > 0;
+  const outro = postoLivreDaObra(state, obraId.destino, o.id, dados, noCaminho);
+  const caminho = outro === undefined ? null : caminhoAteOPosto(state, o.id, outro, dados);
+  if (outro !== undefined && caminho !== null && caminho.tiles.length > 0
+    && !(w.fsmData.caminho ?? []).some((c) => caminho.tiles.some((t) => mesmoTile(c, t) && !mesmoTile(c, outro)))) {
+    const indo: Unidade = { ...semMarcas(o), fsm: 'indo_a_obra', fsmData: { tarefa: o.fsmData.tarefa as string, posto: outro, caminho: caminho.tiles, progresso: 0 } };
+    return { ...state, unidades: { ...state.unidades, porId: { ...state.unidades.porId, [o.id]: indo } } };
+  }
+  // sem posto livre fora do caminho: troca de lugar com quem espera, os dois andando, e volta ao posto
+  if ((w.fsmData.progresso ?? 0) !== 0 || !passoAndavel(state, o, w, 'livre', dados)) return state;
+  const posto = o.fsmData.posto as TileDeGrid;
+  const trocado: Unidade = { ...semMarcas(o), fsm: 'indo_a_obra', fsmData: { tarefa: o.fsmData.tarefa as string, posto, caminho: [{ gx: w.gx, gy: w.gy }, posto], progresso: 0, largada: true } };
+  const quemEspera: Unidade = { ...w, fsmData: { ...w.fsmData, largada: true } };
+  return { ...state, unidades: { ...state.unidades, porId: { ...state.unidades.porId, [o.id]: trocado, [w.id]: quemEspera } } };
 }
 
 /** Civil "fora", esteja ou nao esperando a porta. */
@@ -360,6 +396,7 @@ export function sistemaDoEmpurrao(state: GameState, dados: GameData): GameState 
     const alvo = w.fsmData.caminho?.[0];
     if (alvo === undefined) continue;
     for (const o of civisNoTile(atual, alvo, w.id, dados)) {
+      if (ehObreiroNoPosto(o)) { atual = cederOPosto(atual, o, w, dados); continue; }
       if (!ehEmpurravel(o)) continue;
       const livre = vizinhoLivre(atual, o, w, dados);
       if (livre !== undefined) { atual = darPassoDeLado(atual, o, livre); continue; }

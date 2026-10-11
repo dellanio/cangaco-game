@@ -205,7 +205,9 @@ describe('F18d-1a — o aceite do BUILD_PLAN', () => {
     const { semRua, comRua } = medirOAceite();
     expect(semRua).toEqual({
       estradasNoMapa: 0, // o mapa inteiro sem uma rua, do primeiro ao ultimo tick
-      obraCompletaNoTick: 247, // a casa subiu: serf entregou andando livre
+      // I-MOVIMENTO-OBREIRO-OCUPA-O-CANTEIRO (2026-10-11): os obreiros andam ate o posto em volta da
+      // obra, e nao ate a porta; remedido 262 (era 247). O que se afirma e que a obra completa sem rua
+      obraCompletaNoTick: colisaoCivilLigada(gameData) ? 262 : 247, // a casa subiu: serf entregou andando livre
       // revogacao da D6 (2026-09-25): sem o portao o rotulo vem da FALTA, e a falta
       // desta fixture e rocha — `rochaAoAlcanceDaPedreira` abaixo e o que faz este
       // rotulo ser uma causa e nao um numero trocado

@@ -6,9 +6,10 @@ import { step } from '../src/sim/tick';
 import {
   alvoDeNivelamento, entreguesNaObra, hpTotalDoTipo, obraNivelada, obraTrabalhavel, tetoDeHp,
 } from '../src/sim/obra';
-import { criarTarefaDeConstrucao, reclamar, tarefasDoLaborerEmOrdem, TIPO_QUE_CONSTROI } from '../src/sim/jobs';
+import { criarTarefaDeConstrucao, postosDaObra, reclamar, tarefasDoLaborerEmOrdem, TIPO_QUE_CONSTROI } from '../src/sim/jobs';
 import { gerarTarefas } from '../src/sim/systems/jobs';
 import { tilesDaPorta } from '../src/sim/estradas';
+import { colisaoCivilLigada } from '../src/sim/colisao';
 import {
   armazemDoCenario, comEstoqueNaSaida, comEstradas, comObra, comTarefas, comUnidadeEm, destinoPredioDa,
   inicial, laborersDoCenario,
@@ -248,10 +249,15 @@ describe('F11c — sistemaDosLaborers (Task 5)', () => {
     // tile por unidade (pathfinding.ts:tileAndavel), e assim os dois chegam no mesmo tick.
     let estado = comObra(inicial, 'obra-a', { ...naVila(-3, 4), faltam: { timber: 3, stone: 2 }, nivelamento: 0 });
     const alvo = alvoDeNivelamento('quarry');
-    const porta = tilesDaPorta(estado.predios.porId['obra-a'] as PredioEmObra)[0];
-    if (!porta) throw new Error('fixture: obra sem porta');
-    estado = comUnidadeEm(estado, laborer1, porta.gx, porta.gy);
-    estado = comUnidadeEm(estado, laborer2, porta.gx, porta.gy);
+    // I-MOVIMENTO-OBREIRO-OCUPA-O-CANTEIRO: com a colisao civil, cada obreiro trabalha num POSTO em
+    // volta da obra (o primeiro livre, na ordem dos postos), e nao na porta. Cada um nasce no posto que
+    // vai receber, para os dois chegarem no mesmo tick, como antes na porta.
+    const [posto1, posto2] = colisaoCivilLigada(gameData)
+      ? postosDaObra(estado, estado.predios.porId['obra-a'] as PredioEmObra)
+      : [tilesDaPorta(estado.predios.porId['obra-a'] as PredioEmObra)[0], tilesDaPorta(estado.predios.porId['obra-a'] as PredioEmObra)[0]];
+    if (!posto1 || !posto2) throw new Error('fixture: obra sem posto');
+    estado = comUnidadeEm(estado, laborer1, posto1.gx, posto1.gy);
+    estado = comUnidadeEm(estado, laborer2, posto2.gx, posto2.gy);
 
     let atual = estado;
     let nivelamentoAnterior = 0;

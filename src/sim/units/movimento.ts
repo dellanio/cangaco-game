@@ -20,7 +20,7 @@ type Passo = ResultadoDeSistema;
 /** Monta `fsmData` OMITINDO o que falta (o JSON perderia um `undefined`; e o tipo o proibe). */
 export function dadosDaFsm(d: {
   readonly tarefa?: string; readonly carga?: string; readonly caminho?: readonly TileDeGrid[];
-  readonly progresso?: number; readonly armazem?: string;
+  readonly progresso?: number; readonly armazem?: string; readonly posto?: TileDeGrid | undefined;
 }): DadosDaFsm {
   return {
     ...(d.tarefa === undefined ? {} : { tarefa: d.tarefa }),
@@ -28,6 +28,7 @@ export function dadosDaFsm(d: {
     ...(d.caminho === undefined ? {} : { caminho: [...d.caminho] }),
     ...(d.progresso === undefined ? {} : { progresso: d.progresso }),
     ...(d.armazem === undefined ? {} : { armazem: d.armazem }),
+    ...(d.posto === undefined ? {} : { posto: d.posto }),
   };
 }
 
