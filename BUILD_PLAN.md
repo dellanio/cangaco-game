@@ -9751,6 +9751,61 @@ convertidos para ticks no carregamento:
   5. os testes da fila de civis ("ninguém sai do próprio caminho", "quem quer andar avança no prazo")
      passam.
 
+#### A campanha: as dez fases desenhadas e os mapas prontos para o Tiled (pedido do operador, 2026-10-10)
+- **Pedido:** "leia no KaM Remake 10 fases, como a fase é construída, os desafios, estilo de cenário,
+  posição da vegetação e recursos naturais, e crie 10 fases para o jogo. Adapte ao nosso cenário de
+  sertão e já deixe esses mapas prontos para editar no tilemap."
+- **O que existe (verificado):** a narrativa e as dez missões estão em `pianco-campanha-10-missoes.md`
+  (F22, `57c3cec6`): de Piancó a Cabedelo, com objetivo, derrota, o que libera e o desafio de cada uma.
+  As fases seguem esse documento; nada nele é reescrito.
+- **O que o clone do KaM tem e o que não tem (verificado):** o clone (`731a8a4`) tem o CÓDIGO da
+  missão e da campanha (`src/mission/KM_MissionScript.pas`, `KM_MapTypes.pas`, `KM_Campaigns.pas`) e
+  NÃO tem os mapas das campanhas, que vêm com os dados do jogo. E o CLAUDE.md §9 proíbe qualquer mapa
+  do jogo de 1998, inclusive como referência de transferência. Então: do KaM vem a ESTRUTURA (como a
+  missão é montada, os tipos de objetivo, o modo construir/lutar, a liberação por fase); os mapas são
+  desenho nosso, do sertão.
+- **Fronteira desta leva:** é DADO e FERRAMENTA de autoria. O jogo ainda não roda a campanha (escolher
+  a fase, os objetivos em jogo, as ondas, o desbloqueio por fase): isso é um item de sim, depois, com
+  as decisões do operador. Todo mapa é 128x128 (o `terrain.mapaPadrao`): o mapa maior da missão 8 fica
+  para quando o tamanho do mundo puder variar.
+
+##### I-TERRENO-CAMPANHA-DEZ-FASES-DESENHO — o desenho das dez fases
+- `docs/planos/2026-10-10-campanha-dez-fases.md`: (1) a estrutura da missão no KaM, com `arquivo:linha`
+  do clone: os comandos de montagem, os objetivos de vitória e de sobrevivência, as condições, o modo
+  construir/lutar e a liberação da campanha; (2) o vocabulário de missão nosso, derivado dela; (3) por
+  fase: local, modo, vitória, derrota, o que libera, o inimigo, e o MAPA (relevo, água, vegetação,
+  recursos naturais, onde o jogador começa, onde o inimigo está, os passos estreitos), ligado ao
+  desafio do `pianco-campanha-10-missoes.md`.
+- **Aceite:** o documento existe com as três partes, toda citação do KaM tem `arquivo:linha` do clone,
+  e o que é princípio de desenho e não vem do clone está marcado como tal.
+
+##### I-TERRENO-MAPA-NO-TILED — o mapa abre e volta do Tiled
+- `tools/mapa-tiled.mjs`: `exportar <fase.json> <saida.tmj>` e `importar <entrada.tmj> <fase.json>`. O
+  `.tmj` é o JSON do Tiled, ortogonal (CLAUDE.md §4), com uma camada de tiles `terreno`, uma camada de
+  tiles `recursos` e uma camada de objetos `missao` (o início do jogador, os prédios e as tropas de
+  cada lado, os alvos). A paleta de edição (`tools/tiled/paleta.png` + `paleta.tsx`) é de cores chapadas
+  com a letra do tipo, só para o editor: não é arte do jogo e não entra no bundle.
+- **Aceite:** (1) ida e volta: `importar(exportar(fase))` é igual à fase, byte a byte, nas dez fases;
+  (2) uma edição no `.tmj` (um tile de terreno e um recurso trocados) volta no `importar`; (3) tile ou
+  recurso desconhecido no `.tmj` é recusado com a posição; (4) o `.tmj` declara a paleta pelo caminho
+  relativo e abre sem a pasta do jogo.
+
+##### I-TERRENO-DEZ-MAPAS-DA-CAMPANHA — as dez fases em dado, com mapa
+- `tools/gerar-fases.js` (semente fixa por fase, como o `gerar-mapa.js`) emite
+  `data/campanha/fase-NN-<local>.json` (o mapa no formato do `sertao-128` mais a missão: lados, prédios,
+  tropas, estoque, objetivos, o que libera, o desafio) e o `.tmj` em `tools/tiled/fases/`. Depois de
+  emitido, o `.tmj` é a fonte: quem edita no Tiled roda o `importar`.
+- **Regras (em `tools/data-rules.js`, no `validate:data`):** dimensão do `mapaPadrao`; tipos e recursos
+  do vocabulário de `terrain.json`/`resources.json`; recurso no terreno certo (peixe na água, minério na
+  montanha, pedra na rocha ou sobre o lajedo, árvore e cana em chão); prédio e unidade de cada lado em
+  chão transponível, com a porta livre; todo id de prédio, tropa e objetivo existe; o que a fase libera
+  existe na árvore; a fase N+1 libera só o que a N não liberou.
+- **Aceite:** (1) as dez fases passam no `validate:data`, e um mapa com peixe na terra, prédio na água
+  ou id inexistente é recusado (teste por tabela); (2) pelo A* da sim, o início do jogador alcança a pé
+  pedra, árvore e o inimigo em toda fase, e a fase 4 tem exatamente uma entrada larga e duas estreitas
+  para a vila (medido no mapa); (3) o gerador é determinístico (`--conferir` sai 0); (4) um teste
+  carrega cada fase pela `criarEscaramuca`-like de teste (o mapa no lugar do `sertao-128`) e roda 600
+  ticks sem violação de invariante; (5) a prancha das dez miniaturas em `screenshots/` é aberta.
 #### I-ENTREGA-VERSAO-PUBLICAVEL — o fechamento do bloco e a versão pronta para o operador publicar
 - **Como, na ordem do CLAUDE.md §13:**
   1. `npm run verify` completo (com a transladada);
