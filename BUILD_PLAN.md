@@ -9682,6 +9682,40 @@ convertidos para ticks no carregamento:
      juntos e em que direção, com o porquê;
   3. nenhum número de `data/` muda neste item. O lote só se aplica com a aprovação do operador.
 
+#### I-COMBATE-ESCARAMUCA-GANHAVEL-NA-SECA — a escaramuça de teste ganhável com o clima ligado
+- **Decisão do operador (2026-10-10, opção a):** a tropa inicial do jogador
+  (`escaramuca.tropaDoJogador.quantidade`, hoje 24) sobe até o cenário de teste vencer com o clima
+  ligado. É número do cenário, como no I-COMBATE-ESCARAMUCA-GANHAVEL, e não balanceamento.
+- **Medido antes (sonda sem tela, a partida do teste longo da C-IA-03b, clima ligado):** 24 vence com 6
+  de sobra, 27 com 8, 30 com 21. O roteiro C-IA-03c, pelo mouse, perde com 24 (a tropa morre inteira).
+- **Regra:** mede-se o roteiro C-IA-03c com 27 e com 30, e fica o menor que vence nos DOIS caminhos (o
+  roteiro e o teste longo da C-IA-03b).
+- **Aceite:** (1) o C-IA-03c sai 0; (2) o teste longo da C-IA-03b passa; (3) os roteiros que leem a
+  tropa do dado (C-COMBATE-01c, C-TELA-01 a 04, F-TELA-NEVOA) saem 0; (4) a tabela "tropa → sobra nos
+  dois caminhos" no PROGRESS.
+
+#### I-MOVIMENTO-OBREIRO-OCUPA-O-CANTEIRO — cada obreiro num posto em volta da obra, a porta para o serf
+- **Decisão do operador (2026-10-10):** o obreiro que trabalha na obra ocupa um tile, num POSTO de
+  trabalho em volta dela, e a porta fica livre para o serf que traz o material.
+- **Hoje (verificado na sonda de 2026-10-10):** os até 4 obreiros (`laborersMaximosPorObra`) e o serf vão
+  todos à porta (`tilesDaPorta`, a borda sul). Só trocar os estados de trabalho para "fora" trava a obra
+  (7 testes reprovam), porque o material não chega.
+- **Regra:** os postos são os tiles andáveis vizinhos ao footprint (o anel de 1 tile em volta), menos os
+  tiles da porta. O obreiro recebe um posto no claim da tarefa de obra, guardado no `fsmData`, e o
+  devolve em todo ramo de saída (obra pronta, demolida, obreiro morto, tarefa liberada). Sem posto livre,
+  ele não reclama a tarefa. Os estados `nivelando`, `esperando_material` e `martelando` passam a ocupar o
+  tile. O serf com material continua indo à porta.
+- **Aceite (antes do código):**
+  1. por tabela: os postos de um footprint excluem a porta, o próprio footprint e tile não andável; dois
+     obreiros nunca recebem o mesmo posto;
+  2. pelo `step`: uma obra com 4 obreiros e material chegando completa (o anti-travamento do F11c e a
+     pedreira continuam passando), e nenhum tile tem dois civis "fora" ao mesmo tempo;
+  3. o posto é devolvido: obra demolida no meio, obreiro morto e obra pronta deixam o posto livre (a
+     invariante das reservas não acusa nada);
+  4. o roteiro F18f sai 0 sem mudar a asserção dele (nenhuma pilha de 3);
+  5. os testes da fila de civis ("ninguém sai do próprio caminho", "quem quer andar avança no prazo")
+     passam.
+
 #### I-ENTREGA-VERSAO-PUBLICAVEL — o fechamento do bloco e a versão pronta para o operador publicar
 - **Como, na ordem do CLAUDE.md §13:**
   1. `npm run verify` completo (com a transladada);
