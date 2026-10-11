@@ -21760,3 +21760,40 @@ sem-trabalhador   peça o trabalhador na Casa do Coronel                escola.t
   `canPlace` aceita prédio sobre tile de cultura, e a vila morreu de fome (26 mortes, 13 de milho). A sonda
   passou a escolher um lugar fora dos tiles de cultura. **Hipótese, não verificada:** o jogador também pode
   plantar um prédio em cima da roça sem aviso. Isso vale como pergunta de design, e não como bug do Açude.
+
+### I-MOVIMENTO-DEVOLVENDO-SEM-ARMAZEM-CEDE-O-TILE — quem espera para devolver sem armazém sai do caminho (verificado)
+- **A causa (medida pela sonda, já apagada):** no teste longo da C-IA-03b com a tropa de 27, o jogador
+  derruba o armazém da IA. O serf `u64`, com pão, fica em `devolvendo` sem armazém, parado no tile 87,72
+  (`serfs.ts`, "sem armazem: espera"). O `u66`, com farinha, fica bloqueado atrás dele 458 ticks, e o
+  anti-travamento (prazo 450) reprova. Com 24, a luta corre de outro jeito e ninguém passa por ali.
+- **O que mudou:** `ehEmpurravel` (`src/sim/colisao.ts`) é o predicado único do empurrão: o `ocioso`
+  parado e o `devolvendo` parado sem armazém. O `passoDevolvendo` anda o passo de lado que a colisão
+  marca, com a carga, e volta a esperar.
+- **Testes:** `tests/I-MOVIMENTO-DEVOLVENDO-SEM-ARMAZEM-CEDE-O-TILE.test.ts` (a tabela e o caso pelo
+  `step`) reprova com a regra antiga (só `ocioso`, conferido trocando a linha) e passa com a nova. O
+  longo da C-IA-03b passa com 27; os testes da colisão civil, da fila de civis, do F11c e do F09
+  passam (175).
+
+### I-COMBATE-ESCARAMUCA-GANHAVEL-NA-SECA — a tropa de teste sobe para 27, e o clique no prédio na névoa vai à porta (verificado)
+- **A medida mudou a causa:** a hipótese "a seca deixa a tropa lenta" não se sustentou sozinha. Com 27,
+  a tropa vence a luta e sobram 13, que ficam `ocioso` 100 rodadas diante dos prédios até morrer de
+  fome. O clique no prédio da IA na névoa virava `MoveUnits` a um tile DENTRO do footprint, recusado
+  (`destino-inandavel`). Emenda no BUILD_PLAN antes do código.
+- **O conserto:** `destinoDaMarcha` (`src/ui/ordem-militar.ts`) leva a marcha à porta andável mais
+  perto do tile clicado quando o tile é de prédio e não é andável.
+- **Depois do conserto, a tropa (a decisão do operador, opção a):**
+```text
+tropa  roteiro C-IA-03c (pelo mouse)          teste longo C-IA-03b (sem tela)
+24     perde: a tropa morre inteira           vence, sobram 6 (sonda, clima ligado)
+27     vence (sai 0)                          vence, sobram 8 de 27
+30     não medido no roteiro                  vence, sobram 21 (sonda)
+```
+  Fica 27, o menor que vence nos dois caminhos.
+- **Roteiros que leem a tropa:** C-TELA-01, 02, 04 e F-TELA-NEVOA saem 0 sem mudança. O C-COMBATE-01c
+  tinha as colunas literais (5, e 7 depois de dois "+"); agora deriva da sim (raiz de n para cima, +2):
+  6 e 8 com 27. O C-TELA-03 manda a tropa 6 tiles ao norte, e não 4: com 27 a formação cobria as
+  fileiras de partida, e a troca de vaga emparedada (C-MOVIMENTO-02) devolvia o `u35`, que marchou, ao
+  tile em que nasceu. A asserção "quem marchou saiu do lugar" ficou igual. Os dois saem 0.
+- **Testes:** `tests/I-COMBATE-ESCARAMUCA-GANHAVEL-NA-SECA.test.ts` (a tabela do destino e o caso pelo
+  `step`). A reprovação sem o conserto é a da sonda (`destino-inandavel`, 24 ociosos), e não foi
+  repetida contra o teste.

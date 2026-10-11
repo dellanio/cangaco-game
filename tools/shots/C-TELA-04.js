@@ -10,7 +10,7 @@
 // O px sai do debug (`unidadesRenderizadas`, `camera`), nunca de pixel da captura.
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
-const TROPA = require('../../data/escaramuca.json').tropaDoJogador.quantidade; // dado do cenario (I-COMBATE-ESCARAMUCA-GANHAVEL: 18 -> 24)
+const TROPA = require('../../data/escaramuca.json').tropaDoJogador.quantidade; // dado do cenario (I-COMBATE-ESCARAMUCA-GANHAVEL: 18 -> 24; -NA-SECA: 24 -> 27)
 const escaramuca = require('../../data/escaramuca.json');
 
 const TILE_PX = terreno.tile_px;

@@ -17,7 +17,7 @@
 // O px sai do debug (`unidadesRenderizadas`, `prediosDoEstado`), nunca de pixel da captura.
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
-const TROPA = require('../../data/escaramuca.json').tropaDoJogador.quantidade; // dado do cenario (I-COMBATE-ESCARAMUCA-GANHAVEL: 18 -> 24)
+const TROPA = require('../../data/escaramuca.json').tropaDoJogador.quantidade; // dado do cenario (I-COMBATE-ESCARAMUCA-GANHAVEL: 18 -> 24; -NA-SECA: 24 -> 27)
 const escaramuca = require('../../data/escaramuca.json');
 const unidades = require('../../data/units.json');
 
@@ -235,7 +235,7 @@ async function roteiro(ctx) {
   afirmar(mecanica.marchaNoEscuro, 'depois da paz, o clique no inimigo fora da vista deveria fazer a tropa marchar pelo escuro');
   afirmar(mecanica.ataqueAoQueSeVe, 'o clique no inimigo a vista deveria levar a tropa a lutar');
   afirmar(mecanica.iaAtacou, 'depois da paz, a IA deveria sair para atacar (indo_atacar)');
-  // ESTE CENARIO DE TESTE E GANHAVEL: e dado do cenario (`escaramuca.tropaDoJogador`, 24 em
+  // ESTE CENARIO DE TESTE E GANHAVEL: e dado do cenario (`escaramuca.tropaDoJogador`, 27 em 2026-10-10, antes 24 em
   // 2026-10-04), e nao regra de jogo; muda quando o cenario mudar.
   afirmar(fim === 'vitoria', `a vitoria deveria aparecer na tela, veio ${fim} (${titulo})`);
   const vivos = s.unidadesRenderizadas.filter((u) => u.lado === LADO_DO_JOGADOR && u.tipo === 'militia').length;

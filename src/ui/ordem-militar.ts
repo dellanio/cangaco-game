@@ -18,6 +18,8 @@ import type { Command } from '../sim/commands';
 import type { GameData } from '../sim/data/types';
 import type { GameState } from '../sim/state';
 import { predioNoTile } from '../sim/selectors';
+import { tileAndavel } from '../sim/pathfinding';
+import { tilesDaPorta } from '../sim/estradas';
 import { predioClicavel } from '../render/nevoa';
 import { hpMaximoDoTipo } from '../sim/vida';
 import { ehADistancia } from '../sim/combate';
@@ -94,5 +96,24 @@ export function ordemDoBotaoDireito(
     if (padres.length > 0) comandos.push({ type: 'MoveUnits', unidades: padres, destino });
     return { comandos, marcarDestino: padres.length > 0 ? destino : null };
   }
-  return { comandos: [{ type: 'MoveUnits', unidades: grupo, destino, ...formacao }], marcarDestino: destino };
+  const ate = destinoDaMarcha(estado, dados, destino);
+  return { comandos: [{ type: 'MoveUnits', unidades: grupo, destino: ate, ...formacao }], marcarDestino: ate };
+}
+
+/** I-COMBATE-ESCARAMUCA-GANHAVEL-NA-SECA — o clique num predio que a tropa nao ve (a nevoa) vira
+ *  marcha; o tile dele e DENTRO do footprint, e a sim recusaria (`destino-inandavel`). A marcha vai
+ *  entao a porta andavel mais perto do tile clicado. Sem predio no tile, ou sem porta andavel, o
+ *  destino e o clicado: a sim recusa e o aviso diz por que. */
+export function destinoDaMarcha(
+  estado: GameState, dados: GameData, tile: { readonly gx: number; readonly gy: number },
+): { gx: number; gy: number } {
+  const clicado = { gx: tile.gx, gy: tile.gy };
+  if (tileAndavel(estado, clicado, 'livre', dados)) return clicado;
+  const id = predioNoTile(estado, tile.gx, tile.gy, dados);
+  const predio = id === null ? undefined : estado.predios.porId[id];
+  if (predio === undefined) return clicado;
+  const distancia = (t: { gx: number; gy: number }): number => Math.abs(t.gx - tile.gx) + Math.abs(t.gy - tile.gy);
+  const portas = tilesDaPorta(predio, dados).filter((t) => tileAndavel(estado, t, 'livre', dados));
+  portas.sort((a, b) => distancia(a) - distancia(b) || a.gx - b.gx);
+  return portas[0] ?? clicado;
 }

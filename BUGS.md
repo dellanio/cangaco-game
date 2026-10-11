@@ -59,41 +59,6 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
   o serf espera na fila e a pilha some; se não, o roteiro deve contar só quem ocupa.
 - status: aberto, esperando a decisão
 
-## BUG-SHOT-TODOS-ONZE-ROTEIROS-VERMELHOS — 11 roteiros saem 1 no fechamento de 2026-10-10
-- feature: o fechamento do bloco (I-ENTREGA-VERSAO-PUBLICAVEL); cada roteiro é o aceite da sua feature
-- severidade: errado (o bloco não fecha, e a tag `teste-jogo-2` espera)
-- repro: `npm run shot:todos` em `1d974d2` (resumo em `test-output/shot-todos.json`), e cada um de novo
-  sozinho por `npm run shot -- <nome>`
-- observado (medido em 2026-10-10): 12 de 172 saem 1. Um é o BUG-F18F acima. Os outros 11:
-  - `C-IA-03c`: "os tres predios da IA deveriam cair, sobraram 3" (380 s);
-    medido em 2026-10-10: com o clima LIGADO a luta cai na seca (ticks 3600 a 7200) e a tropa de 24 do
-    jogador morre inteira ate o tick 8128 (a IA fica com 13); com o clima DESLIGADO (so na sonda) o
-    jogador vence a luta nas duas corridas, e numa delas derruba os predios um a um (o AttackBuilding
-    funciona). Na outra, 8 sobreviventes ficaram `ocioso` com os predios intactos ate a rodada 200:
-    hipotese, nao reproduzida (o passo despausado do roteiro varia a corrida). O que falta e decisao
-    do operador: o cenario de teste deixa de ser ganhavel com a seca (a tropa, o comeco da partida na
-    estacao, ou o roteiro jogar fora da seca).
-- verificado: os 10 rápidos (todos menos o `C-IA-03c`) falham IGUAIS em `73833b0`, a `main` de antes do
-  trabalho de 2026-10-10. Não vieram do Açude, das dicas, do som nem do roteiro do machado.
-- hipótese (não conferida): vieram das levas de 2026-10-06 a 2026-10-09 (o jornal só com a última, os
-  enfeites, a caatinga, a serra, as fontes naturais, a seca mais lenta), porque nenhum `shot:todos` rodou
-  entre elas. Ressalva: na corrida da `73833b0` as partidas salvas (`test-output/*.save.txt`) foram
-  copiadas da árvore atual, e um save mais novo pode ter falhado por formato.
-- correção prevista: um por um, como roteiro desatualizado ou defeito de jogo, sem afrouxar asserção.
-- consertados: `I-TELA-CLIMA-VISUAL` (o roteiro afirmava o jornal antigo) e `F25b` (a moldura do
-  menu da proposta, `14b2d58d`, achado por bisect, empurrou o Derrubar 6 px para fora); e os cinco que
-  carregavam partida salva (`G-TELA-GESTO-DO-TRABALHO`, `I-ARTE-PREDIOS-MAIORES`,
-  `I-TELA-OBRAS-COM-ARTE-ATUAL`, `I-TELA-QUARTEL-MAIS-IMPONENTE`, `I-TELA-SELECAO-NO-PE`): o teste
-  gravava em `test-output/` direto, e a corrida transladada do verify sobrescrevia a partida com o
-  mundo de +32. Passam pelo `CANGACO_EVIDENCIA_DIR`, e a guarda global da corrida transladada reprova
-  quem tocar numa partida do mundo normal (provado: sem o conserto, sai 1 e diz o arquivo). E mais
-  tres: `F07` e `D-TELA-LUZ-RELEVO-recorte` plantavam predio encostado em predio, que a
-  I-OBRA-UM-TILE-ENTRE-PREDIOS recusa por 'colado' (o F07 passa a afirmar a recusa; o recorte troca o
-  modelo proprio pela planta do jogo, numa janela maior); `D-TELA-AGUA-PEIXE` tirava o sha256 da
-  pagina, e a borda do HTML do relogio do sol variou 7 px com o mesmo texto: o sha256 e do canvas, e o
-  texto do relogio e afirmado igual a parte.
-- status: aberto, 10 de 11 consertados; falta o `C-IA-03c`, que espera a decisao do operador
-
 ## Polimento
 
 Os três bugs de oscilação de tempo que moravam aqui (BUG-D na F-T1, BUG-E na F-T2b e,

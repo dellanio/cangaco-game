@@ -14,6 +14,8 @@ import {
 } from '../src/render/nevoa';
 import { configDoMapa } from '../src/render/mapa';
 import { ordemDoBotaoDireito } from '../src/ui/ordem-militar';
+import { tilesDaPorta } from '../src/sim/estradas';
+import { tileAndavel } from '../src/sim/pathfinding';
 import { comOlheiro } from './helpers/vista';
 
 const s0 = criarEscaramuca(gameData.economia.estadoInicial.semente);
@@ -80,10 +82,20 @@ describe('F-TELA-NEVOA — o clique', () => {
     expect(predioClicavel(s0, null)).toBeNull();
   });
 
-  it('o botao direito no predio inimigo no escuro e marcha ate o tile; a vista, ataque', () => {
+  // I-COMBATE-ESCARAMUCA-GANHAVEL-NA-SECA: a marcha ia ao tile clicado, DENTRO do footprint, e a sim a
+  // recusava (destino-inandavel); agora vai a porta andavel mais perto do clique
+  it('o botao direito no predio inimigo no escuro e marcha ate a porta dele; a vista, ataque', () => {
     const semPaz: GameState = { ...s0, pazAteTick: 0 };
     const noEscuro = ordemDoBotaoDireito(semPaz, gameData, LADO_DO_JOGADOR, tropa, noArmazem, []);
-    expect(noEscuro.comandos).toEqual([{ type: 'MoveUnits', unidades: tropa, destino: noArmazem }]);
+    expect(tileAndavel(semPaz, noArmazem, 'livre', gameData)).toBe(false);
+    const portas = tilesDaPorta(armazemDaIA, gameData).filter((p) => tileAndavel(semPaz, p, 'livre', gameData));
+    const dist = (p: { gx: number; gy: number }): number => Math.abs(p.gx - noArmazem.gx) + Math.abs(p.gy - noArmazem.gy);
+    expect(noEscuro.comandos).toHaveLength(1);
+    const marcha = noEscuro.comandos[0] as { type: string; unidades: string[]; destino: { gx: number; gy: number } };
+    expect(marcha.type).toBe('MoveUnits');
+    expect(marcha.unidades).toEqual(tropa);
+    expect(portas).toContainEqual(marcha.destino);
+    expect(dist(marcha.destino)).toBe(Math.min(...portas.map(dist)));
     const aVista = ordemDoBotaoDireito(comOlheiro(semPaz, armazemDaIA), gameData, LADO_DO_JOGADOR, tropa, noArmazem, []);
     expect(aVista.comandos).toEqual([{ type: 'AttackBuilding', unidades: tropa, predio: armazemDaIA.id }]);
   });

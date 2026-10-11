@@ -17,6 +17,7 @@ import { textoDaRecusa } from '../src/ui/aviso-de-ordem';
 import { criarEntradaDoMapa, LIMIAR_DA_CAIXA_PX } from '../src/input/colocar';
 import type { GestosMilitares } from '../src/input/colocar';
 import { criarFerramenta } from '../src/input/ferramenta';
+import { tileAndavel } from '../src/sim/pathfinding';
 import temaSertao from '../data/theme-sertao.json';
 import { gravarEvidencia } from './helpers/evidence';
 
@@ -73,8 +74,11 @@ describe('C-COMBATE-01c — os controles de formacao', () => {
   });
 
   it('4. o botao direito leva direcao e colunas so na marcha, e deixa de fora quem carrega', () => {
-    const destino = { gx: 30, gy: 30 };
-    const marcha = ordemDoBotaoDireito(s0, gameData, LADO_DO_JOGADOR, tropa, destino, [], { direcao: 2, colunas: 6 });
+    // um tile ANDAVEL: o 30,30 de antes era dentro do armazem do jogador, e a sim recusaria a marcha (desde a
+    // I-COMBATE-ESCARAMUCA-GANHAVEL-NA-SECA, o clique no predio vai a porta dele)
+    const destino = { gx: 30, gy: 34 };
+    expect(tileAndavel(s0, destino, 'livre', gameData)).toBe(true);
+    const marcha =ordemDoBotaoDireito(s0, gameData, LADO_DO_JOGADOR, tropa, destino, [], { direcao: 2, colunas: 6 });
     expect(marcha.comandos).toEqual([{ type: 'MoveUnits', unidades: tropa, destino, direcao: 2, colunas: 6 }]);
     const semFormacao = ordemDoBotaoDireito(s0, gameData, LADO_DO_JOGADOR, tropa, destino, []);
     expect(semFormacao.comandos).toEqual([{ type: 'MoveUnits', unidades: tropa, destino }]);

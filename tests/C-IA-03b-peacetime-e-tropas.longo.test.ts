@@ -103,7 +103,7 @@ describe('C-IA-03b — peacetime e tropas, a partida inteira', () => {
     const fins = eventos.filter((e) => e.type === 'match-ended');
     expect(fins).toHaveLength(1);
     expect(s.partida?.fim).toBeDefined();
-    // ESTE CENARIO DE TESTE E GANHAVEL. E dado do cenario (`escaramuca.tropaDoJogador`, 24 em
+    // ESTE CENARIO DE TESTE E GANHAVEL. E dado do cenario (`escaramuca.tropaDoJogador`, 27 em 2026-10-10, antes 24 em
     // 2026-10-04), e nao regra: muda quando o cenario mudar.
     expect(s.partida?.fim).toBe('vitoria');
     const sobram = tropa.filter((id) => s.unidades.porId[id]).length;

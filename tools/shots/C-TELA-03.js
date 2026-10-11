@@ -11,7 +11,7 @@
 // O px sai do debug (`unidadesRenderizadas`, `camera`), nunca de pixel da captura.
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
-const TROPA = require('../../data/escaramuca.json').tropaDoJogador.quantidade; // dado do cenario (I-COMBATE-ESCARAMUCA-GANHAVEL: 18 -> 24)
+const TROPA = require('../../data/escaramuca.json').tropaDoJogador.quantidade; // dado do cenario (I-COMBATE-ESCARAMUCA-GANHAVEL: 18 -> 24; -NA-SECA: 24 -> 27)
 
 const TILE_PX = terreno.tile_px;
 const LADO_DO_JOGADOR = 0;
@@ -121,7 +121,11 @@ async function roteiro(ctx) {
 
   // 3. a ordem leva os 18
   const nasceram = new Map(cabras(s).map((u) => [u.id, `${u.gx},${u.gy}`]));
-  const destino = { x: (meio.gx + 0.5) * TILE_PX, y: (meio.gy - 4 + 0.5) * TILE_PX };
+  // I-COMBATE-ESCARAMUCA-GANHAVEL-NA-SECA: 6 tiles ao norte, e nao 4. Com a tropa de 27 (6 por fileira, 5
+  // fileiras) a formacao a 4 tiles cobria as fileiras de partida, e a troca de vaga emparedada
+  // (C-MOVIMENTO-02) devolvia um cabra que marchou ao tile em que nasceu (medido: u35). A 6, as vagas
+  // ficam fora da partida e quem marcha sai do lugar, como o roteiro afirma.
+  const destino = { x: (meio.gx + 0.5) * TILE_PX, y: (meio.gy - 6 + 0.5) * TILE_PX };
   const pd = naPagina(destino.x, destino.y, s.camera);
   await page.mouse.move(pd.x, pd.y);
   await page.mouse.down({ button: 'right' });
