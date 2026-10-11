@@ -9693,6 +9693,21 @@ convertidos para ticks no carregamento:
 - **Aceite:** (1) o C-IA-03c sai 0; (2) o teste longo da C-IA-03b passa; (3) os roteiros que leem a
   tropa do dado (C-COMBATE-01c, C-TELA-01 a 04, F-TELA-NEVOA) saem 0; (4) a tabela "tropa → sobra nos
   dois caminhos" no PROGRESS.
+- **Emenda (2026-10-10, antes do código; pela medida):** com 27 a tropa vence a luta, sobram 13, e eles
+  ficam `ocioso` 100 rodadas diante dos prédios da IA, sem dano, até morrer de fome. A causa, medida
+  pela sonda pelo `step`: o prédio está na névoa, o clique nele vira `MoveUnits` ao tile clicado, que é
+  DENTRO do footprint, e a sim recusa (`destino-inandavel`). A tropa de 24 é recusada igual. O defeito
+  é do clique, não do tamanho da tropa. Então, nesta ordem:
+  1. **o clique no prédio inimigo na névoa marcha até a porta dele:** em `ordemDoBotaoDireito`, quando o
+     tile do `MoveUnits` tem prédio e não é andável, o destino passa a ser o tile andável da porta
+     (`tilesDaPorta`) mais perto do clicado. Sem porta andável, fica como hoje (a sim recusa e o aviso
+     diz por quê). Tile não andável sem prédio (água, rocha) também fica como hoje;
+  2. só se o C-IA-03c ainda perder com 24 depois do conserto, a tropa sobe (27, depois 30), pela regra
+     acima.
+  **Aceite do conserto:** (a) por tabela: clique no tile de um prédio inimigo fora da vista dá `MoveUnits`
+  com destino na porta andável; clique na água dá `MoveUnits` no tile clicado (sem mudança); prédio sem
+  porta andável dá o tile clicado; (b) pelo `step`: a ordem gerada não é recusada e a tropa sai de
+  `ocioso`; (c) o C-IA-03c sai 0.
 
 #### I-MOVIMENTO-OBREIRO-OCUPA-O-CANTEIRO — cada obreiro num posto em volta da obra, a porta para o serf
 - **Decisão do operador (2026-10-10):** o obreiro que trabalha na obra ocupa um tile, num POSTO de
