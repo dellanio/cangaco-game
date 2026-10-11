@@ -97,7 +97,10 @@ describe('D-TELA-07 aceite 2 — pausada e sem insumo, lado a lado, pelo step', 
     // `canPlace` confere o LUGAR; o desbloqueio (a serraria pede o lenhador) vem marcado so
     // para a conferencia, como no teste do T2
     const desbloqueado: GameState = { ...base, tiposJaConstruidos: [...new Set([...base.tiposJaConstruidos, ...gameData.predios.map((p) => p.id)])] };
-    const OUTRA = [5, 6, -5, -6].map((dx) => ({ gx: s1.gx + dx, gy: s1.gy })).find((t) => canPlace(desbloqueado, 'sawmill', t.gx, t.gy).ok);
+    // I-OBRA-SEM-PREDIO-NA-ROCA: o lote ao lado pode cair no rocado de partida do mapa, e o jogador nao
+    // planta ali; procura tambem uma fileira acima e uma abaixo
+    const OUTRA = [0, -3, 3].flatMap((dy) => [5, 6, -5, -6].map((dx) => ({ gx: s1.gx + dx, gy: s1.gy + dy })))
+      .find((t) => canPlace(desbloqueado, 'sawmill', t.gx, t.gy).ok);
     if (OUTRA === undefined) throw new Error('fixture: nenhum lugar livre para a s2');
     let s = comProdutorOcupado(base, { tipo: 'sawmill', id: 's2', unidade: 'u9', ...OUTRA }, gameData);
     // a s1 trabalhando antes de pausar; a s2 nasceu sem tora e cai em esperando_insumo

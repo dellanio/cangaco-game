@@ -16,6 +16,7 @@ import { ligarTeclado } from '../src/input/teclado';
 import { validarTudo } from '../tools/data-rules.js';
 import { ARQUIVOS } from '../tools/data-schema.js';
 import { gravarEvidencia } from './helpers/evidence';
+import { semRoca } from './helpers/roca';
 import { LADO_DO_JOGADOR } from '../src/sim/state';
 
 // --- montagem de estados e de dados injetados (so teste; nada disto entra em sim/) ---
@@ -354,7 +355,8 @@ describe('F06 — canPlace', () => {
     // certo: um tile de folga em qualquer das tres formas e a mesma planta passa.
     it('um tile de folga e a mesma planta passa: o limite e exato', () => {
       expect(canPlace(inicial, 'quarry', 0, alturaDoMapa - pedreiraA - 1)).toEqual({ ok: true });
-      expect(canPlace(inicial, 'quarry', armazem.gx, armazem.gy + armazemA + 1)).toEqual({ ok: true });
+      // I-OBRA-SEM-PREDIO-NA-ROCA: abaixo do armazem fica o rocado de partida do mapa; o assunto e a porta
+      expect(canPlace(semRoca(inicial), 'quarry', armazem.gx, armazem.gy + armazemA + 1)).toEqual({ ok: true });
       expect(canPlace(inicial, 'quarry', armazem.gx, armazem.gy - pedreiraA - 1)).toEqual({ ok: true });
     });
 
@@ -472,11 +474,12 @@ describe('F06 — canPlace: recurso natural sob o footprint (BUG-F)', () => {
     expect(canPlace(comRecurso(inicial, gx + 2, gy, 'tree', 0), 'quarry', gx, gy)).toEqual({ ok: true });
   });
 
-  it('MILHO nao recusa, maduro ou em pousio — e o recorte que a regra precisa', () => {
-    // Milho e tile que o JOGADOR plantou, e pousio e campo com `quantidade: 0`:
-    // recusar aqui proibiria construir onde ja se plantou uma vez.
-    expect(canPlace(comRecurso(inicial, gx + 1, gy, 'corn', 4), 'quarry', gx, gy)).toEqual({ ok: true });
-    expect(canPlace(comRecurso(inicial, gx + 1, gy, 'corn', 0), 'quarry', gx, gy)).toEqual({ ok: true });
+  it('MILHO nao recusa por `recurso`, e sim por `roca`, maduro ou em pousio (I-OBRA-SEM-PREDIO-NA-ROCA)', () => {
+    // Antes, milho e pousio aceitavam predio em cima ("recusar proibiria construir onde ja se plantou").
+    // A decisao do operador de 2026-10-11 revogou isso: a roca recusa com motivo proprio, `roca`, e a
+    // bandeira `bloqueiaConstrucao` do milho continua falsa (e ela que deixa a estrada atravessar).
+    expect(canPlace(comRecurso(inicial, gx + 1, gy, 'corn', 4), 'quarry', gx, gy)).toEqual({ ok: false, motivo: 'roca' });
+    expect(canPlace(comRecurso(inicial, gx + 1, gy, 'corn', 0), 'quarry', gx, gy)).toEqual({ ok: false, motivo: 'roca' });
   });
 
   it('a regra vem do DADO: virar a bandeira vira a resposta, nos dois sentidos', () => {

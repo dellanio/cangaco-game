@@ -539,7 +539,8 @@ describe('F09 — cenario de carga: muitas obras simultaneas e ninguem reclamand
 const plantarERuar = (t: number): Command[] => {
   if (t !== 0) return [];
   return [
-    { type: 'PlaceBlueprint', buildingId: 'quarry', ...naVila(-3, 4) },
+    // I-OBRA-SEM-PREDIO-NA-ROCA: (-3, 4) cai no rocado de partida do mapa; o lote livre logo abaixo dele
+    { type: 'PlaceBlueprint', buildingId: 'quarry', ...naVila(-3, 8) },
     { type: 'PlaceRoad', tiles: [naVila(0, 3), naVila(0, 4), naVila(0, 5), naVila(0, 6), naVila(-1, 6)] },
   ];
 };

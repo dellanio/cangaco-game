@@ -10,6 +10,7 @@ import { step } from '../src/sim/tick';
 import { ancoraDoLajedo } from './helpers/ancoras';
 import { relativoA } from './helpers/ancoras';
 import { canPlace } from '../src/sim/placement';
+import { semRoca } from './helpers/roca';
 import { pedreiraDaVila, ruaDaPedreiraDaVila } from './helpers/producao-cenario';
 
 const require = createRequire(import.meta.url);
@@ -17,7 +18,9 @@ type MapaDeAutoria = { recursos: Record<string, number[][]>; contagemDeRecursos:
 const { validarLajedoDaVila } = require('../tools/data-rules.js') as { validarLajedoDaVila: (c: unknown, m: unknown, erros: string[]) => void };
 describe('I-TERRENO-LAJEDO-TRES-TILES', () => {
   it('pedreiras reposicionadas respeitam o vao e suas ruas sao legais e ligadas a vila', () => {
-    const inicial = createInitialState(1), lajedo = relativoA(ancoraDoLajedo());
+    // I-OBRA-SEM-PREDIO-NA-ROCA: o lote lajedo(10, 8) pega a cana de partida do mapa (a roca recusa com
+    // `roca`, coberta no teste dela); o assunto aqui e o vao e a rua
+    const inicial = semRoca(createInitialState(1)), lajedo = relativoA(ancoraDoLajedo());
     for (const p of [pedreiraDaVila(), lajedo(-1, 5), lajedo(10, 8)]) {
       expect(canPlace(inicial, 'quarry', p.gx, p.gy)).toEqual({ ok: true });
       expect(canPlaceRoad(inicial, ruaDaPedreiraDaVila(undefined, p)).ok).toBe(true);

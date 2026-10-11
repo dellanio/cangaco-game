@@ -3,6 +3,7 @@ import { gameData } from '../src/sim/data';
 import type { Command } from '../src/sim/commands';
 import type { GameEvent, GameState } from '../src/sim/state';
 import { createInitialState } from '../src/sim/state';
+import { semRoca } from './helpers/roca';
 import { estaDesbloqueado, registrarConclusoes } from '../src/sim/desbloqueio';
 import { opcoesDoMenuBuild } from '../src/sim/selectors';
 import { step } from '../src/sim/tick';
@@ -133,7 +134,9 @@ describe('F12 — aceite headless do BUILD_PLAN', () => {
     return { estado: atual, tick: atual.tick, semEvento, semCrescimento };
   }
 
-  const base = comEstradas(createInitialState(1), RUAS);
+  // I-OBRA-SEM-PREDIO-NA-ROCA: o lenhador da fixture (26,34) cai no rocado de partida do mapa; o
+  // assunto aqui e o desbloqueio, e nao a roca
+  const base = comEstradas(semRoca(createInitialState(1)), RUAS);
 
   let comObraDoLenhador: GameState;
   let lenhador: Corrida;

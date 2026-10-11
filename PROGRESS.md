@@ -21923,3 +21923,27 @@ fase                     pedra  árvore  inimigo   (custo do A* em ticks, do in�
   - F11c: a fixture "dois nivelam juntos" põe cada obreiro no posto que ele vai receber, e não os dois
     na porta. A asserção (metade do tempo) é a mesma.
 - **Não verificado:** a suíte transladada e a longa (rodam no fechamento).
+
+### I-OBRA-SEM-PREDIO-NA-ROCA — prédio não se planta em cima da roça (verificado)
+- **Decisão do operador (2026-10-11).**
+- **Regra:** `canPlace` tem o motivo novo `roca`, logo depois de `recurso`. Ele recusa quando um tile do
+  footprint é roça: recurso de tipo com `aradura` no dado (milho e cana), em qualquer quantidade
+  (inclusive o pousio), ou campo planejado (`tileDeRoca`, `placement.ts`). A porta não entra. A estrada
+  continua atravessando a roça, porque `bloqueiaConstrucao` do milho segue falso.
+- **Medido:**
+  - o teste do aceite (3 casos) passa: a tabela, o `PlaceBlueprint` recusado pelo `step` e a roça vinda
+    do dado (um tipo de teste com `aradura` passa a recusar);
+  - **a guarda acusa:** sem a recusa, os 3 casos reprovam;
+  - a suíte normal passa inteira (2967).
+- **O que a regra mudou nos testes (o mapa inicial tem 150 tiles de roça, 20 deles colados à vila:
+  milho em `campoArado` x 26–30, y 35–36, e cana x 34–38, y 35–36):**
+  - **F06 "milho não recusa"** passou a afirmar `roca`, maduro e em pousio. Era a regra que a decisão
+    revogou.
+  - **F-T3:** o caso "galpão sobre o campo" só existe agora num save de antes desta versão. A fixture
+    afirma a recusa `roca` e monta o caso direto; a proteção da colheita e do plantio continua testada.
+  - **Lote movido ou fixture sem a roça (`tests/helpers/roca.ts`, `semRoca`), onde o lote caía por acaso
+    no roçado de partida e o assunto não é a roça:** F06 (porta com folga), F09 (a pedreira do save
+    passa de (-3,4) para (-3,8)), F12 (o lenhador da fixture), D-TELA-07 (procura também uma fileira
+    acima e uma abaixo) e I-TERRENO-LAJEDO (o lote lajedo(10,8)).
+- **Não verificado:** os roteiros de tela que plantam prédio pela interface perto do roçado, a suíte
+  transladada e a longa. Rodam no fechamento.

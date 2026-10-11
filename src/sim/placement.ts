@@ -6,6 +6,15 @@ import { bordaSul, caixaDeTipo, caixaDoPredio, caixasSeSobrepoem } from './footp
 import { ehEstrada, ehPlanejada } from './estradas';
 import { ehTransponivel } from './mapa';
 import { recursoBloqueiaConstrucao, recursoNoTile } from './recursos';
+import { ehCampoPlanejado } from './campos';
+
+/** I-OBRA-SEM-PREDIO-NA-ROCA — o tile e roca: recurso de tipo que se ara (o dado tem `aradura`), em
+ *  qualquer quantidade, ou campo planejado. */
+export function tileDeRoca(state: GameState, gx: number, gy: number, dados: GameData = gameData): boolean {
+  if (ehCampoPlanejado(state.camposPlanejados, { gx, gy })) return true;
+  const r = recursoNoTile(state, gx, gy);
+  return r !== null && (dados.recursos.tipos[r.tipo]?.aradura ?? null) !== null;
+}
 
 export type MotivoDeRecusa =
   | 'predio-desconhecido'
@@ -53,7 +62,12 @@ export type MotivoDeRecusa =
   // NAO e "todo recurso": a bandeira e por tipo, em dado. Milho nao reprova,
   // porque tile de milho e tile que o jogador plantou e pousio e recurso com
   // quantidade zero — recusar ali proibiria construir onde ele ja plantou uma vez.
-  | 'recurso';
+  | 'recurso'
+  // I-OBRA-SEM-PREDIO-NA-ROCA (decisao do operador, 2026-10-11): um tile do footprint e ROCA — recurso de
+  // tipo que se ara (`aradura` no dado: milho e cana), em qualquer quantidade, inclusive o pousio, ou
+  // campo planejado. Motivo proprio, e nao `recurso`: a bandeira `bloqueiaConstrucao` do milho continua
+  // falsa porque e ela que deixa a ESTRADA atravessar a roca.
+  | 'roca';
 
 export type ResultadoDePosicionamento =
   | { readonly ok: true }
@@ -109,6 +123,12 @@ export function canPlace(
   for (let gy = candidato.y0; gy < candidato.y1; gy++) {
     for (let gx = candidato.x0; gx < candidato.x1; gx++) {
       if (recursoBloqueiaConstrucao(recursoNoTile(state, gx, gy), dados)) return recusa('recurso');
+    }
+  }
+  // I-OBRA-SEM-PREDIO-NA-ROCA: logo depois do recurso, pela mesma razao (e sobre o chao). A porta nao entra.
+  for (let gy = candidato.y0; gy < candidato.y1; gy++) {
+    for (let gx = candidato.x0; gx < candidato.x1; gx++) {
+      if (tileDeRoca(state, gx, gy, dados)) return recusa('roca');
     }
   }
 

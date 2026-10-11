@@ -123,10 +123,11 @@ const CHEIO_E_LIVRE = chaveDeTile(NORTE(5, 6));
 function comMilhoDebaixoDaFazenda(estado: GameState): GameState {
   const def = DADOS.predios.find((p) => p.id === 'storehouse');
   if (!def) throw new Error('fixture: storehouse saiu de buildings.json');
-  // A fixture confere a si mesma: o ponto do caso e que o jogo PERMITE esta
-  // planta — e ele permite, porque milho nao bloqueia construcao. Se `canPlace`
-  // passar a recusar, o caso deixou de existir e isto falha aqui, com o motivo
-  // escrito, em vez de o teste seguir medindo outra coisa.
+  // A fixture confere a si mesma. Ate 2026-10-11 o jogo PERMITIA esta planta (milho nao bloqueava
+  // construcao). I-OBRA-SEM-PREDIO-NA-ROCA (decisao do operador) passou a recusar com `roca`: o caso so
+  // existe agora num SAVE de antes dessa versao, e a protecao da colheita e do plantio continua valendo
+  // para ele. Por isso a fixture afirma a recusa e monta o caso direto, como o save antigo o traria. Se a
+  // recusa mudar de motivo ou sumir, isto falha aqui, com o motivo escrito.
   //
   // `registrarTipoConstruido` primeiro porque o cenario nasce sem serraria e o
   // armazem e desbloqueado por ela (`buildings.json: desbloqueadoPor`): sem isto
@@ -134,7 +135,9 @@ function comMilhoDebaixoDaFazenda(estado: GameState): GameState {
   // interessa aqui.
   const comOArmazemLiberado = registrarTipoConstruido(estado, 'sawmill');
   const veredito = canPlace(comOArmazemLiberado, 'storehouse', GALPAO.gx, GALPAO.gy, DADOS);
-  if (!veredito.ok) throw new Error(`fixture: o jogo recusou o galpao sobre o campo (${veredito.motivo})`);
+  if (veredito.ok || veredito.motivo !== 'roca') {
+    throw new Error(`fixture: o galpao sobre o campo devia ser recusado com 'roca' (veio ${veredito.ok ? 'ok' : veredito.motivo})`);
+  }
   const galpao = completarObra({
     lado: LADO_DO_JOGADOR, id: GALPAO.id, tipo: 'storehouse', gx: GALPAO.gx, gy: GALPAO.gy, estado: 'obra', hp: def.hp,
     obra: { faltam: {}, nivelamento: 0 },
