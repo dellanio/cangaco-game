@@ -346,6 +346,8 @@ export function step(
     ...(atual.partida === undefined ? {} : { partida: atual.partida }),
     // C-IA-03b: o fim do peacetime, so na escaramuca
     ...(atual.pazAteTick === undefined ? {} : { pazAteTick: atual.pazAteTick }),
+    // I-TERRENO-FASE-NA-SIM: a fase da campanha, quando a partida e uma
+    ...(atual.fase === undefined ? {} : { fase: atual.fase }),
     // I-COMIDA-AVISO-DA-TROPA-COM-FOME: o tick do ultimo aviso por lado, so enquanto ha tropa com fome
     ...(aviso.registro === undefined ? {} : { avisoDaTropaComFome: aviso.registro }),
     // C2: os projeteis no ar, so quando ha algum voando

@@ -563,6 +563,60 @@ export interface GameData {
   readonly clima: ClimaData;
   /** I-PRODUCAO-ACUDE-AGUA — a agua do Acude e a irrigacao, com os tempos ja em ticks (`data/acude.json`). */
   readonly acude: AcudeData;
+  /** I-TERRENO-FASE-NA-SIM — as dez fases da campanha em ordem e os numeros da missao, com os tempos
+   *  ja em ticks. O MAPA de cada fase nao vem aqui: quem o poe no lugar do sertao-128 e o
+   *  `dadosDaFase` (`src/sim/fase.ts`). */
+  readonly campanha: CampanhaData;
+}
+
+/** I-TERRENO-FASE-NA-SIM — um ponto da fase, em tiles. */
+export interface PontoDaFase { readonly gx: number; readonly gy: number }
+
+/** I-TERRENO-FASE-NA-SIM — o que um lado tem no comeco da fase (`SET_HOUSE`, `SET_GROUP`, `SET_STOCK`). */
+export interface LadoDaFaseData {
+  readonly lado: number;
+  readonly nome: string;
+  readonly estoque: Readonly<Record<string, number>>;
+  readonly predios: readonly { readonly id: string; readonly gx: number; readonly gy: number }[];
+  readonly unidades: readonly { readonly tipo: string; readonly quantidade: number; readonly gx: number; readonly gy: number }[];
+}
+
+/** I-COMBATE-FASE-ONDAS-E-OBJETIVOS — uma onda, com o momento ja em ticks desde o comeco da fase. */
+export interface OndaDaFaseData {
+  readonly tick: Ticks;
+  readonly lado: number;
+  readonly de: PontoDaFase;
+  readonly tropas: readonly { readonly tipo: string; readonly quantidade: number }[];
+}
+
+/** I-COMBATE-FASE-ONDAS-E-OBJETIVOS — uma condicao de vitoria ou derrota (o vocabulario do desenho,
+ *  secao 2), com o tempo ja em ticks. */
+export interface ObjetivoDaFaseData {
+  readonly tipo: 'destruir' | 'perder' | 'proteger' | 'prazo' | 'sobreviver' | 'manter' | 'capturar';
+  readonly lado?: number;
+  readonly alvo?: 'predios' | 'tropas';
+  readonly predios?: readonly string[];
+  readonly unidade?: string;
+  readonly ticks?: Ticks;
+  readonly ondas?: number;
+}
+
+/** I-TERRENO-FASE-NA-SIM — uma fase da campanha, sem o mapa. */
+export interface FaseData {
+  readonly id: string;
+  readonly numero: number;
+  readonly modo: 'construir' | 'lutar';
+  readonly semente: number;
+  readonly libera: { readonly predios: readonly string[]; readonly tropas: readonly string[] };
+  readonly objetivos: { readonly vitoria: readonly ObjetivoDaFaseData[]; readonly derrota: readonly ObjetivoDaFaseData[] };
+  readonly ondas: readonly OndaDaFaseData[];
+  readonly lados: readonly LadoDaFaseData[];
+}
+
+/** I-TERRENO-FASE-NA-SIM — a campanha inteira (`data/campanha/` e `data/missao.json`). */
+export interface CampanhaData {
+  readonly fases: readonly FaseData[];
+  readonly captura: { readonly ticks: Ticks; readonly raio_tiles: number; readonly raioDaEscolta_tiles: number };
 }
 
 /** I-CLIMA-ESTACAO — uma fase do ciclo, com a duracao ja em ticks. */

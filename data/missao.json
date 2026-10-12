@@ -1,0 +1,9 @@
+{
+  "_doc": "I-COMBATE-FASE-ONDAS-E-OBJETIVOS (plano docs/planos/2026-10-12-campanha-jogavel.md) — os numeros da missao que nao sao de uma fase so. As fases ficam em data/campanha/; o tempo delas (aos_segundos, segundos) segue a escala de cada fase. Captura (decisao 2 do operador, 2026-10-12): a tropa do jogador fica a ate raio_tiles da unidade-alvo, sem militar do lado dela a ate raioDaEscolta_tiles, por segundos_base.",
+  "escala": "combate",
+  "captura": {
+    "segundos_base": 10,
+    "raio_tiles": 1,
+    "raioDaEscolta_tiles": 3
+  }
+}

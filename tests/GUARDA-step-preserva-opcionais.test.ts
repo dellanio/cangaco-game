@@ -32,6 +32,8 @@ const OPCIONAIS_DO_ESTADO = {
   ia: 'persiste',
   partida: 'persiste',
   pazAteTick: 'persiste',
+  // I-TERRENO-FASE-NA-SIM: o sistema da fase muda as contagens, mas o campo nunca some
+  fase: 'persiste',
   // I-COMIDA-AVISO-DA-TROPA-COM-FOME: o sistema do aviso cria e apaga com a fome da tropa
   avisoDaTropaComFome: 'do-sistema',
   // o voo acaba e o campo some: cobrado so enquanto `restantes` nao zera (o fixture voa longe)
@@ -116,6 +118,7 @@ function estadoCheio(): { readonly state: Required<GameState>; readonly ids: Rea
     ...comLimite,
     ia: base.ia,
     pazAteTick: base.pazAteTick,
+    fase: { id: 'fase-01-pianco', numero: 1, inicio: 0, ondasDisparadas: 0, tropasDasOndas: [], contagem: {} },
     avisoDaTropaComFome: { [String(LADO_DO_JOGADOR)]: comLimite.tick },
     distribuicao: comLimite.distribuicao,
     descoberto: base.descoberto,
