@@ -15,6 +15,14 @@ import type { RecursoNoTile } from '../sim/state';
 /** Os estados antes da adulta, na ordem (docs/BRIEF-ARTE.md, entrada `arvore`). Sao
  *  tambem os nomes do estado no manifesto: `vegetacao/<id>/<estado>`. */
 export const ESTADOS_DE_CRESCIMENTO = ['muda', 'crescendo_1', 'crescendo_2'] as const;
+/** Os juvenis são juazeiros; aliases botânicos mantêm seu fallback. */
+export function temArteJuvenilDaEspecie(id: string, estadoBase: string): boolean {
+  return id !== 'tree' || estadoBase === 'presente' || estadoBase === 'seca';
+}
+/** Estado juvenil não é espécie nova; acompanha o dado de vento da adulta. */
+export function especieDoVentoDaVegetacao(id: string, estado: string): string {
+  return id === 'tree' && ESTADOS_DE_CRESCIMENTO.some(s => s === estado) ? 'presente' : estado;
+}
 export type EstadoDeCrescimento = (typeof ESTADOS_DE_CRESCIMENTO)[number];
 
 /** `null` e "nao esta crescendo": toco, tile sem relogio ou ja maduro. */

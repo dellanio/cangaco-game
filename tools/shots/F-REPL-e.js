@@ -10,6 +10,7 @@
 const { readFileSync, existsSync } = require('node:fs');
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
+const manifesto = require('../../assets/manifest.json');
 
 const TILE_PX = terreno.tile_px;
 const ZOOM_DA_ARVORE = 2;
@@ -17,6 +18,7 @@ const CHAVE_DO_SAVE = 'cangaco:partida'; // src/arquivo-da-partida.ts
 
 async function roteiro(ctx) {
   const { page, capturar, estado, afirmar } = ctx;
+  const evidencia = ctx.evidencia ?? 'F-REPL-e';
   const canvas = await retanguloDoCanvas(page);
   const esperarFrame = () => page.waitForTimeout(200); // __cangaco sai no POST_RENDER
   const avancar = (n) => page.evaluate((k) => window.__cangaco.avancar(k), n);
@@ -53,11 +55,11 @@ async function roteiro(ctx) {
     afirmar((await estado()).camera.zoom === nivel, `a camera deveria chegar a ${nivel}`);
   }
 
-  for (const arquivo of ['test-output/F-REPL-e.save.txt', 'test-output/F-REPL-e.json']) {
+  for (const arquivo of [`test-output/${evidencia}.save.txt`, `test-output/${evidencia}.json`]) {
     afirmar(existsSync(arquivo), `${arquivo} nao existe: rode \`npm run test\` antes`);
   }
-  const plano = JSON.parse(readFileSync('test-output/F-REPL-e.json', 'utf8'));
-  await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync('test-output/F-REPL-e.save.txt', 'utf8')]);
+  const plano = JSON.parse(readFileSync(`test-output/${evidencia}.json`, 'utf8'));
+  await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync(`test-output/${evidencia}.save.txt`, 'utf8')]);
   await page.keyboard.press('h');
   await esperarFrame();
   await page.click('#ajuda [data-acao="carregar"]');
@@ -88,9 +90,14 @@ async function roteiro(ctx) {
     const desenhado = s.crescimentoDasArvores[plano.tile];
     afirmar(desenhado !== undefined, `t${s.tick}: o tile ${plano.tile} deveria estar crescendo`);
     afirmar(desenhado.estado === esperado, `t${s.tick}: o sprite deveria desenhar '${esperado}', desenhou '${desenhado.estado}'`);
-    afirmar(desenhado.fonte === 'placeholder', `'${esperado}' nao tem PNG hoje: deveria ser o placeholder, veio ${desenhado.fonte}`);
-    afirmar(desenhado.escala > escalaAnterior && desenhado.escala < 1, `'${esperado}': a escala ${desenhado.escala} deveria crescer e ficar abaixo da adulta`);
-    escalaAnterior = desenhado.escala;
+    const arquivo = manifesto.assets.find(a => a.id === 'tree' && a.tipo === 'vegetacao').estados[esperado];
+    const comArte = desenhado.especie === 'presente' && typeof arquivo === 'string' && existsSync(`assets/${arquivo}`);
+    afirmar(desenhado.fonte === (comArte ? 'png' : 'placeholder'), `'${esperado}': fonte ${desenhado.fonte}, PNG disponivel=${comArte}`);
+    if (comArte) afirmar(desenhado.escala === 1, `'${esperado}': PNG usa porte proprio, escala=${desenhado.escala}`);
+    else {
+      afirmar(desenhado.escala > escalaAnterior && desenhado.escala < 1, `'${esperado}': a escala ${desenhado.escala} deveria crescer e ficar abaixo da adulta`);
+      escalaAnterior = desenhado.escala;
+    }
     await capturar(esperado);
   }
 

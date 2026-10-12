@@ -111,6 +111,7 @@ import {
 import type { ChaveDaRevelacao, DesenhoDoRecurso, EntradaDeAsset, TexturaCarregada } from '../manifesto';
 import {
   ALFA_DO_ESTAGIO, escalaDoPlaceholder, especiesDaVegetacao, estadoDeCrescimento, estagioDaCultura,
+  temArteJuvenilDaEspecie, especieDoVentoDaVegetacao,
   type EstadoDeCrescimento, type EstagioDaCultura,
 } from '../crescimento';
 import { iconesDoJogo, manifestoDoJogo, prediosSemArteDaBusca, texturasDosIcones, texturasParaCarregar, atlasesParaCarregar } from '../sprites';
@@ -1759,12 +1760,16 @@ export class WorldScene extends Phaser.Scene {
     const crescimento = this.crescimentoDoTile(chave);
     const chaveDoEstado = crescimento === null
       ? null : chaveDeTextura('vegetacao', desenho.entrada.id, crescimento);
-    const comPng = chaveDoEstado !== null && this.textures.exists(chaveDoEstado);
-    const textura = comPng && chaveDoEstado !== null ? chaveDoEstado : this.texturaDaVegetacao(desenho, chave);
+    const texturaBase = this.texturaDaVegetacao(desenho, chave);
+    const estadoBase = texturaBase.split(':').slice(2).join(':');
+    const especie = estadoBase === 'seca' ? 'presente' : estadoBase.replace(/^seca:/, '');
+    const comPng = chaveDoEstado !== null && this.textures.exists(chaveDoEstado)
+      && temArteJuvenilDaEspecie(desenho.entrada.id, estadoBase);
+    const textura = comPng && chaveDoEstado !== null ? chaveDoEstado : texturaBase;
     const escala = textura.startsWith('vegetacao:rock:v') ? configDaSerra.escala
       : crescimento === null || comPng ? 1 : escalaDoPlaceholder(crescimento);
     if (crescimento === null) this.crescimentoDesenhado.delete(chave);
-    else this.crescimentoDesenhado.set(chave, { estado: crescimento, fonte: comPng ? 'png' : 'placeholder', escala });
+    else this.crescimentoDesenhado.set(chave, { estado: crescimento, fonte: comPng ? 'png' : 'placeholder', escala, especie });
     if (atual?.texture.key === textura && atual.scaleX === escala) return;
     if (desenho.entrada.id === 'tree' && atual !== undefined && atual.texture.key !== textura) this.repinturasDaCaatinga++;
     if (desenho.entrada.id === 'rock') this.repinturasDaSerra++;
@@ -1817,7 +1822,8 @@ export class WorldScene extends Phaser.Scene {
     const arvores: Record<string, { especie: string; anguloGraus: number }> = {};
     for (const [chave, imagem] of this.arvoresNaVista) {
       const { gx, gy } = tileDeChave(chave);
-      const especie = imagem.texture.key.split(':').slice(2).join(':') || 'presente';
+      const especie = especieDoVentoDaVegetacao(imagem.texture.key.split(':')[1] ?? '',
+        imagem.texture.key.split(':').slice(2).join(':') || 'presente');
       const transformacao = transformacaoDoVento(
         dadosDoVento, quadro.tick, quadro.alfa, gx, gy, imagem.x, imagem.y, especie,
       );

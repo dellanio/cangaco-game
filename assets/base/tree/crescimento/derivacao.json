@@ -1,0 +1,152 @@
+{
+  "referencia": "base/vegetation-sertao/juazeiro-D-double-master-2x.png",
+  "anchor": [
+    0.5,
+    1
+  ],
+  "canvas": [
+    192,
+    256
+  ],
+  "pe": 253,
+  "preservados": {
+    "presente": {
+      "arquivo": "sprites/vegetation/tree-D-double.png",
+      "sha256": "a8cd74d7e7db0f9a15fdf42cc4346bbc74d9962a2788d8c392138369424c8296"
+    },
+    "umbuzeiro": {
+      "arquivo": "sprites/vegetation/arvore-seca-double-frame.png",
+      "sha256": "dc4b2f6bd29eb2bb163709becd2ddd4ea812db82bd589179a5bc7024e3a71753"
+    },
+    "mandacaru": {
+      "arquivo": "sprites/vegetation/mandacaru-double-frame.png",
+      "sha256": "48d122306e2721ae69e069289c8c3ca1917754e6fe5a796837fc4fd6a79d8c46"
+    },
+    "facheiro": {
+      "arquivo": "sprites/vegetation/facheiro-double-frame.png",
+      "sha256": "7dce7ca5737fa5f2b379bcd014680483a95dd579fbd300438121453511d914c7"
+    },
+    "xique-xique": {
+      "arquivo": "sprites/vegetation/xique-xique-double-frame.png",
+      "sha256": "959dbecca32f1e5b1525488a6a757b0914e2f507726b4e137831aa37a31a8768"
+    },
+    "macambira": {
+      "arquivo": "sprites/vegetation/macambira-double-frame.png",
+      "sha256": "a84827b6f0a57608662f2917246ce3862aebc68ac2884980703657bc99cdef70"
+    },
+    "seca": {
+      "arquivo": "sprites/vegetation/tree-seca-20261008.png",
+      "sha256": "b92f00ac7fb40815a15ffb34e9243a9db2a4572fe15e19a7a90bf4c082d01d57"
+    },
+    "seca:mandacaru": {
+      "arquivo": "sprites/vegetation/mandacaru-seca-20261008.png",
+      "sha256": "72fab4b61a0d814116851806f41871cf2c26094092d135b29313f1d8d0753350"
+    },
+    "seca:xique-xique": {
+      "arquivo": "sprites/vegetation/xique-xique-seca-20261008.png",
+      "sha256": "66a55e1ba1500e746339f98ae2fd991685c62971f44a10e96cab3237412e33cb"
+    },
+    "seca:facheiro": {
+      "arquivo": "sprites/vegetation/facheiro-seca-20261008.png",
+      "sha256": "3ab73a79e26f9154325c4cc608329156549b034a1b3968d214c123191200fe60"
+    },
+    "seca:macambira": {
+      "arquivo": "sprites/vegetation/macambira-seca-20261008.png",
+      "sha256": "24ef072275ba6b77acf1f2e9bd52d37c46205378adfcdcf026f3d5b10bd1390b"
+    },
+    "seca:umbuzeiro": {
+      "arquivo": "sprites/vegetation/arvore-seca-seca-20261008.png",
+      "sha256": "8119815a48aa37fb67f8956b010b2934186a28e6405b07affdec819f582186dd"
+    }
+  },
+  "medidas": [
+    {
+      "estado": "muda",
+      "fonte": "base/tree/crescimento/muda-original.png",
+      "sha256": "542e9cbe969d02f37ac4248ac7a22c124d9c480cd6d61bf15b790524924bd548",
+      "arquivos": [
+        {
+          "arquivo": "sprites/vegetation/tree-muda-20261012.png",
+          "tamanho": [
+            192,
+            256
+          ],
+          "pe": 253,
+          "altura": 66,
+          "sha256": "70c8f54e7773dbf951c9f1d4c5fdfd52c4f7df3daa2e01025237ec44f55833a6"
+        },
+        {
+          "arquivo": "base/tree/crescimento/tree-muda-20261012-master-2x.png",
+          "tamanho": [
+            384,
+            512
+          ],
+          "pe": 507,
+          "altura": 138,
+          "sha256": "eeb56b2abc53519bab080f17f31ce34a4512d9681fdc1ddf147b45a8434465e0"
+        }
+      ],
+      "geracao": "exec-750f8084-d5f4-4e29-ac10-d14a71720c89"
+    },
+    {
+      "estado": "crescendo_1",
+      "fonte": "base/tree/crescimento/crescendo_1-original.png",
+      "sha256": "f854e2e87abb57a2ae707106a7783a2a127cd7ada241440658db553229f3a772",
+      "arquivos": [
+        {
+          "arquivo": "sprites/vegetation/tree-crescendo_1-20261012.png",
+          "tamanho": [
+            192,
+            256
+          ],
+          "pe": 253,
+          "altura": 116,
+          "sha256": "fa7f13b5e4f6f90209f7f7de61ccfc7ceb1fa9127ec38d23ad1879fc5113929c"
+        },
+        {
+          "arquivo": "base/tree/crescimento/tree-crescendo_1-20261012-master-2x.png",
+          "tamanho": [
+            384,
+            512
+          ],
+          "pe": 507,
+          "altura": 227,
+          "sha256": "218ca6be0e251ecb8ec4cfbdc039db50f6eec94458379a4eceea4741b4eb961d"
+        }
+      ],
+      "geracao": "exec-0441e815-4d07-48ee-879f-90691eace40e"
+    },
+    {
+      "estado": "crescendo_2",
+      "fonte": "base/tree/crescimento/crescendo_2-original.png",
+      "sha256": "e96b241eb33bced19b1acf2809084ec5ffc7c94f42c07e41b655f56a5d7c59c8",
+      "arquivos": [
+        {
+          "arquivo": "sprites/vegetation/tree-crescendo_2-20261012.png",
+          "tamanho": [
+            192,
+            256
+          ],
+          "pe": 253,
+          "altura": 139,
+          "sha256": "0552e1cca79897d77e3b9942ee4ab5547846fc83a83e9f124bfb516adf241fb1"
+        },
+        {
+          "arquivo": "base/tree/crescimento/tree-crescendo_2-20261012-master-2x.png",
+          "tamanho": [
+            384,
+            512
+          ],
+          "pe": 507,
+          "altura": 276,
+          "sha256": "c1496d8a18fbcf4b478b46b6f9c642f13e6c7c540cdcea67ce5b183dda34cc2c"
+        }
+      ],
+      "geracao": "exec-324cd3fe-69a1-4053-9315-73d4b35a86ef"
+    }
+  ],
+  "autor": "OpenAI imagegen, dirigido pelo projeto Piancó",
+  "licenca": "arte propria do projeto",
+  "revisao": "Revisao independente final passou; homologacao do operador pendente.",
+  "vento": "Juvenis herdam presente pelo seletor puro, sem especies extras no dado."
+}

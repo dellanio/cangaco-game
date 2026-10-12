@@ -1,0 +1,48 @@
+{
+  "id": "tree",
+  "kind": "vegetation",
+  "mode": "trial",
+  "frameSize": [
+    192,
+    256
+  ],
+  "masterSize": [
+    384,
+    512
+  ],
+  "frames": [
+    {
+      "state": "muda",
+      "direction": "S",
+      "index": 0,
+      "pivot": [
+        0.5,
+        1
+      ],
+      "path": "assets/sprites/vegetation/tree-muda-20261012.png",
+      "masterPath": "assets/base/tree/crescimento/tree-muda-20261012-master-2x.png"
+    },
+    {
+      "state": "crescendo_1",
+      "direction": "S",
+      "index": 0,
+      "pivot": [
+        0.5,
+        1
+      ],
+      "path": "assets/sprites/vegetation/tree-crescendo_1-20261012.png",
+      "masterPath": "assets/base/tree/crescimento/tree-crescendo_1-20261012-master-2x.png"
+    },
+    {
+      "state": "crescendo_2",
+      "direction": "S",
+      "index": 0,
+      "pivot": [
+        0.5,
+        1
+      ],
+      "path": "assets/sprites/vegetation/tree-crescendo_2-20261012.png",
+      "masterPath": "assets/base/tree/crescimento/tree-crescendo_2-20261012-master-2x.png"
+    }
+  ]
+}

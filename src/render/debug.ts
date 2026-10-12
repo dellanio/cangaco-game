@@ -77,6 +77,7 @@ export interface SinalDePausadoNoDebug {
 
 /** F-REPL-e — um tile replantado ainda crescendo, como o sprite o desenhou. */
 export interface CrescimentoNoDebug {
+  readonly especie: string;
   readonly estado: string;
   readonly fonte: 'png' | 'placeholder';
   readonly escala: number;

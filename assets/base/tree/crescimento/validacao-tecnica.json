@@ -1,0 +1,84 @@
+{
+  "id": "tree",
+  "kind": "vegetation",
+  "mode": "trial",
+  "approved": false,
+  "success": true,
+  "errors": [],
+  "warnings": [
+    "Ensaio técnico sem calibração cromática; não equivale a aprovação"
+  ],
+  "frames": [
+    {
+      "state": "muda",
+      "direction": "S",
+      "index": 0,
+      "path": "D:/projetos-pessoal/cangaco-game-candidatos/arte/2026-10-autonomo/tree-crescimento/derivados/tree-muda-20261012.png",
+      "footline": 250,
+      "centroidX": 97.77425615354741,
+      "regions": [
+        {
+          "luma": 98.33000236928393,
+          "hue": 50.8947619629846
+        },
+        {
+          "luma": 92.71727212551833,
+          "hue": 44.599522628030286
+        },
+        {
+          "luma": 99.6576379386267,
+          "hue": 26.352863338000873
+        }
+      ]
+    },
+    {
+      "state": "crescendo_1",
+      "direction": "S",
+      "index": 0,
+      "path": "D:/projetos-pessoal/cangaco-game-candidatos/arte/2026-10-autonomo/tree-crescimento/derivados/tree-crescendo_1-20261012.png",
+      "footline": 250,
+      "centroidX": 98.43406617491657,
+      "regions": [
+        {
+          "luma": 71.59672252407788,
+          "hue": 49.02738874761968
+        },
+        {
+          "luma": 94.55223758352996,
+          "hue": 41.972963556455966
+        },
+        {
+          "luma": 129.88183224183962,
+          "hue": 30.058106349771833
+        }
+      ]
+    },
+    {
+      "state": "crescendo_2",
+      "direction": "S",
+      "index": 0,
+      "path": "D:/projetos-pessoal/cangaco-game-candidatos/arte/2026-10-autonomo/tree-crescimento/derivados/tree-crescendo_2-20261012.png",
+      "footline": 252,
+      "centroidX": 94.98841272823604,
+      "regions": [
+        {
+          "luma": 84.18401735189717,
+          "hue": 47.428459021314154
+        },
+        {
+          "luma": 102.21205706795065,
+          "hue": 41.32102985204091
+        },
+        {
+          "luma": 123.76268967976735,
+          "hue": 30.709359455752974
+        }
+      ]
+    }
+  ],
+  "contactSheets": [
+    "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\tree-crescimento\\validacao\\contact-0.5.png",
+    "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\tree-crescimento\\validacao\\contact-1.png",
+    "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\tree-crescimento\\validacao\\contact-2.png"
+  ]
+}

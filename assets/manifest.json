@@ -523,7 +523,45 @@
         "nota": "Dezesseis conexoes cardinais N/L/S/O e ponte diagonal derivadas de uma textura canonica pela skill pianco-art-pipeline."
       }
     },
-    {"id":"tree","tipo":"vegetacao","footprint":[1,1],"tamanho":[192,256],"anchor":[0.5,1],"estados":{"presente":"sprites/vegetation/tree-D-double.png","umbuzeiro":"sprites/vegetation/arvore-seca-double-frame.png","mandacaru":"sprites/vegetation/mandacaru-double-frame.png","facheiro":"sprites/vegetation/facheiro-double-frame.png","xique-xique":"sprites/vegetation/xique-xique-double-frame.png","macambira":"sprites/vegetation/macambira-double-frame.png","seca":"sprites/vegetation/tree-seca-20261008.png","seca:mandacaru":"sprites/vegetation/mandacaru-seca-20261008.png","seca:xique-xique":"sprites/vegetation/xique-xique-seca-20261008.png","seca:facheiro":"sprites/vegetation/facheiro-seca-20261008.png","seca:macambira":"sprites/vegetation/macambira-seca-20261008.png","seca:umbuzeiro":"sprites/vegetation/arvore-seca-seca-20261008.png"},"licenca":"arte propria do projeto, juazeiro variante D candidata em 2026-10-01","origem":{"base":"base/vegetation-sertao/juazeiro-D-double-master-2x.png","semente":null,"nota":"Juazeiro D generation-01 com silhueta linear 2x no quadro 192x256, pe preservado. Outros estados somente acolchoados com transparencia no mesmo quadro, sem aumento visual. Candidata com luz anterior. I-ARTE-ARVORE-SECA (pedido do operador, 2026-10-05): o estado `umbuzeiro` (a arvore pequena que destoava) passou a apontar para uma ARVORE SECA da caatinga, no porte do juazeiro: PixelLab create_image_pro, job 72ed5301-21ec-4c70-b37d-38dedec62d00, estilo do juazeiro D como referencia, sha256 c5ab80a6ced07fc538dc76b86d6e3ae472e440fe1029b63a7e752c8b0cf5207b; o pe descido 19 px para a linha do juazeiro (pixels de alfa > 128); master 2x em base/vegetation-sertao/arvore-seca-master-2x.png. A chave `umbuzeiro` ficou (vento.json e a distribuicao das especies a leem); o nome do estado e o slot, nao a especie desenhada. Pares da seca em base/<especie>-seca/geracao.json, com origem apontando a copia versionada do inverno e SHA256. Seis estados OpenAI 2026-10-08; mesma linha do pe e quadro."}},
+    {
+      "id": "tree",
+      "tipo": "vegetacao",
+      "footprint": [
+        1,
+        1
+      ],
+      "tamanho": [
+        192,
+        256
+      ],
+      "anchor": [
+        0.5,
+        1
+      ],
+      "estados": {
+        "presente": "sprites/vegetation/tree-D-double.png",
+        "umbuzeiro": "sprites/vegetation/arvore-seca-double-frame.png",
+        "mandacaru": "sprites/vegetation/mandacaru-double-frame.png",
+        "facheiro": "sprites/vegetation/facheiro-double-frame.png",
+        "xique-xique": "sprites/vegetation/xique-xique-double-frame.png",
+        "macambira": "sprites/vegetation/macambira-double-frame.png",
+        "seca": "sprites/vegetation/tree-seca-20261008.png",
+        "seca:mandacaru": "sprites/vegetation/mandacaru-seca-20261008.png",
+        "seca:xique-xique": "sprites/vegetation/xique-xique-seca-20261008.png",
+        "seca:facheiro": "sprites/vegetation/facheiro-seca-20261008.png",
+        "seca:macambira": "sprites/vegetation/macambira-seca-20261008.png",
+        "seca:umbuzeiro": "sprites/vegetation/arvore-seca-seca-20261008.png",
+        "muda": "sprites/vegetation/tree-muda-20261012.png",
+        "crescendo_1": "sprites/vegetation/tree-crescendo_1-20261012.png",
+        "crescendo_2": "sprites/vegetation/tree-crescendo_2-20261012.png"
+      },
+      "licenca": "arte propria do projeto, juazeiro variante D candidata em 2026-10-01",
+      "origem": {
+        "base": "base/vegetation-sertao/juazeiro-D-double-master-2x.png",
+        "semente": null,
+        "nota": "Juazeiro D generation-01 com silhueta linear 2x no quadro 192x256, pe preservado. Outros estados somente acolchoados com transparencia no mesmo quadro, sem aumento visual. Candidata com luz anterior. I-ARTE-ARVORE-SECA (pedido do operador, 2026-10-05): o estado `umbuzeiro` (a arvore pequena que destoava) passou a apontar para uma ARVORE SECA da caatinga, no porte do juazeiro: PixelLab create_image_pro, job 72ed5301-21ec-4c70-b37d-38dedec62d00, estilo do juazeiro D como referencia, sha256 c5ab80a6ced07fc538dc76b86d6e3ae472e440fe1029b63a7e752c8b0cf5207b; o pe descido 19 px para a linha do juazeiro (pixels de alfa > 128); master 2x em base/vegetation-sertao/arvore-seca-master-2x.png. A chave `umbuzeiro` ficou (vento.json e a distribuicao das especies a leem); o nome do estado e o slot, nao a especie desenhada. Pares da seca em base/<especie>-seca/geracao.json, com origem apontando a copia versionada do inverno e SHA256. Seis estados OpenAI 2026-10-08; mesma linha do pe e quadro. A08: originais, masters, hashes e ids de geracao em base/tree/crescimento/derivacao.json; desenhos juvenis proprios, luz superior/sul. Homologacao pendente."
+      }
+    },
     {
       "id": "rock",
       "tipo": "vegetacao",
