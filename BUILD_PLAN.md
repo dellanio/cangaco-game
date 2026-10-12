@@ -9955,6 +9955,8 @@ Execucao na codex-artes, antes do bloco autonomo de artes. Nenhuma mudanca em sr
 
 - Emenda A08 após captura real: a entrada `tree` também contém aliases de cactos e macambira. Os três novos desenhos são exclusivamente do juazeiro (`presente`, ou `seca` da mesma árvore). Outras espécies mantêm o fallback anterior, evitando transformação de árvore em cacto/bromélia no amadurecimento. Teste por tabela afirma essa seleção; o debug informa a espécie do estágio e o roteiro comprova três PNGs sobre um juazeiro realmente replantado pelo step. O roteiro F-REPL-e continua afirmando fallback das outras espécies. Nenhum PNG antigo, espécie, regra da sim ou prazo é alterado.
 
+- Emenda técnica do vento A08 antes do código: o validador existente distingue espécies dos três estados de crescimento. Os juvenis herdam os valores de `presente` pelo seletor puro do render, em vez de duplicar entradas que o validador recusa. Um teste altera amplitude e velocidade da base no dado de teste e exige transformação idêntica da adulta e dos três juvenis. Os estados de outras espécies passam intactos pelo seletor. O validador e as entradas atuais de vento não mudam; espécies desconhecidas continuam recusadas. Esta herança substitui o cadastro individual previsto acima, conservando a mesma exigência de valores e acompanhando alterações futuras da base.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
