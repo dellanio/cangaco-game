@@ -9914,6 +9914,11 @@ Execucao na codex-artes, antes do bloco autonomo de artes. Nenhuma mudanca em sr
 - Derivar `fishermans/madeira` do completo azul atual, mesma casa/porta/escada/plataforma e acesso à margem; não acrescentar lago pintado ao sprite, trabalhador ou peixe fixo.
 - Aceite: base/original/master versionados, derivado192x176/footprint3x2/anchor[0.5,1] e mesma linha dos pés do completo; teste mede PNG e preserva caminho/origem/anchors/escala do completo; estrutura e cobertura incompletas preservam arquitetura, saída de estoque vazia; roteiro mostra madeira/completo nos três zooms e comparação normal/RGBx0,8 sobre grama/areia/rocha, evidências abertas; verify:rapido saída0. Duas tentativas honestas no máximo; sem src/sim/.
 
+#### I-ARTE-MOINHO-EM-OBRA — A05, madeira do Moinho
+
+- Derivar mill/madeira do completo atual, mesma arquitetura, roda lateral, porta, plataformas vazias de milho/fubá e área de atividade; estrutura/cobertura/alvenaria incompletas. Não alterar completo, escalas ou anchors existentes, nem pintar trabalhador, mercadoria ou bandeira.
+- Aceite: original e master em assets/base/mill/, derivado221x276/footprint3x3/anchor[0.5,1] e pé igual ao completo; teste mede PNG e guarda caminho do completo/origem/anchors/tetos1,44 e1,16; madeira reconhecível como o mesmo prédio, com roda inacabada na mesma região; roteiro mostra madeira/completo em0,5/1/2 e pranchas normal/RGBx0,8 sobre os três solos, todas abertas; validador original e revisão independente aprovam tecnicamente; verify:rapido saída0 antes do commit. Duas tentativas honestas no máximo, sem src/sim/.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
