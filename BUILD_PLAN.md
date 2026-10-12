@@ -9919,6 +9919,11 @@ Execucao na codex-artes, antes do bloco autonomo de artes. Nenhuma mudanca em sr
 - Derivar mill/madeira do completo atual, mesma arquitetura, roda lateral, porta, plataformas vazias de milho/fubá e área de atividade; estrutura/cobertura/alvenaria incompletas. Não alterar completo, escalas ou anchors existentes, nem pintar trabalhador, mercadoria ou bandeira.
 - Aceite: original e master em assets/base/mill/, derivado221x276/footprint3x3/anchor[0.5,1] e pé igual ao completo; teste mede PNG e guarda caminho do completo/origem/anchors/tetos1,44 e1,16; madeira reconhecível como o mesmo prédio, com roda inacabada na mesma região; roteiro mostra madeira/completo em0,5/1/2 e pranchas normal/RGBx0,8 sobre os três solos, todas abertas; validador original e revisão independente aprovam tecnicamente; verify:rapido saída0 antes do commit. Duas tentativas honestas no máximo, sem src/sim/.
 
+#### I-ARTE-PADARIA-EM-OBRA — A06, madeira da Padaria
+
+- Derivar bakery/madeira do completo atual: mesma casa, telhado, porta, forno/chaminé e superfícies vazias de farinha/pães. Obra com caibros expostos e alvenaria/cobertura incompletas; sem trabalhador, fumaça, pão ou sacos pintados. Placa Padaria atual preserva posição, podendo aparecer como tábua ainda sem pintura durante obra.
+- Aceite: base/original/master versionados e derivado com canvas, footprint, anchor e pé do completo; teste mede PNG e guarda caminhos/anchors/tetos existentes e hash do completo; roteiro mostra madeira/completo nos três zooms e pranchas normal/RGBx0,8 nos três solos, todas abertas. Validador original e revisão independente sem reprovação; verify:rapido saída0 antes do commit. Duas tentativas honestas no máximo; sem src/sim/.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a

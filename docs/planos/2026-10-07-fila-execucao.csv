@@ -3,7 +3,7 @@
 "A02","P0","farm/madeira","Mesmo canvas, silhueta, porta, milho e anchors do completo; obra não muda de geometria ao concluir","a executar","feito (5f1a7ea7), aguarda homologação"
 "A03","P0","wineyard/madeira","Derivar do completo; manter identidade de cana/cachaça, sem uvas ou videira","a executar","feito (0da84e1d), aguarda homologação"
 "A04","P0","fishermans/madeira","Derivar do completo; entrada e margem de água alinhadas","a executar","feito (506760ef), aguarda homologação"
-"A05","P0","mill/madeira","Roda e edificação na mesma posição entre estados; mecanismo não salta","a executar","a executar"
+"A05","P0","mill/madeira","Roda e edificação na mesma posição entre estados; mecanismo não salta","a executar","feito (06547fc7), aguarda homologação"
 "A06","P0","bakery/madeira","Mesmo telhado, fachada, anchors de trabalho/estoque/fumaça; não embutir estoque permanente","a executar","a executar"
 "A07","P0","storehouse/madeira","Substituir madeira provisória pela estrutura do completo aprovado. Divergência registrada no manifest; manter anchors normalizados","a executar","a executar"
 "A08","P0","tree: muda, crescendo_1, crescendo_2","Três derivados específicos, mesma base/linha dos pés e canvas compartilhado. Consumidor de crescimento já existe; hoje encolhe adulta como fallback","a executar","a executar"
