@@ -18,3 +18,14 @@ Começar por I-ARTE-MOINHO-EM-OBRA/A05. O mill atual tem entrada de milho e saí
 ## Limites preservados
 
 Som: somente índice/audição para homologação; nenhuma nova produção sonora. Campanha, logística e código de sim permanecem da outra sessão. Itens desconsiderados/adiados/condicionados não são retomados. Dúvidas não impeditivas vão para PROGRESS/Perguntas em aberto, conforme modo autônomo; não pedir aprovação de rotina para seguir tarefas já autorizadas.
+
+## Estado da atuação
+
+- Próximas artes: A05 Moinho06547fc7, A06 Padariaae480f29, A07 Armazémd9ecbda2 entregues tecnicamente, com27 capturas/pranchas abertas e homologação pendente.
+- Crescimento/animações: auditoria confirma consumidores existentes em crescimento.ts e animais.ts. A08 exige contrato explícito para muda/crescendo_1/crescendo_2 e entradas de vento antes de gerar/adicionar estados. Guarda anterior da árvore permanece intacta nesta entrega.
+- Cenário: sequência de trabalho reservada no CSV, sem candidatas novas instaladas nesta rodada.
+- Montanhas minerais: bloqueios medidos mantidos; não foram feitas novas gerações ou redistribuição. Solução por massa contínua deve receber novo aceite/orçamento antes de retomar.
+- Homologação: índice atualizado com o novo lote; som atual em assets/sons/victory.mp3 disponível para o operador ouvir. Não registrar aprovação auditiva sem decisão dele. Enfeites já validados não são reabertos.
+- Integração: branch rebaseada sobre main ef391cf7; verify completo0 no código a5c12e7e (350/2988 normal,350/2986 transladado,5 pulos preexistentes). Correção de checkout LF da paleta passou na guarda original e teste Git real. Sem merge/push.
+
+Próxima execução: A08 e depois A09/A10, após o aceite de estados. O provisionamento é uma fila documentada; não há worker ou agendamento externo ativo.
