@@ -1,2 +1,4 @@
 # Atlases de depuração têm hash reproduzível também em checkouts Windows.
 /assets/depuracao/**/*.json text eol=lf
+# Paleta canônica do Tiled deve ser idêntica aos bytes LF do gerador.
+/tools/tiled/paleta.tsj text eol=lf
