@@ -107,3 +107,6 @@ A07 tentativa2 aprovada tecnicamente: SHA256original B65576F1AAF0193F7D4C79699A4
 ## 2026-10-12 — I-ARTE-ARVORE-CRESCENDO / A08
 Aceite 5a1b8bb0 antes da arte. Referência única: juazeiro-D-double-master-2x, transparência normalizada fora do repo (RGB invisível zerado, sem mudança visual). Primeiro estado muda: exec-750f8084-d5f4-4e29-ac10-d14a71720c89. Original externo: D:/projetos-pessoal/cangaco-game-candidatos/arte/2026-10-autonomo/tree-crescimento/muda-original.png. Prompt: juazeiro juvenil de haste fina e 3-4 ramificações/pequenas copas, pintura e materiais da referência, luz superior sul sem eixo leste-oeste; planta isolada transparente, pés centrais, sem miniatura de copa adulta, chão, texto, objetos ou pessoas. Candidata ainda não derivada/revisada/homologada.
 
+
+A08 crescendo_1: exec-0db9fde6-4e69-426b-887f-c4383b0649ed. Original externo tree-crescimento/crescendo_1-original.png. Referências: adulta limpa e muda gerada. Prompt: juazeiro adolescente de tronco ainda esbelto com bifurcação e aproximadamente cinco ramos abertos/copa juvenil mais cheia, mesmo material/paleta, luz superior sul sem lateral, pés centrais, transparência e sem chão/objetos/texto. Desenho próprio, não cópia reduzida. Candidata ainda sem homologação; próximo estado crescendo_2.
+
