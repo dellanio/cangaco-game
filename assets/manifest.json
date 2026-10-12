@@ -3097,13 +3097,14 @@
         1
       ],
       "estados": {
+        "madeira": "sprites/bakery/bakery-madeira-20261012.png",
         "completo": "sprites/bakery/completo-D.png"
       },
       "licenca": "arte propria do projeto, variante D autorizada pelo operador para ensaio em jogo em 2026-09-30",
       "origem": {
         "base": "base/bakery/bakery-D-master-2x.png",
         "semente": null,
-        "nota": "Derivado de candidatos/D/bakery/generation-02-raw.png, vitrine apagada; luz antiga. Areas de trabalho e estoque sao hipoteses para avaliar por captura em jogo."
+        "nota": "Derivado de candidatos/D/bakery/generation-02-raw.png, vitrine apagada; luz antiga. Areas de trabalho e estoque sao hipoteses para avaliar por captura em jogo. Madeira OpenAI exec-e8eb2fde-4d80-44fd-a311-7aaa24802333, base/bakery/geracao-madeira-20261012.json, derivada da arquitetura atual; balcão vazio, completo intocado."
       },
       "ancoras": {"bandeira": [0.45312, 0.05729], 
         "trabalho": {

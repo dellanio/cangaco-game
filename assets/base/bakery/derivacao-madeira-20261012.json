@@ -1,0 +1,40 @@
+{
+  "source": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\bakery-madeira\\madeira-original.png",
+  "sourceHash": "f29797f1b46cc8b292c56ec5517b6cf6fd127659f77979ca3ecdcbb8bb26952c",
+  "canonical": "assets/sprites/bakery/completo-D.png",
+  "from": {
+    "x0": 9,
+    "y0": 32,
+    "x1": 1244,
+    "y1": 1243
+  },
+  "to": {
+    "x0": 0,
+    "y0": 2,
+    "x1": 191,
+    "y1": 191
+  },
+  "method": "crop alfa; registro no envelope do completo; Lanczos; padding e RGB bleed",
+  "files": [
+    {
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\bakery-madeira\\derivados\\bakery-madeira.png",
+      "sha256": "8629a5d287e837a8287a433acc1c013b318573090ea827c085c8cee8c5e2b4c0",
+      "bounds": {
+        "x0": 0,
+        "y0": 2,
+        "x1": 191,
+        "y1": 191
+      }
+    },
+    {
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\bakery-madeira\\derivados\\bakery-madeira-master-2x.png",
+      "sha256": "75ac6b8993a86973eba1da72e6ee63d6cfe80335aa8161ac8372ef7c67ee6cd9",
+      "bounds": {
+        "x0": 0,
+        "y0": 4,
+        "x1": 383,
+        "y1": 383
+      }
+    }
+  ]
+}

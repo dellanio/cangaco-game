@@ -1,0 +1,24 @@
+{
+  "id": "exec-e8eb2fde-4d80-44fd-a311-7aaa24802333",
+  "ferramenta": "OpenAI imagegen nativo",
+  "referencia": "base/bakery/bakery-D-master-2x.png",
+  "prompt": "prompt-madeira-20261012.txt",
+  "arquivos": [
+    {
+      "path": "assets/base/bakery/bakery-D-master-2x.png",
+      "sha256": "ca3f1f3f9fbd9afa8f30deba4f1c0ce3315f2cb59702b32bf1430fc57e4fba92"
+    },
+    {
+      "path": "assets/base/bakery/madeira-original-20261012.png",
+      "sha256": "f29797f1b46cc8b292c56ec5517b6cf6fd127659f77979ca3ecdcbb8bb26952c"
+    },
+    {
+      "path": "assets/base/bakery/bakery-madeira-20261012-master-2x.png",
+      "sha256": "75ac6b8993a86973eba1da72e6ee63d6cfe80335aa8161ac8372ef7c67ee6cd9"
+    },
+    {
+      "path": "assets/sprites/bakery/bakery-madeira-20261012.png",
+      "sha256": "8629a5d287e837a8287a433acc1c013b318573090ea827c085c8cee8c5e2b4c0"
+    }
+  ]
+}
