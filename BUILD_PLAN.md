@@ -9934,6 +9934,17 @@ Execucao na codex-artes, antes do bloco autonomo de artes. Nenhuma mudanca em sr
 - A paleta tools/tiled/paleta.tsj é serializada em LF pelo gerador. O checkout Windows com core.autocrlf não pode trocar os bytes e reprovar a igualdade canônica existente.
 - Aceite: .gitattributes fixa LF somente para tools/tiled/paleta.tsj; arquivo em disco permanece byte a byte igual a tsjDaPaleta e ao blob versionado. Um teste de checkout Git real, com autocrlf=true em repositório temporário, prova LF preservado pela regra; guarda I-TERRENO-MAPA-NO-TILED continua intocada e passa. Nenhuma mudança no gerador, mapa, sim ou asserções existentes.
 
+### Correções do operador de 2026-10-12 antes da A08
+
+#### I-TELA-PEIXES-SUBMERSOS
+- Aceite: os tiles com recurso `fish` deixam a água visível, sem sobrepor o desenho fixo de peixes boiando nem marcador geométrico. A quantidade e a coleta de peixe não mudam; os anéis existentes da água continuam. Teste da política de camada e captura em jogo aberta.
+
+#### I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO
+- Aceite: o recurso `rock` bloqueia passo enquanto presente; o Pedreiro trabalha de um tile adjacente andável, sem entrar no lajedo. Jazidas de ouro, ferro e carvão continuam atravessáveis. Usar o mecanismo existente de aproximação, sem alterar `src/sim/`. Testes de aproximação e ciclo pelo step; captura em jogo aberta. Se mudar apenas o dado não satisfizer as guardas existentes, registrar o bloqueio sem enfraquecê-las.
+
+#### I-ARTE-ICONES-COMIDA-GUERRA
+- Aceite: todos os retratos dos prédios de `comida` e `guerra` em `data/menu-build.json`, inclusive Açude, derivam do estado `completo` atual. PNG de 72×72, licença/base preservadas, hash da fonte registrado. Teste de cada fonte e do resolvedor; capturas abertas das duas seções com interação despausada. Os outros grupos permanecem intactos.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
