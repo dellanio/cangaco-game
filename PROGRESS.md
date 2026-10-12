@@ -22275,3 +22275,9 @@ Verificado: 17 retratos de comida/guerra derivados do PNG completo atual, inclui
 ## Perguntas em aberto (para a homologação)
 I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO: diagnóstico confirmado no dado rock.bloqueiaPasso=false e no contrato tests/F-T3-caminho.test.ts:164/177, que exige caminhar sobre a rocha. A aproximação adjacente já existe. Correção não aplicada: a mudança exige substituir explicitamente esse contrato anterior e conferir o ciclo/alcance após tornar rock intransponível. Jazidas metálicas e carvão devem permanecer atravessáveis. Nenhuma guarda ou sim foi alterada; não afirmar bug resolvido.
 
+
+## 2026-10-12 — checkpoint água/ícones, HEAD f4e33336
+Verificado: verify:rapido dos ícones saiu 0, 427 testes em 47 s; depois do commit, seis arquivos dirigidos passaram, 62 testes em 4,12 s (novos, F17f, F-SPR e ícones anteriores). Todas as nove capturas dos dois roteiros foram abertas. Logs: test-output/agua-submersa-rapido.log, icones-comida-guerra-rapido.log, agua-icones-dirigidos.log.
+Não verificado/aprovado: npm run verify saiu 1. Suíte normal: 14 arquivos falhos, 338 aprovados; 17 testes falhos, 2984 aprovados, 5 não executados; 364,07 s. Erros registrados são timeouts (incluindo hook do pescador e subprocesso do F05a). Typecheck, lint e validate:data (35 arquivos/10 fases) passaram. Transladada não executou. Log completo: test-output/agua-icones-verify-completo.log. F17f, que expirou na suíte completa, passou na dirigida sem mudar limite algum. Não atribuir os timeouts às mudanças nem afirmar verify verde.
+Pedreiro segue aberto em BUGS.md; A08 ainda a executar. A fase não avançou para produção de arte após o portão vermelho, conforme AGENTS.md. Main, sim, AGENTS, .claude e test-results.json preservados; sem merge/push. Homologação visual do operador continua pendente.
+

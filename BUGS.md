@@ -1,5 +1,12 @@
 # Bugs abertos
 
+## BUG-PEDREIRO-DENTRO-DO-LAJEDO — extração sobre o recurso
+- feature: I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO
+- severidade: errado
+- repro: relato do operador em 2026-10-12; `rock.bloqueiaPasso=false` permite ao A* escolher o próprio tile de extração.
+- esperado: Pedreiro extrai ao lado do lajedo, sem caminhar por dentro da massa de pedra; ouro, ferro e carvão continuam atravessáveis.
+- bloqueio: os contratos F-T3-caminho e F-T2b-obstaculo ainda exigem rocha atravessável. A correção não foi aplicada nesta entrega de arte; nenhum teste foi afrouxado.
+
 Só o que está aberto. Bug corrigido **sai deste arquivo no mesmo commit que o
 corrige** — o histórico do git é o arquivo morto. Isso mantém o arquivo curto e
 barato de carregar em toda sessão.
