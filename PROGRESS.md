@@ -22281,3 +22281,8 @@ Verificado: verify:rapido dos ícones saiu 0, 427 testes em 47 s; depois do comm
 Não verificado/aprovado: npm run verify saiu 1. Suíte normal: 14 arquivos falhos, 338 aprovados; 17 testes falhos, 2984 aprovados, 5 não executados; 364,07 s. Erros registrados são timeouts (incluindo hook do pescador e subprocesso do F05a). Typecheck, lint e validate:data (35 arquivos/10 fases) passaram. Transladada não executou. Log completo: test-output/agua-icones-verify-completo.log. F17f, que expirou na suíte completa, passou na dirigida sem mudar limite algum. Não atribuir os timeouts às mudanças nem afirmar verify verde.
 Pedreiro segue aberto em BUGS.md; A08 ainda a executar. A fase não avançou para produção de arte após o portão vermelho, conforme AGENTS.md. Main, sim, AGENTS, .claude e test-results.json preservados; sem merge/push. Homologação visual do operador continua pendente.
 
+
+## 2026-10-12 — I-ENTREGA-VERIFY-CONCORRENCIA
+Controle opcional CANGACO_TEST_WORKERS, validado por 11 testes; padrão 50% preservado, valores inválidos recusados, transladada herda opção. Nenhum prazo, teste, asserção, include/exclude ou isolamento mudou. Retomada padrão: 2 timeouts/3006 testes; com 2 workers: somente F-VIVO expirou, 3016 passaram/3017. Isolado sem mudar timeout: F-VIVO 8/8 em 3,15 s.
+Verificado com CANGACO_TEST_WORKERS=1: npm run verify 0; normal 353 arquivos/3017 testes, 631,16 s; transladada 353 arquivos/3015 testes e 5 skips preexistentes, 655,73 s. Typecheck/lint/validate:data35 e 10 fases 0. verify:rapido 0, 3017 testes em 670 s. Logs test-output/retomada-A08-verify-um-worker.log e concorrencia-rapido-um-worker.log. Opção limita processos, não verificações. Artes A08 ainda externas, sem nova integração na main.
+

@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import { EXCLUDE_DO_VERIFY } from './tools/suite-longa.mjs';
+import { workersDosTestes } from './tools/concorrencia-testes.mjs';
 
 // maxWorkers (decisao do operador, 2026-09-30): o padrao do vitest e nucleos - 1, e com 15
 // workers a maquina fica sobrecarregada — o teste pesado roda 4 a 4,5x mais lento que isolado
@@ -11,7 +12,7 @@ import { EXCLUDE_DO_VERIFY } from './tools/suite-longa.mjs';
 // rodam aqui nem no `verify`; rodam em `npm run test:longo`. Ver `tools/suite-longa.mjs`.
 export default defineConfig({
   test: {
-    environment: 'node', globals: true, include: ['tests/**/*.test.ts'], maxWorkers: '50%',
+    environment: 'node', globals: true, include: ['tests/**/*.test.ts'], maxWorkers: workersDosTestes(process.env.CANGACO_TEST_WORKERS),
     exclude: [...EXCLUDE_DO_VERIFY],
   },
 });
