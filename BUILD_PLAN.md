@@ -9924,6 +9924,11 @@ Execucao na codex-artes, antes do bloco autonomo de artes. Nenhuma mudanca em sr
 - Derivar bakery/madeira do completo atual: mesma casa, telhado, porta, forno/chaminé e superfícies vazias de farinha/pães. Obra com caibros expostos e alvenaria/cobertura incompletas; sem trabalhador, fumaça, pão ou sacos pintados. Placa Padaria atual preserva posição, podendo aparecer como tábua ainda sem pintura durante obra.
 - Aceite: base/original/master versionados e derivado com canvas, footprint, anchor e pé do completo; teste mede PNG e guarda caminhos/anchors/tetos existentes e hash do completo; roteiro mostra madeira/completo nos três zooms e pranchas normal/RGBx0,8 nos três solos, todas abertas. Validador original e revisão independente sem reprovação; verify:rapido saída0 antes do commit. Duas tentativas honestas no máximo; sem src/sim/.
 
+#### I-ARTE-ARMAZEM-EM-OBRA — A07, madeira do Armazém atual
+
+- Substituir somente storehouse/madeira por obra derivada do completo atual: mesma casa de madeira de dois pisos, telhado reto, portas, sacada/janelas e fundações. Caibros expostos, cobertura parcial e tábuas ainda incompletas. Sem produtos, pessoas ou bandeira fixos; não trazer arquitetura da madeira antiga.
+- Aceite: original/master versionados e derivado230x230/footprint3x3/anchor[0.5,1], pé do completo; teste mede PNG e guarda hash/caminho do completo/origem/anchors/tetos1,2 existentes. Substituição do caminho madeira preserva todo o resto da entrada e mantém a antiga arte no histórico. Roteiro captura madeira/completo em0,5/1/2, pranchas normal/RGBx0,8 sobre três solos abertas, validador original/revisão independente aprovados tecnicamente e verify:rapido saída0. Duas tentativas honestas no máximo; sem sim/estoque externo novo.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
