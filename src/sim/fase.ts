@@ -15,7 +15,7 @@ import { loadGameData } from './data/loader';
 import { rawGameData } from './data/raw';
 import type { RawGameData } from './data/raw';
 import type { FaseData, GameData } from './data/types';
-import { completarObra, createInitialState, ID_DO_ARMAZEM } from './state';
+import { completarObra, createInitialState, ID_DO_ARMAZEM, LADO_DO_JOGADOR } from './state';
 import type { GameState, Predio, Unidade } from './state';
 import { condicaoCheiaDoTipo } from './condicao';
 import { tileAndavel } from './pathfinding';
@@ -61,6 +61,31 @@ export function tilesParaNascer(
   return tiles;
 }
 
+/**
+ * I-OBRA-FASE-LIBERA — o que a fase ja liberou: o `libera` das fases 1..N somado (o `RELEASE_HOUSE`
+ * acumulado do KaM) mais os tipos que o jogador (lado 0) ja tem no comeco da fase.
+ */
+export function liberadosNaFase(fase: FaseData, dados: GameData): { readonly predios: ReadonlySet<string>; readonly tropas: ReadonlySet<string> } {
+  const ate = dados.campanha.fases.filter((f) => f.numero <= fase.numero);
+  const doJogador = fase.lados.find((l) => l.lado === LADO_DO_JOGADOR);
+  return {
+    predios: new Set([...ate.flatMap((f) => f.libera.predios), ...(doJogador?.predios ?? []).map((p) => p.id)]),
+    tropas: new Set([...ate.flatMap((f) => f.libera.tropas), ...(doJogador?.unidades ?? []).map((u) => u.tipo)]),
+  };
+}
+
+/**
+ * I-OBRA-FASE-LIBERA — o tipo esta trancado nesta partida: ela e uma fase, o tipo e liberado por uma
+ * fase DEPOIS desta, e ainda nao esta na lista dos liberados. Fora da campanha nada e trancado. Um
+ * tipo que nenhuma fase cita nao e trancado (o conservador: a campanha so tranca o que ela libera).
+ */
+export function trancadoNaFase(state: GameState, tipo: string, lista: 'predios' | 'tropas', dados: GameData): boolean {
+  if (state.fase === undefined) return false;
+  const fase = faseDaCampanha(state.fase.id, dados);
+  if (liberadosNaFase(fase, dados)[lista].has(tipo)) return false;
+  return dados.campanha.fases.some((f) => f.numero > fase.numero && f.libera[lista].includes(tipo));
+}
+
 /** O estado inicial da fase `id`. `dados` precisa ser o da fase (`dadosDaFase`): e o mapa dele. */
 export function criarFase(id: string, dados: GameData): GameState {
   const fase = faseDaCampanha(id, dados);
@@ -98,8 +123,13 @@ export function criarFase(id: string, dados: GameData): GameState {
       }
     }
   }
+  // I-OBRA-FASE-LIBERA: os predios do jogador no comeco contam como ja construidos, para a arvore de
+  // desbloqueio (GDD §5.2) valer na fase como no jogo livre
+  const doJogador = fase.lados.find((l) => l.lado === LADO_DO_JOGADOR)?.predios.map((p) => p.id) ?? [];
+  const tiposJaConstruidos = [...base.tiposJaConstruidos, ...doJogador.filter((t, i, a) => a.indexOf(t) === i && !base.tiposJaConstruidos.includes(t))];
   const estado: GameState = {
     ...comPredios,
+    tiposJaConstruidos,
     unidades: { porId: unidades, ordem: ordemU },
     proximoId: n,
     fase: { id, numero: fase.numero, inicio: base.tick, ondasDisparadas: 0, tropasDasOndas: [], contagem: {} },

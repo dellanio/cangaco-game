@@ -102,7 +102,9 @@ function nomeDaFerramentaDeCampo(recurso: string): string {
  *  missao nao libera". Apagar agora e apagar o rotulo que essa camada vai pedir.
  */
 function textoDoRequisito(opcao: OpcaoDoMenuBuild): string {
-  const { requer, semRequisito } = temaSertao.menuBuild;
+  const { requer, semRequisito, trancadoNaCampanha } = temaSertao.menuBuild;
+  // I-OBRA-FASE-LIBERA: a fase da campanha ainda nao liberou
+  if (opcao.trancadoNaCampanha) return trancadoNaCampanha;
   return opcao.requer === null ? semRequisito : `${requer} ${nomeDe(opcao.requer)}`;
 }
 

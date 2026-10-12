@@ -15,6 +15,7 @@ import { gameData } from './data';
 import { classeDaUnidade, emAlertaDeFome, fracaoDeCondicao } from './condicao';
 import { caixaDoPredio } from './footprint';
 import { estaDesbloqueado } from './desbloqueio';
+import { trancadoNaFase } from './fase';
 import { predioLigadoAoArmazem } from './estradas';
 import { custoDeTreino, ehEscolaCompleta, filaDaEscola, ouroQueAFilaEspera } from './escola';
 import { custoDoPassoDaUnidade } from './carga';
@@ -359,6 +360,8 @@ export interface OpcaoDoMenuBuild {
   /** Id do predio que falta para liberar este; `null` se ja esta liberado ou
    *  se o dado nao aponta nenhum (`desbloqueadoPor: null`, ex.: storehouse). */
   readonly requer: string | null;
+  /** I-OBRA-FASE-LIBERA — a fase da campanha ainda nao liberou o predio (o cadeado tem outro texto). */
+  readonly trancadoNaCampanha: boolean;
 }
 
 /** O que a estrada custa por tile, para o painel mostrar sem ler `sim/data`. */
@@ -371,13 +374,15 @@ export function opcoesDoMenuBuild(
   state: GameState, dados: GameData = gameData,
 ): readonly OpcaoDoMenuBuild[] {
   return dados.predios.map((def) => {
-    const desbloqueado = estaDesbloqueado(state, def.id, dados);
+    const trancadoNaCampanha = trancadoNaFase(state, def.id, 'predios', dados);
+    const desbloqueado = !trancadoNaCampanha && estaDesbloqueado(state, def.id, dados);
     return {
       id: def.id,
       custo: custoDoPredio(def),
       tamanho: def.tamanho,
       desbloqueado,
-      requer: desbloqueado ? null : def.desbloqueadoPor,
+      requer: desbloqueado || trancadoNaCampanha ? null : def.desbloqueadoPor,
+      trancadoNaCampanha,
     };
   });
 }

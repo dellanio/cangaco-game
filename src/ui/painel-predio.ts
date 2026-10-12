@@ -530,6 +530,7 @@ function desenharCompleto(
         ? rotulos.faltaRequisito.replace('{itens}', t.faltam.map(nomeDaMercadoria).join(', '))
         : t.motivo === 'sem-recruta' ? rotulos.semRecruta
           : t.motivo === 'porta-bloqueada' ? rotulos.portaBloqueada
+            : t.motivo === 'fase-trancada' ? rotulos.faseTrancada
             : t.motivo === null ? null : t.motivo;
       const botao = botaoDaGrade('formar', porQue === null ? `${rotulos.formar} ${nome}` : nome, porQue);
       botao.dataset.tipo = t.tipo;

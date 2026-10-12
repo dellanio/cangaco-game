@@ -4,7 +4,8 @@
  * o alistamento do recruta e o comando perguntam AQUI.
  */
 import type { GameState, Predio, PredioCompleto } from './state';
-import { ID_DO_QUARTEL } from './state';
+import { ID_DO_QUARTEL, LADO_DO_JOGADOR } from './state';
+import { trancadoNaFase } from './fase';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 
@@ -16,7 +17,9 @@ export type MotivoDeRecusaDeSoldado =
   /** Nenhum tile da porta e andavel: o soldado nao teria onde nascer. */
   | 'porta-bloqueada'
   /** C-IA-03b — a partida esta em peacetime (`sim/paz.ts`): no KaM, equipar e bloqueado. */
-  | 'em-paz';
+  | 'em-paz'
+  /** I-OBRA-FASE-LIBERA — a fase da campanha ainda nao liberou esta tropa. */
+  | 'fase-trancada';
 
 export const ehQuartelCompleto = (p: Predio | undefined): p is PredioCompleto =>
   p !== undefined && p.estado === 'completo' && p.tipo === ID_DO_QUARTEL;
@@ -51,6 +54,7 @@ export function motivoDaRecusaDeSoldado(
   if (!ehQuartelCompleto(quartel)) return 'predio-nao-e-quartel';
   const requisitos = requisitosDoTipo(tipo, dados);
   if (requisitos === null) return 'tipo-desconhecido';
+  if (quartel.lado === LADO_DO_JOGADOR && trancadoNaFase(state, tipo, 'tropas', dados)) return 'fase-trancada';
   if (requisitos.some((m) => (quartel.estoque.entrada[m] ?? 0) < 1)) return 'sem-requisito';
   if (recrutasNoQuartel(quartel) < 1) return 'sem-recruta';
   return null;

@@ -2,6 +2,7 @@ import type { GameState } from './state';
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { estaDesbloqueado } from './desbloqueio';
+import { trancadoNaFase } from './fase';
 import { bordaSul, caixaDeTipo, caixaDoPredio, caixasSeSobrepoem } from './footprint';
 import { ehEstrada, ehPlanejada } from './estradas';
 import { ehTransponivel } from './mapa';
@@ -19,6 +20,8 @@ export function tileDeRoca(state: GameState, gx: number, gy: number, dados: Game
 export type MotivoDeRecusa =
   | 'predio-desconhecido'
   | 'bloqueado'
+  /** I-OBRA-FASE-LIBERA — a fase da campanha ainda nao liberou este predio. */
+  | 'fase-trancada'
   | 'fora-do-mapa'
   | 'sobreposicao'
   // Ha estrada (F08) ou canteiro de estrada (F18d-1b) sobre o footprint: predio nao
@@ -99,6 +102,7 @@ export function canPlace(
   const candidato = caixaDeTipo(buildingId, gx, gy, dados);
   if (candidato === null) return recusa('predio-desconhecido');
 
+  if (trancadoNaFase(state, buildingId, 'predios', dados)) return recusa('fase-trancada');
   if (!estaDesbloqueado(state, buildingId, dados)) return recusa('bloqueado');
 
   const { largura, altura } = dados.terreno.mapaPadrao;
