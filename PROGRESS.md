@@ -22294,3 +22294,11 @@ Testes dirigidos33/33; finais26/26; transladados9/9. Shot A08 0 (5 capturas), F-
 Capturas abertas: screenshots/I-ARTE-ARVORE-CRESCENDO-{1-muda-no-zoom-1,2-muda,3-crescendo_1,4-crescendo_2,5-adulta}.png. Antes aberto: mesmo conjunto com prefixo I-ARTE-ARVORE-CRESCENDO-antes-, vindo de add86763 com a MESMA partida replantada. Pranchas abertas: screenshots/I-ARTE-ARVORE-CRESCENDO-pranchas/arvore-crescimento-zoom-{0.5,1,2}.png, seis linhas (grama/areia/rocha, normal/RGBx0.8). Preview temporário removido, junction desfeita sem tocar no node_modules principal.
 Não verificado ainda neste commit: verify completo da nova arte; homologação do operador; versões juvenis específicas da seca (sem PNG seco juvenil, normal é fallback do contrato). Test:longo/shot:todos de fechamento da fila não executados. Sem merge/push ou escrita em main/test-results/.claude/AGENTS. Próximo item de arte: A09 milho.
 
+
+## 2026-10-12 — Resultado completo de A08 (626cd33c)
+
+VERIFICADO: npm run verify com CANGACO_TEST_WORKERS=1 saiu 1. Typecheck, lint e validate:data passaram (35 arquivos, 10 fases, zero erros). Suite normal: 354 arquivos, 349 passaram/5 falharam; 3023 testes, 3016 passaram/7 falharam, 949,40 s. Todas as sete falhas foram timeouts; nenhum limite alterado. Log test-output/A08-verify-completo.log.
+
+Repeticao dirigida dos cinco arquivos afetados, pela trava e com um worker: 5 arquivos/34 testes passaram, saida 0, 19,29 s. Log test-output/A08-falhas-dirigidas.log. Isso nao substitui o verify completo nem prova sua causa. Suite transladada nao executou nesta corrida, porque verify parou na suite normal. Nao houve afrouxamento de guardas, skips ou prazos.
+
+A08 implementada em 626cd33c, com testes especificos/rapido e capturas antes/depois ja abertos; indice docs/homologacao/2026-10-artes.md atualizado. Homologacao continua pendente. O CSV nao foi promovido a feito com verify completo verde. A09 milho ainda nao iniciada. Sem merge/push ou alteracao da main, sim, AGENTS.md, .claude e test-results.json. Portao completo vermelho registrado; nao declarar fase encerrada.
