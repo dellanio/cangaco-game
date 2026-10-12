@@ -4214,55 +4214,63 @@
     }
   },
   "watchtower": {
-    "arquivo": "sprites/watchtower/icone.png",
+    "arquivo": "sprites/watchtower/icone-atual.png",
     "tamanho": [
       72,
       72
     ],
-    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
     "origem": {
-      "base": "base/building-atlas-a/source.png",
+      "base": "base/watchtower/watchtower-D-20261002-completo-master-2x.png",
       "semente": null,
-      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+      "fonteCompleta": "sprites/watchtower/watchtower_completo-D-20261002.png",
+      "sha256": "5ffe90fd4e884b31bdace00dbaf01a0c1f216fac562e802f4bd4cd5496952ecd",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
     }
   },
   "farm": {
-    "arquivo": "sprites/farm/icone.png",
+    "arquivo": "sprites/farm/icone-atual.png",
     "tamanho": [
       72,
       72
     ],
-    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "licenca": "arte propria do projeto, candidata D gerada em 2026-09-30",
     "origem": {
-      "base": "base/building-atlas-a/source.png",
+      "base": "base/farm/farm-D-yellow-tall-master-2x.png",
       "semente": null,
-      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+      "fonteCompleta": "sprites/farm/farm_completo-D-yellow-tall.png",
+      "sha256": "0f97588cd2702fd56479d1c412167eca683890de2a94b7c434fa493d822f35a3",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
     }
   },
   "wineyard": {
-    "arquivo": "sprites/wineyard/icone.png",
+    "arquivo": "sprites/wineyard/icone-atual.png",
     "tamanho": [
       72,
       72
     ],
-    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "licenca": "arte propria do projeto, candidata D gerada em 2026-09-30",
     "origem": {
-      "base": "base/building-atlas-a/source.png",
+      "base": "base/wineyard/wineyard-D-green-cane-tall10-master-2x.png",
       "semente": null,
-      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+      "fonteCompleta": "sprites/wineyard/wineyard_completo-D-green-cane-tall10.png",
+      "sha256": "d0450833f699b8909441ede44aec5af765fb45986746cdda036ca724850906b2",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
     }
   },
   "fishermans": {
-    "arquivo": "sprites/fishermans/icone.png",
+    "arquivo": "sprites/fishermans/icone-atual.png",
     "tamanho": [
       72,
       72
     ],
-    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "licenca": "arte propria do projeto, candidata D azul em 2026-10-01",
     "origem": {
-      "base": "base/building-atlas-a/source.png",
+      "base": "base/fishermans/fishermans-D-blue-master-2x.png",
       "semente": null,
-      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+      "fonteCompleta": "sprites/fishermans/fishermans_completo-D-blue.png",
+      "sha256": "3cddffcb854b9e6ea7a21ef52f37bbe2b30532ea62e4eda18103363871afd0fd",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
     }
   },
   "gold_mine": {
@@ -4305,29 +4313,33 @@
     }
   },
   "weapons_workshop": {
-    "arquivo": "sprites/weapons_workshop/icone.png",
+    "arquivo": "sprites/weapons_workshop/icone-atual.png",
     "tamanho": [
       72,
       72
     ],
-    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
     "origem": {
-      "base": "base/building-atlas-a/source.png",
+      "base": "base/weapons_workshop/weapons_workshop-D-20261002-completo-master-2x.png",
       "semente": null,
-      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+      "fonteCompleta": "sprites/weapons_workshop/weapons_workshop_completo-D-20261002.png",
+      "sha256": "93ce6bc95982bd99f20433cc7ba39d5599c4e12640ebddea61e7f0db359feef6",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
     }
   },
   "barracks": {
-    "arquivo": "sprites/barracks/icone.png",
+    "arquivo": "sprites/barracks/icone-atual.png",
     "tamanho": [
       72,
       72
     ],
-    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
     "origem": {
-      "base": "base/building-atlas-b/source.png",
+      "base": "base/barracks/barracks-D-20261002-completo-master-2x.png",
       "semente": null,
-      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+      "fonteCompleta": "sprites/barracks/barracks_completo-D-20261002.png",
+      "sha256": "3d3c0ef6a91d5a9463f5c5027a26b53df7a61b46fecd4233db78b7e994e56119",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
     }
   },
   "marketplace": {
@@ -4344,94 +4356,108 @@
     }
   },
   "mill": {
-    "arquivo": "sprites/mill/icone.png",
+    "arquivo": "sprites/mill/icone-atual.png",
     "tamanho": [
       72,
       72
     ],
-    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "licenca": "arte propria do projeto, variante D aprovada pelo operador em 2026-09-30",
     "origem": {
-      "base": "base/building-atlas-b/source.png",
+      "base": "base/mill/mill-D-plus15-master-2x.png",
       "semente": null,
-      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+      "fonteCompleta": "sprites/mill/mill_completo-D-plus15.png",
+      "sha256": "96a3c0b3f75af7328796332af06ed6d29352368d5fdb94751025bcc86621b66a",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
     }
   },
   "bakery": {
-    "arquivo": "sprites/bakery/icone.png",
+    "arquivo": "sprites/bakery/icone-atual.png",
     "tamanho": [
       72,
       72
     ],
-    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "licenca": "arte propria do projeto, variante D autorizada pelo operador para ensaio em jogo em 2026-09-30",
     "origem": {
-      "base": "base/building-atlas-b/source.png",
+      "base": "base/bakery/bakery-D-master-2x.png",
       "semente": null,
-      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+      "fonteCompleta": "sprites/bakery/completo-D.png",
+      "sha256": "98482c9d6cdac47da77336729c61da1da69d0f74c37dfcb66f356cd9ffbfd6f4",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
     }
   },
   "swine_farm": {
-    "arquivo": "sprites/swine_farm/icone.png",
+    "arquivo": "sprites/swine_farm/icone-atual.png",
     "tamanho": [
       72,
       72
     ],
-    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
     "origem": {
-      "base": "base/building-atlas-b/source.png",
+      "base": "base/swine_farm/swine_farm-D-20261002-completo-master-2x.png",
       "semente": null,
-      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+      "fonteCompleta": "sprites/swine_farm/swine_farm_completo-D-20261002.png",
+      "sha256": "2b717a9f1c899fb8686a2e9ddf18a435d8da22b3243791d7c5aa342fdb3e215b",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
     }
   },
   "stables": {
-    "arquivo": "sprites/stables/icone.png",
+    "arquivo": "sprites/stables/icone-atual.png",
     "tamanho": [
       72,
       72
     ],
-    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
     "origem": {
-      "base": "base/building-atlas-b/source.png",
+      "base": "base/stables/stables-D-20261002-completo-master-2x.png",
       "semente": null,
-      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+      "fonteCompleta": "sprites/stables/stables_completo-D-20261002.png",
+      "sha256": "11b0bbe06253a80bbd7427d4c47936740e08f9881c8d8ffccb390cd32d926542",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
     }
   },
   "butchers": {
-    "arquivo": "sprites/butchers/icone.png",
+    "arquivo": "sprites/butchers/icone-atual.png",
     "tamanho": [
       72,
       72
     ],
-    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
     "origem": {
-      "base": "base/building-atlas-b/source.png",
+      "base": "base/butchers/butchers-D-20261002-completo-master-2x.png",
       "semente": null,
-      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+      "fonteCompleta": "sprites/butchers/butchers_completo-D-20261002.png",
+      "sha256": "103987c7032ced84e982858d513a945b65a43db8442d250758f0256ffe1a7f90",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
     }
   },
   "tannery": {
-    "arquivo": "sprites/tannery/icone.png",
+    "arquivo": "sprites/tannery/icone-atual.png",
     "tamanho": [
       72,
       72
     ],
-    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
     "origem": {
-      "base": "base/building-atlas-b/source.png",
+      "base": "base/tannery/tannery-D-20261002-completo-master-2x.png",
       "semente": null,
-      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+      "fonteCompleta": "sprites/tannery/tannery_completo-D-20261002.png",
+      "sha256": "e87294ae399fd232b26ae87878f827a8be9e00522c60fe71f5365a8dccde8a43",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
     }
   },
   "armory_workshop": {
-    "arquivo": "sprites/armory_workshop/icone.png",
+    "arquivo": "sprites/armory_workshop/icone-atual.png",
     "tamanho": [
       72,
       72
     ],
-    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
     "origem": {
-      "base": "base/building-atlas-c/source.png",
+      "base": "base/armory_workshop/armory_workshop-D-20261002-completo-master-2x.png",
       "semente": null,
-      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+      "fonteCompleta": "sprites/armory_workshop/armory_workshop_completo-D-20261002.png",
+      "sha256": "b00d94f00da1592c0fe332cdda947c65d4ddf1ce1647fe0c1dbde284c409c4e3",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
     }
   },
   "metallurgists": {
@@ -4448,16 +4474,18 @@
     }
   },
   "town_hall": {
-    "arquivo": "sprites/town_hall/icone.png",
+    "arquivo": "sprites/town_hall/icone-atual.png",
     "tamanho": [
       72,
       72
     ],
-    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
     "origem": {
-      "base": "base/building-atlas-c/source.png",
+      "base": "base/town_hall/town_hall-D-20261002-completo-master-2x.png",
       "semente": null,
-      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+      "fonteCompleta": "sprites/town_hall/town_hall_completo-D-20261002.png",
+      "sha256": "25ca30381cda09bb297b4878b02fd6ca4e5597981f6df84b1b2a0e4aaa144600",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
     }
   },
   "iron_smithy": {
@@ -4474,29 +4502,33 @@
     }
   },
   "weapon_smithy": {
-    "arquivo": "sprites/weapon_smithy/icone.png",
+    "arquivo": "sprites/weapon_smithy/icone-atual.png",
     "tamanho": [
       72,
       72
     ],
-    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
     "origem": {
-      "base": "base/building-atlas-c/source.png",
+      "base": "base/weapon_smithy/weapon_smithy-D-20261002-completo-master-2x.png",
       "semente": null,
-      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+      "fonteCompleta": "sprites/weapon_smithy/weapon_smithy_completo-D-20261002.png",
+      "sha256": "5b1702ff5b48e8a4933c07d07e78f7f8684a0c1262c4b9ec8a13f07933527315",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
     }
   },
   "armor_smithy": {
-    "arquivo": "sprites/armor_smithy/icone.png",
+    "arquivo": "sprites/armor_smithy/icone-atual.png",
     "tamanho": [
       72,
       72
     ],
-    "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
+    "licenca": "arte propria do projeto, geracao nativa autorizada pelo operador em 2026-10-02; aprovada pelo operador em 2026-10-02",
     "origem": {
-      "base": "base/building-atlas-c/source.png",
+      "base": "base/armor_smithy/armor_smithy-D-20261002-completo-master-2x.png",
       "semente": null,
-      "nota": "Derivado do sprite completo pela skill pianco-art-pipeline."
+      "fonteCompleta": "sprites/armor_smithy/armor_smithy_completo-D-20261002.png",
+      "sha256": "d855392800dfd13a620c2448190ca0fbe8406ea6e59f8b69f92c4e07d4c21fe2",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
     }
   },
   "quarry": {
@@ -4567,6 +4599,21 @@
       "semente": null,
       "fonteCompleta": "sprites/church/completo.png",
       "sha256": "3536a3d8a85058051c36dbddeeb9b1be21c45db8cced1e15728a568bf33ae41c",
+      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
+    }
+  },
+  "reservoir": {
+    "arquivo": "sprites/reservoir/icone-atual.png",
+    "tamanho": [
+      72,
+      72
+    ],
+    "licenca": "arte original OpenAI para Piancó, 2026-10-10",
+    "origem": {
+      "base": "base/reservoir/cheio-master-2x.png",
+      "semente": null,
+      "fonteCompleta": "sprites/reservoir/cheio.png",
+      "sha256": "92700662b97fe75dc474d227314bf7d3f9cb27126c7031c23bb5f1b26aa12b60",
       "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
     }
   }

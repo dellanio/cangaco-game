@@ -22268,3 +22268,10 @@ NÃO CONCLUÍDO: homologação, integração, fila inteira ou geração de cresc
 ## 2026-10-12 — I-TELA-PEIXES-SUBMERSOS
 Verificado: peixe deixa a tira de recursos transparente, mantendo a água, as quantidades e a pesca. Teste novo 1/1; shot F-SPR e água 3 capturas, abertas; verify:rapido 0 (35 dados, 10 fases, 1 teste, 47 s). Captura: screenshots/I-TELA-PEIXES-SUBMERSOS-3-agua-sem-peixes-boiando.png. Sem alteração de sim.
 
+
+## 2026-10-12 — I-ARTE-ICONES-COMIDA-GUERRA
+Verificado: 17 retratos de comida/guerra derivados do PNG completo atual, incluindo reservoir. Teste dirigido 17/17, shot 0 (seis capturas abertas), verify:rapido 0 após corrigir a tipagem do teste. Capturas: screenshots/I-ARTE-ICONES-COMIDA-GUERRA-{1-comida-3,2-comida-6,3-comida-8,4-guerra-3,5-guerra-6,6-guerra-9}.png. Sem alterar outros grupos ou src/sim/.
+
+## Perguntas em aberto (para a homologação)
+I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO: diagnóstico confirmado no dado rock.bloqueiaPasso=false e no contrato tests/F-T3-caminho.test.ts:164/177, que exige caminhar sobre a rocha. A aproximação adjacente já existe. Correção não aplicada: a mudança exige substituir explicitamente esse contrato anterior e conferir o ciclo/alcance após tornar rock intransponível. Jazidas metálicas e carvão devem permanecer atravessáveis. Nenhuma guarda ou sim foi alterada; não afirmar bug resolvido.
+
