@@ -22264,3 +22264,7 @@ VERIFICADO NO CODIGO a5c12e7e, rebaseado sobre main ef391cf7: npm run verify com
 ENTREGUE: provisionamento das seis frentes, docs/planos/2026-10-12-frentes-de-artes.md; Moinho/madeira06547fc7, Padaria/madeiraae480f29, Armazém/madeirad9ecbda2,27 capturas/pranchas abertas e índice de homologação atualizado. Hashes das entregas anteriores no CSV atualizados após rebase;90 linhas conservadas. Acrescentada correção de checkout canônico da paleta, sem mudar seu conteúdo/blob.
 
 NÃO CONCLUÍDO: homologação, integração, fila inteira ou geração de crescimento/cenário/minerais nesta rodada; não contar provisionamento como implementação. Som de vitória existente disponibilizado por caminho para audição do operador, sem aprovação auditiva presumida. Minas e distribuição das duas vilas continuam bloqueadas pelos aceites/orçamento anteriores. Próximo A08 árvore, com aceite dos novos estados e vento antes da arte. Sem push/merge, main/worktrees alheias preservadas; nenhum agendamento/worker externo iniciado. Test:longo/shot:todos de fechamento da fila não foram rodados nesta rodada.
+
+## 2026-10-12 — I-TELA-PEIXES-SUBMERSOS
+Verificado: peixe deixa a tira de recursos transparente, mantendo a água, as quantidades e a pesca. Teste novo 1/1; shot F-SPR e água 3 capturas, abertas; verify:rapido 0 (35 dados, 10 fases, 1 teste, 47 s). Captura: screenshots/I-TELA-PEIXES-SUBMERSOS-3-agua-sem-peixes-boiando.png. Sem alteração de sim.
+

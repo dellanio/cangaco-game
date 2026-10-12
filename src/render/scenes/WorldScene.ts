@@ -1,4 +1,5 @@
 import dadosDaBandeira from '../../../data/bandeira.json';
+import { recursoSubmerso } from '../recurso-submerso';
 import { transformacaoDoClima } from '../cobertura-clima';
 import { candidatosAEnfeite, MemoriaDosEnfeites } from '../enfeites';
 import { sementeDoMapa, centroDaVilaInicial } from '../mapa';
@@ -1561,7 +1562,8 @@ export class WorldScene extends Phaser.Scene {
     const arte = this.desenhoPorCodigo.map((d) => (d.como === 'textura' ? d.chave : null));
     const vazias = this.desenhoPorCodigo.flatMap((d, codigo) => (d.como === 'vegetacao' ? [codigo] : []));
     for (let codigo = 0; codigo < arte.length; codigo++) {
-      if (configDasFontes.tipos.includes(recursosDeRender.tipos[codigo - 1] ?? '') && arte[codigo] !== null) {
+      if (recursoSubmerso(recursosDeRender.tipos[codigo - 1] ?? '') ||
+          (configDasFontes.tipos.includes(recursosDeRender.tipos[codigo - 1] ?? '') && arte[codigo] !== null)) {
         arte[codigo] = null; vazias.push(codigo);
       }
     }
