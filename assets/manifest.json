@@ -27,14 +27,14 @@
         1
   ],
   "estados": {
- "madeira": "sprites/storehouse/storehouse_madeira-D-roof-preview-plus20.png",
+ "madeira": "sprites/storehouse/storehouse-madeira-20261012.png",
  "completo": "sprites/storehouse/storehouse_completo-D-roof-straight-plus20.png"
   },
   "licenca": "arte propria do projeto, variante D escolhida pelo operador em 2026-09-30",
   "origem": {
  "base": "base/storehouse/storehouse-D-roof-straight-plus20-master-2x.png",
     "semente": null,
-        "nota": "Ampliação proporcional de 20% desde o ensaio 192x192: canvas 230x230, silhueta 200x222. Derivado do master D de maior detalhe. Madeira provisória antiga ampliada no mesmo canvas ainda difere em geometria/estilo do completo. Bandeira separada e âncoras normalizadas preservadas."
+        "nota": "Ampliação proporcional de 20% desde o ensaio 192x192: canvas 230x230, silhueta 200x222. Derivado do master D de maior detalhe. Madeira provisória antiga ampliada no mesmo canvas ainda difere em geometria/estilo do completo. Bandeira separada e âncoras normalizadas preservadas. A07 substitui a madeira provisória em2026-10-12 pela arquitetura do completo atual, tornando obsoleta a divergência histórica da obra. OpenAI exec-bb1353d4-7fc8-4695-a3c1-8f89e8af03be, base/storehouse/geracao-madeira-20261012.json; completo intocado."
   },
   "ancoras": {
     "estoque": {

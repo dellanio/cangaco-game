@@ -1,0 +1,26 @@
+{
+  "id": "exec-bb1353d4-7fc8-4695-a3c1-8f89e8af03be",
+  "ferramenta": "OpenAI imagegen nativo",
+  "referencia": "base/storehouse/storehouse-D-roof-straight-plus20-master-2x.png",
+  "prompt": "prompt-madeira-20261012.txt",
+  "tentativa": 2,
+  "reprovaAnterior": "luz sul invertida, Δ-3,6",
+  "arquivos": [
+    {
+      "path": "assets/base/storehouse/storehouse-D-roof-straight-plus20-master-2x.png",
+      "sha256": "bc9352e995d851640c64d662cb245c3736ba458d5d6879bac6724f6c75ac832d"
+    },
+    {
+      "path": "assets/base/storehouse/madeira-original-20261012.png",
+      "sha256": "b65576f1aaf0193f7d4c79699a4e5f3443eb84bd8d7947bccb3ab1297aada541"
+    },
+    {
+      "path": "assets/base/storehouse/storehouse-madeira-20261012-master-2x.png",
+      "sha256": "181e01f6d75b25db2366354d396654ab1365df038168ec1c1f1558f88b13a7b0"
+    },
+    {
+      "path": "assets/sprites/storehouse/storehouse-madeira-20261012.png",
+      "sha256": "a6eed90f641b95c14d5ebd7e5158a0eb79fd8fa586878084896a9e2ea43bcb42"
+    }
+  ]
+}

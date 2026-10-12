@@ -1,0 +1,40 @@
+{
+  "source": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\storehouse-madeira\\madeira-original-2.png",
+  "sourceHash": "b65576f1aaf0193f7d4c79699a4e5f3443eb84bd8d7947bccb3ab1297aada541",
+  "canonical": "assets/sprites/storehouse/storehouse_completo-D-roof-straight-plus20.png",
+  "from": {
+    "x0": 75,
+    "y0": 9,
+    "x1": 1193,
+    "y1": 1240
+  },
+  "to": {
+    "x0": 12,
+    "y0": 0,
+    "x1": 217,
+    "y1": 226
+  },
+  "method": "crop alfa; registro no envelope do completo; Lanczos; padding e RGB bleed",
+  "files": [
+    {
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\storehouse-madeira\\derivados-2\\storehouse-madeira.png",
+      "sha256": "a6eed90f641b95c14d5ebd7e5158a0eb79fd8fa586878084896a9e2ea43bcb42",
+      "bounds": {
+        "x0": 12,
+        "y0": 0,
+        "x1": 217,
+        "y1": 226
+      }
+    },
+    {
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\storehouse-madeira\\derivados-2\\storehouse-madeira-master-2x.png",
+      "sha256": "181e01f6d75b25db2366354d396654ab1365df038168ec1c1f1558f88b13a7b0",
+      "bounds": {
+        "x0": 24,
+        "y0": 0,
+        "x1": 435,
+        "y1": 453
+      }
+    }
+  ]
+}
