@@ -9869,6 +9869,74 @@ convertidos para ticks no carregamento:
   5. o relatório ao operador traz o comando de publicação e o que falta dele (a chave, a página, os
      jogadores).
 
+### Pedido do operador de 2026-10-12: a campanha jogável (plano em `docs/planos/2026-10-12-campanha-jogavel.md`)
+
+O operador confirmou os prédios encaixados nas fases, aprovou as regras do capturar (fase 7) e do
+navio (fase 10) e pediu a fase 1 jogável de ponta a ponta primeiro, com o ícone da Campanha no menu.
+**Nota de integração:** o item E é de integração (UI, render e o `inicio.ts`); os itens A, B e C são
+de sim.
+
+#### I-TERRENO-FASE-NA-SIM — a fase vira estado de partida
+- **Aceite:**
+  1. `criarFase(fase-01, dados)` põe cada prédio e cada unidade do dado no lado e no lugar do dado (o
+     prédio no tile, a unidade a até 12 tiles do ponto, em tile andável livre), com o estoque do
+     armazém de cada lado. O teste confere as dez fases.
+  2. Determinismo: duas chamadas dão o mesmo estado, byte a byte (`JSON.stringify`), e 600 ticks de
+     `step` a partir delas também.
+  3. `gameData.campanha` traz as dez fases em ordem, com `aos_segundos` e `segundos` em ticks
+     (inteiros), pela escala `combate`. O teste compara com a conta feita à mão para a fase 1.
+  4. `usarDadosDaFase`: depois dela, quem importou `gameData` lê o mapa da fase (a ligação viva). A
+     segunda chamada com outra fase lança erro, e com a mesma fase não muda nada.
+  5. `state.fase` passa pela guarda `GUARDA-step-preserva-opcionais`.
+  6. O teste das dez fases (`I-TERRENO-DEZ-MAPAS-DA-CAMPANHA`) passa a usar as funções do
+     `src/sim/fase.ts`, e continua verde nos dois mundos.
+
+#### I-COMBATE-FASE-ONDAS-E-OBJETIVOS — a missão roda dentro do `step`
+- **Aceite (pelo `step`):**
+  1. A onda nasce no tick do dado (nem antes nem depois), com o número e o tipo de tropa do dado, no
+     lado do dado, e as tropas dela vão atacar um prédio do jogador (`indo_atacar`, alvo do lado 0).
+  2. Cada condição por tabela, com um estado montado: `destruir` (prédios, tropas, lista),
+     `perder` (todos os listados), `proteger` (qualquer um), `prazo`, `sobreviver`, `manter` e
+     `capturar` (fica no raio pelo tempo do dado → vitória; um militar do lado dele no raio de
+     escolta zera a contagem).
+  3. Vitória pede todos os objetivos de vitória; derrota, qualquer um de derrota; no mesmo tick, a
+     derrota vence. O resultado é gravado uma vez em `state.partida`, com o evento `match-ended`.
+  4. A fase 1 de verdade: derrubando os prédios do Cabo Branco pelo `step`, a partida termina em
+     vitória; derrubando o armazém e a escola do jogador, em derrota.
+  5. A escaramuça não muda: o teste da F34 e o do C-IA-03b continuam verdes, sem edição.
+  6. Os números do capturar ficam em `data/campanha.json` e passam pelo `validate:data`.
+
+#### I-OBRA-FASE-LIBERA — a fase tranca o que ainda não liberou
+- **Aceite:**
+  1. A lista de liberados da fase N, por tabela: a soma do `libera` das fases 1..N mais os tipos que o
+     jogador tem de pé no início. Fase 1: os sete prédios da fase 1, mais o armazém e a escola.
+  2. Na fase 1, `PlaceBuilding` de um prédio da fase 2 (a fazenda, `farm`) é recusado com
+     `fase-trancada`, e o mesmo comando num prédio liberado é aceito. Fora da campanha nada muda.
+  3. O treino de uma tropa trancada é recusado, e o de uma liberada é aceito.
+  4. O menu Build da fase 1 mostra a fazenda com o cadeado e o motivo da campanha (roteiro, captura
+     aberta).
+
+#### I-ARTE-ICONE-CAMPANHA — o ícone do botão da campanha
+- **Aceite:** o PNG 96x96 RGBA em `assets/sprites/ui/menu/campanha.png`, a base em
+  `assets/base/ui/campanha/` com o registro da geração, a entrada no manifesto com os oito campos, e a
+  prancha (96, 48 e 32 px) aberta. A homologação é do operador.
+
+#### I-TELA-MENU-DA-CAMPANHA — escolher a fase, jogar e seguir
+- **Aceite:**
+  1. A regra pura do progresso, por tabela: sem nada vencido, só a fase 1 abre; com a fase N vencida,
+     abre a N+1; uma gravação ilegível no `localStorage` conta como nada vencido.
+  2. O roteiro `tools/shots/I-TELA-MENU-DA-CAMPANHA.js` (com um passo despausado e o gesto segurado
+     150 ms, CLAUDE.md §8): Novo jogo → Campanha (o ícone aparece, com tamanho medido) → a lista com a
+     fase 1 aberta e a 2 com cadeado → a fase 1 mostra a narrativa → Começar. A partida abre com o mapa
+     da fase 1: a ponte publica `fase.id` e o mapa, e um tile conhecido do mapa da fase tem o terreno
+     do dado. As capturas são abertas.
+  3. O mesmo roteiro termina a fase 1 pela ponte (comandos de verdade até a vitória, ou um save
+     preparado pelo teste perto dela), vê **Próxima fase**, e ao voltar ao menu a fase 2 está aberta.
+  4. Salvar uma partida de fase e carregá-la abre o mapa da fase (o roteiro carrega da gaveta e
+     confere o tile).
+  5. O HUD mostra a linha do objetivo da fase (o texto do tema).
+  6. Os roteiros do menu inicial e da escaramuça continuam saindo 0.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
