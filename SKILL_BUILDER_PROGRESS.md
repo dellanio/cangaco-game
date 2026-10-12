@@ -113,3 +113,6 @@ A08 crescendo_1: exec-0db9fde6-4e69-426b-887f-c4383b0649ed. Original externo tre
 
 A08 crescendo_2: exec-65a64283-960e-48ed-bdf1-08f1a84efed9. Original externo tree-crescimento/crescendo_2-original.png. Referências: adulta limpa e adolescente. Prompt: juazeiro juvenil quase adulto, copa irregular aberta em guarda-chuva mais larga, tronco bifurcado menos retorcido que adulta; material/paleta coerentes, pés centrais, luz superior sul sem eixo leste-oeste, sem chão/objetos/texto. Candidata ainda sem validação/homologação. Próximo: medir alfa, derivar os três portes e abrir prancha.
 
+
+A08 tentativa1 medida nos derivados: muda Δsul-norte +5,725; crescendo_1 -0,517; crescendo_2 -3,593. A guarda mantém tolerância original 0,5: os dois últimos reprovam, apesar da revisão visual independente ter passado. Originais preservados como crescendo_1-original-1.png e crescendo_2-original-1.png. Próxima tentativa só corrige iluminação superior/sul, sem alterar anatomia. Sem relaxar o validador.
+
