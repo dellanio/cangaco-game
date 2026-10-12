@@ -99,3 +99,5 @@ A06 tentativa1 tecnicamente aprovada: SHA256original F29797F1B46CC8B292C56EC5517
 
 ## 2026-10-12 — I-ARTE-ARMAZEM-EM-OBRA/A07, tentativa1
 Aceiteacd9c6cd antes da geração. Referência exclusiva storehouse-D-roof-straight-plus20-master-2x atual, footprint3x3/canvas230x230/anchor[0.5,1]. Sem trabalhador/atividade/produção/fumaça/animais; plataforma e entrada livres, sem estoque externo pintado, bandeira dinâmica existente. Prompt: mesma casa de dois pisos/postes/portas/janelas/sacada/telhado reto/pés; caibros e tábuas incompletos, estrutura e registro preservados, luz superior sul sem lateral, transparência. exec-3bb96a1b-3a37-469b-b342-01ce929269bb, original externo em storehouse-madeira/madeira-original.png. Próximo validar/revisar, ainda não homologado. Só estado madeira substitui arte provisória antiga; completo não muda.
+
+A07 tentativa1 reprovada pelo validador original por luz sul invertidaΔ-3,6. SHA256original9C1309006FA194A6B444898E040E6B8CC3400099F37B5120954C1E94F9DE84BF. Candidata não instalada. Tentativa2 deve corrigir somente luz superior/sul, mantendo registro/arquitetura. Sem flexibilizar validador; limite duas tentativas.
