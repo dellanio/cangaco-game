@@ -1,0 +1,202 @@
+# Diagnóstico e correção dos timeouts adicionais
+
+Pedido do operador, 2026-10-12: após a correção das consultas da Feira,
+criar um plano separado para os novos itens identificados. Este plano não
+autoriza afrouxar verificação e não altera a fila de `BUILD_PLAN.md`.
+
+## Estado inicial e evidências
+
+A correção de F35 tem seis regressões novas e passou nos quatro arquivos
+dirigidos do JobBoard, normal e transladado: 97 testes em cada mundo. O cenário
+com 30 tarefas caiu de 1.230 para 90 leituras. O aceite global do plano de F35
+continua pendente: o `verify` após a correção reprovou em F05a e F24a, e não
+executou a suíte transladada completa. Não considerar a Feira homologada nem
+integrar à `main` enquanto os portões obrigatórios estiverem reprovados.
+
+Há sete casos em seis arquivos. São falhas observadas; suas causas ainda não
+foram isoladas. Passar numa corrida posterior não prova uma correção de causa.
+
+| Item | Arquivo e caso | Limite existente | Observação |
+|---|---|---|---|
+| Rebrota 1 | `F-REPL-a-toco-rebrota.test.ts`: mata de 2 tiles, com e sem reposição | 10.000 ms | Timeout no rápido antes da correção de F35, inclusive numa corrida em que os outros casos passaram |
+| Rebrota 2 | `F-REPL-a-toco-rebrota.test.ts`: toco sob estrada e sem estrada | 15.000 ms | Timeout no rápido antes da correção de F35 |
+| Abertura | `F17-aceite.test.ts`: quatro prédios completos, ocupados, ligados e timber entregue | 5.000 ms | Timeout no rápido antes da correção de F35 |
+| Couro | `F24b-cadeia-do-couro.test.ts`: sem Curtume, couro cru presente e nenhum curtido ou gibão | 5.000 ms | Timeout no rápido antes da correção de F35 |
+| CLI inicial | `F05a-estado-inicial.test.ts`: `npm run sim -- inicial --ticks 0` | 30.000 ms no subprocesso e no caso | `spawnSync cmd.exe ETIMEDOUT` no completo após a correção de F35 |
+| Armas | `F24a-armas.test.ts`: save/load no meio do rodízio | 5.000 ms | Timeout no completo após a correção de F35 |
+| Vazão do lenhador | `LOTE3-fases-quatro.test.ts`: `woodcutters`, vazão em 6.000 ticks igual ao modelo anterior (+/-1) | 5.000 ms | Timeout no rápido após a correção de F35 |
+
+Evidências locais (ignoradas pelo Git, não são aceites novos):
+
+- `test-output/diagnostico-feira/antes-da-correcao-verify-rapido.json`: cinco
+  reprovações, incluindo F35; quatro são os primeiros itens desta tabela.
+- `test-output/diagnostico-feira/verify-completo-corrigido.log`: saída do
+  completo após a correção; duas reprovações, F05a e F24a.
+- `test-output/diagnostico-feira/verify-rapido-corrigido.log`: rápido após a
+  correção; três reprovações, rebrota 1, CLI inicial e vazão do lenhador.
+- `test-output/F35-consultas-reclamada.json` e
+  `test-output/F35-consultas-carregando.json`: limite estrutural de leituras.
+
+## Contratos imutáveis
+
+### Retomada do diagnóstico em 2026-10-12
+
+Branch `fix/feira-consultas-do-claim`, HEAD
+`1706299b285cc8c516961856686dd259722d5917`, com a correção da Feira ainda
+na árvore de trabalho. Os seis arquivos juntos passaram no normal (53 testes,
+28,65 s) e no transladado (52 testes, uma exclusão preexistente, 23,35 s).
+Nenhum dos sete timeouts reproduziu nessas corridas dirigidas. Isso não fecha
+os itens nem demonstra uma correção de causa.
+
+Logs: `test-output/diagnostico-timeouts/normal.log` e `transladado.log`.
+Uma terceira corrida dos seis arquivos, com profiler iniciado antes da
+importação de cada arquivo, também passou (53 testes). Perfis individuais e
+`perfis-resumo.json` ficam no mesmo diretório ignorado. Workers, limites e
+cenários não foram alterados. As sondas normais usam diretórios separados de
+evidência; a configuração transladada mantém o diretório que já declara.
+
+Concentrações observadas (amostras próprias, não orçamento de operações):
+rebrota em `avancarNevoa` (661); lenhador em `predioQueContrata` (668),
+`step` e `distanciaPorEstrada`; abertura, armas e couro têm custo distribuído
+entre `step`, importação e consultas. Isso aponta onde investigar, mas não
+comprova recomputação redundante nem define ainda um aceite estrutural.
+
+O comando real `npm run sim -- inicial --ticks 0`, sob a trava e com uma
+sonda de fases externa ao código, encerrou com código zero. No processo da
+simulação: criação do servidor Vite de 182 a 530 ms, importação de `state.ts`
+de 530 a 7.438 ms, importação de `tick.ts` até 7.871 ms, fechamento até
+7.947 ms. O log mostra o otimizador de dependências do cliente iniciado.
+Evidência: `cli-fases.jsonl` e `cli-real.log`. Hipótese: preparação do Vite
+contribui para o timeout sob carga; falta isolar a contribuição do otimizador
+e reproduzir a falha. Não alterar o runner com base apenas nessa hipótese.
+
+A task 1 permanece aberta: falta causa comprovada, proteção determinística
+correspondente e o commit do aceite. Nenhum código adicional foi corrigido
+nesta retomada.
+
+O `npm run verify` desta retomada saiu 0: typecheck e lint aprovados,
+35 arquivos de dados e dez fases sem erros, normal 341 arquivos/2.976 testes
+aprovados, transladado 341 arquivos/2.974 testes aprovados com cinco exclusões
+preexistentes. Log: `test-output/diagnostico-timeouts/verify.log`.
+Não atribuir esse verde a uma correção dos sete timeouts.
+
+Sonda do CLI sem descoberta/otimização de dependências do cliente, sem
+alterar arquivo versionado: `state.ts` ainda levou 6.880 ms, e o processo
+da simulação encerrou em 7.788 ms. O custo não desapareceu; a hipótese de
+que apenas o otimizador explica a demora não se confirmou. Log:
+`cli-sem-otimizador.log`, fases no mesmo `cli-fases.jsonl`.
+
+- Manter limites de relógio, workers, exclusões, skips, cenários, sementes e
+  critérios existentes. Não reduzir janelas, amostras ou ticks para passar.
+- Rebrota: manter a janela de 12.000 ticks, a diferença com/sem reposição, o
+  bloqueio sob estrada e zero unidades dentro de árvores.
+- F17: preservar o teto de 5.300 ticks, os quatro prédios, ocupantes, rede e
+  timber entregue. Não substituir comandos por injeção de estado.
+- F24b: preservar o contraexemplo sem Curtume, a janela de 2.000 ticks após
+  o primeiro couro cru, ausência de produtos finais e invariantes da cadeia.
+- F05a: preservar a invocação real por `npm run sim`, a saída da tabela e o
+  código zero. Não substituir o comando por uma simulação falsa. A exclusão
+  já existente deste subprocesso no mundo transladado não pode ser ampliada.
+- F24a: preservar a corrida de 2.600 ticks, save no tick 1.900, encomendas e
+  igualdade byte a byte com/sem save. Não trocar hashes ou o formato do save.
+- LOTE3: preservar a corrida de 6.000 ticks, produção positiva, diferença de
+  no máximo uma unidade em relação ao modelo anterior e os guardas de fases.
+- Nada em `test-results.json`, `.claude/` ou `AGENTS.md`; nada de push.
+
+## Tasks — um commit por task executável
+
+### 1. Reproduzir e separar custo de simulação, importação e subprocesso
+
+Rodar os seis arquivos pelas configurações normais do projeto, pela trava:
+
+```powershell
+node tools/trava-de-testes.js npx vitest run tests/F-REPL-a-toco-rebrota.test.ts tests/F17-aceite.test.ts tests/F24b-cadeia-do-couro.test.ts tests/F05a-estado-inicial.test.ts tests/F24a-armas.test.ts tests/LOTE3-fases-quatro.test.ts
+node tools/trava-de-testes.js npx vitest run tests/F-REPL-a-toco-rebrota.test.ts tests/F17-aceite.test.ts tests/F24b-cadeia-do-couro.test.ts tests/F05a-estado-inicial.test.ts tests/F24a-armas.test.ts tests/LOTE3-fases-quatro.test.ts -c vitest.transladado.config.mts
+```
+
+Respeitar a exceção transladada existente do CLI. Registrar branch, HEAD,
+limites, fila da trava, nomes dos casos, saída e código de retorno. Comparar
+os casos isolados com os portões do projeto sem mudar sua configuração.
+Cronometragem é evidência, nunca asserção. Usar `CANGACO_EVIDENCIA_DIR` nas
+sondas novas, com diretórios distintos para normal e transladado.
+
+O perfil deve incluir a importação/preparação: F24b roda uma cadeia dentro do
+`describe`, antes dos `it`; medir só o corpo do teste omitiria esse custo.
+F05a exige diagnosticar também o processo filho e a resolução de `npm.cmd`.
+Se o timeout não reproduzir, registrar isso e a incerteza; não fechar o item.
+
+**Aceite da task:** matriz dos sete casos, logs e perfil que identifique onde
+o trabalho se concentra; nenhum teste ou limite alterado. Atualizar este plano
+com diagnóstico e critério estrutural de custo, em commit antes de código.
+
+### 2. Corrigir a causa comprovada nos dois casos de rebrota
+
+Usar o perfil da task 1. Reduzir somente recomputação comprovadamente redundante;
+manter o mesmo percurso de ticks e decisões. Acrescentar proteção determinística
+de operações, que reprove antes da correção; não usar teto de tempo como prova
+de desempenho. Conferir recursos, replantios, estrada, FSM e estado final.
+
+**Aceite:** F-REPL-a inteiro aprovado normal e transladado, resultado preservado
+e redução de trabalho comprovada; validar consumidores do trecho alterado.
+
+### 3. Corrigir a causa comprovada na abertura da Fase A
+
+Preservar a cadeia inteira por comandos. Perfil e guardas devem cobrir o elo
+efetivamente responsável pelo custo, sem mexer em balanceamento ou geometria.
+
+**Aceite:** F17 inteiro aprovado normal e transladado, marcos e entrega
+preservados, com proteção da redução de recomputação identificada na task 1.
+
+### 4. Corrigir a causa comprovada no contraexemplo do couro
+
+Preservar a cadeia completa e o contraexemplo sem Curtume. Separar preparo
+do cenário e corpo do teste; a correção não pode transferir trabalho para fora
+do teste com a finalidade de escapar do limite.
+
+**Aceite:** F24b inteiro aprovado normal e transladado, inclusive ausência de
+curtido/gibão, conservação e invariantes; proteger o custo redundante identificado.
+
+### 5. Corrigir a causa comprovada no CLI inicial do Windows
+
+Diagnosticar onde o subprocesso espera: lançamento, importação ou criação do
+estado. Preservar o caminho público `npm run sim` e sua compatibilidade real;
+nenhuma troca de comando no teste ou nova exclusão para esconder a falha.
+
+**Aceite:** F05a inteiro aprovado no normal e demais casos no transladado,
+saída e código de retorno preservados; evidência do comando real encerrando.
+
+### 6. Corrigir a causa comprovada no save/load das armas
+
+Medir as três corridas do guarda de determinismo, os comandos de encomenda e
+a serialização. Preservar a igualdade de estado e a semântica das encomendas.
+
+**Aceite:** F24a inteiro aprovado normal e transladado, incluindo igualdade
+byte a byte; proteção estrutural do trabalho redundante identificado na task 1.
+
+### 7. Corrigir a causa comprovada na comparação de vazão do lenhador
+
+Medir as corridas atual e do modelo anterior no mesmo cenário, preservando
+as fases e a janela integral. Nenhum ajuste em rendimento, descanso, viagem
+ou tolerância para fazer a comparação passar.
+
+**Aceite:** LOTE3-fases-quatro inteiro aprovado normal e transladado, com
+vazão, fases e diferença máxima de uma unidade preservadas; proteger o custo
+redundante identificado na task 1.
+
+### 8. Fechar os portões e integrar a entrega pendente
+
+Rodar `npm run verify:rapido` antes de cada commit e `npm run verify` no
+fechamento. Todas as camadas devem passar; repetir verde não substitui explicar
+as reprovações. Registrar saída e riscos restantes em `PROGRESS.md`.
+Conferir o aceite global ainda pendente da Feira, a capa candidata e a limpeza
+da `main` antes de qualquer integração autorizada. Quem marca feature é o operador.
+
+## Limites de execução
+
+Este documento é planejamento; as tasks acima ainda não foram executadas como
+plano. As corridas anteriores constituem diagnóstico inicial e não fecham itens.
+Não escolher uma implementação só para obter uma corrida verde. Se o perfil
+apontar mudança de comportamento, balanceamento, hardware/configuração de teste
+ou refatoração ampla não coberta aqui, parar e reportar antes de alterar código.
+Se várias falhas tiverem uma causa comum comprovada, registrar a dependência e
+o conjunto de aceites coberto antes de implementar; não fazer remendos cegos.
