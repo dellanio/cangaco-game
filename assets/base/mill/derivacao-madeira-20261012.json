@@ -1,0 +1,40 @@
+{
+  "source": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\mill-madeira\\madeira-original.png",
+  "sourceHash": "e4d6535d723bfc70ae82bf87af763949290e38a9f5af68aee99d4e6ce2fd9ee6",
+  "canonical": "assets/sprites/mill/mill_completo-D-plus15.png",
+  "from": {
+    "x0": 16,
+    "y0": 74,
+    "x1": 1116,
+    "y1": 1380
+  },
+  "to": {
+    "x0": 2,
+    "y0": 13,
+    "x1": 219,
+    "y1": 273
+  },
+  "method": "crop alfa; registro no envelope do completo; Lanczos; padding e RGB bleed",
+  "files": [
+    {
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\mill-madeira\\derivados\\mill-madeira.png",
+      "sha256": "0fa7bdd2d44f03a370e8a4725032b91852296a09e4ce1d1b00e2d07afac128b6",
+      "bounds": {
+        "x0": 2,
+        "y0": 13,
+        "x1": 219,
+        "y1": 273
+      }
+    },
+    {
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\mill-madeira\\derivados\\mill-madeira-master-2x.png",
+      "sha256": "d7576627d1642310480bf44315145ed5f22eb6897884a3ed625259a5310e9dd8",
+      "bounds": {
+        "x0": 4,
+        "y0": 26,
+        "x1": 439,
+        "y1": 547
+      }
+    }
+  ]
+}

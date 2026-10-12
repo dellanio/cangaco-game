@@ -1,0 +1,24 @@
+{
+  "id": "exec-a328bfba-ac94-43e6-ad22-507c79f70fd0",
+  "ferramenta": "OpenAI imagegen nativo",
+  "referencia": "base/mill/mill-D-plus15-master-2x.png",
+  "prompt": "prompt-madeira-20261012.txt",
+  "arquivos": [
+    {
+      "path": "assets/base/mill/mill-D-plus15-master-2x.png",
+      "sha256": "b4a153abbf2c3cafc104e77751e995f612bb762b64750440db152f729cc5a5d5"
+    },
+    {
+      "path": "assets/base/mill/madeira-original-20261012.png",
+      "sha256": "e4d6535d723bfc70ae82bf87af763949290e38a9f5af68aee99d4e6ce2fd9ee6"
+    },
+    {
+      "path": "assets/base/mill/mill-madeira-20261012-master-2x.png",
+      "sha256": "d7576627d1642310480bf44315145ed5f22eb6897884a3ed625259a5310e9dd8"
+    },
+    {
+      "path": "assets/sprites/mill/mill-madeira-20261012.png",
+      "sha256": "0fa7bdd2d44f03a370e8a4725032b91852296a09e4ce1d1b00e2d07afac128b6"
+    }
+  ]
+}
