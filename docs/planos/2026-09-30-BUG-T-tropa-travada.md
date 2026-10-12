@@ -262,3 +262,17 @@ Aceites da retomada, escritos antes do código:
 4. testes anteriores de troca mútua, formação e colisão continuam passando;
 5. evidência determinística em `test-output/`, registro em PROGRESS e remoção do
    BUG-TROPA-DE-24-PRESA somente depois dos aceites verdes.
+
+## 13. Emenda 3 (operador, 2026-10-12, antes do código): a varredura roda em paz
+
+O fechamento de 2026-10-11 (`ef391cf7`) deu o aceite 4 vermelho, e não por soldado preso: a escaramuça
+mudou (clima, tropa de 27, IA), a paz acaba no meio da varredura e a IA mata 3 soldados na ordem 42
+(tick 8612), antes de qualquer conferência de preso. Decisão do operador (opção a): a varredura mede
+SÓ a marcha.
+
+- A fixture da varredura põe a partida em paz durante toda ela (`pazAteTick` além do último tick
+  possível da varredura). A IA não ataca, e nenhuma morte entra na conta.
+- O resto do aceite 4 fica igual: as mesmas 400 ordens, a mesma semente do sorteio, as tropas de 18
+  e 24, nenhum preso em `marchando` e nenhuma sobreposição, e todos vivos.
+- Se aparecer preso (o Codex viu a ordem 99 com 24 em 2026-10-07), o teste fica vermelho e isso
+  volta ao operador como demanda nova. Não se afrouxa o aceite.
