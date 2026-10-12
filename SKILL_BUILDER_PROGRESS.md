@@ -119,3 +119,6 @@ A08 tentativa1 medida nos derivados: muda Δsul-norte +5,725; crescendo_1 -0,517
 
 A08 crescendo_1 tentativa2: exec-0441e815-4d07-48ee-879f-90691eace40e, original externo crescendo_1-original-2.png. Edição só da luz: folhagem norte mais sombreada, faces sul de tronco/galhos/raízes iluminadas em bege/ocre, sem iluminação inferior/lateral e sem mudança pedida de anatomia. Original1 preservado; medir e revisar antes de escolher.
 
+
+A08 crescendo_2 tentativa2: exec-324cd3fe-69a1-4053-9315-73d4b35a86ef, original externo crescendo_2-original-2.png; somente luz superior/sul com folhas norte sombreadas e tronco/galhos/raízes sul iluminados naturalmente. Originais1 preservados. Os aliases externos de derivação agora apontam às tentativas2; não há nova geração autorizada além das duas tentativas honestas por estágio.
+
