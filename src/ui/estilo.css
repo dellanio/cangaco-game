@@ -878,6 +878,18 @@ body:not([data-corpo="distribuicao"]) #distribuicao { display: none; }
 #fim-de-partida h2 { margin: 0 0 6px; font: 40px/1.1 var(--fonte-display); letter-spacing: 0.06em; text-transform: uppercase; }
 #fim-de-partida p { margin: 0; font-size: 14px; }
 #fim-de-partida[data-fim="derrota"] h2 { color: var(--terracota); }
+/* I-TELA-MENU-DA-CAMPANHA: os botoes do fim de uma fase (o aviso nao recebe clique; os botoes sim) */
+#fim-de-partida .botoes-do-fim { display: flex; gap: 10px; justify-content: center; margin-top: 12px; pointer-events: auto; }
+#fim-de-partida .botoes-do-fim button[hidden] { display: none; }
+#fim-de-partida .botoes-do-fim button { font-size: 15px; padding: 6px 12px; box-shadow: 3px 3px 0 var(--tinta); }
+/* I-TELA-MENU-DA-CAMPANHA: a linha do objetivo da fase, no alto da area do jogo */
+#objetivo-da-fase {
+  position: fixed; left: calc(var(--largura-barra) + (100vw - var(--largura-barra)) / 2); top: 36px;
+  transform: translateX(-50%); z-index: 15; max-width: 60vw;
+  padding: 4px 14px; background: var(--papel); color: var(--tinta); font-size: 14px;
+  border: 2px solid var(--tinta); box-shadow: 2px 2px 0 var(--tinta); pointer-events: none;
+}
+#objetivo-da-fase[hidden] { display: none; }
 
 /* C-COMIDA-01d — o painel do grupo militar: o mesmo papel do painel do predio. */
 #painel-grupo { display: flex; flex-direction: column; gap: 6px; padding: 4px; }
@@ -983,6 +995,12 @@ body[data-menu] #ajuda { z-index: 30; }
 #menu-inicial button { font-size: 17px; padding: 8px 12px; box-shadow: 3px 3px 0 var(--tinta); }
 #menu-inicial button[aria-disabled="true"] { box-shadow: none; }
 #menu-inicial button[data-acao="voltar"] { font-size: 13px; padding: 4px 8px; align-self: center; }
+/* I-TELA-MENU-DA-CAMPANHA: o icone da campanha no botao, e o texto da fase escolhida */
+#menu-inicial button[data-acao="campanha"] { display: flex; align-items: center; justify-content: center; gap: 10px; }
+#menu-inicial button[data-acao="campanha"]::before { content: ''; width: 48px; height: 48px; flex: none; background: url('../../assets/sprites/ui/menu/campanha.png') center / contain no-repeat; }
+#menu-inicial [data-tela="campanha"] button { font-size: 15px; }
+#menu-inicial .narrativa { margin: 0; font-size: 15px; font-style: italic; line-height: 1.35; }
+#menu-inicial .desafio { margin: 0; font-size: 13px; line-height: 1.35; }
 #menu-inicial .motivo { font-size: 12px; font-style: italic; color: var(--terracota); text-align: center; }
 /* E-TELA-CONFIGURAR-PARTIDA — a paz da escaramuca */
 #menu-inicial h2 { margin: 0; font-size: 20px; text-align: center; }

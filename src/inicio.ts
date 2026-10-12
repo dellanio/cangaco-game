@@ -15,7 +15,9 @@ import type { Gaveta } from './arquivo-da-partida';
 import { montarMenuInicial } from './ui/menu-inicial';
 import type { SituacaoDoSave } from './ui/menu-inicial';
 import { montarAjuda } from './ui/ajuda';
-import { gameData } from './sim/data';
+import { gameData, usarDadosDaFase } from './sim/data';
+import { dadosDaFase } from './sim/fase';
+import { lerProgresso, resumoDasFases } from './campanha';
 import { montarCarregamento } from './ui/carregamento';
 import type { Ajuda } from './ui/ajuda';
 import { montarOpcoesDeSom } from './ui/opcoes-de-som';
@@ -57,6 +59,9 @@ async function jogar(escolha: EscolhaDaPartida, ajuda: Ajuda | null): Promise<vo
   const partida = estadoDaEscolha(escolha, gaveta);
   // o menu so oferece o save que abre; se ele sumiu entre o menu e o clique, o jogo livre
   const estado = partida.ok ? partida.estado : estadoNovo({ modo: 'livre' });
+  // I-TELA-MENU-DA-CAMPANHA: a partida de campanha (nova ou carregada) troca o mapa da pagina ANTES
+  // do `main.ts`, para o render e a UI ja nascerem lendo o da fase
+  if (estado.fase !== undefined) usarDadosDaFase(estado.fase.id, dadosDaFase(estado.fase.id));
   // E-ENTREGA-BUILD: a tela de carregamento nasce antes de o `main.ts` (e o Phaser) chegar
   const carregamento = montarCarregamento();
   const modulo = await import('./main');
@@ -87,7 +92,7 @@ function abrirMenu(): Promise<void> {
       ajuda.alternar();
     }, () => {
       somDaPagina().opcoes.abrir();
-    });
+    }, { fases: resumoDasFases(), vencidas: lerProgresso(gavetaDoNavegador()) });
   });
 }
 

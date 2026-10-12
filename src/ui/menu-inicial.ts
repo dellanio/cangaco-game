@@ -9,6 +9,8 @@ import type { EscolhaDaPartida, OpcaoDeNivelNaTela, OpcaoDePazNaTela } from '../
 import type { SituacaoDaGaveta } from '../arquivo-da-partida';
 import { textoDaGaveta } from './arquivo';
 import { mmss } from './contador-de-paz';
+import { faseAberta } from '../campanha';
+import type { ResumoDaFase } from '../campanha';
 
 const rotulos = temaSertao.menuInicial;
 
@@ -59,6 +61,8 @@ export function montarMenuInicial(
   aoAjuda: () => void,
   /** H-TELA-OPCOES-E-VOLUME — abre a caixa de opcoes de som. */
   aoOpcoes: () => void = () => undefined,
+  /** I-TELA-MENU-DA-CAMPANHA — as fases (em ordem) e as ja vencidas: quais abrem e quais tem cadeado. */
+  campanha: { readonly fases: readonly ResumoDaFase[]; readonly vencidas: readonly number[] } = { fases: [], vencidas: [] },
 ): MenuInicial {
   const raiz = document.createElement('section');
   raiz.id = 'menu-inicial';
@@ -128,8 +132,18 @@ export function montarMenuInicial(
   configurar.dataset.tela = 'configurar';
   configurar.hidden = true;
 
+  // I-TELA-MENU-DA-CAMPANHA — a lista das fases e a fase escolhida (narrativa, desafio, Comecar)
+  const listaDaCampanha = document.createElement('div');
+  listaDaCampanha.className = 'opcoes';
+  listaDaCampanha.dataset.tela = 'campanha';
+  listaDaCampanha.hidden = true;
+  const telaDaFase = document.createElement('div');
+  telaDaFase.className = 'opcoes';
+  telaDaFase.dataset.tela = 'fase';
+  telaDaFase.hidden = true;
+
   function mostrar(tela: HTMLElement): void {
-    for (const t of [principal, novo, carregar, configurar]) t.hidden = t !== tela;
+    for (const t of [principal, novo, carregar, configurar, listaDaCampanha, telaDaFase]) t.hidden = t !== tela;
   }
 
   const motivo = motivoDoContinuar(situacao);
@@ -145,8 +159,39 @@ export function montarMenuInicial(
   novo.append(
     botao('livre', rotulos.livre, () => { escolher({ modo: 'livre' }); }),
     botao('escaramuca', rotulos.escaramuca, () => { mostrar(configurar); }),
+    botao('campanha', rotulos.campanha, () => { mostrar(listaDaCampanha); }),
     botao('voltar', rotulos.voltar, () => { mostrar(principal); }),
   );
+  const textos = temaSertao.campanha;
+  const tituloDaCampanha = document.createElement('h2');
+  tituloDaCampanha.textContent = textos.titulo;
+  listaDaCampanha.append(tituloDaCampanha);
+  for (const fase of campanha.fases) {
+    const nome = `${textos.fase.replace('{n}', String(fase.numero)).replace('{local}', fase.local)}: ${fase.titulo}`;
+    const aberta = faseAberta(campanha.vencidas, fase.numero);
+    listaDaCampanha.append(botao(`fase-${fase.numero}`, nome, () => { abrirFase(fase); }, aberta ? null : textos.trancada));
+  }
+  listaDaCampanha.append(botao('voltar', rotulos.voltar, () => { mostrar(novo); }));
+  function abrirFase(fase: ResumoDaFase): void {
+    const titulo = document.createElement('h2');
+    titulo.textContent = textos.fase.replace('{n}', String(fase.numero)).replace('{local}', fase.local);
+    const subtitulo = document.createElement('p');
+    subtitulo.className = 'lema';
+    subtitulo.textContent = fase.titulo;
+    const narrativa = document.createElement('p');
+    narrativa.className = 'narrativa';
+    narrativa.textContent = fase.narrativa;
+    const desafio = document.createElement('p');
+    desafio.className = 'desafio';
+    desafio.textContent = `${textos.desafio}: ${fase.desafio}`;
+    telaDaFase.replaceChildren(
+      titulo, subtitulo, narrativa, desafio,
+      botao('comecar', textos.comecar, () => { escolher({ modo: 'campanha', fase: fase.id }); }),
+      botao('voltar', rotulos.voltar, () => { mostrar(listaDaCampanha); }),
+    );
+    telaDaFase.dataset.fase = fase.id;
+    mostrar(telaDaFase);
+  }
   // E-SAVE-GAVETAS: as tres gavetas. A que nao abre fica desabilitada, com o motivo embaixo.
   for (const g of gavetas) {
     const motivoDela = motivoDaGaveta(g);
@@ -195,7 +240,7 @@ export function montarMenuInicial(
     botao('voltar', rotulos.voltar, () => { mostrar(novo); }),
   );
 
-  caixa.append(logo, lema, principal, novo, carregar, configurar);
+  caixa.append(logo, lema, principal, novo, carregar, configurar, listaDaCampanha, telaDaFase);
   raiz.append(caixa);
   document.body.append(raiz);
 

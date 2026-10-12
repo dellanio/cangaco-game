@@ -36,6 +36,8 @@ import { modosDoTipo } from './ui/modo-do-predio';
 import { montarAlertas } from './ui/alertas';
 import { montarAvisoDoTempo } from './ui/aviso-tempo';
 import { montarFimDePartida } from './ui/fim-de-partida';
+import { montarObjetivoDaFase } from './ui/objetivo-da-fase';
+import { gravarVitoria, objetivoEmTexto, proximaFase, resumoDasFases } from './campanha';
 import { montarFaixaDePassos } from './ui/partida-guiada';
 import { montarCaixaDeDica } from './ui/dicas';
 import { montarSecaoDoRelato } from './ui/relato';
@@ -48,7 +50,7 @@ import type { Ajuda } from './ui/ajuda';
 import type { TelaDeCarregamento } from './ui/carregamento';
 import { montarBarra } from './ui/barra';
 import { montarArquivo } from './ui/arquivo';
-import { criarArquivoDaPartida } from './arquivo-da-partida';
+import { criarArquivoDaPartida, mapaDaGaveta } from './arquivo-da-partida';
 import { criarFerramenta } from './input/ferramenta';
 import { criarSelecao } from './input/selecao';
 import { criarEntradaDoMapa } from './input/colocar';
@@ -88,9 +90,24 @@ import type { OpcoesDeSom } from './ui/opcoes-de-som';
 // C-IA-03c — o botao "Nova escaramuca" do painel H comeca a escaramuca no meio do jogo.
 const SEMENTE = gameData.economia.estadoInicial.semente;
 
+/** I-TELA-MENU-DA-CAMPANHA — o `localStorage`, ou `null` quando o navegador o bloqueia (o acesso pode lancar). */
+function gavetaDoNavegador(): Storage | null {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
 declare global {
   interface Window {
-    __cangacoPartida?: { estadoSerializado(): string };
+    __cangacoPartida?: {
+      estadoSerializado(): string;
+      /** I-TELA-MENU-DA-CAMPANHA — HARNESS: o mapa da pagina (o id e o terreno de um tile), para o roteiro
+       *  conferir que a fase abriu com o mapa dela. */
+      mapa(): { readonly id: string; readonly hash: string };
+      terreno(gx: number, gy: number): string | null;
+    };
     /** H-TELA-CAMADA-DE-SOM — HARNESS: os contadores da camada de som, para o roteiro. */
     __cangacoSom?: {
       contadores(): ContadoresDeSom & { readonly fundo: ContadoresDoFundo; readonly trabalho: ContadoresDoTrabalho };
@@ -321,7 +338,20 @@ export function iniciarPartida(
   const avisoDeOrdem = montarAvisoDeOrdem();
 
   // F34 — o aviso do fim da escaramuca. Derivado do estado, como os alertas.
-  const fimDePartida = montarFimDePartida();
+  // I-TELA-MENU-DA-CAMPANHA: numa fase, o aviso traz o lugar e os botoes do que vem depois. A pagina
+  // joga uma fase so (o mapa e da fase): seguir e recarregar com outro parametro.
+  const faseDaPagina = estadoInicial.fase === undefined ? null : resumoDasFases().find((f) => f.id === estadoInicial.fase?.id) ?? null;
+  const irPara = (busca: string): void => { window.location.assign(`${window.location.pathname}${busca}`); };
+  const fimDePartida = faseDaPagina === null ? montarFimDePartida() : montarFimDePartida(
+    { numero: faseDaPagina.numero, local: faseDaPagina.local, proxima: proximaFase(faseDaPagina.id) },
+    {
+      aoProxima() { const proxima = proximaFase(faseDaPagina.id); if (proxima !== null) irPara(`?campanha=${proxima}`); },
+      aoTentarDeNovo() { irPara(`?campanha=${faseDaPagina.id}`); },
+      aoMenu() { irPara(''); },
+    },
+  );
+  // I-TELA-MENU-DA-CAMPANHA: a linha do objetivo da fase (escondida fora da campanha)
+  const objetivoDaFase = montarObjetivoDaFase((s) => objetivoEmTexto(s, gameData));
 
   // I-TELA-PARTIDA-GUIADA — a faixa de passos. Derivada do estado; a sim nao sabe dela.
   const faixaDePassos = guiada ? montarFaixaDePassos(gameData) : null;
@@ -380,6 +410,9 @@ export function iniciarPartida(
     // C-TELA-02: destino que ninguem vai alcancar nao fica marcado
     if (recusaDaPaz(s.events) !== null) jogo.apagarDestino();
     fimDePartida.atualizar(s);
+    objetivoDaFase.atualizar(s);
+    // I-TELA-MENU-DA-CAMPANHA: a vitoria numa fase abre a seguinte no menu (o progresso, fora do save)
+    if (s.fase !== undefined && s.partida?.fim === 'vitoria') gravarVitoria(gavetaDoNavegador(), s.fase.numero);
     faixaDePassos?.atualizar(s);
     caixaDeDica.atualizar(s);
     ajuda.atualizar(s);
@@ -399,6 +432,10 @@ export function iniciarPartida(
       painelDoArquivo.mostrar(arquivo.salvar(n));
     },
     aoCarregar(n) {
+      // I-TELA-MENU-DA-CAMPANHA: save de outro mapa (uma fase, ou o sertao numa pagina de fase) pede
+      // outra pagina: o `gameData` troca uma vez so, antes do `main.ts`
+      const mapa = mapaDaGaveta(gavetaDoNavegador(), n);
+      if (mapa !== null && mapa !== gameData.mapa.id) { irPara(`?gaveta=${n}`); return; }
       const resultado = arquivo.carregar(n);
       if (resultado.ok) {
         jogo.reiniciarApresentacao();
@@ -409,6 +446,8 @@ export function iniciarPartida(
       painelDoArquivo.mostrar(resultado);
     },
     aoEscaramuca() {
+      // I-TELA-MENU-DA-CAMPANHA: numa pagina de fase o mapa e o da fase; a escaramuca pede a pagina dela
+      if (faseDaPagina !== null) { irPara('?escaramuca'); return; }
       // C-IA-03c: a escaramuca do comeco, no lugar da partida em curso
       jogo.reiniciarApresentacao();
       som.reiniciar();
@@ -488,7 +527,11 @@ export function iniciarPartida(
 
   // E-TELA-MENU-INICIAL — HARNESS, como o `__cangaco` do render: o estado serializado, para o
   // roteiro comparar a escaramuca do menu com a do `?escaramuca` no tick 0. Nao usar em jogo.
-  window.__cangacoPartida = { estadoSerializado: () => JSON.stringify(sessao.estado) };
+  window.__cangacoPartida = {
+    estadoSerializado: () => JSON.stringify(sessao.estado),
+    mapa: () => ({ id: gameData.mapa.id, hash: gameData.mapa.hash }),
+    terreno: (gx, gy) => gameData.mapa.legenda[gameData.mapa.linhas[gy]?.[gx] ?? ''] ?? null,
+  };
   window.__cangacoSom = {
     contadores: () => ({ ...som.contadores(), fundo: fundo.contadores(), trabalho: trabalho.contadores() }),
     // I-TELA-TRILHA-SONORA: o que o elemento de cada faixa esta fazendo (tocando, tempo, volume)
