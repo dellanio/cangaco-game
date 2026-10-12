@@ -116,3 +116,6 @@ A08 crescendo_2: exec-65a64283-960e-48ed-bdf1-08f1a84efed9. Original externo tre
 
 A08 tentativa1 medida nos derivados: muda Δsul-norte +5,725; crescendo_1 -0,517; crescendo_2 -3,593. A guarda mantém tolerância original 0,5: os dois últimos reprovam, apesar da revisão visual independente ter passado. Originais preservados como crescendo_1-original-1.png e crescendo_2-original-1.png. Próxima tentativa só corrige iluminação superior/sul, sem alterar anatomia. Sem relaxar o validador.
 
+
+A08 crescendo_1 tentativa2: exec-0441e815-4d07-48ee-879f-90691eace40e, original externo crescendo_1-original-2.png. Edição só da luz: folhagem norte mais sombreada, faces sul de tronco/galhos/raízes iluminadas em bege/ocre, sem iluminação inferior/lateral e sem mudança pedida de anatomia. Original1 preservado; medir e revisar antes de escolher.
+
