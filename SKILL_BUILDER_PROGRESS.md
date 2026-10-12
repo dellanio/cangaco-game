@@ -103,3 +103,7 @@ Aceiteacd9c6cd antes da geração. Referência exclusiva storehouse-D-roof-strai
 A07 tentativa1 reprovada pelo validador original por luz sul invertidaΔ-3,6. SHA256original9C1309006FA194A6B444898E040E6B8CC3400099F37B5120954C1E94F9DE84BF. Candidata não instalada. Tentativa2 deve corrigir somente luz superior/sul, mantendo registro/arquitetura. Sem flexibilizar validador; limite duas tentativas.
 
 A07 tentativa2 aprovada tecnicamente: SHA256original B65576F1AAF0193F7D4C79699A4E5F3443EB84BD8D7947BCCB3AB1297AADA541; validador original zero erros/revisão independente aprovada. Teste2/2 e roteiro0; nove evidências abertas; verify:rapido0 (55 arquivos/410 testes,47s). canvas230x230/pé226/master460x460/pé453. Nenhuma terceira geração. Homologação pendente.
+
+## 2026-10-12 — I-ARTE-ARVORE-CRESCENDO / A08
+Aceite 5a1b8bb0 antes da arte. Referência única: juazeiro-D-double-master-2x, transparência normalizada fora do repo (RGB invisível zerado, sem mudança visual). Primeiro estado muda: exec-750f8084-d5f4-4e29-ac10-d14a71720c89. Original externo: D:/projetos-pessoal/cangaco-game-candidatos/arte/2026-10-autonomo/tree-crescimento/muda-original.png. Prompt: juazeiro juvenil de haste fina e 3-4 ramificações/pequenas copas, pintura e materiais da referência, luz superior sul sem eixo leste-oeste; planta isolada transparente, pés centrais, sem miniatura de copa adulta, chão, texto, objetos ou pessoas. Candidata ainda não derivada/revisada/homologada.
+
