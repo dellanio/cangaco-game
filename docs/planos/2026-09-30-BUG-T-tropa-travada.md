@@ -276,3 +276,8 @@ SÓ a marcha.
   e 24, nenhum preso em `marchando` e nenhuma sobreposição, e todos vivos.
 - Se aparecer preso (o Codex viu a ordem 99 com 24 em 2026-10-07), o teste fica vermelho e isso
   volta ao operador como demanda nova. Não se afrouxa o aceite.
+- **Medida (2026-10-12, antes do código):** só com a paz, os 18 e os 24 morrem de fome antes do fim
+  das 400 ordens (0 vivos), e o aceite cai no "todos vivos" sem chegar a conferir preso. A fixture
+  também dá à tropa a condição cheia para o horizonte inteiro (`condicao.ticksCondicaoCheia.militar`
+  acima de 400 x 1501 ticks, no dado do teste, usado na criação e no `step`). Nenhum soldado sai da
+  conta por fome ou por ataque.
