@@ -899,6 +899,13 @@ export function custoDaTarefa(
  * (F10: o plano inteiro — a perna do serf ate a origem tambem tem que existir, senao um
  * serf preso reclamaria e soltaria a mesma tarefa a cada tick).
  */
+/** Respostas derivadas do MESMO quadro durante uma escolha. O escopo termina
+ * antes do claim; outra unidade ou outro estado sempre consulta de novo. */
+interface ConsultasDoClaim {
+  unidadeOcupada?: boolean;
+  readonly serfsPorFeira: Map<string, number>;
+}
+
 /**
  * D-MOVIMENTO-01d (JobBoard e porta por estado da chave) — as recusas do claim que NAO precisam do A*: tudo o que `reclamar` confere antes
  * do caminho, para a tarefa aberta. E a MESMA regra que `reclamar` aplica (ele chama esta
@@ -908,10 +915,13 @@ export function custoDaTarefa(
  */
 function recusaSemCaminho(
   state: GameState, tarefa: Tarefa, unidadeId: string, dados: GameData,
+  consultas?: ConsultasDoClaim,
 ): MotivoDeRecusaDoClaim | null {
   const unidade = state.unidades.porId[unidadeId];
   if (!unidade || !podeReclamar(state, tarefa, unidade.tipo, dados)) return 'unidade-invalida';
-  if (unidadeJaTemTarefa(state, unidadeId)) return 'unidade-ocupada';
+  const ocupada = consultas?.unidadeOcupada ?? unidadeJaTemTarefa(state, unidadeId);
+  if (consultas !== undefined) consultas.unidadeOcupada = ocupada;
+  if (ocupada) return 'unidade-ocupada';
 
   // C7 (BUG-N1) — ninguem trabalha para o outro lado: todo predio que a tarefa toca
   // (origem e destino) tem de ser do lado da unidade. Cobre serf, laborer, recruta,
@@ -945,7 +955,12 @@ function recusaSemCaminho(
   // aberta ate uma fechar. Vale para qualquer carga: o A que chega e o B que sai.
   for (const ponta of [('origem' in tarefa ? tarefa.origem : undefined), ('destino' in tarefa ? tarefa.destino : undefined)]) {
     if (ponta === undefined || !ehFeiraCompleta(state.predios.porId[ponta])) continue;
-    if (serfsNaFeira(state, ponta) >= dados.economia.marketplace.maxSerfs) return 'destino-sem-vaga';
+    let n = consultas?.serfsPorFeira.get(ponta);
+    if (n === undefined) {
+      n = serfsNaFeira(state, ponta);
+      consultas?.serfsPorFeira.set(ponta, n);
+    }
+    if (n >= dados.economia.marketplace.maxSerfs) return 'destino-sem-vaga';
   }
 
   if (ehTarefaDoSerf(tarefa)) {
@@ -1311,8 +1326,11 @@ export function reclamarMelhor(
   // de custo. A sim nao le esse motivo (`serfs.ts` so pergunta `r.ok`).
   let recusaSemCaminhoPrimeira: MotivoDeRecusaDoClaim | null = null;
   const vivas: TarefaDoSerf[] = [];
+  // F35 (Feira): ocupacao e teto nao mudam entre candidatas. Reutiliza SOMENTE
+  // nesta filtragem; `reclamar` segue conferindo o quadro atual por conta propria.
+  const consultas: ConsultasDoClaim = { serfsPorFeira: new Map() };
   for (const t of abertas) {
-    const recusa = recusaSemCaminho(state, t, unidadeId, dados);
+    const recusa = recusaSemCaminho(state, t, unidadeId, dados, consultas);
     if (recusa === null) vivas.push(t);
     else recusaSemCaminhoPrimeira ??= recusa;
   }

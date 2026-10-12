@@ -13,7 +13,7 @@ import { describe, expect, it } from 'vitest';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { gameData } from '../src/sim/data';
 import { completarObra, createInitialState, ID_DO_ARMAZEM, LADO_DO_JOGADOR } from '../src/sim/state';
-import type { GameState, PredioCompleto, Unidade } from '../src/sim/state';
+import type { GameState, PredioCompleto, Tarefa, Unidade } from '../src/sim/state';
 import { step } from '../src/sim/tick';
 import type { Command } from '../src/sim/commands';
 import { canPlace } from '../src/sim/placement';
@@ -25,6 +25,8 @@ import { salvar } from '../src/sim/save';
 import { naVila } from './helpers/ancoras';
 import { violacoesDeInvariantes } from './helpers/jobs-invariantes';
 import { gravarEvidencia } from './helpers/evidence';
+import { liberar, reclamar, reclamarMelhor } from '../src/sim/jobs';
+import { deepFreeze } from './helpers/determinism';
 
 const TAXA = gameData.economia.marketplace.taxa;
 const MAX = gameData.economia.marketplace.maxSerfs;
@@ -83,6 +85,37 @@ function bNoMundo(s: GameState): number {
   return (armazemDe(s).estoque.saida[B] ?? 0) + (armazemDe(s).estoque.entrada[B] ?? 0) + (feiraDe(s).estoque.saida[B] ?? 0) + nasMaos;
 }
 const feitas = (s: GameState): number => feiraDe(s).troca?.feitas ?? 0;
+
+/** Quadro parado: uma tarefa por serf em curso e varias candidatas abertas.
+ * As escolhas podem perguntar pelo teto sem precisar rodar a vila inteira. */
+function quadroComFeiraAoTeto(estado: 'reclamada' | 'carregando' = 'reclamada'): GameState {
+  const s = vilaComFeira(60, 0, MAX + 2);
+  const armazem = armazemDe(s);
+  const feira: PredioCompleto = { ...feiraDe(s), troca: { da: A, para: B, quantidade: 30, feitas: 0 } };
+  const tarefas = Array.from({ length: MAX + 20 }, (_, i): Tarefa => ({
+    id: `feira-t${i}`, numero: i + 1, tipo: 'insumo-producao-parada',
+    origem: armazem.id, destino: feira.id, mercadoria: A,
+    estado: i < MAX ? estado : 'aberta', reclamadaPor: i < MAX ? `serf-extra${i}` : null,
+  }));
+  const unidades = { ...s.unidades, porId: { ...s.unidades.porId } };
+  for (const t of tarefas) {
+    if (t.reclamadaPor === null) continue;
+    const u = unidades.porId[t.reclamadaPor];
+    if (u === undefined) throw new Error('fixture: serf da tarefa ausente');
+    unidades.porId[u.id] = {
+      ...u, fsm: estado === 'reclamada' ? 'indo_buscar' : 'indo_entregar',
+      fsmData: estado === 'reclamada' ? { tarefa: t.id } : { tarefa: t.id, carga: A },
+    };
+  }
+  const comColetas: PredioCompleto = estado === 'reclamada' ? armazem : {
+    ...armazem, estoque: { ...armazem.estoque, saida: { ...armazem.estoque.saida, [A]: 60 - MAX } },
+  };
+  return {
+    ...s, unidades, proximoId: Math.max(s.proximoId, tarefas.length + 1),
+    predios: { ...s.predios, porId: { ...s.predios.porId, [armazem.id]: comColetas, feira } },
+    jobs: { tarefas: { porId: Object.fromEntries(tarefas.map((t) => [t.id, t])), ordem: tarefas.map((t) => t.id) } },
+  };
+}
 
 describe('F35 — a Feira', () => {
   it('o dado: taxa 2 para 1, no maximo 10 serfs', () => {
@@ -177,5 +210,76 @@ describe('F35 — a Feira', () => {
     const dir = process.env['CANGACO_EVIDENCIA_DIR'] ?? 'test-output';
     mkdirSync(dir, { recursive: true });
     writeFileSync(`${dir}/F35.save.txt`, salvar(step(vilaComFeira(0, 0), [ordem(3)], gameData)));
+  });
+});
+
+describe('F35 — consultas da escolha no mesmo quadro', () => {
+  it.each(['reclamada', 'carregando'] as const)(
+    'com o teto em %s, varias candidatas nao repetem a varredura por tarefa', (estado) => {
+      const s = quadroComFeiraAoTeto(estado);
+      const antes = JSON.stringify(s);
+      deepFreeze(s);
+      let leituras = 0;
+      const porId = new Proxy(s.jobs.tarefas.porId, {
+        get(target, chave, receiver) {
+          if (typeof chave === 'string' && chave in target) leituras += 1;
+          return Reflect.get(target, chave, receiver);
+        },
+      });
+      const observado: GameState = { ...s, jobs: { tarefas: { ...s.jobs.tarefas, porId } } };
+      expect(reclamarMelhor(observado, `serf-extra${MAX}`)).toEqual({ ok: false, motivo: 'destino-sem-vaga' });
+      const tetoDeLeituras = 3 * s.jobs.tarefas.ordem.length;
+      gravarEvidencia(`F35-consultas-${estado}`, { tarefas: s.jobs.tarefas.ordem.length, leituras, tetoDeLeituras });
+      // Uma passagem pelas candidatas, uma para ocupacao e uma para o teto.
+      // Eixo deterministico: nunca mede tempo nem aumenta timeout.
+      expect(leituras).toBeLessThanOrEqual(tetoDeLeituras);
+      expect(JSON.stringify(s)).toBe(antes);
+    },
+  );
+
+  it.each(['reclamada', 'carregando'] as const)(
+    'uma liberacao de %s aparece na proxima escolha e a vaga volta a fechar', (estado) => {
+      const s = quadroComFeiraAoTeto(estado);
+      const livre = `serf-extra${MAX}`;
+      expect(reclamarMelhor(s, livre)).toEqual({ ok: false, motivo: 'destino-sem-vaga' });
+      const liberado = liberar(s, 'feira-t0', 'pedido-da-unidade').state;
+      expect(serfsNaFeira(liberado, 'feira')).toBe(MAX - 1);
+      const r = reclamarMelhor(liberado, livre);
+      if (!r.ok) throw new Error(`esperava vaga liberada, veio '${r.motivo}'`);
+      expect(r.tarefa).toBe(estado === 'reclamada' ? 'feira-t0' : `feira-t${MAX}`);
+      expect(serfsNaFeira(r.state, 'feira')).toBe(MAX);
+      expect(reclamar(liberado, r.tarefa, livre)).toEqual({ ok: true, state: r.state });
+      expect(reclamarMelhor(r.state, livre)).toEqual({ ok: false, motivo: 'unidade-ocupada' });
+      const outro = `serf-extra${MAX + 1}`;
+      expect(reclamarMelhor(r.state, outro)).toEqual({ ok: false, motivo: 'destino-sem-vaga' });
+      const salvo: GameState = JSON.parse(JSON.stringify(r.state));
+      expect(reclamarMelhor(salvo, outro)).toEqual({ ok: false, motivo: 'destino-sem-vaga' });
+    },
+  );
+
+  it('a liberacao da unidade ocupada e observada na chamada seguinte', () => {
+    const s = quadroComFeiraAoTeto();
+    expect(reclamarMelhor(s, 'serf-extra0')).toEqual({ ok: false, motivo: 'unidade-ocupada' });
+    const liberado = liberar(s, 'feira-t0', 'pedido-da-unidade').state;
+    const r = reclamarMelhor(liberado, 'serf-extra0');
+    if (!r.ok) throw new Error(`esperava unidade livre, veio '${r.motivo}'`);
+    expect(r.tarefa).toBe('feira-t0');
+    expect(serfsNaFeira(r.state, 'feira')).toBe(MAX);
+  });
+
+  it('a primeira recusa continua sendo a da ordem do quadro', () => {
+    const s = quadroComFeiraAoTeto();
+    const armazem = armazemDe(s);
+    const outroLado = armazem.lado === 0 ? 1 : 0;
+    const estrangeiro: PredioCompleto = { ...armazem, id: 'armazem-estrangeiro', lado: outroLado };
+    const id = `feira-t${MAX}`;
+    const t = s.jobs.tarefas.porId[id];
+    if (t === undefined || !('origem' in t)) throw new Error('fixture: candidata ausente');
+    const misto: GameState = {
+      ...s,
+      predios: { porId: { ...s.predios.porId, [estrangeiro.id]: estrangeiro }, ordem: [...s.predios.ordem, estrangeiro.id] },
+      jobs: { tarefas: { ...s.jobs.tarefas, porId: { ...s.jobs.tarefas.porId, [id]: { ...t, origem: estrangeiro.id } } } },
+    };
+    expect(reclamarMelhor(misto, `serf-extra${MAX}`)).toEqual({ ok: false, motivo: 'unidade-invalida' });
   });
 });

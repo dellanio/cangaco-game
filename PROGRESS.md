@@ -21974,3 +21974,63 @@ fase                     pedra  árvore  inimigo   (custo do A* em ticks, do in�
   ainda dizia que construir na roça era permitido. Agora diz que a bandeira fica `false` pela estrada e
   que o prédio é recusado pelo motivo `roca`.
 - **Não verificado ainda:** a segunda corrida do fechamento (verify completo, build, `test:longo`).
+
+### F35 — consultas repetidas na escolha de tarefa, 2026-10-12
+
+- **Pedido do operador e aceite antes do código:**
+  `docs/planos/2026-10-12-feira-consultas-repetidas-no-claim.md`, commit `1706299b`.
+- **Correção:** `reclamarMelhor` reutiliza ocupação da unidade e contagem por Feira
+  somente na filtragem das candidatas do mesmo estado. O claim continua conferindo
+  por conta própria; outra escolha começa com consultas novas. Nenhum cache entrou
+  no `GameState`, e ordem, recusas, reservas, dados e timeout continuam os mesmos.
+- **Proteção determinística:** seis casos novos em `F35-feira.test.ts`, preservando
+  os sete originais. A regressão reprovou antes da correção: 1.230 leituras para
+  30 tarefas e 20 candidatas ao teto, tanto em `reclamada` quanto em `carregando`.
+  Depois: 90 leituras em ambos, teto estrutural de 90; sem asserção de relógio.
+  Liberação, ocupação, outra unidade, JSON e primeira recusa também são conferidos.
+- **Verificação dirigida:** F35, F09-jobboard, F09-sistema e F11b-jobboard:
+  4 arquivos / 97 testes no mundo normal e 4 / 97 no transladado, todos aprovados.
+  Typecheck aprovado. Evidências em `test-output/F35-consultas-*.json` e diagnóstico
+  anterior em `test-output/diagnostico-feira/`.
+- **Verificação completa após a correção:** typecheck, lint e validate:data aprovados;
+  suíte normal: 339 arquivos / 2.974 testes aprovados, 2 arquivos / 2 testes
+  reprovados por timeout. F35 passou. F05a excedeu 30 segundos no subprocesso
+  `npm run sim -- inicial --ticks 0`; F24a excedeu 5 segundos no save/load.
+  A transladada completa não rodou, porque o `verify` parou na suíte normal.
+  Saída em `test-output/diagnostico-feira/verify-completo-corrigido.log`.
+- **Portão rápido após a correção:** 224 arquivos / 2.020 testes aprovados,
+  3 arquivos / 3 testes reprovados: rebrota (mata curta), CLI inicial e vazão do
+  lenhador em LOTE3. F35 passou. Saída em
+  `test-output/diagnostico-feira/verify-rapido-corrigido.log`.
+- **Aceite global pendente:** o item 4 do plano de F35 continua obrigatório.
+  Novo plano: `docs/planos/2026-10-12-timeouts-adicionais-da-verificacao.md`,
+  com sete casos em seis arquivos, diagnóstico antes de implementar. Não fecha
+  rebrota, F17, couro, CLI ou armas por uma corrida posterior verde. A capa continua
+  candidata, sem aplicação ao menu; integração à `main` bloqueada pelo completo.
+  `test-results.json` não foi alterado. Implementação e novo plano permanecem
+  sem commit porque o portão rápido reprovou; a branch é `fix/feira-consultas-do-claim`.
+
+### Retomada dos timeouts — diagnóstico de 2026-10-12
+
+- Seis arquivos juntos: normal 53 testes aprovados em 28,65 s; transladado
+  52 aprovados e uma exclusão existente em 23,35 s. Corrida com perfil incluindo
+  a importação: 53 aprovados. Logs e perfis em
+  `test-output/diagnostico-timeouts/`; detalhes no plano separado.
+- `npm run verify` saiu 0: typecheck, lint e dados aprovados (35 arquivos,
+  dez fases, zero erros); normal 341 arquivos/2.976 testes; transladado
+  341 arquivos/2.974 testes aprovados e cinco exclusões existentes.
+  Saída: `test-output/diagnostico-timeouts/verify.log`. O aceite global de
+  F35 (consultas da Feira) passou nesta corrida.
+- Os sete timeouts permanecem sem causa comprovada. Nenhuma correção adicional
+  foi aplicada; passar agora não fecha esses itens. No CLI real, a importação
+  de `state.ts` consumiu cerca de 6,9 s. Uma sonda externa sem o otimizador de
+  cliente não removeu esse custo. Não modificar o runner só por essa hipótese.
+- `test-results.json` permaneceu com SHA256
+  `349D11517363616E7E9616FC82D16315DBF75C2D3D9C311EA044BE1CCC08D565`.
+  Capa candidata continua sem aplicação ao menu; integração e commits ainda
+  dependem do portão rápido e dos passos registrados no plano.
+- Portão rápido desta retomada: código zero, 227 arquivos e 2.023 testes
+  aprovados; typecheck, lint e validação de dados aprovados. Log:
+  `test-output/diagnostico-timeouts/verify-rapido.log`.
+  Correção de F35 preparada para commit separado; novo plano e diagnóstico
+  ainda não encerram a task 1 nem autorizam improvisar correções.
