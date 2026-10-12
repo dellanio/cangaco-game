@@ -110,3 +110,6 @@ Aceite 5a1b8bb0 antes da arte. Referência única: juazeiro-D-double-master-2x, 
 
 A08 crescendo_1: exec-0db9fde6-4e69-426b-887f-c4383b0649ed. Original externo tree-crescimento/crescendo_1-original.png. Referências: adulta limpa e muda gerada. Prompt: juazeiro adolescente de tronco ainda esbelto com bifurcação e aproximadamente cinco ramos abertos/copa juvenil mais cheia, mesmo material/paleta, luz superior sul sem lateral, pés centrais, transparência e sem chão/objetos/texto. Desenho próprio, não cópia reduzida. Candidata ainda sem homologação; próximo estado crescendo_2.
 
+
+A08 crescendo_2: exec-65a64283-960e-48ed-bdf1-08f1a84efed9. Original externo tree-crescimento/crescendo_2-original.png. Referências: adulta limpa e adolescente. Prompt: juazeiro juvenil quase adulto, copa irregular aberta em guarda-chuva mais larga, tronco bifurcado menos retorcido que adulta; material/paleta coerentes, pés centrais, luz superior sul sem eixo leste-oeste, sem chão/objetos/texto. Candidata ainda sem validação/homologação. Próximo: medir alfa, derivar os três portes e abrir prancha.
+
