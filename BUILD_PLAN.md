@@ -9945,6 +9945,9 @@ Execucao na codex-artes, antes do bloco autonomo de artes. Nenhuma mudanca em sr
 #### I-ARTE-ICONES-COMIDA-GUERRA
 - Aceite: todos os retratos dos prédios de `comida` e `guerra` em `data/menu-build.json`, inclusive Açude, derivam do estado `completo` atual. PNG de 72×72, licença/base preservadas, hash da fonte registrado. Teste de cada fonte e do resolvedor; capturas abertas das duas seções com interação despausada. Os outros grupos permanecem intactos.
 
+#### I-ENTREGA-VERIFY-CONCORRENCIA — concorrência ajustável do executor
+- Aceite: `CANGACO_TEST_WORKERS` permite escolher um inteiro positivo de workers para executar a mesma suíte em máquina compartilhada. Sem variável, mantém exatamente `50%`. Valor vazio, zero, negativo, fracionário ou ilegível é recusado. Nenhum timeout, include, exclude, asserção, isolamento ou etapa do verify muda; a configuração transladada herda a mesma escolha. Teste por tabela e leitura das configurações comprova esses contratos. A verificação completa continua passando pela trava e só é verde com todas as etapas saindo 0; a quantidade de workers e os resultados são registrados.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
