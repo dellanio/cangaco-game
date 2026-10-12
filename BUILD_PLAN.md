@@ -9953,6 +9953,8 @@ Execucao na codex-artes, antes do bloco autonomo de artes. Nenhuma mudanca em sr
 - A guarda do I-ARTE-ARVORE-SECA passa a admitir, além dos estados antigos e dos estados `seca`/`seca:<id>` correspondentes, somente esses três estágios, com caminhos exatos. Continua comparando caminho por caminho os seis estados antigos e anchor `[0.5, 1]`. Testes negativos permanentes recusam `outono` e caminho de `mandacaru` trocado. Nenhum outro estado novo é permitido.
 - Teste mede PNGs, pés, altura, origem, hash e preservação dos estados anteriores; regra de crescimento continua alinhada ao tick da sim. Roteiro abre a partida replantada pelo step, avança as três fronteiras e afirma fonte PNG/escala 1; o roteiro anterior F-REPL-e passa a afirmar PNG quando disponível e placeholder quando ausente, sem perder as medidas do fallback. Capturas em jogo e prancha 0,5/1/2, normal e RGB×0,8 sobre grama/areia/rocha, são geradas e abertas. Revisão independente e homologação do operador são distintas da validação técnica. Sem alterar `src/sim/` ou GameState.
 
+- Emenda A08 após captura real: a entrada `tree` também contém aliases de cactos e macambira. Os três novos desenhos são exclusivamente do juazeiro (`presente`, ou `seca` da mesma árvore). Outras espécies mantêm o fallback anterior, evitando transformação de árvore em cacto/bromélia no amadurecimento. Teste por tabela afirma essa seleção; o debug informa a espécie do estágio e o roteiro comprova três PNGs sobre um juazeiro realmente replantado pelo step. O roteiro F-REPL-e continua afirmando fallback das outras espécies. Nenhum PNG antigo, espécie, regra da sim ou prazo é alterado.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
