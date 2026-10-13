@@ -108,3 +108,66 @@ partida já é feita:
   e o ataque vem pelas ondas.
 - Um módulo `FASE` na lista dos 12: módulo novo é decisão do operador. Os itens usam TERRENO,
   COMBATE, OBRA, ARTE e TELA.
+
+## 5. I-COMBATE-CAMPANHA-JOGADA — as fases 2 a 10 jogadas sem tela (2026-10-13)
+Pedido do operador: "Prossiga com as fases 2 a 10". Aceite e emenda 1 no `BUILD_PLAN.md`.
+
+**Verificado (rodado, evidência aberta):**
+- `node tools/jogar-campanha.js` joga as dez fases com três jogadores automáticos (`passivo`, `ataque`,
+  `reforço`) e grava `test-output/I-COMBATE-CAMPANHA-JOGADA.json`. Cada corrida leva ~5 s de parede.
+- `tests/I-COMBATE-CAMPANHA-JOGADA.test.ts`, 13 testes verdes: por fase, o `ataque` só dá ordens que
+  a sim aceita, repete o estado, e o `passivo` não vence em 600 ticks. Os testes das duas correções
+  abaixo ficam vermelhos sem elas (conferido guardando o `src/sim` e rodando de novo).
+- `gerar-fases --conferir` e `validate:data` passam.
+
+**Duas correções da sim, achadas jogando:**
+- BUG-ONDA-PARA-DEPOIS-DA-LUTA: a tropa da onda recebia o alvo só ao nascer. Depois de lutar com quem a
+  interceptou, ficava `ocioso` para sempre, e a fase 4 ficava "em curso" sem fim. Agora a tropa ociosa
+  da onda recebe o alvo de novo a cada tick, pela mesma `alvoDoAtaque` da IA (`systems/fase.ts`).
+- BUG-CAPTURADO-MORRE-NA-LUTA-AUTOMATICA: encostar no Vicente era lutar com ele (`inimigoEncostado`),
+  e ele morria aos 74 s, antes de poder ser capturado. Agora quem a fase manda capturar não engaja, não
+  é escolhido pela luta automática nem pelo atirador, e a ordem de atacá-lo é recusada
+  (`alvo-de-captura`, `sim/fase.ts: ehAlvoDeCaptura`).
+
+**Os alvos de desenho, no fim (evidência da ferramenta, não `expect`):**
+```text
+fase              passivo            ataque (tropa inicial)   reforço (tropa x2)   alvos
+1 Piancó          derrota  583 s     derrota  513 s           vitória 155 s        A C D E ok
+2 Patos           derrota 1600 s     derrota 1600 s           vitória 184 s        A C D E ok
+3 Soledade        derrota 1800 s     vitória  175 s           vitória 130 s        D ERRA (pergunta 1)
+4 Boqueirão       derrota  505 s     derrota  801 s           derrota 1159 s       E ERRA (pergunta 2)
+5 Campina Grande  derrota  412 s     vitória 1200 s           vitória 1200 s       C E ok
+6 Areia           derrota 1800 s     derrota  188 s           vitória 181 s        A D E ok
+7 Itabaiana       derrota 1800 s     vitória  103 s           vitória  94 s        A B ok
+8 Santa Rita      derrota 1200 s     derrota 1200 s           vitória 311 s        A C D E ok
+9 João Pessoa     derrota 1800 s     vitória  268 s           vitória 262 s        A B ok
+10 Cabedelo       derrota 1000 s     vitória  294 s           vitória 231 s        A B ok
+```
+
+**Os números mudados (em `tools/gerar-fases.mjs`, reemitidos; nenhuma fase tinha edição no Tiled):**
+```text
+fase  o que                         antes                      depois                         por quê
+1     tropa inicial do jogador      nenhuma                    4 militia                      sem soldado, a 1ª onda vence a fase antes de qualquer economia (E)
+2     tropa do Cabo Branco          5 militia, 2 bowman        8 militia, 4 bowman            a tropa inicial vencia aos 236 s (D)
+3     tropa do Cabo Branco          6 militia, 3 bowman        16 militia, 8 bowman, 6 axe    a tropa inicial vencia aos 126 s (D); não basta, pergunta 1
+4     ondas 1, 3, 4, 5, 6           6 / 4 / 4+4 / 4+4 / 4+6+4  5 / 3 / 3+3 / 3+3 / 3+4+3      o dobro da tropa não segurava o Açude (E); não basta, pergunta 2
+6     tropa do Cabo Branco          4 sword, 2 xbow, 4 mil     8 sword, 6 xbow, 10 mil, 4 axe a tropa inicial vencia aos 152 s (D)
+7     escolta do Vicente            8 militia, 4 bowman        12 militia, 6 bowman, 4 axe    com a captura possível, a tropa vencia aos 71 s
+8     lanceiros do Cabo Branco      4 grupos de 3              4 grupos de 5                  a tropa inicial vencia aos 349 s (D)
+```
+
+**Perguntas abertas (decisão do operador):**
+1. **Fase 3, o inimigo da fase sem defesa.** Nenhum número faz a fase 3 pedir economia: com 44
+   inimigos contra 18, o `ataque` ainda venceu aos 213 s. O inimigo da fase só revida (a seção 4), então
+   a tropa dele cai aos poucos, grupo por grupo. Fazer a fase pedir economia pede dar ao lado inimigo
+   a IA de defesa da escaramuça (`state.ia`), o item que a seção 4 deixou fora. A fase 3 ficou no passo
+   moderado (16/8/6).
+2. **Fase 4, a tropa presa no corredor.** Com o dobro da tropa, o Açude cai porque os 16 soldados ficam
+   em `marchando` sem sair do lugar (progresso 0 de t11000 a t11500), entalados no corredor da serra
+   (39–41, 70–74), com o caminho calculado. É a família do BUG-T / BUG-TROPA-PRESA-NA-VARREDURA, que
+   espera a decisão do operador na branch `bugt-varredura-em-paz`. Hipótese, não conferida: é a mesma
+   causa. Os números da fase 4 ficam até a correção dele, e a fase se mede de novo depois.
+
+**O que a ferramenta não mede:** o `reforço` é uma medida grosseira do que a economia daria, e não
+substitui jogar. As fases de construir dependem de quanto a economia rende em 20 a 30 min, que
+nenhum jogador automático exercita.

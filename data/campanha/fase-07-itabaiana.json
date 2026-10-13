@@ -91,15 +91,21 @@
       "unidades": [
         {
           "tipo": "militia",
-          "quantidade": 8,
+          "quantidade": 12,
           "gx": 86,
           "gy": 64
         },
         {
           "tipo": "bowman",
-          "quantidade": 4,
+          "quantidade": 6,
           "gx": 92,
           "gy": 64
+        },
+        {
+          "tipo": "axe_fighter",
+          "quantidade": 4,
+          "gx": 84,
+          "gy": 58
         },
         {
           "tipo": "knight",

@@ -125,25 +125,25 @@
       "unidades": [
         {
           "tipo": "lance_carrier",
-          "quantidade": 3,
+          "quantidade": 5,
           "gx": 100,
           "gy": 28
         },
         {
           "tipo": "lance_carrier",
-          "quantidade": 3,
+          "quantidade": 5,
           "gx": 64,
           "gy": 94
         },
         {
           "tipo": "lance_carrier",
-          "quantidade": 3,
+          "quantidade": 5,
           "gx": 112,
           "gy": 84
         },
         {
           "tipo": "lance_carrier",
-          "quantidade": 3,
+          "quantidade": 5,
           "gx": 28,
           "gy": 98
         }

@@ -87,6 +87,20 @@ export function sistemaDaFase(state: GameState, dados: GameData, tick: number): 
     estado = { ...estado, ondasDisparadas: estado.ondasDisparadas + 1, tropasDasOndas: [...estado.tropasDasOndas, ...comAlvo.map((u) => u.id)] };
   }
 
+  // BUG-ONDA-PARA-DEPOIS-DA-LUTA: a tropa da onda que ficou ociosa (o alvo caiu, ou ela lutou com quem
+  // a interceptou) segue para o proximo predio do jogador, pela mesma escolha da IA
+  const paradas = estado.tropasDasOndas
+    .map((id) => s.unidades.porId[id])
+    .filter((u): u is Unidade => u !== undefined && u.fsm === 'ocioso');
+  for (const lado of [...new Set(paradas.map((u) => u.lado))].sort((a, b) => a - b)) {
+    const grupo = paradas.filter((u) => u.lado === lado);
+    const alvo = alvoDoAtaque(s, grupo, lado, dados);
+    if (alvo === null) continue;
+    const porId = { ...s.unidades.porId };
+    for (const u of grupo) porId[u.id] = { ...u, fsm: FSM_INDO_ATACAR, fsmData: { alvo } };
+    s = { ...s, unidades: { ...s.unidades, porId } };
+  }
+
   const contagem: Record<string, number> = { ...estado.contagem };
   fase.objetivos.vitoria.forEach((o, i) => {
     const chave = `v${i}`;

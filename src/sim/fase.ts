@@ -86,6 +86,18 @@ export function trancadoNaFase(state: GameState, tipo: string, lista: 'predios' 
   return dados.campanha.fases.some((f) => f.numero > fase.numero && f.libera[lista].includes(tipo));
 }
 
+/**
+ * BUG-CAPTURADO-MORRE-NA-LUTA-AUTOMATICA — a unidade que a fase manda capturar (o `capturar`, regra do
+ * operador de 2026-10-12: uma tropa a 1 tile dela por 10 s, sem escolta). Ela nao luta, nao e escolhida
+ * pela luta automatica nem pelo atirador, e a ordem de ataca-la e recusada: encostar nela tem de ser
+ * possivel sem mata-la, ou a regra aprovada nunca acontece.
+ */
+export function ehAlvoDeCaptura(state: GameState, u: Unidade, dados: GameData): boolean {
+  if (state.fase === undefined) return false;
+  const fase = dados.campanha.fases.find((f) => f.id === state.fase?.id);
+  return fase !== undefined && fase.objetivos.vitoria.some((o) => o.tipo === 'capturar' && o.lado === u.lado && o.unidade === u.tipo);
+}
+
 /** O estado inicial da fase `id`. `dados` precisa ser o da fase (`dadosDaFase`): e o mapa dele. */
 export function criarFase(id: string, dados: GameData): GameState {
   const fase = faseDaCampanha(id, dados);

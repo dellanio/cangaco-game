@@ -28,6 +28,7 @@ import type { ResultadoDeSistema } from './jobs';
 import { ordemDoJogadorSemVista, unidadeNaVista } from '../nevoa';
 import { FSM_MARCHANDO } from './marcha';
 import { FSM_ATACANDO, FSM_INDO_ATACAR } from './cerco';
+import { ehAlvoDeCaptura } from '../fase';
 
 export type AttackUnit = Extract<Command, { readonly type: 'AttackUnit' }>;
 
@@ -64,6 +65,8 @@ export function motivoDaRecusaDeLuta(
     if (naoLuta(u.tipo, dados)) return { motivo: 'unidade-nao-luta', unidade: id };
     if (u.lado === alvo.lado) return { motivo: 'alvo-do-proprio-lado', unidade: id };
   }
+  // BUG-CAPTURADO-MORRE-NA-LUTA-AUTOMATICA: quem a fase manda capturar nao se ataca
+  if (ehAlvoDeCaptura(state, alvo, dados)) return { motivo: 'alvo-de-captura', unidade: null };
   // F-COMBATE-ALVO-NA-VISTA: por ultimo, para as recusas de antes continuarem com o motivo delas
   if (ordemDoJogadorSemVista(state, comando.unidades, () => unidadeNaVista(state, comando.alvo, dados))) {
     return { motivo: 'alvo-fora-da-vista', unidade: null };
@@ -110,9 +113,12 @@ function lutarCom(u: Unidade, alvo: Unidade, dados: GameData): Unidade {
 
 /** O primeiro militar de OUTRO lado encostado, em `unidades.ordem`. */
 function inimigoEncostado(state: GameState, u: Unidade, dados: GameData): Unidade | null {
+  // BUG-CAPTURADO-MORRE-NA-LUTA-AUTOMATICA: o capturado nao engaja, e ninguem engaja nele
+  if (ehAlvoDeCaptura(state, u, dados)) return null;
   for (const id of state.unidades.ordem) {
     const outro = state.unidades.porId[id];
     if (outro === undefined || outro.lado === u.lado) continue;
+    if (ehAlvoDeCaptura(state, outro, dados)) continue;
     if (hpMaximoDoTipo(outro.tipo, dados) === null) continue;
     if (encostadas(u, outro)) return outro;
   }
@@ -189,6 +195,7 @@ function alvoDoAtirador(state: GameState, u: Unidade, dados: GameData): Unidade 
   for (const id of state.unidades.ordem) {
     const outro = state.unidades.porId[id];
     if (outro === undefined || outro.lado === u.lado || hpMaximoDoTipo(outro.tipo, dados) === null) continue;
+    if (ehAlvoDeCaptura(state, outro, dados)) continue;
     if (!noAlcance(u, outro, dados) || !noArco(u, outro, dados)) continue;
     const d = distanciaEmTiles(u, outro);
     if (melhor === null || d < melhor.d) melhor = { alvo: outro, d };

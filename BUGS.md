@@ -30,28 +30,6 @@ Registre com `/bug` ou edite à mão. Se não souber a feature, escreva `?`.
 
 ## Abertos
 
-## BUG-ONDA-PARA-DEPOIS-DA-LUTA — a onda da fase para de atacar a vila depois da primeira luta
-- feature: I-COMBATE-FASE-ONDAS-E-OBJETIVOS ("as ondas nascem no tick delas e atacam a vila"), achado
-  pela I-COMBATE-CAMPANHA-JOGADA
-- severidade: errado
-- repro: `node tools/jogar-campanha.js fase-04-boqueirao`, jogador `reforco`, 18 000 ticks
-- esperado: a onda que perde o alvo (a tropa que a interceptou morreu, ou o prédio caiu) segue para o
-  próximo prédio do jogador, como a IA da escaramuça (`atacarComASobra`)
-- observado (medido em 2026-10-13): no fim, 21 inimigos das ondas `ocioso`, parados, com a vila de pé.
-  O alvo é dado uma vez, no nascimento; a fase fica "em curso" para sempre
-- status: aberto
-
-## BUG-CAPTURADO-MORRE-NA-LUTA-AUTOMATICA — o Vicente da fase 7 morre antes de poder ser capturado
-- feature: I-COMBATE-FASE-ONDAS-E-OBJETIVOS (o `capturar`, regra aprovada pelo operador em 2026-10-12:
-  uma tropa a 1 tile dele por 10 s, sem escolta a até 3), achado pela I-COMBATE-CAMPANHA-JOGADA
-- severidade: errado
-- repro: `node tools/jogar-campanha.js fase-07-itabaiana`, jogador `reforco`
-- esperado: dá para ficar a 1 tile dele por 10 s
-- observado (medido em 2026-10-13): o militar do jogador que encosta nele luta sozinho (`inimigoEncostado`)
-  e o mata no tick 743, sem ordem nenhuma. Encostar é lutar, e a regra aprovada não tem como acontecer;
-  a fase só acaba quando todos morrem de fome aos 30 min
-- status: aberto
-
 ## BUG-CARGA-INFINITA-SEM-VEZ — sob carga infinita, a tábua da oficina nunca ganha a pedra da escola
 - feature: D-TRANSPORTE-03 (o lance do KaM e a classe comum), achado pela I-OBRA-UM-TILE-ENTRE-PREDIOS
 - severidade: errado

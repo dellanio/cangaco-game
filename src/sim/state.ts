@@ -54,7 +54,9 @@ export type MotivoDeRecusaDeLuta =
   /** C-IA-03b — a partida esta em peacetime (`sim/paz.ts`). */
   | 'em-paz'
   /** F-COMBATE-ALVO-NA-VISTA — o jogador mandou atacar quem ele nao ve agora (`sim/nevoa.ts`). */
-  | 'alvo-fora-da-vista';
+  | 'alvo-fora-da-vista'
+  /** BUG-CAPTURADO-MORRE-NA-LUTA-AUTOMATICA — o alvo e quem a fase manda capturar (`sim/fase.ts`). */
+  | 'alvo-de-captura';
 
 /** F26a — por que um `MoveUnits` foi recusado. */
 export type MotivoDeRecusaDeMarcha =
