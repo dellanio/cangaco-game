@@ -128,6 +128,9 @@ const CAMPOS_ESCALONADOS = [
   // C5 — quanto o militar espera um tile ocupado antes de dar o passo para o lado.
   { arquivo: 'units', caminho: 'colisaoMilitar.desviarDepois_segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },
+  // I-TRANSPORTE-INSUMO-QUE-ESPERA — o prazo depois do qual o insumo nao paga a multa do armazem.
+  { arquivo: 'delivery', caminho: 'lance.esperaSemMulta_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'lance.escalaDaEspera' },
   // BUG-TROPA-PRESA-NA-VARREDURA — a espera do DODGE e a da troca forcada (WAITING_TIMEOUT) do kam_remake.
   { arquivo: 'units', caminho: 'colisaoMilitar.trocaForcadaDepois_segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },

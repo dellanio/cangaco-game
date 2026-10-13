@@ -835,6 +835,12 @@ export function loadGameData(raw: RawGameData): GameData {
     lance: {
       ticksMultaDoArmazem: Math.round(raw.delivery.lance.multaDoArmazem_tiles * ticksPorTileAPe.estrada),
       ticksPorUnidadeNaEntrada: Math.round(raw.delivery.lance.porUnidadeNaEntrada_tiles * ticksPorTileAPe.estrada),
+      // I-TRANSPORTE-INSUMO-QUE-ESPERA — o prazo da espera sem multa
+      ticksEsperaSemMulta: registrar(
+        'delivery.lance.esperaSemMulta_segundos_base', raw.delivery.lance.escalaDaEspera,
+        raw.delivery.lance.esperaSemMulta_segundos_base, 'segundos',
+        paraTicksDeDuracao(raw.delivery.lance.esperaSemMulta_segundos_base, 'segundos', escalaDe(escalas, raw.delivery.lance.escalaDaEspera) as number, tickHz),
+      ),
     },
     ticksAlertaTarefaSemCandidato: registrar(
       'delivery.alertaTarefaSemCandidato_segundos', raw.delivery.escala,

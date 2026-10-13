@@ -206,9 +206,10 @@ describe('D-TRANSPORTE-03 T1 — a arma prefere o quartel (aceites 1, 2 e 10)', 
     // BUG-CARGA-INFINITA-SEM-VEZ (2026-10-05): com o vao entre lotes (I-OBRA-UM-TILE-ENTRE-PREDIOS) a
     // oficina ficou 1 tile mais longe e, sob a carga infinita da corrida B, a tabua dela nunca ganha a
     // pedra da escola na disputa dos serfs: 0 armas em 12 000 ticks (eram 9). E espera sem fim por
-    // disputa de transporte, registrada no BUGS.md para o operador; ate la a corrida B afirma o que
-    // vale em qualquer saida (nada vai ao armazem) e grava a contagem.
-    expect(b.entreguesAoQuartel, JSON.stringify(b.fim)).toBeGreaterThanOrEqual(0);
+    // disputa de transporte. I-TRANSPORTE-INSUMO-QUE-ESPERA (2026-10-13) a corrige: o insumo aberto ha
+    // `esperaSemMulta` nao paga a multa do armazem, e a tabua passa a ganhar a vez. As armas CHEGAM de novo
+    // (a contagem exata e producao, e fica na evidencia).
+    expect(b.entreguesAoQuartel, JSON.stringify(b.fim)).toBeGreaterThan(0);
     expect(b.saidaDeArmaComQuartel).toBe(0);
     expect(a.saidaDeArmaComQuartel).toBe(0);
     expect(semQuartel.produzidas).toBe(3 * COTA);

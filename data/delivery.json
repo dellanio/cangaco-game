@@ -1,36 +1,100 @@
 {
   "_doc": "D-TRANSPORTE-03 T1 (2026-09-30) — CLASSES de importancia do JobBoard, como no KaM (KM_HandLogistics.pas, clone 731a8a4, :28-35 TKMDemandImportance; filtro estrito em :551-571): importancia menor = mais urgente, e o serf so olha a classe seguinte quando a de cima nao tem tarefa que ele consiga reclamar. DENTRO da classe decide o custo do caminho (o menor lance do KaM), depois a vez no escasso e o numero da tarefa. Cada linha tem um `id`: e por ele que o codigo se refere a um tipo de tarefa (`importanciaDoTipo`, `modoDoTipo`, sim/jobs.ts), sem numero em .ts. Divergencias do KaM, decididas pelo operador em 2026-09-30: (D1) a comida da Bodega fica ACIMA da comida da tropa, o inverso do KaM (diHigh3 abaixo de diHigh2): civil morto e producao perdida para sempre; (excedente) o KaM nao tem excedente automatico, aqui ele e oferta da classe comum. As duas linhas do laborer tem importancia null: nao sao entrega, e ficam aqui so pelo `modo` (validado em tools/data-rules.js, validarEscadaDePrioridade).",
   "prioridades": [
-    { "importancia": 1, "id": "ouro-para-escola",         "modo": "estrada",   "tarefa": "ouro -> schoolhouse",
-      "fonte": "diHigh1: KM_HandLogistics.pas:1163-1166 (ouro na escola). D2 (operador, 2026-09-30): segue o KaM, escola primeiro" },
-    { "importancia": 2, "id": "comida-para-inn",          "modo": "estrada",   "tarefa": "comida -> inn",
-      "fonte": "diHigh3: KM_HandLogistics.pas:1168-1171 (comida na Inn). D1 (operador, 2026-09-30): acima da tropa, divergencia do KaM declarada no _doc" },
-    { "importancia": 3, "id": "comida-para-tropa",        "modo": "livre",     "tarefa": "comida -> militar que pediu (comando Feed)",
+    {
+      "importancia": 1,
+      "id": "ouro-para-escola",
+      "modo": "estrada",
+      "tarefa": "ouro -> schoolhouse",
+      "fonte": "diHigh1: KM_HandLogistics.pas:1163-1166 (ouro na escola). D2 (operador, 2026-09-30): segue o KaM, escola primeiro"
+    },
+    {
+      "importancia": 2,
+      "id": "comida-para-inn",
+      "modo": "estrada",
+      "tarefa": "comida -> inn",
+      "fonte": "diHigh3: KM_HandLogistics.pas:1168-1171 (comida na Inn). D1 (operador, 2026-09-30): acima da tropa, divergencia do KaM declarada no _doc"
+    },
+    {
+      "importancia": 3,
+      "id": "comida-para-tropa",
+      "modo": "livre",
+      "tarefa": "comida -> militar que pediu (comando Feed)",
       "fonte": "diHigh2: KM_UnitWarrior.pas:294",
-      "_doc": "C-COMIDA-01 (decisao do operador, 2026-09-29, L1) e D1 (2026-09-30): logo ABAIXO da Bodega. `livre`: o destino e unidade em campo (a regra da _nota_modo)." },
-    { "importancia": 4, "id": "material-para-obra",       "modo": "livre",     "tarefa": "material -> obra ja nivelada",
-      "fonte": "diHigh4: KM_UnitTaskBuild.pas:637-638" },
-    { "importancia": 4, "id": "pedra-para-canteiro",      "modo": "livre",     "tarefa": "pedra -> tile de estrada planejado",
+      "_doc": "C-COMIDA-01 (decisao do operador, 2026-09-29, L1) e D1 (2026-09-30): logo ABAIXO da Bodega. `livre`: o destino e unidade em campo (a regra da _nota_modo)."
+    },
+    {
+      "importancia": 4,
+      "id": "material-para-obra",
+      "modo": "livre",
+      "tarefa": "material -> obra ja nivelada",
+      "fonte": "diHigh4: KM_UnitTaskBuild.pas:637-638"
+    },
+    {
+      "importancia": 4,
+      "id": "pedra-para-canteiro",
+      "modo": "livre",
+      "tarefa": "pedra -> tile de estrada planejado",
       "fonte": "diHigh4: KM_UnitTaskBuild.pas:241 (a pedra da estrada pedida pelo canteiro). D3 (operador, 2026-09-30): segue o KaM, com a obra",
-      "_doc": "F18g — a carga do serf que leva a pedra ate o tile do canteiro; `livre` porque o canteiro nao tem rua. Na mesma classe da obra: entre as duas decide o caminho." },
-    { "importancia": 5, "id": "insumo-producao-parada",   "modo": "estrada",   "tarefa": "insumo -> producao parada por falta de insumo",
-      "fonte": "diNorm: KM_HandLogistics.pas:28-35 (demanda comum de casa)" },
-    { "importancia": 5, "id": "insumo-producao-baixa",    "modo": "estrada",   "tarefa": "insumo -> producao com estoque baixo",
-      "fonte": "diNorm: KM_HandLogistics.pas:28-35 (demanda comum de casa)" },
-    { "importancia": 5, "id": "saida-cheia-para-armazem", "modo": "estrada",   "tarefa": "saida cheia -> armazem",
-      "fonte": "diNorm: KM_HandLogistics.pas:28-35 (o armazem pede toda mercadoria na classe comum)" },
-    { "importancia": 5, "id": "excedente-para-armazem",   "modo": "estrada",   "tarefa": "excedente -> armazem",
-      "fonte": "sem equivalente no KaM: decisao do operador (2026-09-30), oferta da classe comum" },
-    { "importancia": null, "id": "assentar-estrada",      "modo": "livre",     "tarefa": "laborer assenta tile de estrada planejado",
-      "_doc": "Do laborer: nao e entrega e nao tem importancia. Fica na lista so pelo `modo`." },
-    { "importancia": null, "id": "arar",                  "modo": "livre",     "tarefa": "laborer ara tile de campo planejado",
-      "_doc": "F18h — do laborer: entre as tarefas dele vale a distancia (`tarefasDoLaborerEmOrdem`). Fica na lista porque e daqui que sai o `modo` da busca de caminho, e `livre` e o certo: arar e o que se faz ANTES de haver rua." },
-    { "importancia": 5, "id": "arma-para-quartel",        "modo": "estrada",   "tarefa": "requisito de soldado -> quartel",
+      "_doc": "F18g — a carga do serf que leva a pedra ate o tile do canteiro; `livre` porque o canteiro nao tem rua. Na mesma classe da obra: entre as duas decide o caminho."
+    },
+    {
+      "importancia": 5,
+      "id": "insumo-producao-parada",
+      "modo": "estrada",
+      "tarefa": "insumo -> producao parada por falta de insumo",
+      "fonte": "diNorm: KM_HandLogistics.pas:28-35 (demanda comum de casa)"
+    },
+    {
+      "importancia": 5,
+      "id": "insumo-producao-baixa",
+      "modo": "estrada",
+      "tarefa": "insumo -> producao com estoque baixo",
+      "fonte": "diNorm: KM_HandLogistics.pas:28-35 (demanda comum de casa)"
+    },
+    {
+      "importancia": 5,
+      "id": "saida-cheia-para-armazem",
+      "modo": "estrada",
+      "tarefa": "saida cheia -> armazem",
+      "fonte": "diNorm: KM_HandLogistics.pas:28-35 (o armazem pede toda mercadoria na classe comum)"
+    },
+    {
+      "importancia": 5,
+      "id": "excedente-para-armazem",
+      "modo": "estrada",
+      "tarefa": "excedente -> armazem",
+      "fonte": "sem equivalente no KaM: decisao do operador (2026-09-30), oferta da classe comum"
+    },
+    {
+      "importancia": null,
+      "id": "assentar-estrada",
+      "modo": "livre",
+      "tarefa": "laborer assenta tile de estrada planejado",
+      "_doc": "Do laborer: nao e entrega e nao tem importancia. Fica na lista so pelo `modo`."
+    },
+    {
+      "importancia": null,
+      "id": "arar",
+      "modo": "livre",
+      "tarefa": "laborer ara tile de campo planejado",
+      "_doc": "F18h — do laborer: entre as tarefas dele vale a distancia (`tarefasDoLaborerEmOrdem`). Fica na lista porque e daqui que sai o `modo` da busca de caminho, e `livre` e o certo: arar e o que se faz ANTES de haver rua."
+    },
+    {
+      "importancia": 5,
+      "id": "arma-para-quartel",
+      "modo": "estrada",
+      "tarefa": "requisito de soldado -> quartel",
       "fonte": "diNorm: KM_Houses.pas:659 (a demanda do quartel)",
-      "_doc": "F25a e D-TRANSPORTE-03 T1: classe comum. A arma sai do armazem OU direto da oficina (o KaM, KM_HandLogistics.pas:1238-1258, nao manda arma ao armazem enquanto um quartel a aceita). `estrada` porque entrega na porta de predio pronto (a regra da _nota_modo)." }
+      "_doc": "F25a e D-TRANSPORTE-03 T1: classe comum. A arma sai do armazem OU direto da oficina (o KaM, KM_HandLogistics.pas:1238-1258, nao manda arma ao armazem enquanto um quartel a aceita). `estrada` porque entrega na porta de predio pronto (a regra da _nota_modo)."
+    }
   ],
   "_nota_modo": "O `modo` de cada linha e a vizinhanca que o A* usa na perna de ENTREGA (sim/pathfinding.ts, ModoDeBusca) e a rede em que a existencia de ligacao e medida. O criterio e o DESTINO, nao a mercadoria: canteiro, tile planejado ou unidade em campo -> `livre`, porque a primeira casa tem de subir sem rua nenhuma; porta de predio pronto -> `estrada`, porque sem rua o material fica parado na gaveta. Decisao do operador, 2026-09-23, fonte o jogo original; lido por `modoDoTipo` (sim/jobs.ts) e exigido em toda linha por tools/data-rules.js.",
-  "desempate": ["menorDistanciaDeCaminhoReal", "vezNoEscasso", "menorIdDeTarefa"],
+  "desempate": [
+    "menorDistanciaDeCaminhoReal",
+    "vezNoEscasso",
+    "menorIdDeTarefa"
+  ],
   "_nota_distancia": "Distancia de CAMINHO A PE, nunca euclidiana. Distancia direta faz o trabalhador escolher alvo do outro lado de uma montanha. E erro conhecido no proprio Remake.",
   "reserva": {
     "obrigatoria": true,
@@ -42,22 +106,46 @@
     "_doc": "D-TRANSPORTE-02a — o menu de distribuicao (KM_WareDistribution.pas + KM_Houses.pas: UpdateDemands, conferidos em 731a8a4). Por par mercadoria/tipo de predio, o MAXIMO que o predio quer na gaveta de entrada, contando o que esta a caminho; o jogador muda com SetWareDistribution. So os insumos com dois ou mais consumidores entram, e todos os consumidores de cada um (validarDistribuicao). PARA REVISAO: o padrao e 5 em todos, e nao o do KaM, para a partida nao mudar de balanceamento ate o jogador mexer (5 nunca fica abaixo do alvo de hoje, a gaveta de 5 repartida pela receita). O padrao do KaM, para o lote de balanceamento: iron weapon_smithy 5 / armor_smithy 5; coal iron_smithy 3 / metallurgists 5 / weapon_smithy 3 / armor_smithy 3; timber armory_workshop 2 / weapons_workshop 5; corn mill 4 / swine_farm 5 / stables 3.",
     "maximo": 5,
     "padrao": {
-      "coal": { "metallurgists": 5, "iron_smithy": 5, "weapon_smithy": 5, "armor_smithy": 5 },
-      "corn": { "mill": 5, "swine_farm": 5, "stables": 5 },
-      "timber": { "armory_workshop": 5, "weapons_workshop": 5 },
-      "iron": { "weapon_smithy": 5, "armor_smithy": 5 }
+      "coal": {
+        "metallurgists": 5,
+        "iron_smithy": 5,
+        "weapon_smithy": 5,
+        "armor_smithy": 5
+      },
+      "corn": {
+        "mill": 5,
+        "swine_farm": 5,
+        "stables": 5
+      },
+      "timber": {
+        "armory_workshop": 5,
+        "weapons_workshop": 5
+      },
+      "iron": {
+        "weapon_smithy": 5,
+        "armor_smithy": 5
+      }
     }
   },
   "divisaoDoEscasso": {
     "_doc": "D-PRODUCAO-01b — o insumo escasso dividido (KM_HandLogistics.pas, 731a8a4, TryCalculateBidBasic :1512-1530: a fundicao e as casas que esperam encomenda do jogador, NeedsPlayerOrder em KM_ResHouses.pas). Tarefa de insumo para um destes tipos, com a origem oferecendo ate ofertaMaxima e o destino com ate gavetaMaxima daquela mercadoria na entrada, IGNORA a perna de entrega no custo, e o empate cai para quem recebeu aquela mercadoria ha mais tempo. O KaM desempata com a distribuicao e um aleatorio; aqui e a vez, para a sim continuar deterministica sem gastar o RNG. PARA REVISAO.",
-    "tipos": ["iron_smithy", "weapon_smithy", "armor_smithy", "weapons_workshop", "armory_workshop"],
+    "tipos": [
+      "iron_smithy",
+      "weapon_smithy",
+      "armor_smithy",
+      "weapons_workshop",
+      "armory_workshop"
+    ],
     "ofertaMaxima": 2,
     "gavetaMaxima": 1
   },
   "lance": {
     "_doc": "D-TRANSPORTE-03 T2 — o que o lance do KaM soma ao caminho, dentro da mesma classe de importancia (KM_HandLogistics.pas, 731a8a4). multaDoArmazem: a tarefa que sai do armazem ou entra nele paga isto, menos a arma do armazem ao quartel (:1587-1590); e o que faz a oferta de uma casa ir direto a quem pede, e o armazem so receber o que ninguem quer. porUnidadeNaEntrada: o destino que ja tem N daquela mercadoria na entrada paga N vezes isto, menos armazem e quartel (:1612-1618); e o que reparte entre duas casas que pedem o mesmo. Em TILES, como o lance do KaM (GetLengthDiag, :2809-2812): vira ticks no carregamento, vezes o passo a pe na estrada, como o custoPorUnidade_tiles da colisao civil. Distancia, nao tempo: nao tem grupo de escala. DIVERGENCIA DECLARADA, quartel isolado: no KaM a arma que nenhum quartel aceita fica na saida da oficina; aqui ela vai ao armazem (saida-cheia-para-armazem). Decisao do operador (2026-09-30): manter a nossa.",
     "multaDoArmazem_tiles": 1000,
-    "porUnidadeNaEntrada_tiles": 20
+    "porUnidadeNaEntrada_tiles": 20,
+    "esperaSemMulta_segundos_base": 60,
+    "escalaDaEspera": "economia",
+    "_docEsperaSemMulta": "I-TRANSPORTE-INSUMO-QUE-ESPERA (correcao do BUG-CARGA-INFINITA-SEM-VEZ, 2026-10-13): a tarefa de insumo de producao aberta ha este tempo ou mais nao paga a multaDoArmazem. Sob carga infinita, a tabua do armazem para a oficina perdia sempre para a pedra mais perto, na mesma classe. DIVERGENCIA DECLARADA: o KaM nao envelhece tarefa. Segundos de jogo na escala `escalaDaEspera` (economia)."
   },
   "alertaTarefaSemCandidato_segundos": 30,
   "escala": null,

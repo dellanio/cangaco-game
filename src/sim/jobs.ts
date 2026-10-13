@@ -301,7 +301,7 @@ export function criarTarefaDeInsumo(
     id: `t${numero}`, numero,
     tipo: campos.parada ? 'insumo-producao-parada' : 'insumo-producao-baixa',
     mercadoria: campos.mercadoria, origem: campos.origem, destino: campos.destino,
-    estado: 'aberta', reclamadaPor: null,
+    estado: 'aberta', reclamadaPor: null, abertaEm: state.tick,
   };
   return inserirTarefa(state, tarefa);
 }
@@ -1280,7 +1280,11 @@ function lanceDaTarefa(state: GameState, t: TarefaDoSerf, dados: GameData): numb
   const origem = state.predios.porId[t.origem];
   const destino = 'destino' in t ? state.predios.porId[t.destino] : undefined;
   let lance = 0;
-  if (t.tipo !== 'arma-para-quartel' && (origem?.tipo === ID_DO_ARMAZEM || destino?.tipo === ID_DO_ARMAZEM)) {
+  // I-TRANSPORTE-INSUMO-QUE-ESPERA: o insumo aberto ha `ticksEsperaSemMulta` nao paga a multa (o envelhecimento
+  // em degrau que tira a espera sem fim sob carga; BUG-CARGA-INFINITA-SEM-VEZ)
+  const esperou = (t.tipo === 'insumo-producao-parada' || t.tipo === 'insumo-producao-baixa') && t.abertaEm !== undefined
+    && state.tick - t.abertaEm >= dados.entrega.lance.ticksEsperaSemMulta;
+  if (!esperou && t.tipo !== 'arma-para-quartel' && (origem?.tipo === ID_DO_ARMAZEM || destino?.tipo === ID_DO_ARMAZEM)) {
     lance += ticksMultaDoArmazem;
   }
   if (destino?.estado === 'completo' && destino.tipo !== ID_DO_ARMAZEM) {

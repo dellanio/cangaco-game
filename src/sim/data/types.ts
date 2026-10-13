@@ -447,6 +447,8 @@ export interface EntregaData {
    *  que sai do armazem ou entra nele, e o preco de cada unidade que o destino ja tem. */
   readonly lance: {
     readonly ticksMultaDoArmazem: number;
+    /** I-TRANSPORTE-INSUMO-QUE-ESPERA — a tarefa de insumo aberta ha este tanto nao paga a multa. */
+    readonly ticksEsperaSemMulta: Ticks;
     readonly ticksPorUnidadeNaEntrada: number;
   };
   readonly ticksAlertaTarefaSemCandidato: Ticks;

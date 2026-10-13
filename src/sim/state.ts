@@ -864,9 +864,13 @@ export interface TarefaArmaParaQuartel extends TarefaDeCarga {
  */
 export interface TarefaInsumoProducaoParada extends TarefaDeCarga {
   readonly tipo: 'insumo-producao-parada';
+  /** I-TRANSPORTE-INSUMO-QUE-ESPERA — o tick em que a tarefa abriu. AUSENTE (save antigo): nao envelhece. */
+  readonly abertaEm?: number;
 }
 export interface TarefaInsumoProducaoBaixa extends TarefaDeCarga {
   readonly tipo: 'insumo-producao-baixa';
+  /** I-TRANSPORTE-INSUMO-QUE-ESPERA — o tick em que a tarefa abriu. AUSENTE (save antigo): nao envelhece. */
+  readonly abertaEm?: number;
 }
 
 /**
