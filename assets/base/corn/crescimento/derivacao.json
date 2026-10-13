@@ -1,0 +1,107 @@
+{
+  "referencia": "base/resources/corn-D-master-2x.png",
+  "canvas": [
+    64,
+    64
+  ],
+  "anchor": [
+    0.5,
+    1
+  ],
+  "pe": 63,
+  "preservados": {
+    "presente": {
+      "arquivo": "sprites/resources/corn-D.png",
+      "sha256": "314698f28a415368306d3a7ab7f919078acb6ce6a64787c49c72d9520b48e8be"
+    }
+  },
+  "medidas": [
+    {
+      "estado": "semeado",
+      "fonte": "base/corn/crescimento/semeado-original.png",
+      "sha256": "de040e48665d6a08cb4e1fb779e689747e908f72e92fdcadccf7a5db2131b150",
+      "geracao": "exec-db9d7561-2462-4b18-80cc-dc0536972021",
+      "arquivos": [
+        {
+          "arquivo": "sprites/resources/corn-semeado-20261013.png",
+          "sha256": "d1823b9b15d0e08a15d87ad9c2982104b80fc8c582e9f4966c7ab21a970a66e1",
+          "tamanho": [
+            64,
+            64
+          ],
+          "pe": 63,
+          "alturaOpaca": 10
+        },
+        {
+          "arquivo": "base/corn/crescimento/corn-semeado-20261013-master-2x.png",
+          "sha256": "903e9fe737ca29adcf7f57bfa66e295dda88ca8afa68aa7bb8581c4beaccfc2a",
+          "tamanho": [
+            128,
+            128
+          ],
+          "pe": 127,
+          "alturaOpaca": 20
+        }
+      ]
+    },
+    {
+      "estado": "muda",
+      "fonte": "base/corn/crescimento/muda-original.png",
+      "sha256": "32183e7e7d5a0452ce2bf71c94e11e0d207fa9a05129104a87dfa95951cec84b",
+      "geracao": "exec-71dc8a0f-1456-40f2-a9cc-241df9e07610",
+      "arquivos": [
+        {
+          "arquivo": "sprites/resources/corn-muda-20261013.png",
+          "sha256": "12670547ce56085b1a63fac1495a1f4ff4a79919bb819d6469a15e04fb0598a0",
+          "tamanho": [
+            64,
+            64
+          ],
+          "pe": 63,
+          "alturaOpaca": 23
+        },
+        {
+          "arquivo": "base/corn/crescimento/corn-muda-20261013-master-2x.png",
+          "sha256": "83975c21f022d76b2504702212f713d53fa4e8bd131c2c75a79cfed8cfa76e44",
+          "tamanho": [
+            128,
+            128
+          ],
+          "pe": 127,
+          "alturaOpaca": 47
+        }
+      ]
+    },
+    {
+      "estado": "verde",
+      "fonte": "base/corn/crescimento/verde-original.png",
+      "sha256": "a5ca7847bb7dbcafa759540a08f87cb39155176524c7216e5688212373a241a5",
+      "geracao": "exec-0e3ea8d5-98ad-4aca-8900-426c9ca62b47",
+      "arquivos": [
+        {
+          "arquivo": "sprites/resources/corn-verde-20261013.png",
+          "sha256": "cfc62405ba2e2f5f322f28c5bd8d8292285b2f1ac6bf762b47b902d3294a9f75",
+          "tamanho": [
+            64,
+            64
+          ],
+          "pe": 63,
+          "alturaOpaca": 34
+        },
+        {
+          "arquivo": "base/corn/crescimento/corn-verde-20261013-master-2x.png",
+          "sha256": "d645d7095fc37eecd9c0b0e1379e6b46d1c2c836f54d10d3648b5afd5c4376ad",
+          "tamanho": [
+            128,
+            128
+          ],
+          "pe": 127,
+          "alturaOpaca": 69
+        }
+      ]
+    }
+  ],
+  "referenciaDeEstilo": "base/bakery/madeira-original-20261012.png",
+  "licenca": "arte propria gerada por imagegen nativo",
+  "nota": "Maduro preservado; originais juvenis transparentes. Padaria usada apenas como estilo, sem reutilizar objetos. Recorte pela caixa alfa128 com margem do dado; premultiplicacao e RGB bleed na reducao."
+}

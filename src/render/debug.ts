@@ -304,6 +304,10 @@ export interface EstadoDebug {
   /** BUG-W — o estagio que cada tile de CULTURA com relogio desenha agora (o que tem
    *  `semeadoEm`); o tile do mapa, sem relogio, nao entra. O roteiro le daqui. */
   estagiosDasCulturas: Readonly<Record<string, EstagioDaCultura>>;
+  arteDasCulturas: Readonly<Record<string, {
+    readonly fonte: 'png' | 'fallback'; readonly textura: string | null;
+    readonly largura: number; readonly altura: number;
+  }>>;
   /** F-SPR — os ids que resolveram ARTE do manifesto em cada camada de tile, lidos
    *  uma vez no `create` (a arte chega no `preload`). Lista vazia e o placeholder de
    *  hoje — cor chapada e marcador —, que e comportamento normal (§9). Vegetacao e o
@@ -509,6 +513,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     transicoesVisiveis: {},
     crescimentoDasArvores: {},
     estagiosDasCulturas: {},
+    arteDasCulturas: {},
     detalhesDoTerrenoPorTipo: {},
     arteDasCamadas: { terreno: [], recurso: [], vegetacao: [] },
     vegetacaoRenderizada: 0,

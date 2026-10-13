@@ -1,0 +1,84 @@
+{
+  "id": "corn",
+  "kind": "resource",
+  "mode": "trial",
+  "approved": false,
+  "success": true,
+  "errors": [],
+  "warnings": [
+    "Ensaio técnico sem calibração cromática; não equivale a aprovação"
+  ],
+  "frames": [
+    {
+      "state": "semeado",
+      "direction": "S",
+      "index": 0,
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\corn-crescimento\\derivados\\corn-semeado-20261013.png",
+      "footline": 63,
+      "centroidX": 31.349074074074082,
+      "regions": [
+        {
+          "luma": 90.65309236994221,
+          "hue": 25.885484966124295
+        },
+        {
+          "luma": 90.5343872653837,
+          "hue": 26.29712905266416
+        },
+        {
+          "luma": 87.51254212011285,
+          "hue": 25.824176487631064
+        }
+      ]
+    },
+    {
+      "state": "muda",
+      "direction": "S",
+      "index": 0,
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\corn-crescimento\\derivados\\corn-muda-20261013.png",
+      "footline": 63,
+      "centroidX": 32.62271376489696,
+      "regions": [
+        {
+          "luma": 131.4702896139302,
+          "hue": 67.73176460573751
+        },
+        {
+          "luma": 128.78134747957506,
+          "hue": 66.09809201654048
+        },
+        {
+          "luma": 130.01047709323424,
+          "hue": 63.844423177469764
+        }
+      ]
+    },
+    {
+      "state": "verde",
+      "direction": "S",
+      "index": 0,
+      "path": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\corn-crescimento\\derivados\\corn-verde-20261013.png",
+      "footline": 62,
+      "centroidX": 31.484297643190278,
+      "regions": [
+        {
+          "luma": 123.0810424254508,
+          "hue": 71.84115842582105
+        },
+        {
+          "luma": 117.20562305425413,
+          "hue": 70.8426599297315
+        },
+        {
+          "luma": 117.47797063921507,
+          "hue": 69.43701668393487
+        }
+      ]
+    }
+  ],
+  "contactSheets": [
+    "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\corn-crescimento\\validacao\\contact-0.5.png",
+    "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\corn-crescimento\\validacao\\contact-1.png",
+    "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\2026-10-autonomo\\corn-crescimento\\validacao\\contact-2.png"
+  ]
+}

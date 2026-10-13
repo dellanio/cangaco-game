@@ -1,0 +1,7 @@
+{
+  "alturas": { "semeado": 10, "muda": 24, "verde": 44 },
+  "margemLateral": 3,
+  "margemRecorte": 4,
+  "zooms": [0.5, 1, 2],
+  "tintas": [1, 0.8]
+}

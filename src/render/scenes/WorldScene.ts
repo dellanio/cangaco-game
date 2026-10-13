@@ -41,7 +41,7 @@ import { particulasDaFagulha } from '../fagulha';
 import { celulasDaAguaParaTrocar } from '../agua-viva';
 import { particulasDaPoeira, rajadaNaVista } from '../poeira';
 import { codigoDoRecurso, configDoMapa, recursosDeRender, terrenoDeRender } from '../mapa';
-import { geometriaDaCultura } from '../culturas-visual';
+import { geometriaDaCultura, texturaDoEstagioDaCultura } from '../culturas-visual';
 import { CHAOS_DA_ROCA, chaoDaRoca, indiceDoChao, quadroDoChaoDaCanaMudou } from '../chao-da-roca';
 import {
   gridToScreen, screenToGrid, deslocamentoDaUnidade, depthDeY, tileDentroDoMapa, ESCALA_DO_MUNDO, PROFUNDIDADE_DA_SELECAO,
@@ -942,6 +942,11 @@ export class WorldScene extends Phaser.Scene {
       estado.custo = somarCusto(estado.custo, 'vento', inicioDoVento, estado.vegetacaoBalancando, agora);
       estado.crescimentoDasArvores = Object.fromEntries(this.crescimentoDesenhado);
       estado.estagiosDasCulturas = Object.fromEntries(this.estagioDesenhado);
+      estado.arteDasCulturas = Object.fromEntries([...this.estagioDesenhado.keys()].map(chave => {
+        const imagem = this.culturasEmPe.get(chave);
+        return [chave, { fonte: imagem ? 'png' : 'fallback', textura: imagem?.texture.key ?? null,
+          largura: imagem?.displayWidth ?? 0, altura: imagem?.displayHeight ?? 0 }];
+      }));
       estado.pronto = true;
       if (this.ponte.atual) this.atualizarPredios(this.ponte.atual, tilePx, estado);
       estado.bandeirasRedesenhadas = this.atualizarBandeiras(tilePx);
@@ -1860,13 +1865,16 @@ export class WorldScene extends Phaser.Scene {
         : ticksParaAmadurecer(recurso.tipo, recursosDeRender.ticksDeCrescer[recurso.tipo] ?? 0, recurso.semeadoEm, undefined, recurso.irrigado === true));
     const desenho = this.desenhoPorCodigo[codigo];
     const geometria = geometriaDaCultura(recurso.tipo, estagio, configDoMapa.tilePx);
-    const emPe = geometria.emPe && desenho?.como === 'textura';
+    const arte = desenho?.como === 'textura'
+      ? texturaDoEstagioDaCultura(recurso.tipo, estagio, desenho.chave, chave => this.textures.exists(chave)) : null;
+    const emPe = (geometria.emPe || arte?.juvenil === true) && desenho?.como === 'textura';
     const atual = this.culturasEmPe.get(chave);
     if (emPe) {
-      if (!atual || atual.texture.key !== desenho.chave) {
+      const textura = arte?.chave ?? desenho.chave;
+      if (!atual || atual.texture.key !== textura) {
         atual?.destroy();
         const canto = gridToScreen(tileDeChave(chave), configDoMapa.tilePx, ESCALA_DO_MUNDO);
-        const imagem = this.add.image(canto.x + geometria.peX, canto.y + geometria.peY, desenho.chave)
+        const imagem = this.add.image(canto.x + geometria.peX, canto.y + geometria.peY, textura)
           .setOrigin(0.5, 1).setDisplaySize(geometria.largura, geometria.altura)
           .setDepth(depthDeY(canto.y + geometria.peY));
         this.luz?.tingir(imagem, imagem.x, imagem.y, `cultura:${chave}`);

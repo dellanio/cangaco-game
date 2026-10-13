@@ -22409,3 +22409,18 @@ Item do desenho da campanha que estava "para depois". O tamanho é pergunta em a
 - Campanha jogada, fase 8: A, C, D e E ok. O reforço vence aos 440 s (era 283 s em 128), com o prazo de
   1200 s.
 - `verify:rapido`: 2728 testes.
+## 2026-10-13 — codex-correcoes, I-ARTE-MILHO-CRESCENDO/A09
+
+VERIFICADO: aceite em docs/planos/2026-10-13-correcoes-e-crescimento.md, commit2a5dcba4 antes da arte/código. Três gerações nativas, uma por estágio, originais/masters/metadados em assets/base/corn/crescimento/, PNGs64x64 em assets/sprites/resources/. Âncora[0.5,1], pé alfa>0=63; alturas opacas10/23/34. Presente/corn-D e base madura preservados por caminho/hash; madura conserva ampliação vertical50%. Render seleciona juvenis pelo estágio do tick; PNG ausente conserva fallback e cana mantém comportamento anterior. Debug arteDasCulturas informa fonte/textura/dimensões.
+
+Validador original passou zero erros em trial; revisão independente revisao_milho aprovou tecnicamente. Testes dirigidos6 arquivos/61 testes, saída0; transladados3 arquivos/26 testes, saída0. Roteiro novo e antes saíram0, três capturas cada. Seis capturas abertas: screenshots/I-ARTE-MILHO-CRESCENDO-{1-estagios-zoom-2,2-estagios-zoom-1,3-estagios-zoom-0.5}.png e mesmas com prefixo I-ARTE-MILHO-CRESCENDO-antes-. Antes usa a MESMA partida BUG-W semeada pelo step no render04863eff. Preview temporário removido, junction desfeita sem alterar node_modules principal.
+
+Pranchas abertas: screenshots/I-ARTE-MILHO-CRESCENDO-pranchas/milho-crescimento-zoom-{0.5,1,2}.png, quatro estágios/três solos/normal e RGBx0.8. Logs test-output/milho-{dirigidos-finais,transladado-dirigido,shot,antes-shot}.log. A primeira serialização reformatava outras entradas do manifesto; corrigida para modificar apenas corn (oito linhas no diff), sem perder entradas alheias. Scripts de derivação/registro/prancha ficam reproduzíveis no repo.
+
+NÃO VERIFICADO neste registro: verify completo atualizado, homologação do operador, restante da fila, test:longo/shot:todos. Sem merge/push. Nenhuma alteração de src/sim, GameState, AGENTS.md, .claude ou test-results.json. Próxima arte A10 cana.
+
+## Perguntas em aberto (para a homologação) — pacote de correções
+
+Pedreiro: aceite exige rocha bloqueando passo e sem alterar sim, enquanto guardas F-T3/F-T2b exigem rocha atravessável. Não alteradas guardas/dado/sim para contornar. Transporte sob carga infinita: política de envelhecimento versus teto segue reservada ao operador. Montanhas minerais: orçamento de duas tentativas reprovadas preservado, sem reinício ou aplicação de candidatas. Homologações antigas e som de vitória ainda humanos. Estas pendências NÃO foram entregues por A09.
+
+A09 verificação rápida: saída0, 59 arquivos/440 testes, 95 s; typecheck/lint/validate:data passaram. Log test-output/milho-verify-rapido.log. Main avançou por OUTRA sessão e integrou somente os quatro commits de aceites/candidatas (7ef796df); código/PNG desta entrega continuam nesta worktree. Finais de linha do debug preservados para limitar o diff aos cinco campos novos. Antes do verify completo, rebase sobre main atual com a entrega commitada, sem tocar nos arquivos da outra sessão.
