@@ -262,3 +262,111 @@ Aceites da retomada, escritos antes do código:
 4. testes anteriores de troca mútua, formação e colisão continuam passando;
 5. evidência determinística em `test-output/`, registro em PROGRESS e remoção do
    BUG-TROPA-DE-24-PRESA somente depois dos aceites verdes.
+
+## 13. Emenda 3 (operador, 2026-10-12, antes do código): a varredura roda em paz
+
+O fechamento de 2026-10-11 (`ef391cf7`) deu o aceite 4 vermelho, e não por soldado preso: a escaramuça
+mudou (clima, tropa de 27, IA), a paz acaba no meio da varredura e a IA mata 3 soldados na ordem 42
+(tick 8612), antes de qualquer conferência de preso. Decisão do operador (opção a): a varredura mede
+SÓ a marcha.
+
+- A fixture da varredura põe a partida em paz durante toda ela (`pazAteTick` além do último tick
+  possível da varredura). A IA não ataca, e nenhuma morte entra na conta.
+- O resto do aceite 4 fica igual: as mesmas 400 ordens, a mesma semente do sorteio, as tropas de 18
+  e 24, nenhum preso em `marchando` e nenhuma sobreposição, e todos vivos.
+- Se aparecer preso (o Codex viu a ordem 99 com 24 em 2026-10-07), o teste fica vermelho e isso
+  volta ao operador como demanda nova. Não se afrouxa o aceite.
+- **Medida (2026-10-12, antes do código):** só com a paz, os 18 e os 24 morrem de fome antes do fim
+  das 400 ordens (0 vivos), e o aceite cai no "todos vivos" sem chegar a conferir preso. A fixture
+  também dá à tropa a condição cheia para o horizonte inteiro (`condicao.ticksCondicaoCheia.militar`
+  acima de 400 x 1501 ticks, no dado do teste, usado na criação e no `step`). Nenhum soldado sai da
+  conta por fome ou por ataque.
+
+## 14. BUG-TROPA-PRESA-NA-VARREDURA — o DODGE do KaM (operador, 2026-10-13: "Corrija agora")
+
+**Causa medida (2026-10-13, fase 4 da campanha, tick 11 000, 16 soldados presos):** um ciclo de TRÊS
+marchantes, todos com `progresso` 0, cada um com o tile seguinte tomado pelo próximo: u15 (39,74) →
+40,73 (u21), u21 (40,73) → 40,74 (u43), u43 (40,74) → 39,74 (u15). Os outros 13 estão na fila atrás.
+A troca mútua só pega o ciclo de dois. O desvio (`esperarOuDesviar`) trata todo militar como parede, e
+no corredor cheio não acha contorno: o contador zera e ele tenta de novo, para sempre.
+
+**A correção, do KaM:** o DODGE (`src/units/actions/KM_UnitActionWalkTo.pas:846-902`, chamado em
+`:1071`, depois do PUSH e do EXCHANGE e antes do AVOID; `DODGE_TIMEOUT = 5` em `:128`). O militar que
+marcha, parado com o tile seguinte tomado (`progresso` 0) há `dodgeDepois` (0,5 s base, os 5 ticks do
+KaM), olha os dois tiles ao lado do alvo: a direção do passo girada 45° para cada lado, a partir dele
+(`KMPrevDirection`/`KMNextDirection`, o da esquerda primeiro). Se num deles há um militar do mesmo lado,
+marchando, com `progresso` 0, cujo tile seguinte é o dele, e o passo até lá é andável (com a regra da
+diagonal), o tile seguinte dele vira o desse vizinho (o caminho ganha esse tile na frente, vizinho do
+alvo antigo). A troca mútua do BUG-T faz o resto, na hora. Inimigo nunca troca, como na troca mútua.
+
+**Aceites (antes do código):**
+1. Cenário isolado, pelo `step`, com o ciclo de três da medida (os três tiles e os três caminhos):
+   sem a correção, ninguém sai do tile em 300 ticks; com ela, os três terminam a marcha nos destinos
+   deles, sem dois militares no mesmo tile em nenhum tick.
+2. O número novo em `data/units.json` (`colisaoMilitar.dodgeDepois_segundos_base`), no schema e no
+   loader; nenhum número em `src/sim`.
+3. O aceite 4 do BUG-T (a varredura das 400 ordens em paz, 18 e 24): zero presos, zero sobreposições,
+   todos vivos. Se ainda houver preso, a medida do ciclo dele vai para cá antes de qualquer mudança.
+4. Os testes de troca mútua, formação e colisão continuam passando (`verify:rapido`).
+5. A fase 4 da campanha, medida de novo pelo `jogar-campanha` depois da correção (evidência).
+
+**Emenda 14a (2026-10-13, antes do código; pela medida do aceite 3).** Com o DODGE, o ciclo de três sai,
+mas a varredura ainda deixa presos (18: ordem 363, 4 presos; 24: ordens 85, 89 e 252). A forma é outra:
+o marchante parado na largada tem o tile seguinte ocupado por um soldado PARADO (ocioso) da própria
+formação, e o desvio não acha caminho em volta do bloco (ex.: 24, k = 85: u19 em 31,42 quer 31,41, de
+u32 parado, e a vaga dele, 29,39, já tem um parado). As trocas de vaga que existem (emparedada, tomada,
+cruzada) exigem casos de dois que não valem aqui.
+- **A correção, do KaM:** o PUSH seguido da troca forçada (`KM_UnitActionWalkTo.pas:713-752` e `:754-830`;
+  só o parado é empurrado, e sem tile livre o empurrado troca). Aqui, como ÚLTIMO recurso, depois das
+  trocas de vaga que já existem: o marchante parado na largada há `ticksDesvioMilitar`, com um militar
+  PARADO do mesmo lado no tile seguinte e sem contorno (o desvio, contando todos os militares), troca de
+  tile com ele pela troca mútua. O parado volta para o tile dele depois. Se o tile do parado é o destino
+  do marchante, o parado fica no tile de onde o marchante saiu (senão ele quereria de volta a vaga do outro).
+- O aceite 3 fica igual (zero presos, zero sobreposições, todos vivos). Divergência declarada: o conjunto
+  exato das vagas pode mudar nesse caso (o parado que estava fora da vaga dele termina no tile do
+  marchante), e a varredura não confere vaga, só preso e sobreposição.
+- Aceite novo **1b**: cenário isolado, pelo `step`, de uma fila de três parados entre o marchante e o
+  destino, num corredor de um tile de largura: o marchante chega, os três parados voltam aos tiles
+  deles, sem sobreposição em nenhum tick.
+
+**Emenda 14b (2026-10-13, antes do código; pela medida do aceite 1b).** "O parado volta para o tile dele"
+não funciona: o empurrado recebe como destino o tile em que ainda está, e a marcha o dá por chegado no
+tick seguinte, antes de a troca andar; o marchante fica segurado no fim do passo. Como no PUSH do KaM
+(o empurrado sai do caminho e não volta sozinho), **o empurrado fica no tile de onde o marchante saiu**.
+O conjunto de tiles ocupados pela tropa não muda; quem está em qual tile muda. O aceite 1b passa a ter
+o destino tomado (como na ordem 85) e afirma: ninguém em `marchando` no fim, nenhuma sobreposição, e o
+marchante saiu do tile inicial.
+
+**Emenda 14c (2026-10-13, antes do commit do código; pela medida do aceite 3).** Com 14a e 14b, a
+varredura de 18 zera, e a de 24 deixa um preso na ordem 335: u28 (22,46) começou o passo para 22,45
+quando o tile parecia livre, u29 parou nele, e u28 ficou segurado no FIM do passo (`progresso` = custo
+− 1, contando `bloqueado`). O DODGE e a troca forçada exigiam `progresso` 0. Os dois passam a valer
+também nesse estado (o soldado ainda está no tile dele), e quando agem o passo dele volta a 0.
+
+**Emenda 14d (2026-10-13, antes do commit do código; pela medida do `verify:rapido`).** A troca forçada
+sem recorte quebrou quatro testes de formação e colisão (C-COMBATE-01a, C-MOVIMENTO-02, C-MOVIMENTO-02b,
+C5 (c)): ela agia onde as regras antigas já respondem. Ela passa a valer só no caso medido na varredura:
+o DESTINO do marchante tomado por um parado, e o próximo passo não é o próprio destino (aí vale o "para
+ali perto"). Com o destino vazio, as trocas de vaga que já existem respondem.
+
+**Emenda 14e (2026-10-13, antes do commit do código; pela medida).** Com o recorte da 14d, a varredura
+volta a deixar presos (18: ordem 363; 24: 154, 281 e 358). Na 363 o destino de u24 está VAZIO, mas ele e
+u33 formam um nó de vagas, e a troca de vaga da C-MOVIMENTO-02 não age porque conta um contorno que passa
+por quem também está preso. Sem recorte, o empurrão de tile deixava o empurrado fora da vaga e quebrava
+a formação. A troca forçada passa a ser:
+- **troca de VAGA**, a da C-MOVIMENTO-02: o parado recebe o destino do marchante e sai marchando; o
+  marchante fica com a vaga do parado. O conjunto das vagas não muda;
+- só depois do `WAITING_TIMEOUT` do KaM (`KM_UnitActionWalkTo.pas:131`, 40 ticks: "After this time we can
+  be forced to exchange"), `colisaoMilitar.trocaForcadaDepois_segundos_base` = 4,0 em `data/units.json`,
+  contado em tentativas de desvio que falharam no mesmo tile (`fsmData.tentativasDeDesvio`, zera quando o
+  soldado muda de tile). Na primeira falha do desvio ela agia num engarrafamento passageiro de uma marcha
+  normal (C-COMBATE-01a, 6 soldados em campo aberto);
+- sem o próximo passo ser o destino, e sem alguém só de passagem no destino.
+- O aceite 1b afirma: ninguém em `marchando` no fim e nenhuma sobreposição (o marchante pode ficar com a
+  vaga do primeiro parado, no tile inicial).
+
+**Emenda 14f (2026-10-13, antes do commit do código; pela medida do aceite 1b).** Com o destino tomado por
+um parado, a troca de vaga da 14e entra em vaivém com a vaga tomada da C-MOVIMENTO-02b (p1 recebe o destino
+tomado, fica preso, e m toma a vaga de volta). Passado o mesmo tempo (`trocaForcadaDepois`), sem contorno e
+com o destino tomado por um parado, o marchante **para onde está** (o "para ali perto" de `esperarOuDesviar`,
+que valia só no último passo, vale para o caminho inteiro). A troca de vaga fica para o destino vazio.

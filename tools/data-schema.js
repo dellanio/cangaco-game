@@ -123,6 +123,11 @@ const CAMPOS_ESCALONADOS = [
   // C5 — quanto o militar espera um tile ocupado antes de dar o passo para o lado.
   { arquivo: 'units', caminho: 'colisaoMilitar.desviarDepois_segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },
+  // BUG-TROPA-PRESA-NA-VARREDURA — a espera do DODGE e a da troca forcada (WAITING_TIMEOUT) do kam_remake.
+  { arquivo: 'units', caminho: 'colisaoMilitar.trocaForcadaDepois_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },
+  { arquivo: 'units', caminho: 'colisaoMilitar.dodgeDepois_segundos_base',
+    unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },
   // D-MOVIMENTO-01 — as esperas da colisao civil (as constantes do WalkTo do kam_remake).
   { arquivo: 'units', caminho: 'colisaoCivil.empurrarDepois_segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escalaVelocidade' },

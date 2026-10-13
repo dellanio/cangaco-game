@@ -10,6 +10,7 @@ import { step } from '../../src/sim/tick';
 import { emPaz } from '../../src/sim/paz';
 import { classeDaUnidade } from '../../src/sim/condicao';
 import { criarEscaramuca } from '../../src/sim/cenario';
+import type { GameData } from '../../src/sim/data/types';
 
 export const SEMENTE = gameData.economia.estadoInicial.semente;
 export const PAZ = gameData.escaramuca.ticksDePaz;
@@ -42,7 +43,7 @@ export function ateOFimDaPaz(s0: GameState): { s: GameState; eventos: GameEvent[
  * dependem dessa forma (duas fileiras de 9): eles fixam a tropa aqui, e nao no dado do cenario.
  */
 export const TROPA_DOS_TESTES_DE_FORMACAO = 18;
-export function escaramucaComTropaDe(n: number, semente: number = SEMENTE): GameState {
-  const tj = { ...gameData.escaramuca.tropaDoJogador, quantidade: n };
-  return criarEscaramuca(semente, { ...gameData, escaramuca: { ...gameData.escaramuca, tropaDoJogador: tj } });
+export function escaramucaComTropaDe(n: number, semente: number = SEMENTE, dados: GameData = gameData): GameState {
+  const tj = { ...dados.escaramuca.tropaDoJogador, quantidade: n };
+  return criarEscaramuca(semente, { ...dados, escaramuca: { ...dados.escaramuca, tropaDoJogador: tj } });
 }

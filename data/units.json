@@ -17,6 +17,10 @@
   "colisaoMilitar": {
     "desviarDepois_segundos_base": 1.0,
     "margemDoDesvio_tiles": 4,
+    "dodgeDepois_segundos_base": 0.5,
+    "trocaForcadaDepois_segundos_base": 4.0,
+    "_docTrocaForcada": "BUG-TROPA-PRESA-NA-VARREDURA, emenda 14e: o WAITING_TIMEOUT do kam_remake (src/units/actions/KM_UnitActionWalkTo.pas:131, 40 ticks, 4,0 s: 'After this time we can be forced to exchange'). O militar parado no mesmo tile, com o desvio falhando por este tempo, troca de VAGA com o parado do tile seguinte. Grupo `movimento` (escalaVelocidade).",
+    "_docDodge": "BUG-TROPA-PRESA-NA-VARREDURA: o DODGE do kam_remake (src/units/actions/KM_UnitActionWalkTo.pas:846-902; DODGE_TIMEOUT = 5 em :128, 0,5 s). O militar parado na largada, com o tile seguinte tomado, troca com o vizinho ao lado do alvo (a direcao do passo girada 45 graus) que quer o tile dele: desfaz o ciclo de tres que a troca mutua (o par) nao pega. Grupo `movimento` (escalaVelocidade).",
     "_doc": "C5 (GDD 6.4: 'Militares colidem'). O militar nao entra em tile com outro militar: espera e, passado `desviarDepois`, contorna os militares por uma busca local (o AVOID do kam_remake, 'Go around busy units', KM_UnitActionWalkTo.pas:129), numa caixa que cobre ele e o destino com esta margem em tiles. 1,0 s = os 10 ticks de 100 ms do AVOID_TIMEOUT. Grupo `movimento` (escalaVelocidade). A margem e limite de busca, nao tempo."
   },
   "civis": {

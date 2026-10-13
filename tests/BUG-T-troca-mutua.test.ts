@@ -272,6 +272,63 @@ describe('BUG-T aceite 3 — inimigo nao troca', () => {
   });
 });
 
+// BUG-TROPA-PRESA-NA-VARREDURA (secao 14 do plano) — o ciclo de tres da fase 4 da campanha, com a
+// mesma forma: u15 (0,1) -> (1,0), u21 (1,0) -> (1,1), u43 (1,1) -> (0,1). A troca mutua so pega o par,
+// e o desvio nao se aplica a caminho de um passo: sem o DODGE do KaM, ninguem sai do tile.
+describe('BUG-TROPA-PRESA-NA-VARREDURA — o ciclo de tres (o DODGE)', () => {
+  it('aceite 1: os tres terminam a marcha nos destinos deles, sem sobreposicao em nenhum tick', () => {
+    const base = semUnidades(createInitialState(1));
+    const p = campo(base);
+    const tile = (dx: number, dy: number) => ({ gx: p.gx + dx, gy: p.gy + dy });
+    const marchante = (id: string, de: [number, number], para: [number, number]): Unidade => ({
+      ...soldado(id, LADO_DO_JOGADOR, tile(...de)), fsm: 'marchando',
+      fsmData: { alvoTile: tile(...para), caminho: [tile(...para)], progresso: 0 },
+    });
+    let s = com(base, marchante('u15', [0, 1], [1, 0]), marchante('u21', [1, 0], [1, 1]), marchante('u43', [1, 1], [0, 1]));
+    const sobreposicoes: string[] = [];
+    let fim = -1;
+    for (let t = 1; t <= 300; t += 1) {
+      s = step(s, [], gameData);
+      sobreposicoes.push(...sobrepostos(s));
+      if (fim < 0 && ['u15', 'u21', 'u43'].every((id) => s.unidades.porId[id]?.fsm === 'ocioso')) fim = t;
+    }
+    evidencia['dodge-ciclo-de-tres'] = { ticksAteParar: fim, posicoes: ['u15', 'u21', 'u43'].map((id) => pos(s, id)) };
+    expect(sobreposicoes).toEqual([]);
+    expect([pos(s, 'u15'), pos(s, 'u21'), pos(s, 'u43')]).toEqual([tile(1, 0), tile(1, 1), tile(0, 1)].map((t) => `${t.gx},${t.gy}`));
+    expect(fim).toBeGreaterThan(0);
+  });
+});
+
+// BUG-TROPA-PRESA-NA-VARREDURA, emenda 14a — a troca forcada com o parado (o PUSH e o EXCHANGE do KaM).
+// O bloco de parados cobre a caixa inteira do desvio (margem de `margemDoDesvioMilitar`) e o DESTINO do
+// marchante, como na ordem 85 da varredura: nao ha contorno, e a vaga emparedada (destino vazio) nao vale.
+describe('BUG-TROPA-PRESA-NA-VARREDURA — a fila de parados no caminho (a troca forcada)', () => {
+  it('aceite 1b: com o destino tomado, ninguem fica marchando, sem sobreposicao em nenhum tick', () => {
+    const base = semUnidades(createInitialState(1));
+    const p = campo(base);
+    const tile = (dx: number, dy: number) => ({ gx: p.gx + dx, gy: p.gy + dy });
+    const m = gameData.movimento.margemDoDesvioMilitar + 1;
+    const parados: Unidade[] = [];
+    for (let dy = -m; dy <= m; dy += 1) for (let dx = 1; dx <= 4; dx += 1) parados.push(soldado(`p${dx},${dy}`, LADO_DO_JOGADOR, tile(dx, dy)));
+    const marchante: Unidade = {
+      ...soldado('m', LADO_DO_JOGADOR, tile(0, 0)), fsm: 'marchando',
+      fsmData: { alvoTile: tile(4, 0), caminho: [1, 2, 3, 4].map((dx) => tile(dx, 0)), progresso: 0 },
+    };
+    let s = com(base, ...parados, marchante);
+    const sobreposicoes: string[] = [];
+    let fim = -1;
+    for (let t = 1; t <= 600; t += 1) {
+      s = step(s, [], gameData);
+      sobreposicoes.push(...sobrepostos(s));
+      if (fim < 0 && s.unidades.ordem.every((id) => s.unidades.porId[id]?.fsm === 'ocioso')) fim = t;
+    }
+    const naLinha = [1, 2, 3, 4].map((dx) => `p${dx},0`);
+    evidencia['troca-forcada-com-parado'] = { ticksAteParar: fim, marchante: pos(s, 'm'), naLinha: naLinha.map((id) => pos(s, id)) };
+    expect(sobreposicoes).toEqual([]);
+    expect(fim).toBeGreaterThan(0);
+  });
+});
+
 // o aceite 4 (a varredura das 400 ordens) mora em `BUG-T-troca-mutua.longo.test.ts`, na suite longa
 
 describe('BUG-T — evidencia', () => {
