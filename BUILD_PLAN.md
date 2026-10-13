@@ -9884,6 +9884,12 @@ Execucao na codex-artes, antes do bloco autonomo de artes. Nenhuma mudanca em sr
 #### I-TERRENO-MINERAIS-PERTO-DAS-VILAS — distribuicao e passagem
 - Dados autorais posicionam jazidas de ouro, ferro e carvao a no maximo 20 tiles de distancia Chebyshev dos armazens iniciais de cada vila. Preservar totais (ouro 13, ferro 22, carvao 28) e rendimentos (8, 12, 15). Preservar veios do oeste sempre que compativeis; mover fontes distantes para aproximar as da AI sem adicionar riqueza.
 - Aceite: teste do mapa gerado/referencia afirma totais, rendimentos, proximidade das duas vilas e ausencia de sobreposicao com lotes/portas/spawns iniciais; montanhas de metais conservam bloqueio de passagem e acesso por borda para mineracao; carvao em solo atravessavel, passagem comprovada pelo step, construcao e rua recusadas enquanto ativo. A guarda da serra do oeste passa a distinguir os tres tiles de carvao em solo dos demais tiles montanhosos, preservando coordenadas dos veios e exigindo explicitamente essa excecao. Testes existentes de mapa/geografia/mineracao/save continuam passando; nenhuma verificacao e afrouxada.
+- **Emenda (2026-10-13, antes do commit; o operador mandou terminar os itens faltantes sem interromper):** a
+  guarda I-TERRENO-LAJEDO-TRES-TILES exigia o hash do mapa inteiro, o que nenhuma redistribuição passa. Ela
+  passa a fazer o hash com as 34 casas de terreno que esta autoria muda (5 manchas, listadas no teste) mascaradas,
+  sem as camadas de ouro, ferro e carvão e sem a contagem por tipo (derivada das linhas). Medido nesta sessão: o
+  mapa de antes e o de depois, mascarados assim, dão o MESMO hash (`f106f266…`): fora dessas casas e camadas, nada
+  mudou. Os saves de referência são regerados pelo próprio teste (o jogo recusa, pelo hash, o save do mapa velho).
 
 #### I-TELA-MONTANHAS-MINERAIS-CONTINUAS — conexao e retirada local
 - Render seleciona conexoes e volume pela vizinhanca lida; numeros em data/*.json, sem mutacao do estado. Sem arte carregada, fallback atual. Cache por tick/partida, repintura apenas de trechos cujo estado/conexao mudou.
