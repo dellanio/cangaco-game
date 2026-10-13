@@ -22126,3 +22126,12 @@ fase                     pedra  árvore  inimigo   (custo do A* em ticks, do in�
 - Commit do CLI: rapido aprovado com tres arquivos/29 testes; log
   `cli-verify-rapido.log`. Vite real sem watch/HMR, zero diretorios observados,
   encerramento normal; comando npm original preservado.
+
+### Fechamento retomado — 2026-10-12
+
+- Executor voltou a responder. O rapido de PNG da rodada interrompida terminou
+  com codigo zero: typecheck, lint e dados aprovados, dois arquivos/28 testes.
+  Selo do HEAD `08f975da`; log `png-verify-rapido.log` aberto nesta retomada.
+- PNG continua com dimensoes e existencia afirmadas para cada referencia do
+  manifesto; leitura limitada ao cabecalho, cache apenas no mesmo teste.
+  Capa e integracao ainda dependem do fechamento completo, sem push.

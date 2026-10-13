@@ -24,6 +24,7 @@ import { CHAVES_DA_REVELACAO } from '../src/render/manifesto';
 import { entradasDosIcones, errosDosIconesDeMercadoria } from '../src/render/icone-da-mercadoria';
 import type { IconesDeMercadoria } from '../src/render/icone-da-mercadoria';
 import { gravarEvidencia } from './helpers/evidence';
+import { criarLeitorDeDimensoes } from './helpers/png-cabecalho';
 import { violacoesDoAtlas } from '../src/render/atlas-de-unidade';
 import type { AtlasDeUnidade } from '../src/render/atlas-de-unidade';
 
@@ -83,8 +84,7 @@ const predios = manifesto.assets.filter(ehEntradaDePredio);
  * sem dependencia de decodificador e sem carregar a imagem.
  */
 function dimensaoDoPng(caminho: string): [number, number] {
-  const b = readFileSync(caminho);
-  return [b.readUInt32BE(16), b.readUInt32BE(20)];
+  return criarLeitorDeDimensoes()(caminho);
 }
 
 /**
@@ -136,6 +136,7 @@ describe('F17f — o manifesto descreve a arte que existe', () => {
   });
 
   it('todo arquivo declarado existe e tem a dimensao declarada', () => {
+    const dimensaoDoPng = criarLeitorDeDimensoes();
     for (const e of manifesto.assets) {
       for (const rel of Object.values(e.estados)) {
         const caminho = `assets/${rel}`;
