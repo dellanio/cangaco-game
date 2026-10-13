@@ -242,3 +242,57 @@ A matriz final exige os seis arquivos normais/transladados e o verify completo.
 Uma corrida verde não prova ausência futura de pressão de CPU: fechamento aqui
 significa remover os custos demonstrados e proteger os comportamentos e custos
 com testes permanentes, sem afirmar reprodução de todos os timeouts históricos.
+
+## Ampliação autorizada pelo operador — 2026-10-12
+
+O operador respondeu `autorizado` à inclusão dos três timeouts do rápido:
+F18 (evidência do roçado, 5 s), F17f (arquivos e dimensões, 5 s) e F-VIVO-a
+(pilhas do armazém em 6.000 ticks, 10 s). Todos os critérios existentes ficam
+intactos; nenhum worker, timeout, janela, hash, exclusão ou skip muda.
+
+### Diagnóstico dos três casos novos
+
+Os três arquivos juntos passaram em ambos os mundos (42 testes cada).
+A corrida normal com perfil também passou. Logs `novos-perfil.log` e
+`novos-transladado.log` em `test-output/diagnostico-timeouts/`. A falha histórica
+continua registrada no rápido da contratação; o verde dirigido não a apaga.
+
+Sonda `causas-novas-antes.json`: a consulta negativa de requisito militar leu
+nove tipos; o saneamento de 20 tarefas, sem mudança do quadro, enumerou e
+ordenou o mesmo quadro 24 vezes; a verificação de dimensões leu 22.673.191 bytes
+para 960 referências a 547 PNGs distintos. Só 24 bytes de cada PNG são usados.
+Os perfis concentram trabalho em requisitos do Quartel (F18), enumeração e
+saneamento de tarefas (F-VIVO-a) e abertura/leitura de arquivos (F17f).
+Isso comprova trabalho redundante, sem atribuir a cada timeout uma causa única.
+
+### Correções executáveis e aceites adicionais
+
+1. Consulta booleana do Quartel: preservar a interseção entre mercadorias
+   publicadas e requisitos militares; responder com pesquisa direta e parada
+   na primeira correspondência, sem construir a lista inteira a cada pergunta.
+   O export de lista ordenada permanece intacto. Guarda RED: consulta de uma
+   mercadoria ausente lê zero tipos; correspondência no primeiro tipo lê um
+   tipo. Comparar toda mercadoria publicada e desconhecidas com a regra antiga,
+   incluindo dados injetados mutáveis, e executar F18 e consumidores militares.
+2. Saneamento: reutilizar a lista ordenada somente dentro de uma chamada de
+   `sanearTarefas`, enquanto a referência do quadro de tarefas não muda.
+   Recomputar após liberação/cancelamento; outra chamada consulta novamente.
+   Devolver cópia ao consumidor que pode inverter a lista. Guarda RED: quadro
+   estável de 20 abertas com demanda suficiente ordenado uma vez (antes: 24).
+   Preservar ordem por número, maior excedente primeiro, reservas e liberações;
+   validar excesso, remoção, dados injetados e JSON/load nos testes do JobBoard.
+   Executar os 6.000 ticks e o limite de uma troca por 100 ticks de F-VIVO-a.
+3. Cabeçalho PNG: extrair a leitura de dimensões para helper de verificação que
+   lê só os 24 bytes usados pela regra original, fecha o descritor em sucesso
+   e erro e rejeita cabeçalho curto/inválido. Reutilizar dimensões apenas para
+   o mesmo caminho dentro deste teste; todas as referências do manifesto ainda
+   afirmam existência e igualdade com suas próprias dimensões declaradas.
+   Guarda determinístico de bytes e aberturas, casos de leitura parcial,
+   arquivo ausente e cabeçalho inválido. Nenhum PNG, manifesto, dimensão ou
+   asserção existente é retirado ou alterado; F17f inteiro em ambos os mundos.
+
+Cada correção tem commit próprio após este aceite. O CLI já tem aceite anterior
+(`0c0f5528`) e pode ser corrigido para remover a pressão de observação de arquivos
+antes dos novos casos. A contratação pendente é preservada e será commitada
+após seu portão verde. As novas correções são dependências da task 8 (fechamento),
+que ainda exige o completo, a capa versionada e integração local limpa sem push.
