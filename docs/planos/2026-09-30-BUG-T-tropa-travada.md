@@ -336,3 +336,9 @@ tick seguinte, antes de a troca andar; o marchante fica segurado no fim do passo
 O conjunto de tiles ocupados pela tropa não muda; quem está em qual tile muda. O aceite 1b passa a ter
 o destino tomado (como na ordem 85) e afirma: ninguém em `marchando` no fim, nenhuma sobreposição, e o
 marchante saiu do tile inicial.
+
+**Emenda 14c (2026-10-13, antes do commit do código; pela medida do aceite 3).** Com 14a e 14b, a
+varredura de 18 zera, e a de 24 deixa um preso na ordem 335: u28 (22,46) começou o passo para 22,45
+quando o tile parecia livre, u29 parou nele, e u28 ficou segurado no FIM do passo (`progresso` = custo
+− 1, contando `bloqueado`). O DODGE e a troca forçada exigiam `progresso` 0. Os dois passam a valer
+também nesse estado (o soldado ainda está no tile dele), e quando agem o passo dele volta a 0.
