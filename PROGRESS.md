@@ -22135,3 +22135,21 @@ fase                     pedra  árvore  inimigo   (custo do A* em ticks, do in�
 - PNG continua com dimensoes e existencia afirmadas para cada referencia do
   manifesto; leitura limitada ao cabecalho, cache apenas no mesmo teste.
   Capa e integracao ainda dependem do fechamento completo, sem push.
+
+### Fechamento tecnico aprovado e capa preservada — 2026-10-12
+
+- `npm run verify` no commit `0335b15c` saiu zero. Typecheck, lint e dados
+  aprovados (35 arquivos, dez fases, zero erros). Normal: 347 arquivos/2.990
+  testes aprovados; transladado: 347 arquivos/2.988 aprovados, cinco exclusoes
+  preexistentes. Log `test-output/diagnostico-timeouts/verify-correcoes-completo.log`.
+- Todos os custos demonstrados possuem guardas permanentes e commits proprios;
+  matriz dos nove arquivos de timeouts e novos guardas passou nos dois mundos.
+  Nenhum timeout, worker, janela, dado de balanceamento ou skip foi alterado.
+  Nao atribuir causa exclusiva a cada timeout historico a partir desses resultados.
+- Capa candidata original preservada em output/imagegen, com prompt, autoria,
+  origem, licenca, dimensoes e SHA256 no README. Versionamento pedido pelo
+  operador; sem aplicacao ao menu e sem gerar outra imagem.
+- Entrega autorizada para integracao local por fast-forward apos confirmar o
+  selo completo do commit final e main limpa. Evidencia final em
+  `test-output/diagnostico-timeouts/verify-entrega-final.log` e `.verify-ok`.
+  O operador continua sendo quem marca feature; test-results.json foi preservado.

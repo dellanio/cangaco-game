@@ -193,8 +193,8 @@ da `main` antes de qualquer integração autorizada. Quem marca feature é o ope
 
 ## Limites de execução
 
-Este documento é planejamento; as tasks acima ainda não foram executadas como
-plano. As corridas anteriores constituem diagnóstico inicial e não fecham itens.
+No estado inicial deste plano, as tasks acima ainda não tinham sido executadas.
+As corridas anteriores constituíam diagnóstico inicial e não fechavam itens.
 Não escolher uma implementação só para obter uma corrida verde. Se o perfil
 apontar mudança de comportamento, balanceamento, hardware/configuração de teste
 ou refatoração ampla não coberta aqui, parar e reportar antes de alterar código.
@@ -296,3 +296,34 @@ Cada correção tem commit próprio após este aceite. O CLI já tem aceite ante
 antes dos novos casos. A contratação pendente é preservada e será commitada
 após seu portão verde. As novas correções são dependências da task 8 (fechamento),
 que ainda exige o completo, a capa versionada e integração local limpa sem push.
+
+## Fechamento técnico verificado
+
+O código foi verificado integralmente no commit `0335b15c`: typecheck, lint,
+35 arquivos de dados e dez fases de campanha aprovados; 347 arquivos/2.990
+testes normais e 347 arquivos/2.988 testes transladados aprovados, com cinco
+exclusões preexistentes. Saída: `test-output/diagnostico-timeouts/verify-correcoes-completo.log`.
+Nenhum critério, dado de balanceamento, timeout, worker ou exclusão foi afrouxado.
+
+| Correção | Commit | Proteção determinística |
+| --- | --- | --- |
+| Consultas da Feira | `b86d0b04` | 1.230 para 90 leituras no cenário de 30 tarefas |
+| Fallback da névoa | `e004a9db` | zero leituras de contagem para conferir outro array de descoberto; índice comparado à reconstrução |
+| Contratação | `be79fd00` | seis leituras para seis tipos; parada booleana na primeira correspondência |
+| Requisitos do Quartel | `505cf606` | zero tipos lidos para mercadoria desconhecida e um para correspondência no primeiro tipo |
+| Saneamento do JobBoard | `11f78418` | uma ordenação por quadro estável; reconsulta após cancelamento e em nova chamada |
+| CLI headless | `08f975da` | Vite real observa zero diretórios; comando npm e encerramento preservados |
+| Dimensões de PNG | `0335b15c` | 24 bytes e uma abertura por caminho; leitura parcial e erros fecham o descritor |
+
+Os contratos completos de rebrota, abertura, couro, armas, vazão, roçado,
+manifesto e pilhas passaram na matriz de 17 arquivos em ambos os mundos.
+O arquivo de armas foi repetido três vezes por mundo, mantendo o guarda de
+save/load original. As tasks de implementação e suas validações dependentes
+estão entregues; os custos demonstrados têm guardas permanentes.
+Isso não atribui causa exclusiva a cada timeout histórico nem promete imunidade
+a uma máquina sobrecarregada. Os limites existentes permanecem válidos.
+
+A capa promocional candidata é preservada com PNG, prompt e metadados em
+`output/imagegen/`, por pedido explícito do operador. Não foi aplicada ao menu.
+O selo completo do commit final e a integração são conferidos no fechamento,
+com log `test-output/diagnostico-timeouts/verify-entrega-final.log`, sem push.
