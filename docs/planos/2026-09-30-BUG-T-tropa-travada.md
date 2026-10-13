@@ -342,3 +342,9 @@ varredura de 18 zera, e a de 24 deixa um preso na ordem 335: u28 (22,46) começo
 quando o tile parecia livre, u29 parou nele, e u28 ficou segurado no FIM do passo (`progresso` = custo
 − 1, contando `bloqueado`). O DODGE e a troca forçada exigiam `progresso` 0. Os dois passam a valer
 também nesse estado (o soldado ainda está no tile dele), e quando agem o passo dele volta a 0.
+
+**Emenda 14d (2026-10-13, antes do commit do código; pela medida do `verify:rapido`).** A troca forçada
+sem recorte quebrou quatro testes de formação e colisão (C-COMBATE-01a, C-MOVIMENTO-02, C-MOVIMENTO-02b,
+C5 (c)): ela agia onde as regras antigas já respondem. Ela passa a valer só no caso medido na varredura:
+o DESTINO do marchante tomado por um parado, e o próximo passo não é o próprio destino (aí vale o "para
+ali perto"). Com o destino vazio, as trocas de vaga que já existem respondem.
