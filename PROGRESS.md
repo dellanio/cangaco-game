@@ -22312,3 +22312,43 @@ npm run verify, com CANGACO_TEST_WORKERS=1, no código eb169fd9: saída 0. Typec
 Homologação de I-ARTE-ARVORE-CRESCENDO (três idades do juazeiro) aprovada pelo operador nesta conversa. CSV atualizado com entrega 6cad2982 e hashes das obras após rebase. Operador autorizou integração da branch inteira; documentação do resultado é posterior ao código testado, sem mudança de código/dados/artes.
 
 Ainda pendentes: A09 milho e demais itens não feitos da fila; pedreiro dentro do lajedo; montanhas/distribuição de ouro/ferro/carvão; avaliações específicas antigas não registradas como aprovadas. Não confundir integração autorizada com conclusão da fila. Test:longo e shot:todos não executados nesta integração. Sem push, sem remoção de worktrees de outras sessões. Merge depende da conferência final de main limpa e inalterada.
+
+## 2026-10-13 — campanha fechada, os bugs abertos corrigidos e as worktrees juntadas (sessão autônoma)
+Pedido do operador: "Finalize o trabalho atual e em seguida termine todos os itens da campanha e demais itens
+faltantes [...] corrija os bugs em aberto [...] merge na main [...] envie para github. Não me interrompa".
+As decisões que seriam dele ficaram registradas como emendas de aceite, cada uma num commit antes do código.
+
+**Verificado (rodado, evidência aberta):**
+- **Merges na `main`, em sequência:** `bugt-varredura-em-paz` e `campanha-jogavel`, sem conflito; `verify`
+  completo 0 (366 arquivos, 3077 testes, normal e transladada); push `e74d06f5..36ed8a4f`.
+- **BUG-TROPA-PRESA-NA-VARREDURA** (branch do BUG-T, plano §14 e emendas 14a–14f): o DODGE do KaM
+  (`KM_UnitActionWalkTo.pas:846`), a troca de VAGA forçada depois do WAITING_TIMEOUT (`:131`, 4 s base) e a
+  desistência do destino tomado por um parado. A varredura das 400 ordens: 0 presos, 0 sobreposições, com 18
+  e com 24 (`test-output/BUG-T-varredura-18.json`, `-24.json`). Números novos em `data/units.json`.
+- **I-COMBATE-FASE-INIMIGO-DEFENDE:** o inimigo da fase defende como a IA da escaramuça (raio 8 em
+  `data/missao.json`); o capturado (Vicente) não entra em posição. A campanha jogada de novo: TODOS os alvos A a
+  E ok nas dez fases (tabela em `docs/planos/2026-10-12-campanha-jogavel.md` §6). A fase 3 passou a pedir
+  economia; a fase 4 deixou de prender tropa; a guarda de Cabedelo foi aliviada (6/4/4 → 4/3/3).
+- **I-TELA-JORNAL-ONDA-DA-FASE:** `wave-arrived` e a notícia "O Cabo Branco ataca!" (captura aberta).
+- **BUG-PEDREIRO-DENTRO-DO-LAJEDO / I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO:** `rock.bloqueiaPasso = true`. Os
+  contratos de rocha atravessável (F-T3, F-T2b) substituídos; tempos do contorno medidos (o depósito da pedreira
+  da vila em 644, era 600); o miolo do lajedo é lavrado de fora para dentro. Captura com o pedreiro na borda.
+- **BUG-CARGA-INFINITA-SEM-VEZ / I-TRANSPORTE-INSUMO-QUE-ESPERA:** o insumo aberto há 60 s base não paga a
+  multa do armazém (`abertaEm` opcional na tarefa de insumo). Sob carga infinita, 15 armas de 15 (eram 0).
+- **I-TERRENO-MINERAIS-PERTO-DAS-VILAS:** a tentativa de 2026-10-10 aplicada; a guarda do mapa mascara as 34
+  casas e as três camadas de minério redistribuídas. O hash mascarado do mapa de antes e do de depois é o mesmo
+  (`f106f266…`, medido nesta sessão: prova de que nada mais mudou).
+- O roteiro das nove fases abre cada fase numa página nova (recarregar a mesma página esgotava os contextos
+  WebGL: `ERR_INSUFFICIENT_RESOURCES` e "Framebuffer incomplete"; cada fase sozinha abria sem erro).
+
+**`BUGS.md`: nenhum bug aberto.**
+
+**Não feito, para as próximas versões (relatório ao operador):**
+- `codex-correcoes`: mudanças sem commit há 2 h (o milho crescendo, render): sessão em curso, não juntada.
+- `noru-novos-sprites` e `codex/noru-antes-rebase-20261003`: exploração de arte de 9–11 dias (candidatas de
+  estilo, skills arquivadas, o `serf-D`); não são worktree aberta e trariam material rejeitado. Não juntadas.
+- Arte bloqueada esperando módulos aprovados: montanhas de ouro e ferro, jazida de carvão no chão, montanhas
+  minerais contínuas. As homologações das artes A01–A07, do Açude e da caatinga.
+- Campanha: o mapa maior da fase 8 e o brejo da fase 6 (desenho novo de mapa); a economia de cada fase só se
+  confere jogando (o jogador automático mede exército, não economia).
+- `D-TELA-LUZ-RELEVO` segue `false`; publicação no itch e playtest são do operador.
