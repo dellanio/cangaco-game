@@ -52,9 +52,11 @@ describe('F-T2b — o cenario dos casos e o que eles dizem ser', () => {
 });
 
 describe('F-T2b — quem bloqueia sai do DADO, e esta em pe', () => {
-  it('a arvore bloqueia; a rocha e o cardume nao', () => {
+  // I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO (2026-10-13): a rocha passou a fechar o passo (o pedreiro extrai
+  // ao lado do lajedo, relato do operador); o cardume e as jazidas nao
+  it('a arvore e a rocha bloqueiam; o cardume nao', () => {
     expect(recursoBloqueiaPasso({ tipo: 'tree', quantidade: 4 })).toBe(true);
-    expect(recursoBloqueiaPasso({ tipo: 'rock', quantidade: 15 })).toBe(false);
+    expect(recursoBloqueiaPasso({ tipo: 'rock', quantidade: 15 })).toBe(true);
     expect(recursoBloqueiaPasso({ tipo: 'fish', quantidade: 20 })).toBe(false);
   });
 
@@ -177,9 +179,10 @@ describe('F-T2b — o passo reprova: a rede de estradas, a outra metade', () => 
     // entao nada a recusava. O BUG-F mostrou que ela precisa recusar por OUTRO
     // motivo — obra em cima de recurso que se colhe —, e a assercao fica mais
     // estrita do que era, nao so diferente: alem do `ok: false` ela exige que a
-    // rocha continue ANDAVEL, que e o que separa os dois predicados. Se alguem
-    // "consertar" isto marcando `bloqueiaPasso: true` na rocha, a segunda metade
-    // reprova.
+    // rocha continue ANDAVEL, que e o que separa os dois predicados.
+    // I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO (2026-10-13): a rocha passou a fechar o passo tambem, por
+    // decisao (o relato do operador: o pedreiro extrai ao lado). O motivo da recusa da estrada continua
+    // `recurso` (a obra em cima do que se colhe), e o passo agora tambem e fechado.
     const alvo = tile(FAIXA.x0 + 2, y);
     const rocha = comRecursos({ [chaveDeTile(alvo)]: { tipo: 'rock', quantidade: 15 } });
     const recusa = canPlaceRoad(rocha, [alvo]);
@@ -187,9 +190,9 @@ describe('F-T2b — o passo reprova: a rede de estradas, a outra metade', () => 
     expect(recusa.ok === false && recusa.motivo).toBe('recurso');
     expect(recusa.ok === false && recusa.tile).toEqual(alvo);
 
-    expect(recursoBloqueiaPasso(recursoNoTile(rocha, alvo.gx, alvo.gy)), 'rocha nao fecha o passo').toBe(false);
-    expect(bloqueadoPorRecurso(camadaDeBloqueio(rocha), alvo.gx, alvo.gy), 'e ninguem a ve como obstaculo').toBe(false);
-    expect(tileAndavel(rocha, alvo, 'livre'), 'o serf atravessa o lajedo a pe').toBe(true);
+    expect(recursoBloqueiaPasso(recursoNoTile(rocha, alvo.gx, alvo.gy)), 'rocha fecha o passo').toBe(true);
+    expect(bloqueadoPorRecurso(camadaDeBloqueio(rocha), alvo.gx, alvo.gy), 'e a camada de bloqueio a ve').toBe(true);
+    expect(tileAndavel(rocha, alvo, 'livre'), 'o serf contorna o lajedo').toBe(false);
 
     // E o veio zerado deixa de recusar, como o tile cortado: a bandeira e lida
     // junto com a quantidade. (Rocha e regime `nunca`, entao na vida real a

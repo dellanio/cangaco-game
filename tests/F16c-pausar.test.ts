@@ -132,9 +132,14 @@ const LOTE_DA_PEDREIRA = gameData.producao.receitas.quarry?.sai.stone ?? 0;
  * O que isso muda para a pausa: "no meio do ciclo" agora quer dizer NO TILE, e e la
  * que o pedreiro congela. A semantica nao mudou — congelar o relogio e nada mais —,
  * mudou onde ele esta quando congela, e isto o caso (1) passou a afirmar.
+ *
+ * I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO (2026-10-13): a rocha fecha o passo, e o pedreiro contorna o
+ * lajedo e lavra do tile ao lado (23,26). Medido na trilha tick a tick: sai da porta no tick 79, chega
+ * no 150 e volta a andar o relogio no 151; o deposito cai no 644 (o mesmo da F15a-producao e da F-T2a).
+ * Ida 50 -> 72 e volta 49 -> 71, na mesma conta de antes.
  */
-const IDA_ATE_O_TILE = 50;
-const VOLTA_DO_TILE = 49;
+const IDA_ATE_O_TILE = 72;
+const VOLTA_DO_TILE = 71;
 const INTERVALO_DA_PEDREIRA = IDA_ATE_O_TILE + CICLO_DA_PEDREIRA + VOLTA_DO_TILE;
 /** LOTE3-b2 — o ciclo abre com o descanso dentro do predio, antes da ida. */
 const DESCANSO_DA_PEDREIRA = gameData.producao.receitas.quarry?.colheita?.ticksDeDescanso ?? 0;
@@ -154,8 +159,11 @@ const NA_METADE = DESCANSO_DA_PEDREIRA + IDA_ATE_O_TILE + 3;
  * nenhuma mercadoria e perdida, nenhuma e duplicada, e o relogio nao anda durante
  * a pausa. O que ele NAO pode mais dizer e "o ciclo termina ao despausar": o preco
  * da pausa em campo e pago em TICKS, e esta escrito aqui embaixo, exato.
+ *
+ * I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO (2026-10-13): 50 -> 72, a volta do tile ao lado do lajedo (71) e a
+ * transicao, como antes (49 e 1).
  */
-const VOLTA_DE_MAOS_VAZIAS = 50;
+const VOLTA_DE_MAOS_VAZIAS = 72;
 
 /** Onde a unidade esta. A pausa nao pode mover ninguem, e sem isto o congelamento
  *  em campo passaria com o pedreiro voltando para casa na ponta dos pes. */

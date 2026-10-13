@@ -70,10 +70,16 @@ const CICLO = gameData.producao.receitas.quarry?.ticksDoCiclo ?? 0;
  * traz para (26,36) — quatro tiles mais perto do tile (25,30) de onde ele colhe.
  * Todos os ciclos seguintes partem de (26,36), e e por isso que sao iguais entre
  * si. O `1 +` de cada soma e o tick da transicao, em que ele ainda esta na porta.
+ *
+ * I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO (2026-10-13): a rocha fecha o passo, e o pedreiro contorna o
+ * lajedo e lavra do tile AO LADO. Medido: o primeiro deposito no tick 948 (ocupacao em 315), entao
+ * IDA_DA_PORTA + VOLTA = 126 (eram 103); e o intervalo do mesmo trajeto na F15a-producao, 644 = 1 + IDA +
+ * CICLO + VOLTA, da IDA + VOLTA = 142 (eram 98). O que se mede sao as SOMAS; a divisao em pernas iguais
+ * (71 e 71) e a escrita, e so as somas entram nas contas abaixo.
  */
-const IDA_DA_PORTA_DA_OCUPACAO = 54;
-const IDA = 49;
-const VOLTA = 49;
+const IDA_DA_PORTA_DA_OCUPACAO = 55;
+const IDA = 71;
+const VOLTA = 71;
 const PRIMEIRO_CICLO = 1 + IDA_DA_PORTA_DA_OCUPACAO + CICLO + VOLTA;
 const INTERVALO = 1 + IDA + CICLO + VOLTA;
 

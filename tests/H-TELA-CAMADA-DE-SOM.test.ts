@@ -168,7 +168,9 @@ describe('H-TELA-CAMADA-DE-SOM — (a) a vista e a recusa', () => {
     let atual = cenarioDePedreira();
     const porEvento: Record<string, number> = {};
     const tocados: Record<string, number> = {};
-    for (let i = 0; i < 600; i += 1) {
+    // I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO (2026-10-13): a pedreira contorna o lajedo e o primeiro deposito
+    // passou de 600 para 644 ticks (F15a-producao); a janela cobre um ciclo inteiro
+    for (let i = 0; i < 700; i += 1) {
       const antes = atual;
       atual = step(atual, [], gameData);
       for (const e of atual.events) if (idDoSom(e, TABELA) !== null) porEvento[e.type] = (porEvento[e.type] ?? 0) + 1;
@@ -176,7 +178,7 @@ describe('H-TELA-CAMADA-DE-SOM — (a) a vista e a recusa', () => {
     }
     expect(tocados['goods-produced'] ?? 0, JSON.stringify(porEvento)).toBeGreaterThan(0);
     expect(tocados['goods-produced']).toBe(porEvento['goods-produced']);
-    evidencia['pedreira600ticks'] = { eventosComSom: porEvento, tocadosDepoisDaVista: tocados };
+    evidencia['pedreira700ticks'] = { eventosComSom: porEvento, tocadosDepoisDaVista: tocados };
   });
 });
 

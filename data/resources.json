@@ -20,8 +20,8 @@
       "rendimentoPorTile": 15,
       "bloqueiaConstrucao": true,
       "_docBloqueiaConstrucao": "BUG-F (2026-09-24): NAO se constroi nem se ruma estrada em cima. O defeito que isto mata foi medido — a pedreira aceitava ser posta sobre o lajedo e lavrava a rocha debaixo das proprias paredes, com saida identica a de uma pedreira ao lado dele. Recusar mata por construcao; permitir e consumir precisaria apagar o veio, devolver no demolir e avisar antes do clique. E o jogador planta no lajedo porque e ali que se planta: recusar protege o que ele veio colher.",
-      "bloqueiaPasso": false,
-      "_docBloqueiaPasso": "A rocha NAO bloqueia o passo, e isso e decisao, nao esquecimento: a pedreira se assenta em cima do lajedo (BUG-C, 2026-09-24) e `placement.ts` nunca teve recusa por recurso. O intransponivel da serra e do lajedo alto e terreno (`terrain.intransponivel`), nao recurso.",
+      "bloqueiaPasso": true,
+      "_docBloqueiaPasso": "I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO (2026-10-13, relato do operador: o pedreiro extrai AO LADO do lajedo, sem andar por dentro da pedra): a rocha em pe FECHA o passo. O motivo antigo (a pedreira se assentava em cima do lajedo, BUG-C) caiu com o BUG-F, que proibe construir sobre a rocha. O tile esgotado (`quantidade` 0) nao bloqueia: o lajedo e lavrado de fora para dentro. Ouro, ferro e carvao continuam atravessaveis.",
       "_doc": "A pedra do lajedo e da saia da serra. 15 por tile contra o veio fixo de 200 da F15a: o lajedo de 13 tiles da vila rende 195, entao a pedreira de abertura vale quase o mesmo que valia — o que mudou nao foi o total, foi de onde ele vem."
     },
     "tree": {

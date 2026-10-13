@@ -18,6 +18,7 @@ import type { Command } from '../src/sim/commands';
 import type { GameState, Predio, PredioCompleto } from '../src/sim/state';
 import { step } from '../src/sim/tick';
 import { nosExpandidos, zerarEstatisticasDeBusca } from '../src/sim/pathfinding';
+import { reservadoNoDestino } from '../src/sim/reservas';
 import { validarTudo } from '../tools/data-rules.js';
 import { ARQUIVOS } from '../tools/data-schema.js';
 import { comandosDaVilaNoTick, vilaDaCalibracao } from './helpers/cal-vila';
@@ -88,6 +89,11 @@ function correr(variante: Variante, dados: GameData = gameData, ticks: number = 
   let doArmazemParaSerraria = 0;
   let aoArmazem = 0;
   let aoArmazemComVaga = 0;
+  // I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO (2026-10-13): a vaga da serraria se mede no tick em que a tarefa
+  // ao armazem e RECLAMADA (a escolha), descontadas as vagas ja reservadas por outras toras a caminho, e nao
+  // na entrega: ate la uma vaga pode ter aberto. A medida antiga acusava uma tora (de 18) quando o
+  // contorno do lajedo mudou o tempo das viagens
+  const vagaNaEscolha = new Map<string, boolean>();
   const violacoes: string[] = [];
   zerarEstatisticasDeBusca();
   for (let t = 0; t < ticks; t += 1) {
@@ -101,6 +107,12 @@ function correr(variante: Variante, dados: GameData = gameData, ticks: number = 
     }
     const antes = s;
     s = step(s, comandos, dados);
+    for (const id of s.jobs.tarefas.ordem) {
+      const tarefa = s.jobs.tarefas.porId[id];
+      if (tarefa === undefined || vagaNaEscolha.has(id) || tarefa.estado === 'aberta' || !('mercadoria' in tarefa) || tarefa.mercadoria !== TORA) continue;
+      if (!('destino' in tarefa) || s.predios.porId[tarefa.destino]?.tipo !== ID_DO_ARMAZEM) continue;
+      vagaNaEscolha.set(id, completosDo(s, SERRARIA).some((p) => (p.estoque.entrada[TORA] ?? 0) + reservadoNoDestino(s, p.id, TORA) < (p.capacidade.entrada ?? 0)));
+    }
     for (const ev of s.events) {
       if (ev.type !== 'task-completed' || ev.mercadoria !== TORA) continue;
       const tarefa = antes.jobs.tarefas.porId[ev.tarefa];
@@ -109,7 +121,7 @@ function correr(variante: Variante, dados: GameData = gameData, ticks: number = 
       viagensDeTora += 1;
       if (destino?.tipo === ID_DO_ARMAZEM) {
         aoArmazem += 1;
-        if (completosDo(antes, SERRARIA).some((p) => (p.estoque.entrada[TORA] ?? 0) < (p.capacidade.entrada ?? 0))) aoArmazemComVaga += 1;
+        if (vagaNaEscolha.get(ev.tarefa) === true) aoArmazemComVaga += 1;
       }
       if (destino?.tipo === SERRARIA) {
         entreguesNaSerraria += 1;

@@ -114,15 +114,19 @@ const ULTIMO_DEPOSITO = {
    *  O ciclo conserva os 501 ticks (3 pedras por viagem), o trajeto mudou. */
   curtoPrimeiro: 558,
   curtoSegundo: 1116,
-  /** 13 tiles a um lote cada; todos os depositos do novo trajeto afirmados abaixo. */
-  lajedo: 7444,
+  /** 13 tiles a um lote cada; todos os depositos do novo trajeto afirmados abaixo.
+   *  I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO (2026-10-13): 7444 -> 7754. A rocha fecha o passo, e o
+   *  pedreiro lavra do tile ao lado: cada viagem ganha o contorno. O miolo do lajedo so fica ao
+   *  alcance quando a borda esgota (o tile esgotado nao bloqueia): os 13 tiles continuam saindo. */
+  lajedo: 7754,
   /** um unico tile ao alcance, pedreira na borda (32,34). 580 com o ciclo de 501
    *  (LOTE3-c); era 246, e nao 244, desde a
    *  noite 17: a roca da vila entrou na faixa sul (x 26..30, y 35..36) e o
    *  caminho da borda cruza chao arado, mais caro que grama no A*. */
   borda: 622,
   /** as duas sobrepostas: q1 no lajedo leva 12 tiles, q2 na borda leva 1 */
-  sobrepostas: 6868,
+  /** I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO (2026-10-13): 6868 -> 7160, o mesmo contorno. */
+  sobrepostas: 7160,
 } as const;
 
 
@@ -239,13 +243,14 @@ describe('F-T2a — perna 2: o lugar passa a importar, e o numero prova', () => 
     expect(a.produzido).toBe(tilesNoLajedo * LOTE);
     expect(b.produzido).toBe(tilesNaBorda * LOTE);
     // e o ritmo tambem: 13 viagens, a primeira e a ultima no tick exato. O lajedo
-    // esgota em 7444 ticks e nao nos 13 x 501 = 6513 do ciclo puro — a diferenca
+    // esgota em 7754 ticks e nao nos 13 x 501 = 6513 do ciclo puro — a diferenca
     // e a viagem, e ela esta declarada, nao tolerada.
     expect(a.ticksDeDeposito).toHaveLength(tilesNoLajedo);
-    expect(a.ticksDeDeposito[0]).toBe(600);
+    expect(a.ticksDeDeposito[0]).toBe(644);
     expect(a.ticksDeDeposito.at(-1)).toBe(ULTIMO_DEPOSITO.lajedo);
     // Nova geometria autorizada: todo deposito continua exato, nao apenas os extremos.
-    expect(a.ticksDeDeposito).toEqual([600, 1186, 1772, 2358, 2934, 3506, 4078, 4650, 5226, 5784, 6342, 6900, 7444]);
+    // I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO: a lista da geometria com a rocha fechando o passo
+    expect(a.ticksDeDeposito).toEqual([644, 1270, 1910, 2534, 3128, 3708, 4316, 4912, 5482, 6058, 6620, 7210, 7754]);
     expect(b.ticksDeDeposito).toEqual([ULTIMO_DEPOSITO.borda]);
     expect(disponivelDe(a.fim, 'q1', umPorTile)).toBe(0);
     expect(disponivelDe(b.fim, 'q1', umPorTile)).toBe(0);

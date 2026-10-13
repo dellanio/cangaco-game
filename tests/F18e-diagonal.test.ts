@@ -14,8 +14,16 @@ import { componenteDe, isConnected, pontesDiagonais } from '../src/sim/estradas'
 import type { TileDeGrid } from '../src/sim/estradas';
 import { buscarCaminho } from '../src/sim/pathfinding';
 import { tilesEntre } from '../src/input/arrasto';
-import { comEstradas, comObra, inicial, tile } from './helpers/jobs-cenario';
+import { comEstradas, comObra, inicial as inicialDoMapa, tile } from './helpers/jobs-cenario';
 import { gravarEvidencia } from './helpers/evidence';
+
+/** I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO (2026-10-13): a rocha passou a fechar o passo, e as retas deste
+ *  teste (estrada contra grama) cruzavam um lajedo do mapa. O assunto aqui e a geometria da estrada, nao a
+ *  rocha: o cenario tira a rocha do mapa, e o resto do estado inicial fica igual. */
+const inicial = {
+  ...inicialDoMapa,
+  recursos: Object.fromEntries(Object.entries(inicialDoMapa.recursos).filter(([, r]) => r.tipo !== 'rock')),
+};
 
 const RETO = gameData.movimento.ticksPorTile.aPe;
 const DIAGONAL = gameData.movimento.ticksPorTileDiagonal.aPe;

@@ -40,7 +40,9 @@ function obraDe(tipo: string): PredioEmObra {
 // MAPA — 49 ticks em cada perna, da porta (26,36) ao tile (24,29) que esta
 // pedreira escolhe, mais o tick da transicao (medido na trilha de
 // `test-output/F-T3-ciclo-em-campo.json`).
-const VIAGEM = 99;
+// I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO (2026-10-13): 99 -> 143. A rocha fecha o passo: o pedreiro
+// contorna o lajedo e lavra do tile ao lado (medido: o primeiro deposito no tick 644, o mesmo da F-T2a).
+const VIAGEM = 143;
 const INTERVALO = receita('quarry').ticksDoCiclo + VIAGEM;
 /** LOTE3-c — o pedreiro traz 3 blocos por viagem (`colheita.fases.porViagem`): cada
  *  deposito e de 3, e o tile perde 3 de uma vez. */

@@ -159,9 +159,12 @@ function comMilhoDebaixoDaFazenda(estado: GameState): GameState {
 }
 
 describe('F-T3 — por onde se chega ao tile', () => {
-  it('a premissa do dado: arvore fecha o passo, rocha e milho nao', () => {
+  // I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO (2026-10-13): a rocha passou a fechar o passo, pelo relato do
+  // operador (o pedreiro extrai AO LADO do lajedo). Ouro, ferro e carvao continuam atravessaveis.
+  it('a premissa do dado: arvore e rocha fecham o passo; milho e as jazidas nao', () => {
     expect(DADOS.recursos.tipos['tree']?.bloqueiaPasso).toBe(true);
-    expect(DADOS.recursos.tipos['rock']?.bloqueiaPasso).toBe(false);
+    expect(DADOS.recursos.tipos['rock']?.bloqueiaPasso).toBe(true);
+    for (const jazida of ['gold_ore', 'iron_ore', 'coal']) expect(DADOS.recursos.tipos[jazida]?.bloqueiaPasso).toBe(false);
     expect(DADOS.recursos.tipos['corn']?.bloqueiaPasso).toBe(false);
   });
 
@@ -172,9 +175,9 @@ describe('F-T3 — por onde se chega ao tile', () => {
 
     expect(alvos.length).toBeGreaterThan(0);
     for (const a of alvos) expect(tileAndavel(estado, a, 'livre', DADOS)).toBe(true);
-    // rocha nao fecha o passo: o pedreiro lavra de cima do lajedo, e o proprio
-    // tile e o primeiro alvo — custo zero para quem ja esta nele.
-    expect(alvos[0]).toEqual({ gx: lajedo.gx, gy: lajedo.gy });
+    // rocha FECHA o passo (I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO): o pedreiro lavra do lado, e o proprio
+    // tile do lajedo nunca e alvo.
+    expect(alvos).not.toContainEqual({ gx: lajedo.gx, gy: lajedo.gy });
     // ordem estavel: a mesma chamada devolve a mesma lista, e o desempate do A*
     // deixa de depender de quem chamou.
     expect(alvosDeAproximacao(estado, lajedo, DADOS)).toEqual(alvos);
@@ -311,7 +314,7 @@ describe('F-T3 — o claim de colheita exige caminho', () => {
     expect(reclamar(criada.state, criada.id, 'u1', DADOS).ok).toBe(true);
   });
 
-  it('o caminho termina numa aproximacao: em cima do lajedo, ao lado da arvore', () => {
+  it('o caminho termina numa aproximacao: ao lado do lajedo e ao lado da arvore', () => {
     const estado = cenarioDePedreira(DADOS);
     const lajedo = tileDeChave(primeiroTileColhivel(estado, predioDe(estado, 'q1'), colheitaDe('quarry')));
     const ateOLajedo = caminhoAteAproximacaoDoTile(estado, lajedo, 'u1', DADOS);
@@ -319,18 +322,14 @@ describe('F-T3 — o claim de colheita exige caminho', () => {
     const alvosDoLajedo = alvosDeAproximacao(estado, lajedo, DADOS);
     const fimNoLajedo = (ateOLajedo as Caminho).tiles.at(-1) as TileDeGrid;
     expect(alvosDoLajedo).toContainEqual(fimNoLajedo);
-    // rocha nao fecha o passo, entao o proprio tile e um alvo valido — mas o A*
-    // para no alvo mais BARATO, que e o da borda por onde ele chegou. Por isso a
-    // assercao nao e "termina em cima": e "termina numa das nove casas, e nunca
-    // paga mais do que pagaria para ir em cima".
-    expect(Math.max(Math.abs(fimNoLajedo.gx - lajedo.gx), Math.abs(fimNoLajedo.gy - lajedo.gy)))
-      .toBeLessThanOrEqual(1);
-    expect(alvosDoLajedo).toContainEqual({ gx: lajedo.gx, gy: lajedo.gy });
+    // I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO: rocha fecha o passo, entao o caminho para AO LADO, como na
+    // arvore: nunca em cima, e a uma casa do lajedo.
+    expect(fimNoLajedo).not.toEqual({ gx: lajedo.gx, gy: lajedo.gy });
+    expect(Math.max(Math.abs(fimNoLajedo.gx - lajedo.gx), Math.abs(fimNoLajedo.gy - lajedo.gy))).toBe(1);
     const u1 = estado.unidades.porId['u1'];
     if (u1 === undefined) throw new Error('teste: u1 saiu do cenario da pedreira');
-    const soEmCima = buscarCaminho(estado, { gx: u1.gx, gy: u1.gy }, [lajedo], 'livre', DADOS);
-    expect(soEmCima).not.toBeNull();
-    expect((ateOLajedo as Caminho).custo).toBeLessThanOrEqual((soEmCima as Caminho).custo);
+    // e ninguem chega EM CIMA do lajedo: o tile dele nao e andavel
+    expect(buscarCaminho(estado, { gx: u1.gx, gy: u1.gy }, [lajedo], 'livre', DADOS)).toBeNull();
 
     const arvores = DADOS.mapa.recursos['tree'] ?? [];
     const comCaminho = arvores.find(([gx, gy]) => (estado.recursos[chaveDeTile({ gx, gy })]?.quantidade ?? 0) > 0
