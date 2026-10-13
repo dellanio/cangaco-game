@@ -14,11 +14,11 @@ import type { GameData } from '../data/types';
 import type { TileDeGrid } from '../estradas';
 import { classeDaUnidade } from '../condicao';
 import { buscarCaminho, passoAndavel, tileAndavel } from '../pathfinding';
-import { andar, chegou, comUnidade, militarParadoEm, noTile, ocioso, vagaEmparedadaPor } from '../units/movimento';
+import { andar, chegou, comUnidade, militarOcupa, militarParadoEm, noTile, ocioso, semContorno, vagaEmparedadaPor } from '../units/movimento';
 import { emCargaIncontrolavel } from '../carga';
 import type { ResultadoDeSistema } from './jobs';
 import { semRetomar, viradaPeloPasso } from './combate';
-import { DIRECAO_PADRAO, direcaoAproximada, direcaoDe, passoDaDirecao } from '../combate';
+import { DIRECAO_PADRAO, direcaoAproximada, direcaoDe, direcaoEntre, passoDaDirecao } from '../combate';
 
 export type MoveUnits = Extract<Command, { readonly type: 'MoveUnits' }>;
 
@@ -270,6 +270,29 @@ function passoMarchando(state: GameState, u: Unidade, dados: GameData, tick: Tic
     };
     return { state: comUnidade(comUnidade(state, fica), vai), events: [] };
   }
+  // BUG-TROPA-PRESA-NA-VARREDURA, emenda 14e — o ultimo recurso: `u` e o parado do tile seguinte trocam
+  // de VAGA (o parado sai marchando para o destino de `u`, e `u` fica com a vaga dele)
+  if (atual.fsm === FSM_MARCHANDO && desisteDoDestino(state, atual, dados)) {
+    return { state: comUnidade(state, parar(noComecoDoPasso(atual))), events: [] };
+  }
+  const empurrado = atual.fsm === FSM_MARCHANDO ? paradoParaTrocar(state, atual, dados) : null;
+  if (empurrado !== null) {
+    const vai: Unidade = {
+      ...empurrado, fsm: FSM_MARCHANDO,
+      fsmData: { caminho: [], progresso: 0, alvoTile: alvo, ...(final === undefined ? {} : { direcaoFinal: final }) },
+    };
+    const fica: Unidade = {
+      ...noComecoDoPasso(atual),
+      fsmData: { ...noComecoDoPasso(atual).fsmData, caminho: [], alvoTile: noTile(empurrado), direcaoFinal: empurrado.direcao ?? final ?? DIRECAO_PADRAO },
+    };
+    return { state: comUnidade(comUnidade(state, vai), fica), events: [] };
+  }
+  // BUG-TROPA-PRESA-NA-VARREDURA — o DODGE do KaM: o vizinho ao lado do alvo quer o tile de `u`. O
+  // caminho de `u` passa a comecar pelo tile dele, e a troca mutua logo abaixo troca os dois
+  if (atual.fsm === FSM_MARCHANDO && trocaMutuaCom(state, atual, dados) === null) {
+    const desviado = dodgeDe(state, atual, dados);
+    if (desviado !== null) atual = desviado;
+  }
   // BUG-T — a troca mutua, na hora (decisao do operador). Atomica nas duas pontas: os dois
   // LARGAM juntos (os dois tiles ficam tomados para terceiros desde o primeiro tick, porque quem
   // anda ocupa o tile para onde vai) e, quando os DOIS terminam o passo, trocam de tile juntos
@@ -393,6 +416,109 @@ export function trocaMutuaCom(state: GameState, u: Unidade, dados: GameData): Un
     if (o.fsm !== FSM_MARCHANDO || o.lado !== u.lado || classeDaUnidade(o.tipo, dados) !== 'militar') continue;
     const dele = o.fsmData.caminho?.[0];
     if (dele !== undefined && dele.gx === u.gx && dele.gy === u.gy) return o;
+  }
+  return null;
+}
+
+/**
+ * BUG-TROPA-PRESA-NA-VARREDURA (ordem 335 com 24) — `u` esta parado no proprio tile esperando o passo:
+ * na largada (`progresso` 0) ou segurado no fim do passo (`custo - 1`, a chegada com o tile tomado, que
+ * conta `bloqueado`). Nos dois casos ele ainda esta no tile dele, e as trocas valem.
+ */
+function esperandoOPasso(state: GameState, u: Unidade, dados: GameData): boolean {
+  const progresso = u.fsmData.progresso ?? 0;
+  if (progresso === 0) return true;
+  const proximo = u.fsmData.caminho?.[0];
+  return proximo !== undefined && u.fsmData.bloqueado !== undefined
+    && progresso === custoDoPassoDaUnidade(state, u, proximo, dados) - 1;
+}
+
+/** `u` de volta ao comeco do passo (o `progresso` 0 da troca mutua), sem a espera contada. */
+function noComecoDoPasso(u: Unidade): Unidade {
+  const { bloqueado: _b, ...semEspera } = u.fsmData;
+  void _b;
+  return { ...u, fsmData: { ...semEspera, progresso: 0 } };
+}
+
+/** Emenda 14e — o WAITING_TIMEOUT do KaM, em tentativas de desvio que falharam no mesmo tile. */
+function esperouATrocaForcada(u: Unidade, dados: GameData): boolean {
+  return (u.fsmData.tentativasDeDesvio ?? 0) * dados.movimento.ticksDesvioMilitar >= dados.movimento.ticksTrocaForcadaMilitar;
+}
+
+/**
+ * BUG-TROPA-PRESA-NA-VARREDURA, emenda 14f — `u` desiste do destino e para onde esta: parado no tile
+ * (`esperandoOPasso`) pelo tempo da troca forcada, com o DESTINO tomado por um militar parado e sem
+ * contorno contando todos os militares. E o "para ali perto" de `esperarOuDesviar`, que la vale so no
+ * ultimo passo.
+ */
+export function desisteDoDestino(state: GameState, u: Unidade, dados: GameData): boolean {
+  const caminho = u.fsmData.caminho ?? [];
+  const destino = caminho[caminho.length - 1];
+  if (destino === undefined || caminho.length === 1 || classeDaUnidade(u.tipo, dados) !== 'militar') return false;
+  if (!esperandoOPasso(state, u, dados) || !esperouATrocaForcada(u, dados)) return false;
+  return militarParadoEm(state, destino, u.id, dados) !== null && semContorno(state, u, destino, dados);
+}
+
+/**
+ * BUG-TROPA-PRESA-NA-VARREDURA, emenda 14a — o PUSH seguido da troca forcada do kam_remake
+ * (`src/units/actions/KM_UnitActionWalkTo.pas:713-752` e `:754-830`), como ULTIMO recurso: `u` marcha
+ * parado no tile (`esperandoOPasso`) ha `ticksDesvioMilitar`, o tile seguinte tem um militar PARADO do
+ * mesmo lado, o proximo passo nao e o destino, e nao ha contorno contando TODOS os militares (a
+ * `vagaEmparedadaPor` conta so os parados, e o contorno dela pode passar por quem tambem esta preso).
+ * Devolve esse parado: os dois trocam de VAGA (emenda 14e), como na C-MOVIMENTO-02. Senao, null.
+ */
+export function paradoParaTrocar(state: GameState, u: Unidade, dados: GameData): Unidade | null {
+  const caminho = u.fsmData.caminho ?? [];
+  const proximo = caminho[0];
+  const destino = caminho[caminho.length - 1];
+  if (proximo === undefined || destino === undefined || classeDaUnidade(u.tipo, dados) !== 'militar') return null;
+  if (!esperandoOPasso(state, u, dados) || (u.fsmData.bloqueado ?? 0) + 1 < dados.movimento.ticksDesvioMilitar) return null;
+  if (!esperouATrocaForcada(u, dados)) return null;
+  const parado = militarParadoEm(state, proximo, u.id, dados);
+  if (parado === null || parado.lado !== u.lado || !passoAndavel(state, proximo, noTile(u), 'livre', dados)) return null;
+  // o proximo passo e o destino: vale o "para ali perto" do `esperarOuDesviar`
+  if (caminho.length === 1) return null;
+  // quem so esta de passagem pelo destino sai sozinho (e o desvio sempre falha com o destino tomado); com o
+  // destino tomado por um parado vale a `desisteDoDestino` (emenda 14f)
+  if (militarOcupa(state, destino, u.id, dados)) return null;
+  if (!semContorno(state, u, destino, dados)) return null;
+  return parado;
+}
+
+/**
+ * BUG-TROPA-PRESA-NA-VARREDURA — o DODGE do kam_remake (`src/units/actions/KM_UnitActionWalkTo.pas:846-902`,
+ * `DODGE_TIMEOUT` em `:128`). `u` marcha parado na largada (`progresso` 0) com o tile seguinte tomado ha
+ * `ticksDodgeMilitar`. Os dois tiles ao lado do alvo sao a direcao do passo girada 45 graus para cada
+ * lado, a partir de `u` (o da esquerda primeiro, como o `KMPrevDirection` do KaM). Se num deles ha um
+ * militar do mesmo lado, marchando, parado na largada, cujo tile seguinte e o de `u`, e os passos ate
+ * la e de la ao alvo sao andaveis, devolve `u` com o caminho comecando por esse tile: a troca mutua
+ * (`trocaMutuaCom`) troca os dois. E o ciclo de tres (ou mais) que o par nao pega. Senao, null.
+ */
+export function dodgeDe(state: GameState, u: Unidade, dados: GameData): Unidade | null {
+  const caminho = u.fsmData.caminho ?? [];
+  const proximo = caminho[0];
+  if (proximo === undefined || classeDaUnidade(u.tipo, dados) !== 'militar') return null;
+  if (!esperandoOPasso(state, u, dados) || (u.fsmData.bloqueado ?? 0) + 1 < dados.movimento.ticksDodgeMilitar) return null;
+  if (!militarOcupa(state, proximo, u.id, dados)) return null;
+  const direcao = direcaoEntre(u, proximo);
+  if (direcao === null) return null;
+  for (const giro of [-1, 1]) {
+    const [dx, dy] = passoDaDirecao(direcao + giro);
+    const lado = { gx: u.gx + dx, gy: u.gy + dy };
+    if (!passoAndavel(state, noTile(u), lado, 'livre', dados) || !passoAndavel(state, lado, proximo, 'livre', dados)) continue;
+    for (const id of state.unidades.ordem) {
+      const o = state.unidades.porId[id];
+      if (o === undefined || id === u.id || o.gx !== lado.gx || o.gy !== lado.gy) continue;
+      if (o.fsm !== FSM_MARCHANDO || o.lado !== u.lado || classeDaUnidade(o.tipo, dados) !== 'militar') continue;
+      const dele = o.fsmData.caminho?.[0];
+      if ((o.fsmData.progresso ?? 0) !== 0 || dele === undefined || dele.gx !== u.gx || dele.gy !== u.gy) continue;
+      const { bloqueado: _b, ...semEspera } = u.fsmData;
+      void _b;
+      // o tile do lado ja e o segundo passo: so pula o primeiro
+      const segundo = caminho[1];
+      const novo = segundo !== undefined && segundo.gx === lado.gx && segundo.gy === lado.gy ? caminho.slice(1) : [lado, ...caminho];
+      return { ...u, fsmData: { ...semEspera, caminho: novo, progresso: 0 } };
+    }
   }
   return null;
 }

@@ -52,14 +52,3 @@ antes deles, o BUG-001 na F09) saíram em 2026-09-24 com a regra que os dissolve
 **medida de relógio é evidência da sessão, nunca asserção** — `CLAUDE.md` §8, decisão
 do operador. A regra antiga daqui ("alargar o teto com o número medido") está **revogada**:
 ela consertava a asserção em vez de perguntar se aquele eixo podia ser asserção.
-
-### BUG-TROPA-PRESA-NA-VARREDURA — soldados ficam em "marchando" depois de ordens de marcha (errado)
-
-- **Onde:** `tests/BUG-T-troca-mutua.longo.test.ts`, aceite 4 do BUG-T, com a fixture da emenda 3 (paz
-  e condição cheia a varredura inteira; 2026-10-12). Nenhuma morte, nenhuma sobreposição.
-- **Medido (commit da fixture, sobre `ef391cf7`):** com 18, a ordem 127 (destino 35,35, direção 0,
-  5 colunas) deixa u21, u25, u26 e u27 presos. Com 24, as ordens 89 (20,41; 3 colunas; 4 presos),
-  175 (33,40; 4 colunas; 3 presos) e 334 (24,46; direção 4; 4 colunas; 1 preso). Evidência em
-  `test-output/BUG-T-varredura-18.json` e `-24.json`.
-- **Não corrigido.** O operador disse, em 2026-10-08: "se acontecer novamente eu abro uma nova
-  demanda". A `test:longo` fica vermelha até essa demanda.

@@ -1394,6 +1394,9 @@ export interface DadosDaFsm {
   /** C5 — ticks que o militar ja esperou um tile ocupado por outro militar. D-MOVIMENTO-01 (colisao civil) — o mesmo
    *  para o civil com a colisao civil ligada (zera so num passo normal). */
   readonly bloqueado?: number;
+  /** BUG-TROPA-PRESA-NA-VARREDURA, emenda 14e — quantas vezes o desvio do militar falhou sem ele mudar de
+   *  tile (`esperarOuDesviar`); some quando ele muda de tile. Mede a espera da troca forcada. */
+  readonly tentativasDeDesvio?: number;
   /** I-MOVIMENTO-FILA-DE-CIVIS — o civil de um ciclo de espera (de frente ou rotacao) larga neste
    *  tick mesmo com o tile seguinte ocupado (`sistemaDaLargadaEmCiclo`); some quando o passo comeca. */
   readonly largada?: boolean;

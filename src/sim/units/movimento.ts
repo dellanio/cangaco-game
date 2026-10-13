@@ -175,6 +175,12 @@ export function vagaEmparedadaPor(state: GameState, u: Unidade, dados: GameData)
   return desvio(state, u, destino, dados, true) === null ? parado : null;
 }
 
+/** BUG-TROPA-PRESA-NA-VARREDURA, emenda 14a — `u` nao tem contorno ate `destino` contando TODOS os
+ *  militares como parede (o desvio de `esperarOuDesviar` falharia). */
+export function semContorno(state: GameState, u: Unidade, destino: TileDeGrid, dados: GameData): boolean {
+  return desvio(state, u, destino, dados) === null;
+}
+
 /** C-MOVIMENTO-01 — todo vizinho andavel do tile tem um militar PARADO: nao ha por onde entrar. */
 function cercadoPorParados(state: GameState, tile: TileDeGrid, quem: string, dados: GameData): boolean {
   for (const d of VIZINHOS_8) {
@@ -208,7 +214,8 @@ function esperarOuDesviar(
     return { ...u, fsmData: { ...resto, caminho: [], progresso: 0 } };
   }
   return contorno === null || contorno.length === 0
-    ? { ...u, fsmData: { ...resto, progresso: segura } } // tenta de novo depois de outro periodo
+    // tenta de novo depois de outro periodo; BUG-TROPA-PRESA-NA-VARREDURA, emenda 14e: conta a tentativa
+    ? { ...u, fsmData: { ...resto, progresso: segura, tentativasDeDesvio: (u.fsmData.tentativasDeDesvio ?? 0) + 1 } }
     : { ...u, fsmData: { ...resto, caminho: contorno, progresso: 0 } };
 }
 
@@ -270,8 +277,10 @@ export function andar(state: GameState, u: Unidade, dados: GameData, parceiro: s
     if (saiAndandoLivre(state, proximo, u.id, dados)) return { ...u, fsmData: { ...u.fsmData, progresso: custo - 1 } };
     return esperarOuDesviar(state, u, caminho, custo - 1, dados);
   }
-  const { bloqueado: _b, ...semEspera } = u.fsmData;
+  // BUG-TROPA-PRESA-NA-VARREDURA, emenda 14e: mudou de tile, as tentativas de desvio somem
+  const { bloqueado: _b, tentativasDeDesvio: _t, ...semEspera } = u.fsmData;
   void _b;
+  void _t;
   return { ...u, gx: proximo.gx, gy: proximo.gy, fsmData: { ...semEspera, caminho: caminho.slice(1), progresso: 0 } };
 }
 

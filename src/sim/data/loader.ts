@@ -595,6 +595,16 @@ export function loadGameData(raw: RawGameData): GameData {
       raw.units.colisaoMilitar.desviarDepois_segundos_base, 'segundos',
       paraTicksDeDuracao(raw.units.colisaoMilitar.desviarDepois_segundos_base, 'segundos', escalaMovimento, tickHz),
     ),
+    ticksDodgeMilitar: registrar(
+      'units.colisaoMilitar.dodgeDepois_segundos_base', raw.units.escalaVelocidade,
+      raw.units.colisaoMilitar.dodgeDepois_segundos_base, 'segundos',
+      paraTicksDeDuracao(raw.units.colisaoMilitar.dodgeDepois_segundos_base, 'segundos', escalaMovimento, tickHz),
+    ),
+    ticksTrocaForcadaMilitar: registrar(
+      'units.colisaoMilitar.trocaForcadaDepois_segundos_base', raw.units.escalaVelocidade,
+      raw.units.colisaoMilitar.trocaForcadaDepois_segundos_base, 'segundos',
+      paraTicksDeDuracao(raw.units.colisaoMilitar.trocaForcadaDepois_segundos_base, 'segundos', escalaMovimento, tickHz),
+    ),
     margemDoDesvioMilitar: raw.units.colisaoMilitar.margemDoDesvio_tiles,
     colisaoCivil: {
       ligada: raw.units.colisaoCivil.ligada,

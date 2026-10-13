@@ -281,6 +281,12 @@ export interface MovimentoData {
   /** C5 — quantos ticks o militar espera um tile ocupado por outro militar antes do passo
    *  para o lado (`units.json: colisaoMilitar`). */
   readonly ticksDesvioMilitar: Ticks;
+  /** BUG-TROPA-PRESA-NA-VARREDURA — quantos ticks o militar espera, com o tile seguinte tomado, antes
+   *  do DODGE do KaM (`units.json: colisaoMilitar.dodgeDepois`). */
+  readonly ticksDodgeMilitar: Ticks;
+  /** BUG-TROPA-PRESA-NA-VARREDURA, emenda 14e — quantos ticks no mesmo tile, com o desvio falhando, antes
+   *  da troca de vaga forcada (o WAITING_TIMEOUT do KaM; `units.json: colisaoMilitar.trocaForcadaDepois`). */
+  readonly ticksTrocaForcadaMilitar: Ticks;
   /** C5 — a margem, em tiles, da caixa da busca local do desvio (limite de busca). */
   readonly margemDoDesvioMilitar: number;
   /** D-MOVIMENTO-01 — a colisao civil (`units.json: colisaoCivil`). `ligada` false: nada muda. */
