@@ -10099,6 +10099,23 @@ inimigo da fase só revida e cai grupo por grupo, e a fase 3 não pede economia 
   4. A evidência da campanha jogada (`tools/jogar-campanha.js`) é rodada de novo, e as fases que errarem
      os alvos A a E têm os números acertados no dado da fase, com a tabela no plano da campanha.
 
+#### I-TRANSPORTE-INSUMO-QUE-ESPERA — o insumo que espera demais deixa de pagar a multa do armazém
+Correção do BUG-CARGA-INFINITA-SEM-VEZ (o operador mandou corrigir os bugs abertos sem interromper; das
+duas saídas registradas, envelhecimento ou teto de vez, esta é o envelhecimento, em degrau). Sob carga
+infinita, a tábua do armazém para a oficina perde sempre para a pedra da escola, na mesma classe (5): as
+duas pagam a multa do armazém, e a pedra está mais perto. O KaM não tem envelhecimento; isto é
+divergência declarada, mínima: só a tarefa de insumo de produção, e só depois de um prazo longo.
+- **Aceite:**
+  1. A tarefa de insumo de produção guarda o tick em que abriu (`abertaEm`, opcional: a tarefa de um save
+     antigo, sem o campo, não envelhece). Aberta há `delivery.lance.esperaSemMulta_segundos` (60 s base,
+     escala `economia`, no dado) ou mais, ela não paga a multa do armazém no lance. Nada mais do lance muda.
+  2. Regra pura, por tabela, pela ordem do quadro: duas tarefas de insumo na mesma classe, a mais longe
+     com a espera vencida vem antes; sem a espera vencida, a mais perto vem antes; sem `abertaEm`, a ordem
+     de antes.
+  3. A corrida B da D-TRANSPORTE-03 (carga infinita) volta a afirmar que as armas CHEGAM ao quartel:
+     `entreguesAoQuartel > 0` em 12 000 ticks (era `>= 0` desde o bug), e nada vai ao armazém.
+  4. `verify` completo verde: a ordem das outras tarefas não muda.
+
 #### I-TELA-JORNAL-ONDA-DA-FASE — o jornal avisa quando chega uma onda da fase
 Pendência da campanha jogável (o relatório de 2026-10-12: "o jornal não avisa quando uma onda chega").
 **Feature de integração** (CLAUDE.md §10): toca `src/sim` (o evento) e `src/render/eventos-da-sim.ts`, a
