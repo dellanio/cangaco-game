@@ -9937,6 +9937,43 @@ de sim.
   5. O HUD mostra a linha do objetivo da fase (o texto do tema).
   6. Os roteiros do menu inicial e da escaramuça continuam saindo 0.
 
+#### I-COMBATE-CAMPANHA-JOGADA — as fases 2 a 10 jogadas sem tela e com os números acertados
+Pedido do operador (2026-10-12): "Prossiga com as fases 2 a 10". As fases já rodam (o item acima), mas
+nenhuma foi jogada nem teve os números conferidos. Não há jogador de economia automático, então a fase
+é jogada por dois jogadores automáticos que só dão ordens de exército, os mesmos comandos do mouse:
+- **`passivo`:** nenhuma ordem;
+- **`ataque`:** a cada 2 s, todo militar ocioso do jogador recebe uma ordem. Na fase de destruir
+  prédios, `AttackBuilding` no prédio inimigo mais perto. Na de destruir tropas, ou quando há inimigo a
+  até 12 tiles de um militar, `AttackUnit` no inimigo mais perto. Na de capturar, ataca a escolta e,
+  sem escolta perto do alvo, marcha para o lado dele. Nas de defender (sobreviver, manter, proteger),
+  só ataca o inimigo que chega a até 12 tiles de um prédio do jogador.
+
+Os alvos de desenho, por fase (as fases de construir pedem economia; as de lutar se vencem com o que
+se tem):
+- **(A) toda fase:** o `passivo` não vence nenhuma fase de destruir ou capturar.
+- **(B) lutar (7, 9, 10):** o `ataque` vence dentro do prazo.
+- **(C) construir com ondas ou prazo (1, 2, 4, 5, 8):** o `passivo` não perde antes de 5 min de jogo
+  (dá tempo de montar a economia), e não vence (a fase tem pressão de verdade).
+- **(D) construir de destruir (1, 2, 3, 6, 8):** o `ataque` só com a tropa inicial não vence (a fase
+  pede economia).
+
+**Aceite:**
+1. A ferramenta `tools/jogar-campanha.js` roda as fases 2 a 10 (e a 1, como referência) com os dois
+   jogadores, até o fim ou até o prazo da fase (ou 30 min de jogo, sem prazo), e grava em
+   `test-output/I-COMBATE-CAMPANHA-JOGADA.json`, por fase e jogador: o resultado, o tick, as tropas que
+   sobraram de cada lado, as ondas disparadas e as ordens recusadas.
+2. Os alvos A a D são conferidos na saída da ferramenta. Fase que erra um alvo tem os números da fase
+   acertados no dado (tropas, ondas, prazo), pelo `.json` da fase e reexportados ao `.tmj`, sem mudar
+   regra da sim. Cada número mudado e o porquê entram na tabela do PROGRESS. Os alvos são de desenho:
+   ficam na evidência, não viram `expect` (CLAUDE.md, "teste afirma mecânica").
+3. Teste `tests/I-COMBATE-CAMPANHA-JOGADA.test.ts`, só mecânica, em horizonte curto: para cada fase,
+   o jogador `ataque` dá ordens que a sim aceita (nenhuma recusa por alvo inválido em 600 ticks), as
+   mesmas 600 ticks repetidas dão o mesmo estado (determinismo), e o `passivo` não vence em 600 ticks.
+4. O roteiro `tools/shots/I-COMBATE-CAMPANHA-JOGADA.js` abre cada uma das fases 2 a 10 pelo
+   `?campanha=<id>`, confere a linha do objetivo e o mapa da fase pela ponte, sem erro de console, e
+   grava uma prancha com as nove capturas, que é aberta.
+5. As fases continuam passando no `validate:data` e na ida e volta do Tiled (`--conferir`).
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
