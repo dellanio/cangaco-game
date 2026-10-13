@@ -9941,6 +9941,15 @@ Execucao na codex-artes, antes do bloco autonomo de artes. Nenhuma mudanca em sr
 
 #### I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO
 - Aceite: o recurso `rock` bloqueia passo enquanto presente; o Pedreiro trabalha de um tile adjacente andável, sem entrar no lajedo. Jazidas de ouro, ferro e carvão continuam atravessáveis. Usar o mecanismo existente de aproximação, sem alterar `src/sim/`. Testes de aproximação e ciclo pelo step; captura em jogo aberta. Se mudar apenas o dado não satisfizer as guardas existentes, registrar o bloqueio sem enfraquecê-las.
+- **Emenda (2026-10-13, antes do código; o operador mandou corrigir os bugs abertos sem interromper):** os
+  contratos que exigiam rocha atravessável são SUBSTITUÍDOS pelo relato do operador (o pedreiro extrai ao
+  lado do lajedo). O motivo escrito no dado ("a pedreira se assenta em cima do lajedo") caiu com o BUG-F,
+  que já proíbe construir sobre a rocha. Medido com `rock.bloqueiaPasso = true` (19 testes em 10 arquivos):
+  a premissa do dado (F-T3, F-T2b), o alvo de aproximação (F-T3: o tile ao lado, não o do lajedo), os tempos
+  de ciclo da pedreira (F15a, F16c, som, transporte) e as contagens de tiles ao alcance (F-T2a: o miolo do
+  lajedo só fica ao alcance quando a borda esgota; o tile esgotado não bloqueia, e a pedreira lavra de fora
+  para dentro, como no KaM), a reta da estrada (F18e) e o save de teste (D-SAVE). Cada um passa a afirmar a
+  medida nova, com o porquê no teste; nenhum é afrouxado nem pulado.
 
 #### I-ARTE-ICONES-COMIDA-GUERRA
 - Aceite: todos os retratos dos prédios de `comida` e `guerra` em `data/menu-build.json`, inclusive Açude, derivam do estado `completo` atual. PNG de 72×72, licença/base preservadas, hash da fonte registrado. Teste de cada fonte e do resolvedor; capturas abertas das duas seções com interação despausada. Os outros grupos permanecem intactos.
