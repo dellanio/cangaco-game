@@ -4,6 +4,7 @@ import type {
   EntregaData, GameData, ModoDeTrabalho, ModosDoPredio, MovimentoData, ProducaoData, ReceitaDePredio,
   MapaData, RecursosData, RegimeDeRecurso, TerrenoData, TerrenoDeMapa, TerrenoTipo,
   LimiaresEmTicks, NumerosDaIA, Ticks, TileDeMapa, TipoDeRecurso, UnidadesData, VisaoData,
+  CampanhaData, FaseData, ObjetivoDaFaseData,
 } from './types';
 import { TERRENOS_DE_MAPA } from './terrenos';
 import { hashDeTexto } from './hash';
@@ -375,6 +376,49 @@ function escalaDe(escalas: RawGameData['time']['escalas'], nome: string | null):
     throw new Error(`loadGameData: grupo de escala '${nome}' nao existe em time.escalas`);
   }
   return valor;
+}
+
+/** I-TERRENO-FASE-NA-SIM — as fases da campanha em ordem de numero, com `aos_segundos` e `segundos`
+ *  convertidos em ticks pela escala que cada fase declara (CLAUDE.md §5: uma vez, aqui). */
+function carregarCampanha(
+  raw: RawGameData, escalas: RawGameData['time']['escalas'], tickHz: number,
+  registrar: (caminho: string, grupo: string | null, valorBase: number, unidade: string, ticks: Ticks) => Ticks,
+): CampanhaData {
+  const fases = [...raw.fases].sort((a, b) => a.fase - b.fase).map((f): FaseData => {
+    const escala = escalaDe(escalas, f.escala) as number;
+    const emTicks = (caminho: string, segundos: number): Ticks =>
+      registrar(`campanha.${f.id}.${caminho}`, f.escala, segundos, 'segundos', paraTicksDeDuracao(segundos, 'segundos', escala, tickHz));
+    const objetivo = (o: object, caminho: string): ObjetivoDaFaseData => {
+      const { segundos, ...resto } = o as { segundos?: number } & Omit<ObjetivoDaFaseData, 'ticks'>;
+      return segundos === undefined ? resto : { ...resto, ticks: emTicks(`${caminho}.segundos`, segundos) };
+    };
+    return {
+      id: f.id,
+      numero: f.fase,
+      modo: f.modo as FaseData['modo'],
+      semente: f.semente,
+      libera: f.libera,
+      objetivos: {
+        vitoria: f.objetivos.vitoria.map((o, i) => objetivo(o, `objetivos.vitoria[${i}]`)),
+        derrota: f.objetivos.derrota.map((o, i) => objetivo(o, `objetivos.derrota[${i}]`)),
+      },
+      ondas: f.ondas.map((o, i) => ({ tick: emTicks(`ondas[${i}].aos_segundos`, o.aos_segundos), lado: o.lado, de: o.de, tropas: o.tropas })),
+      lados: f.lados,
+    };
+  });
+  fases.forEach((f, i) => {
+    if (f.numero !== i + 1) throw new Error(`loadGameData: a campanha precisa das fases 1..${fases.length} sem buraco (achou ${f.numero} na posicao ${i + 1})`);
+  });
+  const m = raw.missao;
+  return {
+    fases,
+    captura: {
+      ticks: registrar('missao.captura.segundos_base', m.escala, m.captura.segundos_base, 'segundos',
+        paraTicksDeDuracao(m.captura.segundos_base, 'segundos', escalaDe(escalas, m.escala) as number, tickHz)),
+      raio_tiles: m.captura.raio_tiles,
+      raioDaEscolta_tiles: m.captura.raioDaEscolta_tiles,
+    },
+  };
 }
 
 export function loadGameData(raw: RawGameData): GameData {
@@ -976,6 +1020,8 @@ export function loadGameData(raw: RawGameData): GameData {
       ticksPorConsumo: registrar('acude.consumo_segundosPorUnidadePorFazenda_base', raw.acude.escala, raw.acude.consumo_segundosPorUnidadePorFazenda_base, 'segundos',
         paraTicksDeDuracao(raw.acude.consumo_segundosPorUnidadePorFazenda_base, 'segundos', escalaDe(escalas, raw.acude.escala), tickHz)),
     },
+    // I-TERRENO-FASE-NA-SIM: as fases em ordem, com os tempos em ticks pela escala de cada uma
+    campanha: carregarCampanha(raw, escalas, tickHz, registrar),
     // I-CLIMA-ESTACAO: cada fase do ciclo em ticks, uma vez, aqui
     clima: {
       ligado: raw.clima.ligado,

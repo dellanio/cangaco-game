@@ -134,21 +134,27 @@
       "unidades": [
         {
           "tipo": "sword_fighter",
-          "quantidade": 4,
+          "quantidade": 8,
           "gx": 108,
           "gy": 62
         },
         {
           "tipo": "crossbowman",
-          "quantidade": 2,
+          "quantidade": 6,
           "gx": 118,
           "gy": 70
         },
         {
           "tipo": "militia",
-          "quantidade": 4,
+          "quantidade": 10,
           "gx": 106,
           "gy": 54
+        },
+        {
+          "tipo": "axe_fighter",
+          "quantidade": 4,
+          "gx": 110,
+          "gy": 76
         }
       ]
     }
@@ -1867,7 +1873,6 @@
         [77, 77],
         [78, 77],
         [89, 77],
-        [109, 77],
         [10, 78],
         [25, 78],
         [26, 78],
@@ -1886,7 +1891,6 @@
         [77, 78],
         [89, 78],
         [90, 78],
-        [108, 78],
         [127, 78],
         [4, 79],
         [6, 79],

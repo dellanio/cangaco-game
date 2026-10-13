@@ -54,7 +54,9 @@ export type MotivoDeRecusaDeLuta =
   /** C-IA-03b — a partida esta em peacetime (`sim/paz.ts`). */
   | 'em-paz'
   /** F-COMBATE-ALVO-NA-VISTA — o jogador mandou atacar quem ele nao ve agora (`sim/nevoa.ts`). */
-  | 'alvo-fora-da-vista';
+  | 'alvo-fora-da-vista'
+  /** BUG-CAPTURADO-MORRE-NA-LUTA-AUTOMATICA — o alvo e quem a fase manda capturar (`sim/fase.ts`). */
+  | 'alvo-de-captura';
 
 /** F26a — por que um `MoveUnits` foi recusado. */
 export type MotivoDeRecusaDeMarcha =
@@ -1491,6 +1493,23 @@ export interface Unidade {
  * referencia circular. `JSON.parse(JSON.stringify(state))` tem que devolver
  * um estado equivalente — e ha teste que verifica isso estruturalmente.
  */
+/**
+ * I-TERRENO-FASE-NA-SIM — o que a partida de campanha guarda da fase. O resto (objetivos, ondas,
+ * libera) vem de `gameData.campanha.fases`, pelo `id`.
+ */
+export interface EstadoDaFase {
+  readonly id: string;
+  readonly numero: number;
+  /** O tick em que a fase comecou: as ondas e os prazos contam dele. */
+  readonly inicio: number;
+  /** Quantas ondas ja nasceram (as ondas sao disparadas na ordem do dado). */
+  readonly ondasDisparadas: number;
+  /** I-COMBATE-FASE-ONDAS-E-OBJETIVOS — os ids das tropas que vieram nas ondas (o `sobreviver`). */
+  readonly tropasDasOndas: readonly string[];
+  /** Ticks seguidos de cada objetivo de vitoria com tempo (`manter`, `capturar`), pelo indice dele. */
+  readonly contagem: Readonly<Record<string, number>>;
+}
+
 export interface GameState {
   readonly tick: number;
   /** O RNG vive DENTRO do estado. Semente fora do estado quebra o load. */
@@ -1621,6 +1640,11 @@ export interface GameState {
    * versao (campo opcional ausente).
    */
   readonly pazAteTick?: number;
+  /**
+   * I-TERRENO-FASE-NA-SIM — a partida e uma fase da campanha (`sim/fase.ts`). AUSENTE no jogo livre e
+   * na escaramuca; so o `criarFase` o cria. O save nao muda de versao (campo opcional ausente).
+   */
+  readonly fase?: EstadoDaFase;
   /**
    * I-COMIDA-AVISO-DA-TROPA-COM-FOME — o tick do ultimo aviso `troop-hungry` de cada LADO (chave: o
    * lado, em texto), so dos lados com tropa em alerta de fome agora (`sim/condicao.ts`). E o

@@ -18,6 +18,19 @@ import acudeJson from '../../../data/acude.json';
 // F-T1 — a camada de terreno base. Um arquivo por mapa; o jogo carrega ESTE, e
 // `tools/gerar-mapa.js` e quem o emite (autoria, nunca runtime).
 import mapaSertaoJson from '../../../data/maps/sertao-128.json';
+// I-TERRENO-FASE-NA-SIM — os numeros da missao e as dez fases da campanha, em ordem. Cada fase traz o
+// proprio mapa; quem o poe no lugar do sertao-128 e o `dadosDaFase` (src/sim/fase.ts).
+import missaoJson from '../../../data/missao.json';
+import fase01Json from '../../../data/campanha/fase-01-pianco.json';
+import fase02Json from '../../../data/campanha/fase-02-patos.json';
+import fase03Json from '../../../data/campanha/fase-03-soledade.json';
+import fase04Json from '../../../data/campanha/fase-04-boqueirao.json';
+import fase05Json from '../../../data/campanha/fase-05-campina-grande.json';
+import fase06Json from '../../../data/campanha/fase-06-areia.json';
+import fase07Json from '../../../data/campanha/fase-07-itabaiana.json';
+import fase08Json from '../../../data/campanha/fase-08-santa-rita.json';
+import fase09Json from '../../../data/campanha/fase-09-joao-pessoa.json';
+import fase10Json from '../../../data/campanha/fase-10-cabedelo.json';
 
 // theme-sertao.json fica de fora deliberadamente. CLAUDE.md 9: sim/ nunca le
 // o arquivo de tema — ele alimenta so a tela e o pipeline de arte. Reforcado
@@ -50,6 +63,8 @@ export const rawGameData = {
   clima: climaJson,
   acude: acudeJson,
   mapa: mapaSertaoJson,
+  missao: missaoJson,
+  fases: [fase01Json, fase02Json, fase03Json, fase04Json, fase05Json, fase06Json, fase07Json, fase08Json, fase09Json, fase10Json],
 };
 
 export type RawGameData = typeof rawGameData;

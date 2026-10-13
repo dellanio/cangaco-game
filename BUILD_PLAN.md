@@ -9957,6 +9957,122 @@ Execucao na codex-artes, antes do bloco autonomo de artes. Nenhuma mudanca em sr
 
 - Emenda técnica do vento A08 antes do código: o validador existente distingue espécies dos três estados de crescimento. Os juvenis herdam os valores de `presente` pelo seletor puro do render, em vez de duplicar entradas que o validador recusa. Um teste altera amplitude e velocidade da base no dado de teste e exige transformação idêntica da adulta e dos três juvenis. Os estados de outras espécies passam intactos pelo seletor. O validador e as entradas atuais de vento não mudam; espécies desconhecidas continuam recusadas. Esta herança substitui o cadastro individual previsto acima, conservando a mesma exigência de valores e acompanhando alterações futuras da base.
 
+### Pedido do operador de 2026-10-12: a campanha jogável (plano em `docs/planos/2026-10-12-campanha-jogavel.md`)
+
+O operador confirmou os prédios encaixados nas fases, aprovou as regras do capturar (fase 7) e do
+navio (fase 10) e pediu a fase 1 jogável de ponta a ponta primeiro, com o ícone da Campanha no menu.
+**Nota de integração:** o item E é de integração (UI, render e o `inicio.ts`); os itens A, B e C são
+de sim.
+
+#### I-TERRENO-FASE-NA-SIM — a fase vira estado de partida
+- **Aceite:**
+  1. `criarFase(fase-01, dados)` põe cada prédio e cada unidade do dado no lado e no lugar do dado (o
+     prédio no tile, a unidade a até 12 tiles do ponto, em tile andável livre), com o estoque do
+     armazém de cada lado. O teste confere as dez fases.
+  2. Determinismo: duas chamadas dão o mesmo estado, byte a byte (`JSON.stringify`), e 600 ticks de
+     `step` a partir delas também.
+  3. `gameData.campanha` traz as dez fases em ordem, com `aos_segundos` e `segundos` em ticks
+     (inteiros), pela escala `combate`. O teste compara com a conta feita à mão para a fase 1.
+  4. `usarDadosDaFase`: depois dela, quem importou `gameData` lê o mapa da fase (a ligação viva). A
+     segunda chamada com outra fase lança erro, e com a mesma fase não muda nada.
+  5. `state.fase` passa pela guarda `GUARDA-step-preserva-opcionais`.
+  6. O teste das dez fases (`I-TERRENO-DEZ-MAPAS-DA-CAMPANHA`) passa a usar as funções do
+     `src/sim/fase.ts`, e continua verde nos dois mundos.
+
+#### I-COMBATE-FASE-ONDAS-E-OBJETIVOS — a missão roda dentro do `step`
+- **Aceite (pelo `step`):**
+  1. A onda nasce no tick do dado (nem antes nem depois), com o número e o tipo de tropa do dado, no
+     lado do dado, e as tropas dela vão atacar um prédio do jogador (`indo_atacar`, alvo do lado 0).
+  2. Cada condição por tabela, com um estado montado: `destruir` (prédios, tropas, lista),
+     `perder` (todos os listados), `proteger` (qualquer um), `prazo`, `sobreviver`, `manter` e
+     `capturar` (fica no raio pelo tempo do dado → vitória; um militar do lado dele no raio de
+     escolta zera a contagem).
+  3. Vitória pede todos os objetivos de vitória; derrota, qualquer um de derrota; no mesmo tick, a
+     derrota vence. O resultado é gravado uma vez em `state.partida`, com o evento `match-ended`.
+  4. A fase 1 de verdade: derrubando os prédios do Cabo Branco pelo `step`, a partida termina em
+     vitória; derrubando o armazém e a escola do jogador, em derrota.
+  5. A escaramuça não muda: o teste da F34 e o do C-IA-03b continuam verdes, sem edição.
+  6. Os números do capturar ficam em `data/campanha.json` e passam pelo `validate:data`.
+
+#### I-OBRA-FASE-LIBERA — a fase tranca o que ainda não liberou
+- **Aceite:**
+  1. A lista de liberados da fase N, por tabela: a soma do `libera` das fases 1..N mais os tipos que o
+     jogador tem de pé no início. Fase 1: os sete prédios da fase 1, mais o armazém e a escola.
+  2. Na fase 1, `PlaceBuilding` de um prédio da fase 2 (a fazenda, `farm`) é recusado com
+     `fase-trancada`, e o mesmo comando num prédio liberado é aceito. Fora da campanha nada muda.
+  3. O treino de uma tropa trancada é recusado, e o de uma liberada é aceito.
+  4. O menu Build da fase 1 mostra a fazenda com o cadeado e o motivo da campanha (roteiro, captura
+     aberta).
+
+#### I-ARTE-ICONE-CAMPANHA — o ícone do botão da campanha
+- **Aceite:** o PNG 96x96 RGBA em `assets/sprites/ui/menu/campanha.png`, a base em
+  `assets/base/ui/campanha/` com o registro da geração, a entrada no manifesto com os oito campos, e a
+  prancha (96, 48 e 32 px) aberta. A homologação é do operador.
+
+#### I-TELA-MENU-DA-CAMPANHA — escolher a fase, jogar e seguir
+- **Aceite:**
+  1. A regra pura do progresso, por tabela: sem nada vencido, só a fase 1 abre; com a fase N vencida,
+     abre a N+1; uma gravação ilegível no `localStorage` conta como nada vencido.
+  2. O roteiro `tools/shots/I-TELA-MENU-DA-CAMPANHA.js` (com um passo despausado e o gesto segurado
+     150 ms, CLAUDE.md §8): Novo jogo → Campanha (o ícone aparece, com tamanho medido) → a lista com a
+     fase 1 aberta e a 2 com cadeado → a fase 1 mostra a narrativa → Começar. A partida abre com o mapa
+     da fase 1: a ponte publica `fase.id` e o mapa, e um tile conhecido do mapa da fase tem o terreno
+     do dado. As capturas são abertas.
+  3. O mesmo roteiro termina a fase 1 pela ponte (comandos de verdade até a vitória, ou um save
+     preparado pelo teste perto dela), vê **Próxima fase**, e ao voltar ao menu a fase 2 está aberta.
+  4. Salvar uma partida de fase e carregá-la abre o mapa da fase (o roteiro carrega da gaveta e
+     confere o tile).
+  5. O HUD mostra a linha do objetivo da fase (o texto do tema).
+  6. Os roteiros do menu inicial e da escaramuça continuam saindo 0.
+
+#### I-COMBATE-CAMPANHA-JOGADA — as fases 2 a 10 jogadas sem tela e com os números acertados
+Pedido do operador (2026-10-12): "Prossiga com as fases 2 a 10". As fases já rodam (o item acima), mas
+nenhuma foi jogada nem teve os números conferidos. Não há jogador de economia automático, então a fase
+é jogada por dois jogadores automáticos que só dão ordens de exército, os mesmos comandos do mouse:
+- **`passivo`:** nenhuma ordem;
+- **`ataque`:** a cada 2 s, todo militar ocioso do jogador recebe uma ordem. Na fase de destruir
+  prédios, `AttackBuilding` no prédio inimigo mais perto. Na de destruir tropas, ou quando há inimigo a
+  até 12 tiles de um militar, `AttackUnit` no inimigo mais perto. Na de capturar, ataca a escolta e,
+  sem escolta perto do alvo, marcha para o lado dele. Nas de defender (sobreviver, manter, proteger),
+  só ataca o inimigo que chega a até 12 tiles de um prédio do jogador.
+
+Os alvos de desenho, por fase (as fases de construir pedem economia; as de lutar se vencem com o que
+se tem):
+- **(A) toda fase:** o `passivo` não vence nenhuma fase de destruir ou capturar.
+- **(B) lutar (7, 9, 10):** o `ataque` vence dentro do prazo.
+- **(C) construir com ondas ou prazo (1, 2, 4, 5, 8):** o `passivo` não perde antes de 5 min de jogo
+  (dá tempo de montar a economia), e não vence (a fase tem pressão de verdade).
+- **(D) construir de destruir (1, 2, 3, 6, 8):** o `ataque` só com a tropa inicial não vence (a fase
+  pede economia).
+
+**Emenda 1 (2026-10-13, antes do código; pela medida da primeira corrida):** o alvo D sozinho empurra a
+fase para "impossível" sem nada que segure o outro lado. Entra um terceiro jogador e um alvo:
+- **`reforço`:** o mesmo `ataque`, com cada militar inicial do jogador em dobro (o mesmo tipo, nascido
+  ao lado). É o que a economia daria na fase, uma medida aproximada e só da ferramenta: a fase de
+  verdade não dá reforço nenhum.
+- **(E) construir (1 a 6, 8):** o `reforço` vence (destruir, capturar) ou não perde (sobreviver,
+  manter) dentro do prazo, ou em 30 min sem prazo. Com o D, a tropa inicial não basta e o dobro basta.
+- O `ataque` (e o `reforço`) segue o primeiro objetivo de vitória ainda não cumprido, não só o
+  primeiro da lista, nunca ataca a unidade que a fase manda capturar, nem o prédio que um objetivo de
+  derrota manda proteger.
+
+**Aceite:**
+1. A ferramenta `tools/jogar-campanha.js` roda as fases 2 a 10 (e a 1, como referência) com os dois
+   jogadores, até o fim ou até o prazo da fase (ou 30 min de jogo, sem prazo), e grava em
+   `test-output/I-COMBATE-CAMPANHA-JOGADA.json`, por fase e jogador: o resultado, o tick, as tropas que
+   sobraram de cada lado, as ondas disparadas e as ordens recusadas.
+2. Os alvos A a D são conferidos na saída da ferramenta. Fase que erra um alvo tem os números da fase
+   acertados no dado (tropas, ondas, prazo), pelo `.json` da fase e reexportados ao `.tmj`, sem mudar
+   regra da sim. Cada número mudado e o porquê entram na tabela do PROGRESS. Os alvos são de desenho:
+   ficam na evidência, não viram `expect` (CLAUDE.md, "teste afirma mecânica").
+3. Teste `tests/I-COMBATE-CAMPANHA-JOGADA.test.ts`, só mecânica, em horizonte curto: para cada fase,
+   o jogador `ataque` dá ordens que a sim aceita (nenhuma recusa por alvo inválido em 600 ticks), as
+   mesmas 600 ticks repetidas dão o mesmo estado (determinismo), e o `passivo` não vence em 600 ticks.
+4. O roteiro `tools/shots/I-COMBATE-CAMPANHA-JOGADA.js` abre cada uma das fases 2 a 10 pelo
+   `?campanha=<id>`, confere a linha do objetivo e o mapa da fase pela ponte, sem erro de console, e
+   grava uma prancha com as nove capturas, que é aberta.
+5. As fases continuam passando no `validate:data` e na ida e volta do Tiled (`--conferir`).
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a

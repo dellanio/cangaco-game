@@ -8,15 +8,13 @@ import { describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { gameData, rawGameData } from '../src/sim/data';
-import { loadGameData } from '../src/sim/data/loader';
+import { gameData } from '../src/sim/data';
 import type { GameData } from '../src/sim/data/types';
-import { completarObra, createInitialState } from '../src/sim/state';
-import type { GameState, Predio, Unidade } from '../src/sim/state';
+import { criarFase, dadosDaFase } from '../src/sim/fase';
+import type { GameState } from '../src/sim/state';
 import { step } from '../src/sim/tick';
 import { buscarCaminho, tileAndavel } from '../src/sim/pathfinding';
 import type { TileDeGrid } from '../src/sim/estradas';
-import { condicaoCheiaDoTipo } from '../src/sim/condicao';
 import { validarCampanha } from '../tools/data-rules.js';
 import { ARQUIVOS } from '../tools/data-schema.js';
 import { escreverFase } from '../tools/fase-formato.mjs';
@@ -33,55 +31,7 @@ const FASES: Fase[] = ARQUIVOS_DAS_FASES.map((n) => JSON.parse(readFileSync(join
 const DADOS: Record<string, unknown> = Object.fromEntries(ARQUIVOS.map((n) => [n, JSON.parse(readFileSync(join('data', `${n}.json`), 'utf8')) as unknown]));
 const comoMapa = (fs: Record<string, Fase>): Record<string, unknown> => fs;
 
-/** A sim com o mapa da fase no lugar do `sertao-128`, e sem a vila inicial do sandbox. */
-function dadosDaFase(fase: Fase): GameData {
-  const mapa = { ...rawGameData.mapa, id: fase.id, linhas: fase.mapa.linhas, recursos: fase.mapa.recursos };
-  const economy = { ...rawGameData.economy, estadoInicial: { ...rawGameData.economy.estadoInicial, predios: [], unidades: {} } };
-  return loadGameData({ ...rawGameData, mapa, economy } as unknown as typeof rawGameData);
-}
-
-/** O estado da fase: os predios completos e as tropas de cada lado, cada unidade num tile andavel livre
- *  perto do ponto dela (como o spawn da escaramuca). */
-function estadoDaFase(fase: Fase, dados: GameData): GameState {
-  let s = createInitialState(dados.economia.estadoInicial.semente, dados);
-  const predios: Record<string, Predio> = {};
-  const ordemP: string[] = [];
-  const unidades: Record<string, Unidade> = {};
-  const ordemU: string[] = [];
-  let n = 1;
-  for (const lado of fase.lados) {
-    for (const p of lado.predios) {
-      const def = dados.predios.find((d) => d.id === p.id);
-      const id = `p${n++}`;
-      predios[id] = completarObra({ lado: lado.lado, id, tipo: p.id, gx: p.gx, gy: p.gy, estado: 'obra', hp: def?.hp ?? 1, obra: { faltam: {}, nivelamento: 0 } }, dados);
-      ordemP.push(id);
-    }
-  }
-  s = { ...s, predios: { porId: predios, ordem: ordemP } };
-  const ocupado = new Set<string>();
-  for (const lado of fase.lados) {
-    for (const u of lado.unidades) {
-      let postos = 0;
-      for (let r = 0; postos < u.quantidade && r < 12; r++) {
-        for (let dy = -r; dy <= r && postos < u.quantidade; dy++) {
-          for (let dx = -r; dx <= r && postos < u.quantidade; dx++) {
-            if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-            const t = { gx: u.gx + dx, gy: u.gy + dy };
-            const k = `${t.gx},${t.gy}`;
-            if (ocupado.has(k) || !tileAndavel(s, t, 'livre', dados)) continue;
-            ocupado.add(k);
-            const id = `u${n++}`;
-            unidades[id] = { id, lado: lado.lado, tipo: u.tipo, gx: t.gx, gy: t.gy, fsm: 'ocioso', fsmData: {}, condicao: condicaoCheiaDoTipo(u.tipo, dados) };
-            ordemU.push(id);
-            postos++;
-          }
-        }
-      }
-      if (postos < u.quantidade) throw new Error(`${fase.id}: sem lugar para ${u.quantidade} '${u.tipo}' em (${u.gx},${u.gy})`);
-    }
-  }
-  return { ...s, unidades: { porId: unidades, ordem: ordemU } };
-}
+// I-TERRENO-FASE-NA-SIM: o dado e o estado da fase vem da sim (src/sim/fase.ts), que nasceu daqui.
 
 /** Os tiles andaveis vizinhos de qualquer tile da lista (quem colhe para ao lado do recurso). */
 function vizinhosAndaveis(s: GameState, dados: GameData, tiles: readonly (readonly [number, number])[]): TileDeGrid[] {
@@ -147,8 +97,8 @@ describe('I-TERRENO-DEZ-MAPAS-DA-CAMPANHA', () => {
   it('(2) pelo A* da sim: do inicio do jogador se chega a pedra e a arvore (fase de construir) e ao inimigo, em toda fase', () => {
     const medido: Record<string, Record<string, number | null>> = {};
     for (const fase of FASES) {
-      const dados = dadosDaFase(fase);
-      const s = estadoDaFase(fase, dados);
+      const dados = dadosDaFase(fase.id);
+      const s = criarFase(fase.id, dados);
       const inicio = fase.lados[0]?.unidades[0];
       if (inicio === undefined) throw new Error(`${fase.id}: sem unidade do jogador`);
       const de = { gx: inicio.gx, gy: inicio.gy };
@@ -218,9 +168,9 @@ describe('I-TERRENO-DEZ-MAPAS-DA-CAMPANHA', () => {
   it('(4) cada fase carrega na sim (o mapa no lugar do sertao-128) e roda 600 ticks sem violacao de invariante', () => {
     const resumo: Record<string, { unidades: number; predios: number; violacoes: number }> = {};
     for (const fase of FASES) {
-      const dados = dadosDaFase(fase);
+      const dados = dadosDaFase(fase.id);
       expect(dados.mapa.hash, `${fase.id}: o mapa da fase e outro mapa`).not.toBe(gameData.mapa.hash);
-      let s = estadoDaFase(fase, dados);
+      let s = criarFase(fase.id, dados);
       const violacoes: string[] = [];
       for (let t = 0; t < 600; t++) {
         s = step(s, [], dados);

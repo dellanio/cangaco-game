@@ -1165,6 +1165,18 @@ function validarPedidoDeComida(dados, erros) {
 // I-CLIMA-ESTACAO — o ciclo nao e vazio, cada fase tem id unico, duracao > 0 e multiplicador > 0, e as
 // culturas sao tipos de recurso
 // I-PRODUCAO-ACUDE-AGUA — a agua do Acude e a irrigacao
+// I-COMBATE-FASE-ONDAS-E-OBJETIVOS — os numeros da missao (a captura do capturar)
+function validarMissao(dados, erros) {
+  const e = (msg) => erros.push(`missao: ${msg}`);
+  const m = dados.missao;
+  if (!m || typeof m !== 'object') { e('data/missao.json precisa existir'); return; }
+  const c = m.captura;
+  if (!c || typeof c !== 'object') { e('captura precisa existir'); return; }
+  if (!(typeof c.segundos_base === 'number' && c.segundos_base > 0)) e('captura.segundos_base precisa ser > 0');
+  if (!(Number.isInteger(c.raio_tiles) && c.raio_tiles >= 1)) e('captura.raio_tiles precisa ser inteiro >= 1');
+  if (!(Number.isInteger(c.raioDaEscolta_tiles) && c.raioDaEscolta_tiles >= c.raio_tiles)) e('captura.raioDaEscolta_tiles precisa ser inteiro >= raio_tiles');
+}
+
 function validarAcude(dados, erros) {
   const e = (msg) => erros.push(`acude: ${msg}`);
   const a = dados.acude;
@@ -2327,6 +2339,7 @@ function validarTudo(dados) {
   validarAvisoDaTropaComFome(dados, erros);
   validarClima(dados, erros);
   validarAcude(dados, erros);
+  validarMissao(dados, erros);
   validarPrazoDeProgresso(dados, erros);
   validarPrioridadesDaIA(dados, erros);
   validarEscaramuca(dados, erros);

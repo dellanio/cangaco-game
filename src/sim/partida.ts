@@ -12,6 +12,7 @@ import { ID_DA_ESCOLA, ID_DO_ARMAZEM, ID_DO_QUARTEL, LADO_DO_JOGADOR } from './s
 import type { GameData } from './data/types';
 import { gameData } from './data';
 import { classeDaUnidade } from './condicao';
+import { resultadoDaFase } from './systems/fase';
 
 export type FimDaPartida = 'vitoria' | 'derrota';
 
@@ -32,7 +33,9 @@ export function ladoCaiu(state: GameState, lado: number, dados: GameData = gameD
   });
 }
 
-export function resultadoDaPartida(state: GameState, dados: GameData = gameData): FimDaPartida | null {
+export function resultadoDaPartida(state: GameState, dados: GameData = gameData, tick: number = state.tick): FimDaPartida | null {
+  // I-COMBATE-FASE-ONDAS-E-OBJETIVOS: a partida de campanha acaba pelos objetivos da fase
+  if (state.fase !== undefined) return resultadoDaFase(state, dados, tick);
   if (state.ia === undefined) return null;
   const oponentes = Object.keys(state.ia).map(Number).filter((l) => l !== LADO_DO_JOGADOR);
   if (oponentes.length === 0) return null;

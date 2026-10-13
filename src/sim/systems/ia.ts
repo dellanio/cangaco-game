@@ -185,12 +185,25 @@ function atacarComASobra(state: GameState, lado: number, ia: IADoLado, dados: Ga
     .filter((u): u is Unidade => u !== undefined && u.lado === lado && u.fsm === 'ocioso'
       && classeDaUnidade(u.tipo, dados) === 'militar' && posicaoDoMembro(ia.posicoes, u.id) === null);
   if (livres.length < numerosDaIA(state, lado, dados).tamanhoDoGrupo) return state;
+  const alvo = alvoDoAtaque(state, livres, lado, dados);
+  if (alvo === null) return state;
+  let atual = state;
+  for (const u of livres) atual = comUnidade(atual, { ...u, fsm: FSM_INDO_ATACAR, fsmData: { alvo } });
+  return atual;
+}
+
+/**
+ * O predio que um grupo do `lado` ataca: o mais perto do centro do grupo entre os PRIORITARIOS (C8:
+ * a IA nova do KaM, quartel, armazem, escola, prefeitura); sem nenhum de pe, qualquer predio de outro
+ * lado. `null` sem predio de outro lado. Tambem e o alvo das ondas da campanha
+ * (I-COMBATE-FASE-ONDAS-E-OBJETIVOS, `sim/systems/fase.ts`).
+ */
+export function alvoDoAtaque(state: GameState, grupo: readonly Unidade[], lado: number, dados: GameData): string | null {
+  if (grupo.length === 0) return null;
   const centro = {
-    gx: Math.round(livres.reduce((s, u) => s + u.gx, 0) / livres.length),
-    gy: Math.round(livres.reduce((s, u) => s + u.gy, 0) / livres.length),
+    gx: Math.round(grupo.reduce((s, u) => s + u.gx, 0) / grupo.length),
+    gy: Math.round(grupo.reduce((s, u) => s + u.gy, 0) / grupo.length),
   };
-  // C8: o mais perto entre os PRIORITARIOS (a IA nova do KaM: quartel, armazem, escola,
-  // prefeitura); sem nenhum de pe, qualquer predio de outro lado
   const prioritarios = new Set<string>(dados.combate.ia.alvosPrioritarios);
   const maisPerto = (serve: (tipo: string) => boolean): { id: string; d: number } | null => {
     let melhor: { id: string; d: number } | null = null;
@@ -205,11 +218,7 @@ function atacarComASobra(state: GameState, lado: number, ia: IADoLado, dados: Ga
     }
     return melhor;
   };
-  const alvo = maisPerto((t) => prioritarios.has(t)) ?? maisPerto(() => true);
-  if (alvo === null) return state;
-  let atual = state;
-  for (const u of livres) atual = comUnidade(atual, { ...u, fsm: FSM_INDO_ATACAR, fsmData: { alvo: alvo.id } });
-  return atual;
+  return (maisPerto((t) => prioritarios.has(t)) ?? maisPerto(() => true))?.id ?? null;
 }
 
 /** `tick` e o numero do tick que este `step` produz (o `state.tick` ainda e o anterior). */

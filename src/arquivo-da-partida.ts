@@ -19,6 +19,7 @@ import type { GameState } from './sim/state';
 import { carregar, salvar } from './sim/save';
 import type { GameData } from './sim/data/types';
 import { gameData } from './sim/data';
+import { dadosDaFase } from './sim/fase';
 
 /** O pedaco do `Storage` que o arquivo usa. */
 export interface Gaveta {
@@ -102,6 +103,42 @@ function mensagemDe(erro: unknown): string {
  * se o Continuar abre (e por que nao), antes de o jogo existir. `gaveta` nula e o navegador sem
  * armazenamento. O `carregar` do jogo passa por aqui tambem.
  */
+/**
+ * I-TELA-MENU-DA-CAMPANHA — o mapa que o save pede, sem carregar o estado: o `mapa` gravado, ou
+ * `null` se o texto nao e um save legivel.
+ */
+export function mapaDoSave(texto: string): string | null {
+  try {
+    const cru = JSON.parse(texto) as { mapa?: unknown };
+    return typeof cru.mapa === 'string' ? cru.mapa : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * I-TELA-MENU-DA-CAMPANHA — os dados com que o save abre: o da fase, se o mapa dele e uma fase da
+ * campanha (o `dadosDaFase` usa o id da fase como id do mapa); senao, `dados`. Assim o save de uma
+ * fase abre do menu sem a pagina saber antes qual mapa ele tem.
+ */
+export function dadosDoSave(texto: string, dados: GameData = gameData): GameData {
+  const mapa = mapaDoSave(texto);
+  if (mapa === null || mapa === dados.mapa.id) return dados;
+  return dados.campanha.fases.some((f) => f.id === mapa) ? dadosDaFase(mapa) : dados;
+}
+
+/** I-TELA-MENU-DA-CAMPANHA — o mapa do save de uma gaveta, ou `null` (vazia, ilegivel ou sem gaveta).
+ *  E o que o jogo confere antes de carregar: save de outro mapa pede outra pagina. */
+export function mapaDaGaveta(gaveta: Gaveta | null, n: NumeroDaGaveta): string | null {
+  if (gaveta === null) return null;
+  try {
+    const texto = gaveta.getItem(chaveDaGaveta(n));
+    return texto === null ? null : mapaDoSave(texto);
+  } catch {
+    return null;
+  }
+}
+
 export type LeituraDoSave =
   | { readonly ok: true; readonly estado: GameState }
   | { readonly ok: false; readonly causa: 'sem-save' | 'recusado' | 'gaveta'; readonly detalhe: string };
@@ -116,7 +153,7 @@ export function lerGaveta(gaveta: Gaveta | null, n: NumeroDaGaveta, dados: GameD
   }
   if (texto === null) return { ok: false, causa: 'sem-save', detalhe: '' };
   try {
-    return { ok: true, estado: carregar(texto, dados) };
+    return { ok: true, estado: carregar(texto, dadosDoSave(texto, dados)) };
   } catch (erro) {
     return { ok: false, causa: 'recusado', detalhe: mensagemDe(erro) };
   }

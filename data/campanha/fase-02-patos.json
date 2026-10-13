@@ -123,13 +123,13 @@
       "unidades": [
         {
           "tipo": "militia",
-          "quantidade": 5,
+          "quantidade": 8,
           "gx": 96,
           "gy": 102
         },
         {
           "tipo": "bowman",
-          "quantidade": 2,
+          "quantidade": 4,
           "gx": 90,
           "gy": 104
         }

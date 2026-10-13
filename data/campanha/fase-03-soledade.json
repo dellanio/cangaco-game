@@ -141,15 +141,21 @@
       "unidades": [
         {
           "tipo": "militia",
-          "quantidade": 6,
+          "quantidade": 16,
           "gx": 64,
           "gy": 72
         },
         {
           "tipo": "bowman",
-          "quantidade": 3,
+          "quantidade": 8,
           "gx": 60,
           "gy": 66
+        },
+        {
+          "tipo": "axe_fighter",
+          "quantidade": 6,
+          "gx": 70,
+          "gy": 72
         }
       ]
     }
@@ -241,7 +247,7 @@
       "ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggagggggggggggggaggggggggggggg",
       "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaaagggggggaaagggggggggggg",
       "ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaggggggggaaagggggggggggg",
-      "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggmmgggggggmggggggggggggggggggggggggggggggggggggggggggggaaggggggggggggg",
+      "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggmmggggggggggggggggggggggggggggggggggggggggggggggggggggaaggggggggggggg",
       "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggmmmmmmmmmmmgggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
       "ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggmmmmmmmmmmmmmggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
       "ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggmmmmmmmmmmmmmggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",

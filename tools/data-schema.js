@@ -26,6 +26,8 @@ const ARQUIVOS = [
   'clima',
   // I-PRODUCAO-ACUDE-AGUA — a agua do Acude e a irrigacao.
   'acude',
+  // I-COMBATE-FASE-ONDAS-E-OBJETIVOS — os numeros da missao (a captura). As fases ficam em data/campanha/.
+  'missao',
   // F-T1 — a camada de terreno base. Um arquivo por mapa; `maps/` e diretorio
   // porque a campanha vai ter varios (GDD Anexo B).
   'maps/sertao-128',
@@ -115,6 +117,9 @@ const CAMPOS_ESCALONADOS = [
   { arquivo: 'acude', caminho: 'evaporacao_segundosPorUnidade_base',
     unidade: 'segundos', declaraEscalaEm: 'escala' },
   { arquivo: 'acude', caminho: 'consumo_segundosPorUnidadePorFazenda_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
+  // I-COMBATE-FASE-ONDAS-E-OBJETIVOS — quanto tempo a tropa fica ao lado do alvo para capturar.
+  { arquivo: 'missao', caminho: 'captura.segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escala' },
   { arquivo: 'units', caminho: 'velocidadeBase_tilesPorSegundo.aPe',
     unidade: 'tilesPorSegundo', declaraEscalaEm: 'escalaVelocidade' },

@@ -1,0 +1,23 @@
+{
+  "tool": "image_gen (nativa)",
+  "generation_id": "01a1317f-7df9-73b1-ac93-6f2f88992e9a",
+  "output_id": "exec-81248c37-0501-4dec-b9fb-86187a4ca320",
+  "seed": null,
+  "seed_note": "Ferramenta nao informou semente.",
+  "prompt": "Use case: stylized-concept. Create ONE square transparent-background game menu icon for \"Campanha\", Piancó, Paraíba sertão, Brazil in the 1930s. References are style references only: existing menu brown-ink silhouettes subaba-guerra, subaba-vila, titulo-mandacaru. Match their restrained dark brown ink, bold simple contours and handcrafted worn brush edges; add warm aged paper ochre and terracotta washes, no polished 3D rendering.\nSubject: an unrolled old paper map with curled edges, a clearly visible winding RED DASHED route connecting four bold circular campaign waypoints from inland Piancó toward the coastline. A small authentic brown leather cangaceiro hat rests on ONE corner: characteristic crescent half-moon upturned brim, visible crown, simple leather stitching. Hat must not cover route. No text or letters. Simple faint brown map/coast strokes, no busy cartography.\nComposition: centered complete isolated object, large within square with 7% transparent safety margin, readable silhouette. Map occupies most of icon, hat about one-third width. Red route and separate dots must remain easily legible when the entire image is reduced to 48x48 pixels; use chunky short dashes, few details. Thick dark brown outlines.\nPalette: paper #D9C9A8 and #C9974B, ink #5A3F2B, leather #8A5A32, terracotta #B4562F; route muted strong red. Painterly ink and aged paper, restrained volume. One light from above slightly south (viewer bottom), no east-west light. Genuine RGBA transparency around objects, no background, no frame, no cast shadow beyond tiny contact shadow on the paper beneath hat. No watermark. No assets or references from the 1998 game. Generate high resolution square master.",
+  "references": [
+    "assets/sprites/ui/menu/subaba-guerra.png",
+    "assets/sprites/ui/menu/subaba-vila.png",
+    "assets/sprites/ui/menu/titulo-mandacaru.png"
+  ],
+  "base": "assets/base/ui/campanha/campanha-base.png",
+  "derived": "assets/sprites/ui/menu/campanha.png",
+  "license": "Imagem gerada por IA para este projeto; sem assets do jogo de 1998.",
+  "derivation": "FFmpeg Lanczos, 96x96, pixel format RGBA",
+  "visual_review": "Prancha aberta: mapa, chapeu e trilha vermelha distinguiveis em 48px; detalhes internos reduzidos em 32px.",
+  "sha256": {
+    "assets/base/ui/campanha/campanha-base.png": "e5515aec8423464a3228b69f2069b4de0578ced21be84581fa86ab7f20ce8a31",
+    "assets/sprites/ui/menu/campanha.png": "62a2a4beae1a6f64a9ccd2c24dbd339e0694855fac531410e95443ff546d4591",
+    "screenshots/I-ARTE-ICONE-CAMPANHA-prancha.png": "30da3e1a222632aa3c31c3bdae3e99d939a24db59f51881633a3d21244b8469b"
+  }
+}

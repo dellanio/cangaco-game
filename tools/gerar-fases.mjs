@@ -236,7 +236,7 @@ const FASES = [
       return {
         lados: [
           { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 10, timber: 25, stone: 10, loaves: 10 }, predios: jogador,
-            unidades: [tropa(p, 'serf', 4, 21, 27), tropa(p, 'laborer', 2, 25, 27)] },
+            unidades: [tropa(p, 'serf', 4, 21, 27), tropa(p, 'laborer', 2, 25, 27), tropa(p, 'militia', 4, 30, 30)] },
           { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo, unidades: [tropa(p, 'militia', 6, 82, 62)] },
         ],
       };
@@ -274,7 +274,7 @@ const FASES = [
         lados: [
           { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 15, timber: 30, stone: 20, loaves: 12, sausages: 6 }, predios: jogador,
             unidades: [tropa(p, 'serf', 6, 20, 36), tropa(p, 'laborer', 3, 26, 36), tropa(p, 'militia', 8, 32, 40)] },
-          { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo, unidades: [tropa(p, 'militia', 5, 96, 102), tropa(p, 'bowman', 2, 90, 104)] },
+          { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo, unidades: [tropa(p, 'militia', 8, 96, 102), tropa(p, 'bowman', 4, 90, 104)] },
         ],
       };
     },
@@ -309,7 +309,7 @@ const FASES = [
         lados: [
           { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 20, timber: 30, stone: 30, loaves: 15, sausages: 10 }, predios: jogador,
             unidades: [tropa(p, 'serf', 6, 8, 68), tropa(p, 'laborer', 3, 14, 68), tropa(p, 'militia', 10, 24, 70), tropa(p, 'axe_fighter', 4, 30, 70), tropa(p, 'bowman', 4, 36, 70)] },
-          { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo, unidades: [tropa(p, 'militia', 6, 64, 72), tropa(p, 'bowman', 3, 60, 66)] },
+          { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo, unidades: [tropa(p, 'militia', 16, 64, 72), tropa(p, 'bowman', 8, 60, 66), tropa(p, 'axe_fighter', 6, 70, 72)] },
         ],
       };
     },
@@ -321,12 +321,12 @@ const FASES = [
     libera: { predios: ['fishermans', 'reservoir', 'watchtower'], tropas: ['lance_carrier'] },
     objetivos: { vitoria: [{ tipo: 'sobreviver', ondas: 6 }], derrota: [{ tipo: 'proteger', lado: 0, predios: ['reservoir'] }] },
     ondas: [
-      { aos_segundos: 300, lado: 1, de: { gx: 64, gy: 126 }, tropas: [{ tipo: 'militia', quantidade: 6 }] },
+      { aos_segundos: 300, lado: 1, de: { gx: 64, gy: 126 }, tropas: [{ tipo: 'militia', quantidade: 5 }] },
       { aos_segundos: 540, lado: 1, de: { gx: 2, gy: 80 }, tropas: [{ tipo: 'militia', quantidade: 4 }, { tipo: 'bowman', quantidade: 2 }] },
-      { aos_segundos: 780, lado: 1, de: { gx: 125, gy: 80 }, tropas: [{ tipo: 'axe_fighter', quantidade: 4 }] },
-      { aos_segundos: 1020, lado: 1, de: { gx: 64, gy: 126 }, tropas: [{ tipo: 'scout', quantidade: 4 }, { tipo: 'militia', quantidade: 4 }] },
-      { aos_segundos: 1260, lado: 1, de: { gx: 2, gy: 80 }, tropas: [{ tipo: 'axe_fighter', quantidade: 4 }, { tipo: 'bowman', quantidade: 4 }] },
-      { aos_segundos: 1500, lado: 1, de: { gx: 64, gy: 126 }, tropas: [{ tipo: 'scout', quantidade: 4 }, { tipo: 'axe_fighter', quantidade: 6 }, { tipo: 'bowman', quantidade: 4 }] },
+      { aos_segundos: 780, lado: 1, de: { gx: 125, gy: 80 }, tropas: [{ tipo: 'axe_fighter', quantidade: 3 }] },
+      { aos_segundos: 1020, lado: 1, de: { gx: 64, gy: 126 }, tropas: [{ tipo: 'scout', quantidade: 3 }, { tipo: 'militia', quantidade: 3 }] },
+      { aos_segundos: 1260, lado: 1, de: { gx: 2, gy: 80 }, tropas: [{ tipo: 'axe_fighter', quantidade: 3 }, { tipo: 'bowman', quantidade: 3 }] },
+      { aos_segundos: 1500, lado: 1, de: { gx: 64, gy: 126 }, tropas: [{ tipo: 'scout', quantidade: 3 }, { tipo: 'axe_fighter', quantidade: 4 }, { tipo: 'bowman', quantidade: 3 }] },
     ],
     desenhar(p) {
       p.elipse(64, 36, 34, 20, 'w', 0.3); // o acude
@@ -428,7 +428,7 @@ const FASES = [
         lados: [
           { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 30, timber: 30, stone: 25, loaves: 20, sausages: 15 }, predios: jogador,
             unidades: [tropa(p, 'serf', 8, 14, 80), tropa(p, 'laborer', 3, 20, 80), tropa(p, 'militia', 12, 30, 84), tropa(p, 'axe_fighter', 6, 36, 84), tropa(p, 'bowman', 6, 42, 84), tropa(p, 'lance_carrier', 4, 48, 84)] },
-          { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo, unidades: [tropa(p, 'sword_fighter', 4, 108, 62), tropa(p, 'crossbowman', 2, 118, 70), tropa(p, 'militia', 4, 106, 54)] },
+          { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo, unidades: [tropa(p, 'sword_fighter', 8, 108, 62), tropa(p, 'crossbowman', 6, 118, 70), tropa(p, 'militia', 10, 106, 54), tropa(p, 'axe_fighter', 4, 110, 76)] },
         ],
       };
     },
@@ -460,7 +460,7 @@ const FASES = [
         lados: [
           { lado: 0, nome: BANDO_DO_JOGADOR, estoque: {}, predios: [],
             unidades: [tropa(p, 'militia', 10, 12, 52), tropa(p, 'bowman', 4, 18, 52), tropa(p, 'axe_fighter', 6, 12, 70), tropa(p, 'scout', 4, 18, 70)] },
-          { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo, unidades: [tropa(p, 'militia', 8, 86, 64), tropa(p, 'bowman', 4, 92, 64), tropa(p, 'knight', 1, 88, 62)] },
+          { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo, unidades: [tropa(p, 'militia', 12, 86, 64), tropa(p, 'bowman', 6, 92, 64), tropa(p, 'axe_fighter', 4, 84, 58), tropa(p, 'knight', 1, 88, 62)] },
         ],
       };
     },
@@ -489,7 +489,7 @@ const FASES = [
           { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 40, timber: 30, stone: 20, loaves: 25, sausages: 15 }, predios: jogador,
             unidades: [tropa(p, 'serf', 6, 12, 18), tropa(p, 'scout', 6, 24, 20), tropa(p, 'knight', 2, 30, 20), tropa(p, 'militia', 6, 36, 20)] },
           { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo,
-            unidades: [tropa(p, 'lance_carrier', 3, 100, 28), tropa(p, 'lance_carrier', 3, 64, 94), tropa(p, 'lance_carrier', 3, 112, 84), tropa(p, 'lance_carrier', 3, 28, 98)] },
+            unidades: [tropa(p, 'lance_carrier', 5, 100, 28), tropa(p, 'lance_carrier', 5, 64, 94), tropa(p, 'lance_carrier', 5, 112, 84), tropa(p, 'lance_carrier', 5, 28, 98)] },
         ],
       };
     },

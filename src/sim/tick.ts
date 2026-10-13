@@ -23,6 +23,7 @@ import { aplicarConvertUnit, sistemaDoPadre } from './systems/padre';
 import { sistemaDoAcude } from './systems/acude';
 import { sistemaDaTorre } from './systems/torre';
 import { sistemaDaIA } from './systems/ia';
+import { sistemaDaFase } from './systems/fase';
 import { resultadoDaPartida } from './partida';
 import { avancarNevoa } from './nevoa';
 import { aplicarSetTrade, sistemaDaFeira } from './systems/feira';
@@ -254,7 +255,10 @@ export function step(
   events.push(...torre.events);
   const cerco = sistemaDoCerco(torre.state, dados);
   events.push(...cerco.events);
-  const saneado = sanearTarefas(cerco.state, dados);
+  // I-COMBATE-FASE-ONDAS-E-OBJETIVOS: as ondas da fase e as contagens dos objetivos, depois do cerco
+  const missao = sistemaDaFase(cerco.state, dados, tick);
+  events.push(...missao.events);
+  const saneado = sanearTarefas(missao.state, dados);
   // F20b: a fome ANTES das tres familias e depois do saneamento. Antes, porque o
   // civil que cruza o limiar neste tick sai para comer neste tick, e quem morre nao
   // deve ser passado por uma FSM de familia; depois, porque a tarefa que ela libera
@@ -309,7 +313,7 @@ export function step(
 
   // F34: o fim da escaramuca, conferido no estado do FIM do tick e gravado uma vez so
   if (atual.partida === undefined) {
-    const fim = resultadoDaPartida(atual, dados);
+    const fim = resultadoDaPartida(atual, dados, tick);
     if (fim !== null) {
       atual = { ...atual, partida: { fim, tick } };
       events.push({ type: 'match-ended', fim });
@@ -346,6 +350,8 @@ export function step(
     ...(atual.partida === undefined ? {} : { partida: atual.partida }),
     // C-IA-03b: o fim do peacetime, so na escaramuca
     ...(atual.pazAteTick === undefined ? {} : { pazAteTick: atual.pazAteTick }),
+    // I-TERRENO-FASE-NA-SIM: a fase da campanha, quando a partida e uma
+    ...(atual.fase === undefined ? {} : { fase: atual.fase }),
     // I-COMIDA-AVISO-DA-TROPA-COM-FOME: o tick do ultimo aviso por lado, so enquanto ha tropa com fome
     ...(aviso.registro === undefined ? {} : { avisoDaTropaComFome: aviso.registro }),
     // C2: os projeteis no ar, so quando ha algum voando

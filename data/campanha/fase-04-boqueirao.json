@@ -49,7 +49,7 @@
       "tropas": [
         {
           "tipo": "militia",
-          "quantidade": 6
+          "quantidade": 5
         }
       ]
     },
@@ -81,7 +81,7 @@
       "tropas": [
         {
           "tipo": "axe_fighter",
-          "quantidade": 4
+          "quantidade": 3
         }
       ]
     },
@@ -95,11 +95,11 @@
       "tropas": [
         {
           "tipo": "scout",
-          "quantidade": 4
+          "quantidade": 3
         },
         {
           "tipo": "militia",
-          "quantidade": 4
+          "quantidade": 3
         }
       ]
     },
@@ -113,11 +113,11 @@
       "tropas": [
         {
           "tipo": "axe_fighter",
-          "quantidade": 4
+          "quantidade": 3
         },
         {
           "tipo": "bowman",
-          "quantidade": 4
+          "quantidade": 3
         }
       ]
     },
@@ -131,15 +131,15 @@
       "tropas": [
         {
           "tipo": "scout",
-          "quantidade": 4
+          "quantidade": 3
         },
         {
           "tipo": "axe_fighter",
-          "quantidade": 6
+          "quantidade": 4
         },
         {
           "tipo": "bowman",
-          "quantidade": 4
+          "quantidade": 3
         }
       ]
     }

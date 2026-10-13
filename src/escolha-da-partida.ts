@@ -15,10 +15,11 @@
 import { createInitialState } from './sim/state';
 import type { GameState } from './sim/state';
 import { criarEscaramuca } from './sim/cenario';
+import { criarFase, dadosDaFase } from './sim/fase';
 import { NIVEL_PADRAO } from './sim/ia';
 import type { GameData } from './sim/data/types';
 import { gameData } from './sim/data';
-import { lerGaveta, lerUltimoSave } from './arquivo-da-partida';
+import { GAVETAS, lerGaveta, lerUltimoSave } from './arquivo-da-partida';
 import type { Gaveta, LeituraDoSave, NumeroDaGaveta } from './arquivo-da-partida';
 
 export type EscolhaDaPartida =
@@ -31,7 +32,9 @@ export type EscolhaDaPartida =
   /** O ultimo save (o Continuar do menu). */
   | { readonly modo: 'continuar' }
   /** E-SAVE-GAVETAS — uma gaveta escolhida no Carregar. */
-  | { readonly modo: 'carregar'; readonly gaveta: NumeroDaGaveta };
+  | { readonly modo: 'carregar'; readonly gaveta: NumeroDaGaveta }
+  /** I-TELA-MENU-DA-CAMPANHA — uma fase da campanha, pelo id (`data/campanha/<id>.json`). */
+  | { readonly modo: 'campanha'; readonly fase: string };
 
 /** `true` quando a pagina abre no menu. */
 export function abreNoMenu(busca: string): boolean {
@@ -43,6 +46,12 @@ export function abreNoMenu(busca: string): boolean {
 export function escolhaDaUrl(busca: string): EscolhaDaPartida {
   const parametros = new URLSearchParams(busca);
   if (parametros.has('escaramuca')) return { modo: 'escaramuca' };
+  // I-TELA-MENU-DA-CAMPANHA: a fase direto (`?campanha=<id>`, a Proxima fase e o Tentar de novo) e
+  // uma gaveta direto (`?gaveta=<n>`, o carregar de um save de outro mapa: a pagina recarrega)
+  const fase = parametros.get('campanha');
+  if (fase !== null && fase !== '') return { modo: 'campanha', fase };
+  const n = Number(parametros.get('gaveta'));
+  if (parametros.has('gaveta') && (GAVETAS as readonly number[]).includes(n)) return { modo: 'carregar', gaveta: n as NumeroDaGaveta };
   // I-TELA-PARTIDA-GUIADA: `?guiada`, para o roteiro nascer com a faixa sem passar pelo menu
   return parametros.has('guiada') ? { modo: 'guiada' } : { modo: 'livre' };
 }
@@ -94,6 +103,9 @@ export function opcoesDeNivelNaTela(dados: GameData = gameData): OpcaoDeNivelNaT
 
 /** O estado de cada escolha: a partida nova, o ultimo save ou uma gaveta (que podem ser recusados). */
 export function estadoDaEscolha(escolha: EscolhaDaPartida, gaveta: Gaveta | null, dados: GameData = gameData): EstadoDaEscolha {
+  // I-TELA-MENU-DA-CAMPANHA: a fase nasce com o mapa dela; quem troca o `gameData` da pagina e o
+  // `inicio.ts`, antes do `main.ts` (`usarDadosDaFase`)
+  if (escolha.modo === 'campanha') return { ok: true, estado: criarFase(escolha.fase, dadosDaFase(escolha.fase)) };
   if (escolha.modo === 'livre' || escolha.modo === 'guiada' || escolha.modo === 'escaramuca') return { ok: true, estado: estadoNovo(escolha, dados) };
   const leitura = escolha.modo === 'carregar' ? lerGaveta(gaveta, escolha.gaveta, dados) : lerUltimoSave(gaveta, dados);
   return leitura.ok ? { ok: true, estado: leitura.estado } : { ok: false, leitura };
