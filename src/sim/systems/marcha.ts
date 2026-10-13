@@ -372,6 +372,7 @@ export function vagaTomadaPor(state: GameState, u: Unidade, dados: GameData): Un
     const dele = o.fsmData.alvoTile;
     const seguinte = o.fsmData.caminho?.[0];
     if (dele === undefined || (dele.gx === alvo.gx && dele.gy === alvo.gy) || seguinte === undefined) continue;
+    if (paradoDaTrocaForcada(state, o, dados) !== null) continue;
     if (cadeiaTerminaEmParado(state, o, dados)) return o;
   }
   return null;
@@ -468,12 +469,23 @@ export function desisteDoDestino(state: GameState, u: Unidade, dados: GameData):
  * Devolve esse parado: os dois trocam de VAGA (emenda 14e), como na C-MOVIMENTO-02. Senao, null.
  */
 export function paradoParaTrocar(state: GameState, u: Unidade, dados: GameData): Unidade | null {
+  if (!esperandoOPasso(state, u, dados) || (u.fsmData.bloqueado ?? 0) + 1 < dados.movimento.ticksDesvioMilitar) return null;
+  if (!esperouATrocaForcada(u, dados)) return null;
+  return paradoDaTrocaForcada(state, u, dados);
+}
+
+/**
+ * BUG-TROPA-PRESA-NA-VARREDURA (ordem 385 com 24) — as condicoes da troca forcada que nao dependem da
+ * espera: o parado do mesmo lado no tile seguinte, o destino livre e mais de um passo, sem contorno.
+ * Devolve o parado, ou null. Quem as tem sai sozinho quando a espera vence (`paradoParaTrocar`); a
+ * `vagaTomadaPor` nao lhe tira a vaga antes disso, senao a C-MOVIMENTO-02 a devolve e o par troca de
+ * vaga para sempre, sem que a espera de nenhum dos dois chegue ao fim.
+ */
+export function paradoDaTrocaForcada(state: GameState, u: Unidade, dados: GameData): Unidade | null {
   const caminho = u.fsmData.caminho ?? [];
   const proximo = caminho[0];
   const destino = caminho[caminho.length - 1];
   if (proximo === undefined || destino === undefined || classeDaUnidade(u.tipo, dados) !== 'militar') return null;
-  if (!esperandoOPasso(state, u, dados) || (u.fsmData.bloqueado ?? 0) + 1 < dados.movimento.ticksDesvioMilitar) return null;
-  if (!esperouATrocaForcada(u, dados)) return null;
   const parado = militarParadoEm(state, proximo, u.id, dados);
   if (parado === null || parado.lado !== u.lado || !passoAndavel(state, proximo, noTile(u), 'livre', dados)) return null;
   // o proximo passo e o destino: vale o "para ali perto" do `esperarOuDesviar`

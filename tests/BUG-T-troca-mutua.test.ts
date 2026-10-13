@@ -23,6 +23,7 @@ import { condicaoCheiaDoTipo } from '../src/sim/condicao';
 import { naVila } from './helpers/ancoras';
 import { gravarEvidencia } from './helpers/evidence';
 import { sobrepostos } from './helpers/militares';
+import { escaramucaComTropaDe } from './helpers/escaramuca-paz';
 import { vagaTomadaPor } from '../src/sim/systems/marcha';
 
 const TIPO = gameData.escaramuca.tropaDoJogador.tipo;
@@ -326,6 +327,60 @@ describe('BUG-TROPA-PRESA-NA-VARREDURA — a fila de parados no caminho (a troca
     evidencia['troca-forcada-com-parado'] = { ticksAteParar: fim, marchante: pos(s, 'm'), naLinha: naLinha.map((id) => pos(s, id)) };
     expect(sobreposicoes).toEqual([]);
     expect(fim).toBeGreaterThan(0);
+  });
+});
+
+// BUG-TROPA-PRESA-NA-VARREDURA, ordem 385 com 24 (2026-10-13; a rocha que fecha o passo mudou a trajetoria
+// da varredura e a levou a este caso). O retrato da tropa no tick 600 da ordem, relativo ao lider no comeco
+// da escaramuca, a beira do bosque. O u32 tem o u27 parado a frente e nenhum contorno (a troca forcada o
+// tiraria dali), mas a C-MOVIMENTO-02b dava a vaga dele ao u31, e a C-MOVIMENTO-02 a devolvia: o par
+// trocava de vaga a cada 5 ticks, a espera zerava a cada troca, e os quatro marchavam para sempre.
+// [id, dx, dy, direcao] dos parados; dos que marcham, mais [alvo, caminho, direcaoFinal]
+const RETRATO_385_PARADOS: readonly (readonly [string, number, number, number])[] = [
+  ['u16', -4, 4, 0], ['u17', -3, 4, 0], ['u18', -5, 4, 0], ['u19', -4, 6, 0], ['u20', -3, 5, 0], ['u21', -5, 5, 0],
+  ['u22', -4, 8, 0], ['u23', -3, 6, 0], ['u25', -5, 6, 0], ['u26', -4, 5, 0], ['u27', -5, 7, 0], ['u28', -6, 7, 0],
+  ['u29', -2, 7, 0], ['u30', -3, 7, 0], ['u34', -1, 8, 0], ['u35', -7, 8, 0], ['u36', -8, 8, 0], ['u37', -1, 9, 0],
+  ['u38', -2, 11, 0], ['u39', -2, 12, 0],
+];
+type Rel = readonly [number, number];
+const RETRATO_385_MARCHANDO: readonly (readonly [string, number, number, number, Rel, readonly Rel[], number])[] = [
+  ['u24', -6, 5, 2, [-2, 8], [[-5, 6], [-4, 7], [-3, 8], [-2, 8]], 0],
+  ['u31', -3, 8, 0, [-4, 7], [[-4, 7]], 0],
+  ['u32', -4, 7, 0, [-6, 8], [[-5, 7], [-6, 7], [-6, 8]], 0],
+  ['u33', -2, 8, 5, [-3, 8], [[-3, 8]], 0],
+];
+
+describe('BUG-TROPA-PRESA-NA-VARREDURA — a ordem 385 com 24 (a troca de vaga que se desfaz)', () => {
+  it('aceite 4b: do retrato do travamento, os 24 param em ate 1500 ticks, sem sobreposicao', () => {
+    const s0 = escaramucaComTropaDe(24, gameData.economia.estadoInicial.semente);
+    const tropa = s0.unidades.ordem.filter((id) => s0.unidades.porId[id]?.lado === LADO_DO_JOGADOR && s0.unidades.porId[id]?.tipo === TIPO);
+    const lider = s0.unidades.porId[tropa[0] as string] as Unidade;
+    const tile = ([dx, dy]: Rel) => ({ gx: lider.gx + dx, gy: lider.gy + dy });
+    const porId = { ...s0.unidades.porId };
+    for (const [id, dx, dy, direcao] of RETRATO_385_PARADOS) {
+      porId[id] = { ...(porId[id] as Unidade), ...tile([dx, dy]), direcao, fsm: 'ocioso', fsmData: {} };
+    }
+    for (const [id, dx, dy, direcao, alvo, caminho, direcaoFinal] of RETRATO_385_MARCHANDO) {
+      porId[id] = {
+        ...(porId[id] as Unidade), ...tile([dx, dy]), direcao, fsm: 'marchando',
+        fsmData: { alvoTile: tile(alvo), caminho: caminho.map(tile), progresso: 0, direcaoFinal },
+      };
+    }
+    // a paz e a condicao cheia cobrem a corrida, como na varredura (emenda 3 do plano)
+    const dados = { ...gameData, condicao: { ...gameData.condicao, ticksCondicaoCheia: { ...gameData.condicao.ticksCondicaoCheia, militar: 10_000 } } };
+    let s: GameState = { ...s0, pazAteTick: s0.tick + 10_000, unidades: { ...s0.unidades, porId } };
+    expect(sobrepostos(s)).toEqual([]);
+    const sobreposicoes: string[] = [];
+    let fim = -1;
+    for (let t = 1; t <= 1500 && fim < 0; t += 1) {
+      s = step(s, [], dados);
+      sobreposicoes.push(...sobrepostos(s));
+      if (tropa.every((id) => s.unidades.porId[id]?.fsm === 'ocioso')) fim = t;
+    }
+    const presos = tropa.filter((id) => s.unidades.porId[id]?.fsm !== 'ocioso');
+    evidencia['ordem-385-com-24'] = { ticksAteParar: fim, presos };
+    expect(sobreposicoes).toEqual([]);
+    expect(presos).toEqual([]);
   });
 });
 
