@@ -10090,6 +10090,17 @@ inimigo da fase só revida e cai grupo por grupo, e a fase 3 não pede economia 
   4. A evidência da campanha jogada (`tools/jogar-campanha.js`) é rodada de novo, e as fases que errarem
      os alvos A a E têm os números acertados no dado da fase, com a tabela no plano da campanha.
 
+#### I-TELA-JORNAL-ONDA-DA-FASE — o jornal avisa quando chega uma onda da fase
+Pendência da campanha jogável (o relatório de 2026-10-12: "o jornal não avisa quando uma onda chega").
+- **Aceite:**
+  1. A sim emite `wave-arrived` no tick em que uma onda nasce, com `unidades` (quantos nasceram) e
+     `atacante` (o lado da onda; o campo não se chama `lado`, porque o jornal só noticia o `lado` do
+     jogador). Um evento por onda; nenhum nas ticks sem onda. Teste pelo `step`, na fase 1.
+  2. `data/jornal.json` liga `wave-arrived` à notícia `ondaChegou`, com manchete e texto no tema
+     (`{n}` = quantos chegaram). A regra pura `noticiasDosEventos` dá a notícia com o número.
+  3. O roteiro `tools/shots/I-TELA-JORNAL-ONDA-DA-FASE.js` abre a fase 1, avança até a primeira onda
+     pela ponte, e o ícone do jornal aparece; aberto, mostra a manchete da onda. Captura aberta.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
