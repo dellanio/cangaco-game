@@ -281,3 +281,31 @@ SÓ a marcha.
   também dá à tropa a condição cheia para o horizonte inteiro (`condicao.ticksCondicaoCheia.militar`
   acima de 400 x 1501 ticks, no dado do teste, usado na criação e no `step`). Nenhum soldado sai da
   conta por fome ou por ataque.
+
+## 14. BUG-TROPA-PRESA-NA-VARREDURA — o DODGE do KaM (operador, 2026-10-13: "Corrija agora")
+
+**Causa medida (2026-10-13, fase 4 da campanha, tick 11 000, 16 soldados presos):** um ciclo de TRÊS
+marchantes, todos com `progresso` 0, cada um com o tile seguinte tomado pelo próximo: u15 (39,74) →
+40,73 (u21), u21 (40,73) → 40,74 (u43), u43 (40,74) → 39,74 (u15). Os outros 13 estão na fila atrás.
+A troca mútua só pega o ciclo de dois. O desvio (`esperarOuDesviar`) trata todo militar como parede, e
+no corredor cheio não acha contorno: o contador zera e ele tenta de novo, para sempre.
+
+**A correção, do KaM:** o DODGE (`src/units/actions/KM_UnitActionWalkTo.pas:846-902`, chamado em
+`:1071`, depois do PUSH e do EXCHANGE e antes do AVOID; `DODGE_TIMEOUT = 5` em `:128`). O militar que
+marcha, parado com o tile seguinte tomado (`progresso` 0) há `dodgeDepois` (0,5 s base, os 5 ticks do
+KaM), olha os dois tiles ao lado do alvo: a direção do passo girada 45° para cada lado, a partir dele
+(`KMPrevDirection`/`KMNextDirection`, o da esquerda primeiro). Se num deles há um militar do mesmo lado,
+marchando, com `progresso` 0, cujo tile seguinte é o dele, e o passo até lá é andável (com a regra da
+diagonal), o tile seguinte dele vira o desse vizinho (o caminho ganha esse tile na frente, vizinho do
+alvo antigo). A troca mútua do BUG-T faz o resto, na hora. Inimigo nunca troca, como na troca mútua.
+
+**Aceites (antes do código):**
+1. Cenário isolado, pelo `step`, com o ciclo de três da medida (os três tiles e os três caminhos):
+   sem a correção, ninguém sai do tile em 300 ticks; com ela, os três terminam a marcha nos destinos
+   deles, sem dois militares no mesmo tile em nenhum tick.
+2. O número novo em `data/units.json` (`colisaoMilitar.dodgeDepois_segundos_base`), no schema e no
+   loader; nenhum número em `src/sim`.
+3. O aceite 4 do BUG-T (a varredura das 400 ordens em paz, 18 e 24): zero presos, zero sobreposições,
+   todos vivos. Se ainda houver preso, a medida do ciclo dele vai para cá antes de qualquer mudança.
+4. Os testes de troca mútua, formação e colisão continuam passando (`verify:rapido`).
+5. A fase 4 da campanha, medida de novo pelo `jogar-campanha` depois da correção (evidência).
