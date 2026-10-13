@@ -22120,3 +22120,6 @@ fase                     pedra  √°rvore  inimigo   (custo do A* em ticks, do in√
 - Commit da consulta booleana do Quartel: rapido aprovado com 262 arquivos/
   2.317 testes; log `quartel-verify-rapido.log`. Aceite `5e6c6c1c`; lista de
   requisitos e criterios militares preservados.
+- Commit do saneamento: rapido aprovado com 216 arquivos/1.930 testes; log
+  `saneamento-verify-rapido.log`. Consulta ordenada limitada a mesma chamada e
+  quadro; cancelamentos/liberacoes e novas chamadas reconsultam normalmente.

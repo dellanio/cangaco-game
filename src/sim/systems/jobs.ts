@@ -300,9 +300,9 @@ function abertaVale(state: GameState, t: Tarefa, dados: GameData): boolean {
  * continua contando, porque a vaga la so e consumida na entrega.
  */
 function grupoDeAbertas(
-  state: GameState, t: TarefaDeTransporte, dados: GameData,
+  state: GameState, t: TarefaDeTransporte, dados: GameData, tarefas: readonly Tarefa[],
 ): { readonly teto: number; readonly existentes: number } {
-  const mesmoTipoEMercadoria = tarefasPorNumero(state)
+  const mesmoTipoEMercadoria = tarefas
     .filter((o): o is TarefaDeTransporte => ehTarefaDeTransporte(o) && o.tipo === t.tipo && o.mercadoria === t.mercadoria);
   if (ORIGEM_ESPERADA_POR_TIPO[t.tipo] === 'outro-predio') {
     return {
@@ -321,6 +321,17 @@ function grupoDeAbertas(
 export function sanearTarefas(state: GameState, dados: GameData = gameData): ResultadoDeSistema {
   let atual = state;
   const events: GameEvent[] = [];
+  // Reutiliza a ordenacao somente nesta chamada e no MESMO quadro. Liberar
+  // ou cancelar substitui o quadro: a consulta seguinte precisa ordena-lo de novo.
+  let quadro: GameState['jobs']['tarefas'] | undefined;
+  let ordenadas: Tarefa[] = [];
+  const consultar = (s: GameState): Tarefa[] => {
+    if (quadro !== s.jobs.tarefas) {
+      quadro = s.jobs.tarefas;
+      ordenadas = tarefasPorNumero(s);
+    }
+    return [...ordenadas]; // consumidores podem inverter sem alterar o cache
+  };
   const liberarComMotivo = (id: string, motivo: MotivoDeLiberacao): void => {
     const r = liberar(atual, id, motivo);
     atual = r.state;
@@ -329,7 +340,7 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
 
   // 1. cada tarefa em curso, sozinha. Reclamada: unidade, origem, destino, caminho.
   //    Carregando: so unidade e destino (a coleta ja aconteceu).
-  for (const t of tarefasPorNumero(state)) {
+  for (const t of consultar(state)) {
     if (t.estado === 'aberta') continue;
     const motivo = t.estado === 'reclamada' ? motivoIndividual(atual, t, dados) : motivoDaCarregando(atual, t, dados);
     if (motivo !== null) liberarComMotivo(t.id, motivo);
@@ -344,7 +355,7 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
   //    por essa via (ver `vagaDeConstrucao`, reservas.ts).
   // F18g — a pedra do canteiro entra no grupo pelas duas pontas: a origem e um
   // armazem como o das outras, e a "vaga" e o que o tile ainda pede (`vagaNoTile`).
-  const emGrupo = tarefasPorNumero(atual)
+  const emGrupo = consultar(atual)
     .filter((t): t is TarefaDoSerf => ehTarefaDoSerf(t) && t.estado !== 'aberta')
     .reverse();
   const ordemDeSoltar = [...emGrupo.filter((t) => t.estado === 'reclamada'), ...emGrupo.filter((t) => t.estado === 'carregando')];
@@ -366,34 +377,34 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
   }
 
   // 3. abertas que nao valem mais
-  for (const t of tarefasPorNumero(atual)) {
+  for (const t of consultar(atual)) {
     if (t.estado === 'aberta' && !abertaVale(atual, t, dados)) atual = cancelarAberta(atual, t.id);
   }
 
   // 4. abertas em excesso: nunca mais tarefas (abertas + reclamadas, por obra e — so
   //    material — por mercadoria) do que o teto pede. Material: teto = faltam[mercadoria]
   //    (encolhe com a entrega). Construir: teto = laborersMaximosPorObra (constante).
-  for (const t of tarefasPorNumero(atual).reverse()) {
+  for (const t of consultar(atual).reverse()) {
     if (t.estado !== 'aberta') continue;
     if (ehTarefaDeTransporte(t)) {
-      const { teto, existentes } = grupoDeAbertas(atual, t, dados);
+      const { teto, existentes } = grupoDeAbertas(atual, t, dados, consultar(atual));
       if (existentes > teto) atual = cancelarAberta(atual, t.id);
     } else if (t.tipo === 'construir' || t.tipo === 'reparar') {
       // F-CERCO-b: o reparo tem o MESMO teto da obra, por predio e por tipo de tarefa
-      const existentes = tarefasPorNumero(atual).filter((o) => o.tipo === t.tipo && o.destino === t.destino).length;
+      const existentes = consultar(atual).filter((o) => o.tipo === t.tipo && o.destino === t.destino).length;
       if (existentes > dados.construcao.laborersMaximosPorObra) atual = cancelarAberta(atual, t.id);
     } else if (ehTarefaDeAssentamento(t)) {
       // F18d-1b: um tile planejado comporta UMA tarefa. Duas assentariam a mesma
       // casa e reservariam duas pedras para uma so.
       const chave = chaveDeTile(t.destinoTile);
-      const existentes = tarefasPorNumero(atual)
+      const existentes = consultar(atual)
         .filter((o) => ehTarefaDeAssentamento(o) && chaveDeTile(o.destinoTile) === chave).length;
       if (existentes > 1) atual = cancelarAberta(atual, t.id);
     } else if (ehTarefaDeAradura(t)) {
       // F18h: um tile do canteiro do campo comporta UMA tarefa, pelo mesmo motivo
       // do tile de estrada logo acima — dois laborers arariam a mesma roca.
       const chave = chaveDeTile(t.destinoTile);
-      const existentes = tarefasPorNumero(atual)
+      const existentes = consultar(atual)
         .filter((o) => ehTarefaDeAradura(o) && chaveDeTile(o.destinoTile) === chave).length;
       if (existentes > 1) atual = cancelarAberta(atual, t.id);
     } else if (ehTarefaDePedraParaCanteiro(t)) {
@@ -401,7 +412,7 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
       // teto e `demandaDoTile` (custo menos o que ja esta la), como `faltam` e o
       // teto do material de obra.
       const chave = chaveDeTile(t.destinoTile);
-      const existentes = tarefasPorNumero(atual)
+      const existentes = consultar(atual)
         .filter((o) => ehTarefaDePedraParaCanteiro(o) && chaveDeTile(o.destinoTile) === chave).length;
       if (existentes > demandaDoTile(atual, t, dados)) atual = cancelarAberta(atual, t.id);
     } else if (ehTarefaDeColheita(t)) {
@@ -411,20 +422,20 @@ export function sanearTarefas(state: GameState, dados: GameData = gameData): Res
       // a segunda, duas pedreiras com alcances sobrepostos voltariam a mirar o
       // mesmo tile — que e a divida que esta feature fecha.
       const chave = chaveDeTile(t.origemTile);
-      const doPredio = tarefasPorNumero(atual).filter((o) => ehTarefaDeColheita(o) && o.destino === t.destino).length;
-      const doTile = tarefasPorNumero(atual)
+      const doPredio = consultar(atual).filter((o) => ehTarefaDeColheita(o) && o.destino === t.destino).length;
+      const doTile = consultar(atual)
         .filter((o) => ehTarefaDeColheita(o) && chaveDeTile(o.origemTile) === chave).length;
       if (doPredio > 1 || doTile > 1) atual = cancelarAberta(atual, t.id);
     } else if (ehTarefaDeComidaParaTropa(t)) {
       // C-COMIDA-01b: UMA tarefa por militar, em qualquer estado. A comida enche a
       // condicao inteira; a segunda chegaria a quem ja comeu.
-      const existentes = tarefasPorNumero(atual)
+      const existentes = consultar(atual)
         .filter((o) => ehTarefaDeComidaParaTropa(o) && o.destinoUnidade === t.destinoUnidade).length;
       if (existentes > 1) atual = cancelarAberta(atual, t.id);
     } else {
       // 'ocupar' (F14): o teto e a VAGA do predio (1 vago, 0 ocupado), derivada
       // do estado — nao ha teto em dado, ver `vagasDoPredio`.
-      const existentes = tarefasPorNumero(atual).filter((o) => o.tipo === 'ocupar' && o.destino === t.destino).length;
+      const existentes = consultar(atual).filter((o) => o.tipo === 'ocupar' && o.destino === t.destino).length;
       if (existentes > vagasDoPredio(atual.predios.porId[t.destino], dados)) atual = cancelarAberta(atual, t.id);
     }
   }
