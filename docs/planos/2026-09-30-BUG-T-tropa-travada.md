@@ -364,3 +364,9 @@ a formação. A troca forçada passa a ser:
 - sem o próximo passo ser o destino, e sem alguém só de passagem no destino.
 - O aceite 1b afirma: ninguém em `marchando` no fim e nenhuma sobreposição (o marchante pode ficar com a
   vaga do primeiro parado, no tile inicial).
+
+**Emenda 14f (2026-10-13, antes do commit do código; pela medida do aceite 1b).** Com o destino tomado por
+um parado, a troca de vaga da 14e entra em vaivém com a vaga tomada da C-MOVIMENTO-02b (p1 recebe o destino
+tomado, fica preso, e m toma a vaga de volta). Passado o mesmo tempo (`trocaForcadaDepois`), sem contorno e
+com o destino tomado por um parado, o marchante **para onde está** (o "para ali perto" de `esperarOuDesviar`,
+que valia só no último passo, vale para o caminho inteiro). A troca de vaga fica para o destino vazio.
