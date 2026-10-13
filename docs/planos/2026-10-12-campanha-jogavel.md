@@ -171,3 +171,29 @@ fase  o que                         antes                      depois           
 **O que a ferramenta não mede:** o `reforço` é uma medida grosseira do que a economia daria, e não
 substitui jogar. As fases de construir dependem de quanto a economia rende em 20 a 30 min, que
 nenhum jogador automático exercita.
+
+## 6. I-COMBATE-FASE-INIMIGO-DEFENDE e a fase 4 medida de novo (2026-10-13)
+As duas perguntas da seção 5 foram respondidas pelo operador ("1. Sim; 2. Corrija agora"):
+- a tropa presa (BUG-TROPA-PRESA-NA-VARREDURA) foi corrigida na branch do BUG-T (o DODGE do KaM, a troca
+  de vaga forçada e a desistência do destino tomado) e mergeada na `main`;
+- o inimigo da fase defende como a IA da escaramuça: cada grupo de militares da fase vira posições de
+  defesa (raio 8, `data/missao.json: defesa`). O capturado (o Vicente) não entra em posição.
+
+**A campanha jogada de novo (`node tools/jogar-campanha.js`, evidência em
+`test-output/I-COMBATE-CAMPANHA-JOGADA.json`), todos os alvos ok:**
+```text
+fase              passivo            ataque (tropa inicial)   reforço (tropa x2)   alvos
+1 Piancó          derrota  583 s     derrota  513 s           vitória 307 s        A C D E ok
+2 Patos           derrota 1600 s     derrota 1600 s           vitória 204 s        A C D E ok
+3 Soledade        derrota 1800 s     derrota   56 s           vitória 169 s        A D E ok (era D ERRA)
+4 Boqueirão       derrota  505 s     derrota 1051 s           vitória 1082 s       C E ok (era E ERRA)
+5 Campina Grande  derrota  412 s     vitória 1200 s           vitória 1200 s       C E ok
+6 Areia           derrota 1800 s     derrota  102 s           vitória 175 s        A D E ok
+7 Itabaiana       derrota 1800 s     vitória  109 s           vitória 100 s        A B ok
+8 Santa Rita      derrota 1200 s     derrota 1200 s           vitória 283 s        A C D E ok
+9 João Pessoa     derrota 1800 s     vitória  268 s           vitória 252 s        A B ok
+10 Cabedelo       derrota 1000 s     vitória  237 s           vitória 219 s        A B ok (era B ERRA)
+```
+**Número mudado:** fase 10, a guarda do Cabo Branco: 6 militia, 4 axe, 4 pikeman → 4, 3, 3. Com a
+defesa, a tropa inicial do jogador perdia aos 1000 s (o prazo) com 6 inimigos de pé; a fase de lutar
+se vence com o que se tem (alvo B).

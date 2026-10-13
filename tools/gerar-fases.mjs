@@ -569,7 +569,7 @@ const FASES = [
             unidades: [tropa(p, 'militia', 10, 12, 78), tropa(p, 'axe_fighter', 6, 18, 78), tropa(p, 'bowman', 6, 12, 86), tropa(p, 'scout', 4, 18, 86), tropa(p, 'knight', 2, 24, 82)] },
           { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo,
             unidades: [
-              tropa(p, 'militia', 6, 100, 42), tropa(p, 'axe_fighter', 4, 110, 44), tropa(p, 'sword_fighter', 3, 106, 58), tropa(p, 'pikeman', 4, 96, 50),
+              tropa(p, 'militia', 4, 100, 42), tropa(p, 'axe_fighter', 3, 110, 44), tropa(p, 'sword_fighter', 3, 106, 58), tropa(p, 'pikeman', 3, 96, 50),
               tropa(p, 'bowman', 4, 92, 92), tropa(p, 'crossbowman', 3, 98, 92), tropa(p, 'lance_carrier', 3, 90, 80), tropa(p, 'scout', 2, 88, 88), tropa(p, 'knight', 1, 100, 78),
             ] },
         ],

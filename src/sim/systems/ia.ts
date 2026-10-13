@@ -48,6 +48,7 @@ import { FSM_MARCHANDO, tilesDoGrupo } from './marcha';
 import { FSM_ATIRANDO, FSM_INDO_LUTAR, FSM_LUTANDO } from './combate';
 import { aplicarEnqueueTraining } from './escolas';
 import { ehTickDaRevisao, pedidosDoPrefeito } from '../prefeito';
+import { ehAlvoDeCaptura } from '../fase';
 
 const lutando = (u: Unidade): boolean => u.fsm === FSM_INDO_LUTAR || u.fsm === FSM_LUTANDO || u.fsm === FSM_ATIRANDO;
 
@@ -80,6 +81,8 @@ function guarnecer(state: GameState, lado: number, ia: IADoLado, dados: GameData
     const u = state.unidades.porId[id];
     if (u === undefined || u.lado !== lado || u.fsm !== 'ocioso' || classeDaUnidade(u.tipo, dados) !== 'militar') continue;
     if (posicaoDoMembro(posicoes, id) !== null) continue;
+    // I-COMBATE-FASE-INIMIGO-DEFENDE: quem a fase manda capturar nao entra em posicao (ela o mandaria lutar)
+    if (ehAlvoDeCaptura(state, u, dados)) continue;
     const tipo = tipoDeGrupo(u.tipo, dados);
     const i = ordem.find((k) => {
       const p = posicoes[k];

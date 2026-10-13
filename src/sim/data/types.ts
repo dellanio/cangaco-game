@@ -623,6 +623,8 @@ export interface FaseData {
 export interface CampanhaData {
   readonly fases: readonly FaseData[];
   readonly captura: { readonly ticks: Ticks; readonly raio_tiles: number; readonly raioDaEscolta_tiles: number };
+  /** I-COMBATE-FASE-INIMIGO-DEFENDE — o raio das posicoes de defesa do inimigo da fase. */
+  readonly defesa: { readonly raio_tiles: number };
 }
 
 /** I-CLIMA-ESTACAO — uma fase do ciclo, com a duracao ja em ticks. */

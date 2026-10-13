@@ -16,8 +16,9 @@ import { rawGameData } from './data/raw';
 import type { RawGameData } from './data/raw';
 import type { FaseData, GameData } from './data/types';
 import { completarObra, createInitialState, ID_DO_ARMAZEM, LADO_DO_JOGADOR } from './state';
-import type { GameState, Predio, Unidade } from './state';
-import { condicaoCheiaDoTipo } from './condicao';
+import type { GameState, IADoLado, PosicaoDeDefesa, Predio, Unidade } from './state';
+import { classeDaUnidade, condicaoCheiaDoTipo } from './condicao';
+import { numerosDaIA, tipoDeGrupo } from './ia';
 import { tileAndavel } from './pathfinding';
 import { descobertoInicial } from './nevoa';
 
@@ -98,6 +99,25 @@ export function ehAlvoDeCaptura(state: GameState, u: Unidade, dados: GameData): 
   return fase !== undefined && fase.objetivos.vitoria.some((o) => o.tipo === 'capturar' && o.lado === u.lado && o.unidade === u.tipo);
 }
 
+/** I-COMBATE-FASE-INIMIGO-DEFENDE — as posicoes de defesa de um grupo de militares da fase: blocos de
+ *  `tamanho` (o maximo da posicao), `tras` para quem atira, `frente` para os outros, com o raio de
+ *  `data/missao.json`. Nenhum membro fica de sobra para o ataque da IA. O primeiro bloco fica no ponto do
+ *  grupo; os outros, no tile em que nasceu o primeiro membro deles, para as formacoes nao disputarem os
+ *  mesmos tiles. */
+function posicoesDoGrupo(
+  id: string, ponto: { gx: number; gy: number }, grupo: PosicaoDeDefesa['tipoDeGrupo'], membros: readonly string[],
+  tamanho: number, dados: GameData, onde: (id: string) => { gx: number; gy: number },
+): PosicaoDeDefesa[] {
+  const blocos: PosicaoDeDefesa[] = [];
+  for (let i = 0; i < membros.length; i += tamanho) {
+    blocos.push({
+      id: `${id}-${i / tamanho}`, ponto: i === 0 ? ponto : onde(membros[i] as string), tipoDeGrupo: grupo, raio: dados.campanha.defesa.raio_tiles,
+      linha: grupo === 'distancia' ? 'tras' : 'frente', membros: membros.slice(i, i + tamanho),
+    });
+  }
+  return blocos;
+}
+
 /** O estado inicial da fase `id`. `dados` precisa ser o da fase (`dadosDaFase`): e o mapa dele. */
 export function criarFase(id: string, dados: GameData): GameState {
   const fase = faseDaCampanha(id, dados);
@@ -124,17 +144,30 @@ export function criarFase(id: string, dados: GameData): GameState {
   const unidades: Record<string, Unidade> = {};
   const ordemU: string[] = [];
   const ocupado = new Set<string>();
+  // I-COMBATE-FASE-INIMIGO-DEFENDE: as posicoes de defesa de cada lado que nao e o jogador
+  const posicoesPorLado: Record<string, PosicaoDeDefesa[]> = {};
   for (const lado of fase.lados) {
-    for (const u of lado.unidades) {
+    for (const [g, u] of lado.unidades.entries()) {
       const tiles = tilesParaNascer(comPredios, u.gx, u.gy, u.quantidade, ocupado, dados);
       if (tiles.length < u.quantidade) throw new Error(`criarFase: '${id}' sem lugar para ${u.quantidade} '${u.tipo}' em (${u.gx},${u.gy})`);
+      const nascidos: string[] = [];
       for (const t of tiles) {
         const uid = `u${n++}`;
         unidades[uid] = { id: uid, lado: lado.lado, tipo: u.tipo, gx: t.gx, gy: t.gy, fsm: 'ocioso', fsmData: {}, condicao: condicaoCheiaDoTipo(u.tipo, dados) };
         ordemU.push(uid);
+        nascidos.push(uid);
+      }
+      const grupo = tipoDeGrupo(u.tipo, dados);
+      // quem a fase manda capturar nao defende: a posicao o mandaria lutar (BUG-CAPTURADO-MORRE-NA-LUTA-AUTOMATICA)
+      const capturado = fase.objetivos.vitoria.some((o) => o.tipo === 'capturar' && o.lado === lado.lado && o.unidade === u.tipo);
+      if (lado.lado !== LADO_DO_JOGADOR && grupo !== null && classeDaUnidade(u.tipo, dados) === 'militar' && !capturado) {
+        const posicoes = (posicoesPorLado[String(lado.lado)] ??= []);
+        posicoes.push(...posicoesDoGrupo(`g${g}`, { gx: u.gx, gy: u.gy }, grupo, nascidos, numerosDaIA(comPredios, lado.lado, dados).tamanhoDoGrupo, dados,
+          (uid) => { const x = unidades[uid] as Unidade; return { gx: x.gx, gy: x.gy }; }));
       }
     }
   }
+  const ia: Record<string, IADoLado> = Object.fromEntries(Object.entries(posicoesPorLado).map(([lado, posicoes]) => [lado, { posicoes }]));
   // I-OBRA-FASE-LIBERA: os predios do jogador no comeco contam como ja construidos, para a arvore de
   // desbloqueio (GDD §5.2) valer na fase como no jogo livre
   const doJogador = fase.lados.find((l) => l.lado === LADO_DO_JOGADOR)?.predios.map((p) => p.id) ?? [];
@@ -144,6 +177,7 @@ export function criarFase(id: string, dados: GameData): GameState {
     tiposJaConstruidos,
     unidades: { porId: unidades, ordem: ordemU },
     proximoId: n,
+    ...(Object.keys(ia).length === 0 ? {} : { ia }),
     fase: { id, numero: fase.numero, inicio: base.tick, ondasDisparadas: 0, tropasDasOndas: [], contagem: {} },
   };
   return { ...estado, descoberto: descobertoInicial(estado, dados) };

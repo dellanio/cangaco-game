@@ -13,27 +13,28 @@ const TIMEOUT_PRONTO_MS = 15_000;
 
 async function roteiro({ page, capturar, afirmar }) {
   const capturas = [];
-  const erros = [];
-  page.on('pageerror', (e) => { erros.push(String(e)); });
-  page.on('response', (r) => { if (r.status() >= 400) erros.push(`${r.status()} ${r.url()}`); });
-  page.on('requestfailed', (r) => { erros.push(`falhou ${r.url()} ${(r.failure() || {}).errorText}`); });
   const origem = new URL(page.url()).origin;
-  const cdp = await page.context().newCDPSession(page);
-  for (const id of IDS) {
-    // a pagina anterior desmonta e o lixo e coletado antes da proxima carregar: em sequencia, a terceira
-    // navegacao falhava com net::ERR_INSUFFICIENT_RESOURCES nos modulos do servidor de desenvolvimento
-    await page.goto('about:blank');
-    await cdp.send('HeapProfiler.collectGarbage');
-    await page.waitForTimeout(1000);
+  // a pagina do shot.js solta o jogo dela (e o WebGL) antes das abas das fases; volta so para a prancha
+  await page.goto('about:blank');
+  // cada fase numa PAGINA NOVA, fechada no fim: recarregar a mesma pagina acumula contextos WebGL, e a
+  // terceira ou quarta fase falhava (net::ERR_INSUFFICIENT_RESOURCES, depois "Framebuffer status:
+  // Incomplete Attachment"); cada fase sozinha abre sem erro. A pagina nova nao passa pelo coletor de
+  // erros do shot.js: o roteiro junta os dela e afirma que estao vazios
+  for (const [i, id] of IDS.entries()) {
+    // o shot.js abre a pagina com `browser.newPage` (um contexto so dela): a aba nova vem do navegador
+    const aba = await page.context().browser().newPage({ viewport: page.viewportSize() || { width: 1280, height: 720 } });
+    const erros = [];
+    aba.on('pageerror', (e) => { erros.push(String(e)); });
+    aba.on('console', (m) => { if (m.type() === 'error') erros.push(m.text()); });
+    aba.on('response', (r) => { if (r.status() >= 400) erros.push(`${r.status()} ${r.url()}`); });
     const url = new URL(origem);
-    url.search = '';
     url.searchParams.set('pausado', '');
     url.searchParams.set('campanha', id);
-    await page.goto(url.href);
-    const pronto = await page.waitForFunction(() => Boolean(window.__cangaco && window.__cangaco.pronto), undefined, { timeout: TIMEOUT_PRONTO_MS })
+    await aba.goto(url.href);
+    const pronto = await aba.waitForFunction(() => Boolean(window.__cangaco && window.__cangaco.pronto), undefined, { timeout: TIMEOUT_PRONTO_MS })
       .then(() => true, () => false);
     afirmar(pronto, `${id}: o jogo nao ficou pronto; erros da pagina: ${erros.join(' | ')}`);
-    const visto = await page.evaluate(() => {
+    const visto = await aba.evaluate(() => {
       const e = window.document.querySelector('#objetivo-da-fase');
       return {
         mapa: window.__cangacoPartida.mapa().id,
@@ -45,7 +46,13 @@ async function roteiro({ page, capturar, afirmar }) {
     afirmar(visto.fase && visto.fase.id === id, `${id}: o estado deveria ser da fase: ${JSON.stringify(visto.fase)}`);
     afirmar(visto.objetivo !== null && !visto.objetivo.hidden && visto.objetivo.texto.length > 0,
       `${id}: a linha do objetivo deveria aparecer: ${JSON.stringify(visto.objetivo)}`);
-    capturas.push({ id, objetivo: visto.objetivo.texto, arquivo: await capturar(id) });
+    // os dois quadros desenhados antes da imagem, como o capturar do shot.js
+    await aba.evaluate(() => new Promise((ok) => window.requestAnimationFrame(() => window.requestAnimationFrame(ok))));
+    const arquivo = `screenshots/I-COMBATE-CAMPANHA-JOGADA-fase-${i + 2}-${id}.png`;
+    await aba.screenshot({ path: arquivo });
+    afirmar(erros.length === 0, `${id}: erro de console ou de pagina: ${erros.join(' | ')}`);
+    capturas.push({ id, objetivo: visto.objetivo.texto, arquivo });
+    await aba.context().close();
   }
 
   // a prancha: as nove capturas numa grade 3x3, na mesma pagina

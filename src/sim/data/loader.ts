@@ -418,6 +418,7 @@ function carregarCampanha(
       raio_tiles: m.captura.raio_tiles,
       raioDaEscolta_tiles: m.captura.raioDaEscolta_tiles,
     },
+    defesa: { raio_tiles: m.defesa.raio_tiles },
   };
 }
 

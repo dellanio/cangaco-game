@@ -99,13 +99,13 @@
       "unidades": [
         {
           "tipo": "militia",
-          "quantidade": 6,
+          "quantidade": 4,
           "gx": 100,
           "gy": 42
         },
         {
           "tipo": "axe_fighter",
-          "quantidade": 4,
+          "quantidade": 3,
           "gx": 110,
           "gy": 44
         },
@@ -117,7 +117,7 @@
         },
         {
           "tipo": "pikeman",
-          "quantidade": 4,
+          "quantidade": 3,
           "gx": 96,
           "gy": 50
         },

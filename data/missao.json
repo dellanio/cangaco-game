@@ -5,5 +5,9 @@
     "segundos_base": 10,
     "raio_tiles": 1,
     "raioDaEscolta_tiles": 3
+  },
+  "defesa": {
+    "_doc": "I-COMBATE-FASE-INIMIGO-DEFENDE (decisao do operador, 2026-10-13): o inimigo da fase defende como a IA da escaramuca. Cada grupo de militares da fase vira posicoes de defesa (blocos de combat.json ia.tamanhoDoGrupo); o raio e ate onde a posicao sai para o inimigo, euclidiano a partir do ponto, o mesmo 8 das posicoes de data/escaramuca.json. Tiles, nao tempo.",
+    "raio_tiles": 8
   }
 }
