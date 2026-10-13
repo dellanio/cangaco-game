@@ -22123,3 +22123,6 @@ fase                     pedra  √°rvore  inimigo   (custo do A* em ticks, do in√
 - Commit do saneamento: rapido aprovado com 216 arquivos/1.930 testes; log
   `saneamento-verify-rapido.log`. Consulta ordenada limitada a mesma chamada e
   quadro; cancelamentos/liberacoes e novas chamadas reconsultam normalmente.
+- Commit do CLI: rapido aprovado com tres arquivos/29 testes; log
+  `cli-verify-rapido.log`. Vite real sem watch/HMR, zero diretorios observados,
+  encerramento normal; comando npm original preservado.

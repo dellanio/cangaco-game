@@ -133,7 +133,9 @@ async function main() {
     return;
   }
 
-  const server = await createServer({ server: { middlewareMode: true }, appType: 'custom' });
+  // Uma corrida headless nao acompanha edicoes: observar a arvore inteira so
+  // disputa CPU/IO com a simulacao e com os testes que chamam este CLI.
+  const server = await createServer({ server: { middlewareMode: true, watch: null, hmr: false }, appType: 'custom' });
   try {
     const { createInitialState, ID_DA_ESCOLA } = await server.ssrLoadModule('/src/sim/state.ts');
     const { step } = await server.ssrLoadModule('/src/sim/tick.ts');
