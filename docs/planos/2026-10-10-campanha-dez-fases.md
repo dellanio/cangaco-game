@@ -189,6 +189,6 @@ Açude) entram nas fases marcados **[proposta]**, para o operador confirmar.
 - **A camada de missão na sim:** escolher a fase, rodar as ondas, avaliar os objetivos e trancar o que
   a fase não libera. É sim, com aceite próprio, e com as decisões do operador. Por exemplo, o
   "capturar" da fase 7 e o "navio" da fase 10 não têm regra hoje.
-- **O mapa maior (fase 8):** depende de o tamanho do mundo deixar de ser um só (`terrain.mapaPadrao`).
+- **O mapa maior (fase 8):** feito em 2026-10-13 (I-TERRENO-FASE-8-MAPA-MAIOR): a fase declara `lado: 192` no gerador, e a partida dela usa o tamanho do mapa da fase. O tamanho (192) é pergunta em aberto ao operador.
 - **O terreno de brejo (fase 6):** hoje o vocabulário de terreno não tem "brejo". A fase usa grama,
   mata densa e córregos. Um tipo novo de chão seria arte e regra novas.

@@ -71,7 +71,7 @@ describe('I-TERRENO-DEZ-MAPAS-DA-CAMPANHA', () => {
       ['dois recursos no tile', (f) => { const [x, y] = f.mapa.recursos['tree']?.[0] ?? [0, 0]; f.mapa.recursos['grapes'] = [[x, y]]; }, /dois recursos/],
       ['objetivo fora do vocabulario', (f) => { f.objetivos.vitoria.push({ tipo: 'explorar' }); }, /objetivo 'explorar' fora do vocabulario/],
       ['onda de lado que nao existe', (f) => { f.ondas.push({ aos_segundos: 10, lado: 7, de: { gx: 100, gy: 100 }, tropas: [] }); }, /onda do lado 7/],
-      ['mapa de outro tamanho', (f) => { f.mapa.largura = 64; }, new RegExp(`mapa precisa ser ${L}x${A}`)],
+      ['mapa de outro tamanho', (f) => { f.mapa.largura = 64; }, new RegExp(`mapa precisa ser quadrado, de ${L}x${A}`)],
     ];
     for (const [nome, estragar, erro] of casos) {
       const f = structuredClone(base);

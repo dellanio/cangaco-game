@@ -3229,6 +3229,13 @@ que vetar custe uma linha.
 
 ## Perguntas em aberto
 
+- **(2026-10-13, I-TERRENO-FASE-8-MAPA-MAIOR) O tamanho do mapa maior da fase 8.** O desenho diz só
+  "mapa maior". Ficou 192x192 (1,5 vez o lado), a interpretação conservadora, dentro do que a F17c mediu
+  (até 256). Trocar é uma linha no gerador (`lado`), e a regra de dados aceita do padrão ao dobro dele.
+  Decisão do operador.
+- **(2026-10-13) O brejo da fase 6.** O desenho pede um chão de brejo que o vocabulário de terreno não
+  tem. É arte nova (CLAUDE.md §9: arte entra por decisão humana) e regra nova (o que o brejo faz com o
+  passo e a obra). Hoje a fase usa grama, mata densa e córregos. Decisão do operador.
 - **(2026-10-04, G-TELA-ROCEIRO-NO-CAMPO) O roceiro de verdade dentro do tile?** Hoje a sim leva o
   roceiro ao tile vizinho do campo, e o render só desenha ele dentro. Pôr o roceiro dentro do tile na
   sim muda o caminho e o tempo do ciclo da fazenda e do canavial, ou seja, é balanceamento. Decisão
@@ -22382,3 +22389,23 @@ As decisões que seriam dele ficaram registradas como emendas de aceite, cada um
 
 **Nota:** o `shot:todos` completo rodou em `13f10937`. Depois dele mudaram o F16b (só o roteiro) e a marcha.
 O F16b e os 16 roteiros com tropa foram rodados de novo, mas os outros 171 não.
+
+## 2026-10-13 — I-TERRENO-FASE-8-MAPA-MAIOR (Santa Rita em 192x192)
+Item do desenho da campanha que estava "para depois". O tamanho é pergunta em aberto ao operador.
+
+**Verificado (rodado, evidência aberta):**
+- `dadosDaFase` usa a largura e a altura do mapa da fase como `terrain.mapaPadrao` da partida. O loader
+  segue recusando mapa e `mapaPadrao` diferentes, e as fases de 128 dão o `mapaPadrao` de antes. A regra de
+  dados aceita fase quadrada do padrão ao dobro dele, e recusa 127 e 257 (teste novo).
+- O gerador ganhou tamanho por fase (`lado`). `--conferir`: as outras nove fases ficam byte a byte iguais.
+  Na fase 8, as distâncias escalam 1,5 vez e o canavial 2,25 vezes, e a abertura não muda. A primeira
+  versão escalava também a abertura: a tropa nascia longe da vila e a visão inicial ficava com buracos
+  (medido por sonda, já apagada). Pedra 42 tiles, como antes; o lajedo passou a ir antes do canavial,
+  porque a moita tomava o tile do disco e a pedra não entrava (primeira medida: 20).
+- Pelo `step`: tudo o que a fase põe fica dentro de 192, e o batedor chega a um tile além do mundo padrão.
+- Tela (`tools/shots/I-TERRENO-FASE-8-MAPA-MAIOR.js`): a câmera travada no canto sudeste termina em
+  192,00 x 192,00 tiles. Com `?relevo`, a camada não nasce (o relevo é do `sertao-128`), sem erro de
+  console. Capturas abertas: a abertura igual à do mapa de 128 (5 enfeites na vista), e o canto sob a névoa.
+- Campanha jogada, fase 8: A, C, D e E ok. O reforço vence aos 440 s (era 283 s em 128), com o prazo de
+  1200 s.
+- `verify:rapido`: 2728 testes.

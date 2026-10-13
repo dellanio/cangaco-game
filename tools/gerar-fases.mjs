@@ -11,7 +11,8 @@
 // e o JSON da fase passa a ser o editado. Regerar por aqui apaga a edicao (como o `gerar-mapa.js`
 // diz do `sertao-128`: a semente vira registro historico).
 //
-// Os mapas sao 128x128 (o `terrain.mapaPadrao`). Nenhum vem do jogo de 1998 (CLAUDE.md §9): sao
+// Os mapas sao do tamanho do `terrain.mapaPadrao` (128x128), menos a fase que declara `lado` (a fase 8,
+// I-TERRENO-FASE-8-MAPA-MAIOR: 192x192). Nenhum vem do jogo de 1998 (CLAUDE.md §9): sao
 // desenho nosso, do sertao ao litoral.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -26,7 +27,10 @@ const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const TERRENO = JSON.parse(readFileSync(join(RAIZ, 'data', 'terrain.json'), 'utf8'));
 const PREDIOS = JSON.parse(readFileSync(join(RAIZ, 'data', 'buildings.json'), 'utf8'));
 const LISTA_DE_PREDIOS = Array.isArray(PREDIOS) ? PREDIOS : (PREDIOS.predios ?? PREDIOS.buildings);
-const { largura: L, altura: A } = TERRENO.mapaPadrao;
+const PADRAO = TERRENO.mapaPadrao;
+// o tamanho da fase que esta sendo desenhada: `gerarFase` o ajusta antes de cada prancheta
+let L = PADRAO.largura;
+let A = PADRAO.altura;
 export const PASTA_DAS_FASES = join(RAIZ, 'data', 'campanha');
 export const PASTA_DOS_TMJ = join(RAIZ, 'tools', 'tiled', 'fases');
 
@@ -466,30 +470,35 @@ const FASES = [
     },
   },
   {
-    n: 8, slug: 'santa-rita', local: 'Santa Rita', titulo: 'Cortar a cana', ato: 'III', modo: 'construir', semente: 101008,
+    // I-TERRENO-FASE-8-MAPA-MAIOR: o mapa maior do desenho (192x192). As DISTANCIAS do desenho de 128 escalam
+    // 1,5 vez (os alvos, o rio, o segundo lajedo, os lanceiros), e o canavial 2,25 vezes (a area). O arranjo
+    // da abertura nao escala: a vila, a tropa inicial e o lajedo da vila ficam onde estavam (escalados, a
+    // tropa nascia longe da vila e a visao inicial ficava com buracos entre as duas)
+    n: 8, slug: 'santa-rita', local: 'Santa Rita', titulo: 'Cortar a cana', ato: 'III', modo: 'construir', semente: 101008, lado: 192,
     narrativa: 'Tudo que o Cabo Branco come, veste e atira passa pelos canaviais e engenhos de Santa Rita.',
     desafio: 'Ofensiva com prazo. Quatro alvos longe uns dos outros, e só a cavalaria chega a tempo; mas cavalaria morre para a aguilhada.',
     libera: { predios: ['stables'], tropas: ['scout', 'knight'] },
     objetivos: { vitoria: [{ tipo: 'destruir', lado: 1, alvo: 'predios' }], derrota: [{ tipo: 'prazo', segundos: 1800 }] },
     ondas: [],
     desenhar(p) {
-      const rio = [[0, 112], [40, 116], [80, 113], [127, 108]];
+      const rio = [[0, 168], [60, 174], [120, 170], [191, 162]];
       p.faixa(rio, 10, 'a');
       p.faixa(rio, 5, 'w');
-      p.moitas('grapes', 16, 0, 0, L, 100, 5, 9, 0.7); // os canaviais
-      p.manchas('c', 6, 0, 0, L, 100, 2, 4);
+      // o lajedo antes do canavial: a moita que caia no disco tomava o tile, e a pedra nao entrava
       p.lajedo(22, 34, 2.5);
-      p.lajedo(80, 40, 2.5);
+      p.lajedo(120, 60, 2.5);
+      p.moitas('grapes', 36, 0, 0, L, 150, 5, 9, 0.7); // os canaviais
+      p.manchas('c', 14, 0, 0, L, 150, 2, 4);
       p.vegetacao('tree', 0.03, 0, 0, L - 1, A - 1);
       p.peixe();
       const jogador = vila(p, 8, 8, ['storehouse', 'schoolhouse', 'barracks', 'stables']);
-      const inimigo = [predio(p, 'mill', 96, 20), predio(p, 'mill', 60, 86), predio(p, 'storehouse', 108, 76), predio(p, 'stables', 24, 90)];
+      const inimigo = [predio(p, 'mill', 144, 30), predio(p, 'mill', 90, 129), predio(p, 'storehouse', 162, 114), predio(p, 'stables', 36, 135)];
       return {
         lados: [
           { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 40, timber: 30, stone: 20, loaves: 25, sausages: 15 }, predios: jogador,
             unidades: [tropa(p, 'serf', 6, 12, 18), tropa(p, 'scout', 6, 24, 20), tropa(p, 'knight', 2, 30, 20), tropa(p, 'militia', 6, 36, 20)] },
           { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo,
-            unidades: [tropa(p, 'lance_carrier', 5, 100, 28), tropa(p, 'lance_carrier', 5, 64, 94), tropa(p, 'lance_carrier', 5, 112, 84), tropa(p, 'lance_carrier', 5, 28, 98)] },
+            unidades: [tropa(p, 'lance_carrier', 5, 150, 42), tropa(p, 'lance_carrier', 5, 96, 141), tropa(p, 'lance_carrier', 5, 168, 126), tropa(p, 'lance_carrier', 5, 42, 147)] },
         ],
       };
     },
@@ -579,6 +588,8 @@ const FASES = [
 ];
 
 export function gerarFase(def) {
+  L = def.lado ?? PADRAO.largura;
+  A = def.lado ?? PADRAO.altura;
   const p = new Prancheta(def.semente);
   const { lados } = def.desenhar(p);
   return {
@@ -600,14 +611,16 @@ export function pranchaDasFases(fases) {
   const TEMA = JSON.parse(readFileSync(join(RAIZ, 'data', 'theme-sertao.json'), 'utf8'));
   const px = 3;
   const margem = 8;
-  const w = 5 * (L * px + margem) + margem;
-  const h = 2 * (A * px + margem) + margem;
+  // a celula da prancha e a do maior mapa (a fase 8 tem 192)
+  const lado = Math.max(...fases.map((f) => f.mapa.largura));
+  const w = 5 * (lado * px + margem) + margem;
+  const h = 2 * (lado * px + margem) + margem;
   const data = new Uint8Array(w * h * 4).fill(255);
   const rgb = (hex) => { const n = Number.parseInt(hex.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
   const pintar = (x, y, cor) => { if (x >= 0 && y >= 0 && x < w && y < h) data.set([...cor, 255], (y * w + x) * 4); };
   fases.forEach((fase, i) => {
-    const ox = margem + (i % 5) * (L * px + margem);
-    const oy = margem + Math.floor(i / 5) * (A * px + margem);
+    const ox = margem + (i % 5) * (lado * px + margem);
+    const oy = margem + Math.floor(i / 5) * (lado * px + margem);
     const tile = (gx, gy, cor, tam = px) => { for (let y = 0; y < tam; y++) for (let x = 0; x < tam; x++) pintar(ox + gx * px + x, oy + gy * px + y, cor); };
     fase.mapa.linhas.forEach((linha, gy) => [...linha].forEach((ch, gx) => tile(gx, gy, rgb(TEMA.terreno[LEGENDA[ch]]))));
     for (const [tipo, tiles] of Object.entries(fase.mapa.recursos)) for (const [gx, gy] of tiles) tile(gx, gy, rgb(TEMA.recursos[tipo]));

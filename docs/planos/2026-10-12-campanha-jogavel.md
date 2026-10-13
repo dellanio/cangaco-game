@@ -103,7 +103,7 @@ partida já é feita:
 ## 4. Fora desta leva
 - As fases 2 a 10 jogáveis de verdade (balanceamento, a IA do inimigo em cada uma). A mecânica dos
   objetivos já serve a todas, mas só a fase 1 tem roteiro jogado do começo ao fim.
-- O mapa maior da fase 8 e o brejo da fase 6 (seção 4 do desenho).
+- O brejo da fase 6 (seção 4 do desenho). O mapa maior da fase 8 foi feito depois (seção 7).
 - O inimigo com IA própria (defesa, reposição) numa fase. Na fase 1, a guarda do acampamento só revida,
   e o ataque vem pelas ondas.
 - Um módulo `FASE` na lista dos 12: módulo novo é decisão do operador. Os itens usam TERRENO,
@@ -197,3 +197,12 @@ fase              passivo            ataque (tropa inicial)   reforço (tropa x2
 **Número mudado:** fase 10, a guarda do Cabo Branco: 6 militia, 4 axe, 4 pikeman → 4, 3, 3. Com a
 defesa, a tropa inicial do jogador perdia aos 1000 s (o prazo) com 6 inimigos de pé; a fase de lutar
 se vence com o que se tem (alvo B).
+
+## 7. I-TERRENO-FASE-8-MAPA-MAIOR — Santa Rita em 192x192 (2026-10-13)
+Aceite no `BUILD_PLAN.md`. As distâncias do desenho escalam 1,5 vez (os quatro alvos, o rio, o segundo
+lajedo, os lanceiros) e o canavial 2,25 vezes; a abertura (a vila, a tropa inicial, o lajedo da vila) fica
+onde estava. Os números da fase não mudaram.
+```text
+fase              passivo            ataque (tropa inicial)   reforço (tropa x2)   alvos
+8 Santa Rita      derrota 1200 s     derrota 1200 s           vitória 440 s        A C D E ok (era vitória 283 s em 128)
+```

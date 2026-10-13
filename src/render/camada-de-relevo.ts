@@ -82,16 +82,21 @@ function criarImagem(cena: Phaser.Scene, chave: string, luz: MapaDeLuz, tilePx: 
 }
 
 export function criarCamadaDeRelevo(
-  cena: Phaser.Scene, config: { readonly tilePx: number }, busca: string, debug: EstadoDebug,
+  cena: Phaser.Scene, config: { readonly tilePx: number; readonly largura: number; readonly altura: number },
+  busca: string, debug: EstadoDebug,
 ): LuzDoRelevo | null {
   if (!relevoPedido(busca, relevoLigadoNoDado)) return null;
+  // I-TERRENO-FASE-8-MAPA-MAIOR: o relevo e do `sertao-128` (um vertice a mais que os tiles); num mapa de
+  // outro tamanho (a fase 8, 192) ele nao cobre o mundo, e a camada nao nasce
+  const alturas = alturasDoMapa();
+  if (alturas.largura !== config.largura + 1 || alturas.altura !== config.altura + 1) return null;
 
   const { tilePx } = config;
   const p: ParametrosDaLuz = {
     ...parametrosDaLuz,
     pxDeMundoPorDegrau: pxPorDegrauDaBusca(busca, parametrosDaLuz.pxDeMundoPorDegrau),
   };
-  const luz = calcularLuz(alturasDoMapa(), p, tilePx);
+  const luz = calcularLuz(alturas, p, tilePx);
   const { sombra, luz: realce } = texturasDaLuz(luz);
 
   // A D-TELA-06 garante o WebGL antes de o jogo existir (src/render/webgl.ts).

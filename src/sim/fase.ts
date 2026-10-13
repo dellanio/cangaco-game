@@ -37,9 +37,13 @@ export function faseDaCampanha(id: string, dados: GameData): FaseData {
 export function dadosDaFase(id: string, raw: RawGameData = rawGameData): GameData {
   const fase = raw.fases.find((f) => f.id === id);
   if (fase === undefined) throw new Error(`dadosDaFase: '${id}' nao e fase da campanha`);
-  const mapa = { ...raw.mapa, id: fase.id, linhas: fase.mapa.linhas, recursos: fase.mapa.recursos };
+  const { largura, altura } = fase.mapa;
+  const mapa = { ...raw.mapa, id: fase.id, largura, altura, linhas: fase.mapa.linhas, recursos: fase.mapa.recursos };
   const economy = { ...raw.economy, estadoInicial: { ...raw.economy.estadoInicial, predios: [], unidades: {} } };
-  return deepFreeze(loadGameData({ ...raw, mapa, economy } as unknown as RawGameData));
+  // I-TERRENO-FASE-8-MAPA-MAIOR: o mundo da partida tem o tamanho do mapa da fase. O loader continua
+  // recusando mapa e `mapaPadrao` diferentes; aqui os dois sao o mesmo numero
+  const terrain = { ...raw.terrain, mapaPadrao: { largura, altura } };
+  return deepFreeze(loadGameData({ ...raw, terrain, mapa, economy } as unknown as RawGameData));
 }
 
 /** Os tiles livres e andaveis em volta de `(gx, gy)`, anel por anel (o spawn da escaramuca). */

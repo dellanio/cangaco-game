@@ -2387,8 +2387,12 @@ function validarCampanha(dados, fases) {
     if (!MODOS_DA_FASE.includes(fase.modo)) err(`modo '${fase.modo}' nao e ${MODOS_DA_FASE.join(' nem ')}`);
     if (fase.escala !== 'combate') err("escala precisa ser 'combate' (as duracoes da missao)");
     const mapa = fase.mapa;
-    if (!mapa || mapa.largura !== mapaPadrao.largura || mapa.altura !== mapaPadrao.altura) {
-      err(`mapa precisa ser ${mapaPadrao.largura}x${mapaPadrao.altura} (terrain.mapaPadrao)`);
+    // I-TERRENO-FASE-8-MAPA-MAIOR: a fase pode ser maior que o mundo padrao, quadrada e ate o dobro dele (a
+    // F17c mediu a sim em 64, 128 e 256). A partida da fase usa o tamanho do mapa dela (`dadosDaFase`)
+    const n = mapa && mapa.largura;
+    if (!mapa || !Number.isInteger(n) || mapa.altura !== n || mapaPadrao.largura !== mapaPadrao.altura
+      || n < mapaPadrao.largura || n > 2 * mapaPadrao.largura) {
+      err(`mapa precisa ser quadrado, de ${mapaPadrao.largura}x${mapaPadrao.altura} (terrain.mapaPadrao) ao dobro dele`);
       continue;
     }
     let torto = false;
