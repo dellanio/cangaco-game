@@ -22048,3 +22048,72 @@ fase                     pedra  árvore  inimigo   (custo do A* em ticks, do in�
   Limites, ticks e contratos de rebrota/visao preservados.
 - Portao rapido da task 2 aprovado: typecheck, lint, dados e 257 arquivos/2.305
   testes normais. Log `test-output/diagnostico-timeouts/nevoa-verify-rapido.log`.
+
+### Timeouts — task 3 e validacoes dependentes 4/6/7, 2026-10-12
+
+- Consulta compartilhada de contratacao: RED permanente 27 leituras para seis
+  tipos. A filtragem passa a ler cada tipo uma vez; o predicado booleano usa
+  parada na primeira correspondencia. Sem cache, dado mutado/injetado responde
+  na chamada seguinte, mantendo padrao Prefeitura e Igreja explicita.
+- Seis arquivos dirigidos normais e transladados: 39 testes aprovados por mundo,
+  incluindo abertura F17, couro, armas, lenhador e Igreja. Regressao deterministica
+  registra seis leituras e verifica referencias/ordem.
+- Tasks 4/6/7 dependem da correcao compartilhada, sem ajuste de producao ou janela.
+  Logs: `contratacao-normal.log`, `contratacao-transladado.log` em
+  `test-output/diagnostico-timeouts/`.
+- F24a inteiro repetido tres vezes por mundo (uma na matriz, duas isoladas):
+  nove testes aprovados em cada corrida, preservando o guarda original de
+  save/load, comandos, 2.600 ticks e save no tick 1.900. Logs adicionais
+  `armas-normal-{2,3}.log` e `armas-transladado-{2,3}.log`.
+
+### Parada obrigatoria por novos casos fora do plano — 2026-10-12
+
+- `verify:rapido` da contratacao terminou 1: 255 arquivos/2.305 testes
+  aprovados, tres arquivos/tres testes reprovados por timeout.
+- Novos casos nao cobertos: F18-rocado, evidencia do aceite (5 s);
+  F17f-manifesto, arquivos existentes e dimensao declarada (5 s);
+  F-VIVO-a-pilhas, armazem nao pisca em 6.000 ticks (10 s).
+- Log completo: `test-output/diagnostico-timeouts/contratacao-verify-rapido.log`.
+  Nao houve aumento de timeout, worker, skip ou exclusao.
+- Aplicada regra do AGENTS do operador: parar e reportar situacao nao coberta.
+  Solicitada autorizacao para ampliar o plano; nenhuma correcao desses casos
+  foi improvisada. Consulta de contratacao e seu teste continuam sem commit.
+- Nevoa ja commitada (`e004a9db`); aceite causal commitado (`0c0f5528`).
+  CLI: observador identificado por perfil/sonda, codigo ainda nao alterado.
+  Capa: PNG conferido, hash e README preparados em output/imagegen, sem commit.
+  Main permanece no estado anterior. Outros worktrees nao foram alterados.
+
+### Retomada autorizada e custos dos novos casos — 2026-10-12
+
+- Operador autorizou ampliar o plano. Aceite adicional registrado antes do codigo
+  em `5e6c6c1c`, por checkout temporario apenas de documentacao (rapido passou
+  typecheck, lint, dados e selecionou zero testes, conforme contrato desse caso).
+  Nenhuma implementacao e declarada aceita com esse portao de documentacao.
+- CLI: guarda permanente RED observou 336 diretorios no Vite real. `watch: null`
+  removeu o trabalho do observador; 21 testes dirigidos (CLI e F05a) passaram.
+  Caminho publico npm e timeout 30 s permanecem. Logs `cli-red.log`/`cli-green.log`.
+- Quartel: a pergunta booleana evita construir a lista completa. RED leu nove
+  tipos para desconhecida; GREEN le zero, e requisito do primeiro tipo le um.
+  Lista ordenada publicada permanece igual; guarda compara toda mercadoria
+  publicada e dados injetados mutaveis contra a regra anterior.
+- Saneamento: ordenacao reutilizada so na mesma chamada/quadro, com nova conta
+  apos cancelar/liberar. RED 24 enumeracoes para 20 tarefas; GREEN uma. Guarda
+  de excesso preserva menores numeros e valida nova chamada/JSON.
+- Simulacao dirigida: seis arquivos/59 testes aprovados, incluindo F18,
+  F-VIVO-a, JobBoard e Quartel, sem mudar ticks, regras ou timeouts.
+  Log `test-output/diagnostico-timeouts/novas-sim-green.log`.
+- PNG: RED permanente registrou 2 MB em duas consultas; leitura nova busca
+  somente cabecalho de 24 bytes e reutiliza mesmo caminho neste teste.
+  Validacoes originais do manifesto foram mantidas. Guarda cobre leitura
+  parcial, arquivo ausente, cabecalho invalido e fechamento em erro.
+- PNG dirigido: dois arquivos/28 testes aprovados; guarda GREEN mede 24 bytes,
+  uma abertura e um fechamento por caminho. Log `png-green.log`.
+- Matriz normal de 17 arquivos: 146 testes aprovados. O runner headless tambem
+  desliga HMR, evitando abrir WebSocket de cliente inutil quando dois CLIs
+  rodam na mesma suite; nenhum cliente faz parte do contrato desse comando.
+- Matriz final transladada: 17 arquivos/145 testes aprovados, uma exclusao
+  preexistente. Rapido com todas as correcoes: typecheck, lint e dados verdes;
+  262 arquivos/2.317 testes aprovados, sem falha. Log
+  `test-output/diagnostico-timeouts/verify-rapido-custos-finais.log`.
+  As implementacoes serao registradas em commits separados; completo ainda
+  obrigatorio antes da integracao.

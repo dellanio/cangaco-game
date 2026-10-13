@@ -19,6 +19,11 @@ export type MotivoDeRecusaDeMercenario =
   /** BUG-S — a partida esta em peacetime (`sim/paz.ts`): no KaM, equipar na prefeitura e bloqueado. */
   | 'em-paz';
 
+/** Resolve o registro ja encontrado, sem buscar o proprio tipo novamente. */
+function contratanteDoTipo(t: GameData['unidades']['mercenarios']['tipos'][number]): string {
+  return 'predioQueTreina' in t && typeof t.predioQueTreina === 'string' ? t.predioQueTreina : ID_DA_PREFEITURA;
+}
+
 /**
  * I-PREDIO-IGREJA (2026-10-06) — o predio que contrata o tipo pago em ouro: o `predioQueTreina` do
  * dado (o padre, na Igreja), ou a Prefeitura, que e o padrao de todo mercenario.
@@ -26,17 +31,17 @@ export type MotivoDeRecusaDeMercenario =
 export function predioQueContrata(tipo: string, dados: GameData = gameData): string | null {
   const t = dados.unidades.mercenarios.tipos.find((m) => m.id === tipo);
   if (t === undefined) return null;
-  return 'predioQueTreina' in t && typeof t.predioQueTreina === 'string' ? t.predioQueTreina : ID_DA_PREFEITURA;
+  return contratanteDoTipo(t);
 }
 
 /** Os tipos que o predio `tipoDoPredio` contrata, na ordem do dado. */
 export function tiposContratadosEm(tipoDoPredio: string, dados: GameData = gameData) {
-  return dados.unidades.mercenarios.tipos.filter((t) => predioQueContrata(t.id, dados) === tipoDoPredio);
+  return dados.unidades.mercenarios.tipos.filter((t) => contratanteDoTipo(t) === tipoDoPredio);
 }
 
 /** O predio completo que contrata alguem por ouro (a Prefeitura, a Igreja). */
 export function ehPredioDeContratoCompleto(p: Predio | undefined, dados: GameData = gameData): p is PredioCompleto {
-  return p !== undefined && p.estado === 'completo' && tiposContratadosEm(p.tipo, dados).length > 0;
+  return p !== undefined && p.estado === 'completo' && dados.unidades.mercenarios.tipos.some((t) => contratanteDoTipo(t) === p.tipo);
 }
 
 export const ehPrefeituraCompleta = (p: Predio | undefined): p is PredioCompleto =>
