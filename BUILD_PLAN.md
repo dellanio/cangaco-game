@@ -10073,6 +10073,23 @@ fase para "impossível" sem nada que segure o outro lado. Entra um terceiro joga
    grava uma prancha com as nove capturas, que é aberta.
 5. As fases continuam passando no `validate:data` e na ida e volta do Tiled (`--conferir`).
 
+#### I-COMBATE-FASE-INIMIGO-DEFENDE — o inimigo da fase defende como a IA da escaramuça
+Decisão do operador (2026-10-13, pergunta 1 da campanha jogada: "Sim"). Sem defesa, a guarda do
+inimigo da fase só revida e cai grupo por grupo, e a fase 3 não pede economia nem com 44 inimigos.
+- **Aceite:**
+  1. `criarFase` dá IA (`state.ia`) a cada lado da fase que não é o jogador e tem militar: cada grupo de
+     militares do dado da fase (`lados[].unidades`) vira posições de defesa, partidas em blocos de
+     `combate.ia.tamanhoDoGrupo`, com o ponto do grupo, o tipo de grupo do tipo da tropa (`tipoDeGrupo`),
+     a linha `tras` para quem atira e `frente` para os outros, e o raio de `data/missao.json`
+     (`defesa.raio_tiles`, 8, o da escaramuça). Os membros são as unidades nascidas do grupo. Nenhum
+     militar inicial fica de sobra: o ataque da fase continua vindo só pelas ondas.
+  2. Pelo `step`, numa fase: um militar do jogador que entra no raio de uma posição é atacado pelos
+     membros dela (eles saem do lugar), e quem persegue para além do raio volta ao ponto. A fase sem
+     tropa inimiga (4, 5) não ganha IA.
+  3. Determinismo: a mesma fase, os mesmos comandos, o mesmo estado em 600 ticks.
+  4. A evidência da campanha jogada (`tools/jogar-campanha.js`) é rodada de novo, e as fases que errarem
+     os alvos A a E têm os números acertados no dado da fase, com a tabela no plano da campanha.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
