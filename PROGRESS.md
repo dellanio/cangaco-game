@@ -22302,3 +22302,13 @@ VERIFICADO: npm run verify com CANGACO_TEST_WORKERS=1 saiu 1. Typecheck, lint e 
 Repeticao dirigida dos cinco arquivos afetados, pela trava e com um worker: 5 arquivos/34 testes passaram, saida 0, 19,29 s. Log test-output/A08-falhas-dirigidas.log. Isso nao substitui o verify completo nem prova sua causa. Suite transladada nao executou nesta corrida, porque verify parou na suite normal. Nao houve afrouxamento de guardas, skips ou prazos.
 
 A08 implementada em 626cd33c, com testes especificos/rapido e capturas antes/depois ja abertos; indice docs/homologacao/2026-10-artes.md atualizado. Homologacao continua pendente. O CSV nao foi promovido a feito com verify completo verde. A09 milho ainda nao iniciada. Sem merge/push ou alteracao da main, sim, AGENTS.md, .claude e test-results.json. Portao completo vermelho registrado; nao declarar fase encerrada.
+
+## 2026-10-13 — integração autorizada da codex-artes
+
+VERIFICADO: main limpa em 62dd01f0. Rebase das 59 entregas/documentos concluído; conflito apenas aditivo em PROGRESS, resolvido mantendo registros integrais das duas sessões. Diff próprio contra main não altera src/sim/, .claude/, AGENTS.md, test-results.json ou as referências de estilo apagadas. Candidatas minerais reprovadas não foram instaladas.
+
+npm run verify, com CANGACO_TEST_WORKERS=1, no código eb169fd9: saída 0. Typecheck/lint passaram; validate:data 35 arquivos/10 fases, zero erros. Normal 360 arquivos/3043 testes, 581,55 s; transladada 360 arquivos/3041 testes e cinco skips preexistentes, 671,45 s. Sem mudança de prazos, asserções, skips ou guardas. Os sete timeouts anteriores não se repetiram. Log test-output/merge-artes-20261013-verify.log. npm run build: saída 0, log test-output/merge-artes-20261013-build.log.
+
+Homologação de I-ARTE-ARVORE-CRESCENDO (três idades do juazeiro) aprovada pelo operador nesta conversa. CSV atualizado com entrega 6cad2982 e hashes das obras após rebase. Operador autorizou integração da branch inteira; documentação do resultado é posterior ao código testado, sem mudança de código/dados/artes.
+
+Ainda pendentes: A09 milho e demais itens não feitos da fila; pedreiro dentro do lajedo; montanhas/distribuição de ouro/ferro/carvão; avaliações específicas antigas não registradas como aprovadas. Não confundir integração autorizada com conclusão da fila. Test:longo e shot:todos não executados nesta integração. Sem push, sem remoção de worktrees de outras sessões. Merge depende da conferência final de main limpa e inalterada.
