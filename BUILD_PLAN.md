@@ -10135,6 +10135,32 @@ lista que o compilador confere contra os `type` da sim (sem ela o typecheck falh
   3. O roteiro `tools/shots/I-TELA-JORNAL-ONDA-DA-FASE.js` abre a fase 1, avança até a primeira onda
      pela ponte, e o ícone do jornal aparece; aberto, mostra a manchete da onda. Captura aberta.
 
+#### I-TERRENO-FASE-8-MAPA-MAIOR — Santa Rita num mapa de 192x192
+Pendência do desenho da campanha (`docs/planos/2026-10-10-campanha-dez-fases.md` §4: "o mapa maior da fase
+8 depende de o tamanho do mundo deixar de ser um só"). O pedido do operador de 2026-10-13 manda terminar os
+itens da campanha sem interromper. **O tamanho não está decidido em lugar nenhum:** 192x192 (1,5 vez o lado)
+é a interpretação conservadora, dentro do que a F17c já mediu (64, 128 e 256), e vai para `## Perguntas
+em aberto` do PROGRESS. **Feature de integração** (CLAUDE.md §10): toca `src/sim/fase.ts` (o tamanho da
+fase vira o `terrain.mapaPadrao` da partida), o gerador e o dado da fase, e em `src/render/` só a guarda
+da camada de relevo (o relevo do `sertao-128` não se desenha num mapa de outro tamanho). O sertão de 128 e
+as outras nove fases não mudam.
+- **Aceite:**
+  1. `dadosDaFase` usa a `largura` e a `altura` do mapa da fase como o `terrain.mapaPadrao` da partida. O
+     loader continua recusando um mapa de tamanho diferente do `mapaPadrao` (a guarda do "mundo com dois
+     tamanhos" fica). As fases de 128 dão o mesmo `GameData` de antes.
+  2. O gerador (`tools/gerar-fases.mjs`) aceita o tamanho por fase. A fase 8 é emitida em 192x192, com o
+     mesmo desenho escalado 1,5 vez: a várzea, os canaviais, o rio ao sul, o jogador no noroeste e os
+     quatro alvos longe uns dos outros. `--conferir` passa, e as outras nove fases ficam byte a byte iguais.
+  3. Pelo `step`, na fase 8: tudo o que `criarFase` põe no mapa fica dentro de 192x192, e um militar do
+     jogador mandado a um tile com `gx` e `gy` acima de 127 chega lá (o mundo tem mesmo 192).
+  4. O Tiled: `importar(exportar(fase 8))` é igual à fase, byte a byte, como nas outras.
+  5. A tela: o roteiro `tools/shots/I-TERRENO-FASE-8-MAPA-MAIOR.js` abre `?campanha=fase-08-santa-rita`,
+     confere pela ponte que o mapa da página tem 192x192 e leva a câmera ao canto sudeste (o tile 191,191
+     visível). Captura aberta. Com `?relevo` numa fase de outro tamanho, a camada de relevo não nasce, e
+     a página abre sem erro de console.
+  6. A campanha jogada (`tools/jogar-campanha.js fase-08-santa-rita`): os alvos A, C, D e E da fase 8
+     continuam ok. Se algum errar, os números da fase são acertados no gerador, com a tabela no plano.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
