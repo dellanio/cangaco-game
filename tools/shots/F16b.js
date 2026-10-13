@@ -176,8 +176,8 @@ async function roteiro(ctx) {
     await esperarFrame();
   }
   // F18d-1b: o arrasto DESENHA; quem ergue e o laborer, durante o passo 5. O ouro da
-  // escola so anda por rua de pe, entao a rua erguida e precondicao do "cabra ocupou" —
-  // e e la que ela e conferida, ja de pe.
+  // escola so anda por rua de pe; a rua inteira e conferida de pe no passo 5, depois do
+  // "cabra ocupou" (ver la por que a espera e por condicao).
   const canteiro = await estado();
   afirmar(
     canteiro.estradasPlanejadasRenderizadas === tilesDaRua && canteiro.estradasRenderizadas === 0,
@@ -271,6 +271,15 @@ async function roteiro(ctx) {
   // ---- 5. deixar a vila trabalhar ------------------------------------------
   let depoisDoTrabalho = await estado();
   for (let t = 0; depoisDoTrabalho.prediosDoEstado[ID_PEDREIRA]?.ocupante == null && t < TETO_ATE_OCUPAR; t += PASSO_DE_AVANCO) {
+    await avancar(PASSO_DE_AVANCO);
+    await esperarFrame();
+    depoisDoTrabalho = await estado();
+  }
+  // Desde a rocha que fecha o passo (I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO, 2026-10-13) o
+  // cabra pode chegar a pedreira com o ultimo tile da rua ainda em obra (medido: 11 de pe
+  // e 1 planejado). A rua inteira continua obrigatoria; so a espera passa a ser por
+  // condicao, com o mesmo teto.
+  for (let t = 0; depoisDoTrabalho.estradasPlanejadasRenderizadas > 0 && t < TETO_ATE_OCUPAR; t += PASSO_DE_AVANCO) {
     await avancar(PASSO_DE_AVANCO);
     await esperarFrame();
     depoisDoTrabalho = await estado();
