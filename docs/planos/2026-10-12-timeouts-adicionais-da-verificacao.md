@@ -200,3 +200,45 @@ apontar mudança de comportamento, balanceamento, hardware/configuração de tes
 ou refatoração ampla não coberta aqui, parar e reportar antes de alterar código.
 Se várias falhas tiverem uma causa comum comprovada, registrar a dependência e
 o conjunto de aceites coberto antes de implementar; não fazer remendos cegos.
+
+## Diagnóstico causal e aceite estrutural — 2026-10-12
+
+A task 1 identifica custos redundantes, sem afirmar que cada timeout histórico
+teve uma causa exclusiva. Os perfis e sondas preservam todos os limites de teste.
+
+1. CLI: o perfil do processo filho concentra 4.312 amostras em `FSWatcher`.
+   Desativar apenas o observador na sonda externa reduz o carregamento de
+   `state.ts` de 6.908 para 533 ms e o processo da simulação de 7.966 para
+   1.582 ms, mantendo a saída e código zero. Remover apenas o otimizador não
+   removeu o custo. O CLI executa uma corrida e fecha; não precisa observar
+   arquivos. Aceite permanente: o servidor criado pelo runner usa `watch: null`,
+   comprovado por um processo com Vite instrumentado, e o comando real de F05a
+   permanece íntegro e passa. Nenhuma dependência, comando ou timeout muda.
+2. Consulta de contratação: `tiposContratadosEm` percorre a lista e, para cada
+   elemento, busca o mesmo elemento novamente. Sonda: seis tipos, 27 leituras
+   de entradas. Aceite: no máximo N leituras para N tipos; ordem, referências,
+   prefeitura por padrão, Igreja explícita, dados injetados e ausência de cache
+   persistente preservados. `ehPredioDeContratoCompleto` não precisa construir
+   uma lista para responder sim/não e deve parar no primeiro tipo correspondente.
+3. Névoa: ao conferir um array de descoberto de outra linha/save, o fallback
+   varre todos os 16.384 tiles, embora só 348 estejam visíveis no estado inicial.
+   Isso aparece nos cenários de rebrota que alternam estados/dados e no save/load.
+   Aceite: conferir somente os tiles com contagem positiva, com índice derivado
+   fora do GameState, mantido por carimbo/descarimbo; nenhuma consulta à contagem
+   para tile invisível no fallback. Comparar a contagem e o índice a uma visão
+   nova após movimento, morte, mudança de lado, obra completa/demolida e load.
+   Preservar descoberto monotônico, byte a byte e o custo por olho que mudou.
+
+Evidências ignoradas: `causas-antes.json` (27 leituras e 16.384 consultas),
+`cli-child.cpuprofile`, `cli-sem-watch.log`, `cli-fases.jsonl` e os seis perfis.
+
+Dependências de execução: task 2 corrige a varredura da névoa; task 3 corrige a
+consulta de contratação compartilhada por abertura, couro, armas e lenhador.
+Tasks 4, 6 e 7 verificam seus contratos completos sobre essas correções comuns,
+sem inventar uma mudança distinta para cada sintoma. Task 5 corrige o observador
+no CLI. Cada correção executável tem commit próprio, depois deste aceite.
+A task 6 conserva e repete três vezes o guarda original de save/load.
+A matriz final exige os seis arquivos normais/transladados e o verify completo.
+Uma corrida verde não prova ausência futura de pressão de CPU: fechamento aqui
+significa remover os custos demonstrados e proteger os comportamentos e custos
+com testes permanentes, sem afirmar reprodução de todos os timeouts históricos.
