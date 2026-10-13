@@ -22352,3 +22352,33 @@ As decisões que seriam dele ficaram registradas como emendas de aceite, cada um
 - Campanha: o mapa maior da fase 8 e o brejo da fase 6 (desenho novo de mapa); a economia de cada fase só se
   confere jogando (o jogador automático mede exército, não economia).
 - `D-TELA-LUZ-RELEVO` segue `false`; publicação no itch e playtest são do operador.
+
+## 2026-10-13 — o fechamento do bloco: tag `teste-jogo-2` no `8e6cf305`
+
+**Verificado (rodado, evidência aberta):**
+- **`shot:todos`** em `13f10937`: 188 roteiros, 187 com saída 0. O F16b (painel de seleção de prédio)
+  reprovou: com a rocha fechando o passo, o cabra ocupa a pedreira com 11 de 12 tiles da rua erguidos, e o
+  roteiro afirmava a rua inteira de pé no mesmo instante. A rua inteira continua obrigatória; a espera por ela
+  passou a ser por condição, com o mesmo teto (`e59fcf77`). O F16b sozinho: OK, 5 capturas.
+- **`test:longo`** em `e59fcf77`: VERMELHO. Aceite 4 do BUG-T, varredura das 400 ordens com 24: a ordem 385
+  (destino relativo, à beira do bosque) deixava 4 marchando (u24, u31, u32, u33), no mundo normal e no
+  transladado. **Causa medida** (sonda tick a tick, apagada): a C-MOVIMENTO-02b dava a vaga do u32, que tinha o
+  u27 parado à frente e nenhum contorno, ao u31; a C-MOVIMENTO-02 a devolvia. O par trocava de vaga a cada 5
+  ticks, a espera zerava em cada troca, e a troca forçada (emenda 14e) nunca vencia. **O gatilho**: com a rocha
+  atravessável nos dados da sonda, as 400 ordens dão 0 presos. A rocha não está no travamento: ela muda a
+  trajetória da varredura, que chega a um caso que a trajetória antiga não visitava.
+  - Primeira hipótese (a 02 só troca com o destino vizinho do parado, como diz o comentário dela): reprovada,
+    quebra o teste 1 da C-MOVIMENTO-02. Revertida.
+  - Correção (`8e6cf305`): `paradoDaTrocaForcada` separa as condições da troca forçada que não dependem da
+    espera, e a `vagaTomadaPor` pula quem as tem. Aceite 4b novo, no `verify` (o retrato do travamento no tick
+    600 da ordem, relativo ao líder): reprova sem a correção, com os mesmos 4 presos, e passa com ela. A
+    varredura: 0 presos, 0 sobreposições, com 18 (80 883 ticks) e com 24 (93 938 ticks).
+  - Os 16 roteiros de tela que movem tropa, de novo em `8e6cf305`: 16 OK.
+- **`verify` completo** em `8e6cf305`: saída 0. Normal 370 arquivos / 3099 testes; transladada 370 / 3097 e os
+  5 skips de antes.
+- **`test:longo`** em `8e6cf305`: VERDE, 399 s, sozinha; `selo:longo` OK.
+- **`npm run build`**: 549 arquivos, 44,50 MB, sem `assets/base/` e sem página de depuração.
+- **Push** `13f10937..8e6cf305` (pre-push com o selo completo) e a tag anotada `teste-jogo-2` no `8e6cf305`.
+
+**Nota:** o `shot:todos` completo rodou em `13f10937`. Depois dele mudaram o F16b (só o roteiro) e a marcha.
+O F16b e os 16 roteiros com tropa foram rodados de novo, mas os outros 171 não.
