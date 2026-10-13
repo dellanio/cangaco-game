@@ -348,3 +348,19 @@ sem recorte quebrou quatro testes de formação e colisão (C-COMBATE-01a, C-MOV
 C5 (c)): ela agia onde as regras antigas já respondem. Ela passa a valer só no caso medido na varredura:
 o DESTINO do marchante tomado por um parado, e o próximo passo não é o próprio destino (aí vale o "para
 ali perto"). Com o destino vazio, as trocas de vaga que já existem respondem.
+
+**Emenda 14e (2026-10-13, antes do commit do código; pela medida).** Com o recorte da 14d, a varredura
+volta a deixar presos (18: ordem 363; 24: 154, 281 e 358). Na 363 o destino de u24 está VAZIO, mas ele e
+u33 formam um nó de vagas, e a troca de vaga da C-MOVIMENTO-02 não age porque conta um contorno que passa
+por quem também está preso. Sem recorte, o empurrão de tile deixava o empurrado fora da vaga e quebrava
+a formação. A troca forçada passa a ser:
+- **troca de VAGA**, a da C-MOVIMENTO-02: o parado recebe o destino do marchante e sai marchando; o
+  marchante fica com a vaga do parado. O conjunto das vagas não muda;
+- só depois do `WAITING_TIMEOUT` do KaM (`KM_UnitActionWalkTo.pas:131`, 40 ticks: "After this time we can
+  be forced to exchange"), `colisaoMilitar.trocaForcadaDepois_segundos_base` = 4,0 em `data/units.json`,
+  contado em tentativas de desvio que falharam no mesmo tile (`fsmData.tentativasDeDesvio`, zera quando o
+  soldado muda de tile). Na primeira falha do desvio ela agia num engarrafamento passageiro de uma marcha
+  normal (C-COMBATE-01a, 6 soldados em campo aberto);
+- sem o próximo passo ser o destino, e sem alguém só de passagem no destino.
+- O aceite 1b afirma: ninguém em `marchando` no fim e nenhuma sobreposição (o marchante pode ficar com a
+  vaga do primeiro parado, no tile inicial).
