@@ -22117,3 +22117,6 @@ fase                     pedra  √°rvore  inimigo   (custo do A* em ticks, do in√
   `test-output/diagnostico-timeouts/verify-rapido-custos-finais.log`.
   As implementacoes serao registradas em commits separados; completo ainda
   obrigatorio antes da integracao.
+- Commit da consulta booleana do Quartel: rapido aprovado com 262 arquivos/
+  2.317 testes; log `quartel-verify-rapido.log`. Aceite `5e6c6c1c`; lista de
+  requisitos e criterios militares preservados.

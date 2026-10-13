@@ -29,7 +29,10 @@ export function requisitosDoQuartel(dados: GameData = gameData): readonly string
 }
 
 export function ehRequisitoDoQuartel(mercadoria: string, dados: GameData = gameData): boolean {
-  return requisitosDoQuartel(dados).includes(mercadoria);
+  // A pergunta booleana nao precisa materializar/ordenar a uniao inteira.
+  // A intersecao com mercadorias publicadas continua igual a da lista acima.
+  return dados.economia.mercadorias.includes(mercadoria)
+    && dados.unidades.militares.tipos.some((t) => t.requisitos?.includes(mercadoria) === true);
 }
 
 /** Recrutas dentro: o campo, ou zero quando ausente. */
