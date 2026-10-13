@@ -119,11 +119,16 @@ describe('I-TERRENO-MINAS-PERTO-DA-VILA', () => {
     expect(deslocamento).toBeGreaterThanOrEqual(0);
     expect(MAPA).toEqual(transladarMapa(GERADO, deslocamento));
     const charDaMontanha = Object.entries(MAPA.legenda).find(([, tipo]) => tipo === 'montanha')?.[0];
+    const charDaGrama = Object.entries(MAPA.legenda).find(([, tipo]) => tipo === 'grama')?.[0];
+    let tilesDeCarvao = 0;
     for (const [x, y] of gerador.tilesDaSerraDoOeste()) {
       const gx = x + deslocamento;
       const gy = y + deslocamento;
-      expect(MAPA.linhas[gy]?.[gx], `${gx},${gy}`).toBe(charDaMontanha);
+      const carvao = MAPA.recursos.coal?.some(([cx, cy]) => cx === gx && cy === gy);
+      if (carvao) tilesDeCarvao++;
+      expect(MAPA.linhas[gy]?.[gx], `${gx},${gy}`).toBe(carvao ? charDaGrama : charDaMontanha);
     }
+    expect(tilesDeCarvao).toBe(3);
     for (const veio of SERRA.veios) {
       const tiles = MAPA.recursos[veio.tipo]?.filter(([gx]) => gx === SERRA.x1) ?? [];
       expect(tiles.map(([, gy]) => gy).sort((a, b) => a - b), veio.tipo)

@@ -103,10 +103,10 @@
     "coal": {
       "regime": "nunca",
       "rendimentoPorTile": 15,
-      "bloqueiaConstrucao": false,
-      "_docBloqueiaConstrucao": "Mesma razao do cardume na agua: o veio esta na montanha, e montanha ja e intransponivel por terreno — `canPlace` recusa com motivo `terreno` antes de olhar recurso (`sim/placement.ts`, ordem terreno -> recurso). Marcar `true` aqui seria a segunda regra dizendo o mesmo fato, e duas fontes para o mesmo fato e como elas divergem. A resposta de design do operador (F21b: so os tiles adjacentes, nunca o de baixo) continua valendo inteira — o que a sustenta e o terreno, nao a bandeira.",
+      "bloqueiaConstrucao": true,
+      "_docBloqueiaConstrucao": "I-TERRENO-MINERAIS-PERTO-DAS-VILAS: jazida ativa de carvao em solo caminhavel recusa predio e rua. Ao esgotar, o regime nunca remove o recurso e libera o solo; sem alterar rendimento ou exploracao.",
       "bloqueiaPasso": false,
-      "_docBloqueiaPasso": "O veio esta dentro da montanha, e montanha ja e intransponivel por terreno. Marcar aqui seria a segunda regra dizendo a mesma coisa.",
+      "_docBloqueiaPasso": "Decisao do operador (2026-10-10): unidades podem atravessar a jazida de carvao e caminhar por cima. Carvao ativo em grama; este recurso nao bloqueia o passo.",
       "_doc": "F21b — o carvao da serra. `nunca` porque veio nao volta: a mina de carvao deixou de produzir do nada e passou a colher o tile, como a pedreira desde a F-T2a. 15 por tile, o mesmo da rocha: e o minerio que mais se queima (a metalurgia consome 1.2 de carvao por ciclo contra 1.0 de minerio de ouro), entao o veio dele e o mais gordo dos tres."
     },
     "iron_ore": {

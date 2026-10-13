@@ -54,6 +54,7 @@ const terreno = require(path.join(RAIZ, 'data', 'terrain.json'));
 const economia = require(path.join(RAIZ, 'data', 'economy.json'));
 const construcoes = require(path.join(RAIZ, 'data', 'buildings.json'));
 const producao = require(path.join(RAIZ, 'data', 'production.json'));
+const escaramuca = require(path.join(RAIZ, 'data', 'escaramuca.json'));
 
 const SEMENTE = 20260924;
 const ID = 'sertao-128';
@@ -747,7 +748,7 @@ function montarRelevo(grade, cfg) {
 
 /** `cfg` so para o teste provar que outra semente da outro relevo; o arquivo usa o dado. */
 function montarArquivoDeRelevo(cfg = RELEVO.geracao) {
-  const { grade } = gerar();
+  const { grade } = mundoComMineraisPertoDasVilas();
   const { largura, altura, h } = montarRelevo(grade, cfg);
   const linhas = [];
   for (let vy = 0; vy < altura; vy += 1) {
@@ -777,11 +778,48 @@ function serializarRelevo(arquivo) {
   return `${corpo},\n  "linhas": [\n${linhas.map((l) => `    ${JSON.stringify(l)}`).join(',\n')}\n  ]\n}\n`;
 }
 
-function montarArquivo() {
+/** Autoria apenas: preserva o RNG/contagens e move recursos ja existentes. */
+function mundoComMineraisPertoDasVilas() {
   const mundo = gerar();
+  const recursos = gerarRecursos(mundo);
+  const config = terreno.geracao.mineraisPertoDasVilas;
+  const vila = escaramuca.predios.find(p => p.id === 'storehouse');
+  if (!vila) throw new Error('Minerais: armazem da AI ausente');
+  const ocupados = new Set(Object.values(recursos).flat().map(([x, y]) => `${x},${y}`));
+  for (const j of config.jazidasDaAi) {
+    if (!['gold_ore', 'iron_ore', 'coal'].includes(j.tipo)
+      || ![j.gx, j.gy, j.largura, j.altura].every(Number.isInteger)
+      || j.largura <= 0 || j.altura <= 0 || j.largura * j.altura > recursos[j.tipo].length) {
+      throw new Error('Minerais: configuracao invalida da jazida');
+    }
+    const novos = [];
+    for (let dy = 0; dy < j.altura; dy++) for (let dx = 0; dx < j.largura; dx++) {
+      const x = j.gx + dx, y = j.gy + dy;
+      if (ocupados.has(`${x},${y}`) || mundo.grade[y]?.[x] !== 'grama') throw new Error(`Minerais: jazida invade tile ocupado ${x},${y}`);
+      if (Math.max(Math.abs(x - vila.gx), Math.abs(y - vila.gy)) > config.raioMaximo) throw new Error('Minerais: jazida longe da AI');
+      novos.push([x, y]);
+    }
+    const distancia = ([x, y]) => Math.max(Math.abs(x - vila.gx), Math.abs(y - vila.gy));
+    const candidatos = recursos[j.tipo].filter(([x, y]) => !naSerraDoOeste(x, y))
+      .slice().sort((a, b) => distancia(b) - distancia(a) || a[1] - b[1] || a[0] - b[0]);
+    if (candidatos.length < novos.length) throw new Error('Minerais: nao ha tiles suficientes para mover');
+    const retirados = new Set(candidatos.slice(0, novos.length).map(([x, y]) => `${x},${y}`));
+    recursos[j.tipo] = recursos[j.tipo].filter(([x, y]) => !retirados.has(`${x},${y}`)).concat(novos);
+    for (const [x, y] of novos) {
+      mundo.grade[y][x] = j.tipo === 'coal' ? config.terrenoDoCarvao : 'montanha';
+      ocupados.add(`${x},${y}`);
+    }
+  }
+  for (const [x, y] of recursos.coal) mundo.grade[y][x] = config.terrenoDoCarvao;
+  for (const [tipo, total] of Object.entries(config.totais)) if (recursos[tipo].length !== total) throw new Error(`Minerais: total de ${tipo} mudou`);
+  return { ...mundo, recursos };
+}
+
+function montarArquivo() {
+  const mundo = mundoComMineraisPertoDasVilas();
   const { largura, altura, grade } = mundo;
   const linhas = grade.map((linha) => linha.map((tipo) => CHAR[tipo]).join(''));
-  const recursos = gerarRecursos(mundo);
+  const recursos = mundo.recursos;
 
   const contagem = {};
   for (const linha of grade) for (const tipo of linha) contagem[tipo] = (contagem[tipo] || 0) + 1;

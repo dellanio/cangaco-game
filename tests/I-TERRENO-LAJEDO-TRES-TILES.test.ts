@@ -14,7 +14,11 @@ import { semRoca } from './helpers/roca';
 import { pedreiraDaVila, ruaDaPedreiraDaVila } from './helpers/producao-cenario';
 
 const require = createRequire(import.meta.url);
-type MapaDeAutoria = { recursos: Record<string, number[][]>; contagemDeRecursos: Record<string, number> };
+type MapaDeAutoria = { recursos: Record<string, number[][]>; contagemDeRecursos: Record<string, number>; linhas: string[]; contagemPorTipo?: unknown };
+/** I-TERRENO-MINERAIS-PERTO-DAS-VILAS (emenda de 2026-10-13): as 34 casas de terreno que a autoria dos
+ *  minerais muda (5 manchas). A guarda as mascara, junto com as camadas de minerio que ela redistribui. */
+const CASAS_DOS_MINERAIS: readonly (readonly [number, number])[] = [[13,32],[13,33],[13,34],[57,82],[58,82],[59,82],[57,83],[58,83],[59,83],[63,84],[64,84],[65,84],[63,85],[64,85],[65,85],[100,89],[100,90],[100,91],[100,92],[101,93],[101,94],[102,95],[103,96],[104,96],[98,106],[98,107],[98,108],[98,109],[99,111],[99,112],[100,113],[101,114],[103,115],[104,115]];
+const CAMADAS_DOS_MINERAIS = ['gold_ore', 'iron_ore', 'coal'] as const;
 const { validarLajedoDaVila } = require('../tools/data-rules.js') as { validarLajedoDaVila: (c: unknown, m: unknown, erros: string[]) => void };
 describe('I-TERRENO-LAJEDO-TRES-TILES', () => {
   it('pedreiras reposicionadas respeitam o vao e suas ruas sao legais e ligadas a vila', () => {
@@ -44,7 +48,16 @@ describe('I-TERRENO-LAJEDO-TRES-TILES', () => {
     mapa.recursos.rock = mapa.recursos.rock!.filter(p => !novos.includes(p));
     // Registro do mapa homologado, retirando SOMENTE os treze tiles da vila:
     // terrenos, recursos restantes, legenda e metadados ficam byte a byte iguais.
-    expect(createHash('sha256').update(JSON.stringify(mapa)).digest('hex')).toBe('2b835f6017d0f2643a765f5dabfe36cc7029b03ea7879a6188125038ad47baff');
+    // I-TERRENO-MINERAIS-PERTO-DAS-VILAS (emenda de 2026-10-13): mascaradas tambem as 34 casas e as tres
+    // camadas de minerio que a redistribuicao muda, e a contagem por tipo (derivada das linhas). Medido na
+    // sessao: o mapa de antes e o de depois, mascarados assim, davam o mesmo hash; o hash era 2b835f60...
+    // com o mapa inteiro
+    const linhas = mapa.linhas.map((l) => l.split(''));
+    for (const [x, y] of CASAS_DOS_MINERAIS) (linhas[y] as string[])[x] = '?';
+    mapa.linhas = linhas.map((l) => l.join(''));
+    for (const k of CAMADAS_DOS_MINERAIS) { delete mapa.recursos[k]; delete mapa.contagemDeRecursos[k]; }
+    delete mapa.contagemPorTipo;
+    expect(createHash('sha256').update(JSON.stringify(mapa)).digest('hex')).toBe('44d43325cb278b257b9a0b55a2c45dfa15fa8145f565c5a07de645dbcbdcaabe');
   });
   it('canPlaceRoad e PlaceRoad pelo step recusam cada tile novo do lajedo real', () => {
     const inicial = createInitialState(1), a = ancoraDoLajedo();
