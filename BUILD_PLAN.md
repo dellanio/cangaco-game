@@ -9957,6 +9957,17 @@ se tem):
 - **(D) construir de destruir (1, 2, 3, 6, 8):** o `ataque` só com a tropa inicial não vence (a fase
   pede economia).
 
+**Emenda 1 (2026-10-13, antes do código; pela medida da primeira corrida):** o alvo D sozinho empurra a
+fase para "impossível" sem nada que segure o outro lado. Entra um terceiro jogador e um alvo:
+- **`reforço`:** o mesmo `ataque`, com cada militar inicial do jogador em dobro (o mesmo tipo, nascido
+  ao lado). É o que a economia daria na fase, uma medida aproximada e só da ferramenta: a fase de
+  verdade não dá reforço nenhum.
+- **(E) construir (1 a 6, 8):** o `reforço` vence (destruir, capturar) ou não perde (sobreviver,
+  manter) dentro do prazo, ou em 30 min sem prazo. Com o D, a tropa inicial não basta e o dobro basta.
+- O `ataque` (e o `reforço`) segue o primeiro objetivo de vitória ainda não cumprido, não só o
+  primeiro da lista, nunca ataca a unidade que a fase manda capturar, nem o prédio que um objetivo de
+  derrota manda proteger.
+
 **Aceite:**
 1. A ferramenta `tools/jogar-campanha.js` roda as fases 2 a 10 (e a 1, como referência) com os dois
    jogadores, até o fim ou até o prazo da fase (ou 30 min de jogo, sem prazo), e grava em
