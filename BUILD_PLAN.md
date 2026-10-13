@@ -10092,6 +10092,8 @@ inimigo da fase só revida e cai grupo por grupo, e a fase 3 não pede economia 
 
 #### I-TELA-JORNAL-ONDA-DA-FASE — o jornal avisa quando chega uma onda da fase
 Pendência da campanha jogável (o relatório de 2026-10-12: "o jornal não avisa quando uma onda chega").
+**Feature de integração** (CLAUDE.md §10): toca `src/sim` (o evento) e `src/render/eventos-da-sim.ts`, a
+lista que o compilador confere contra os `type` da sim (sem ela o typecheck falha). Nada mais do render muda.
 - **Aceite:**
   1. A sim emite `wave-arrived` no tick em que uma onda nasce, com `unidades` (quantos nasceram) e
      `atacante` (o lado da onda; o campo não se chama `lado`, porque o jornal só noticia o `lado` do
