@@ -21,7 +21,9 @@ describe('BUG-P — quem vai lutar revida o inimigo encostado', () => {
   it('o alvo cercado pelos colegas nao trava o atacante: ele luta com o que encosta, e o bloco cai', () => {
     const bloco: Unidade[] = [];
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) bloco.push(u(`b${dx + 1}${dy + 1}`, 'bowman', IA, 60 + dx, 60 + dy));
-    const s0 = createInitialState(1);
+    // I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO (2026-10-13): a rocha passou a fechar o passo, e no mundo
+    // transladado estas coordenadas absolutas caem num trecho com rocha. O assunto e o combate: sem recursos
+    const s0 = { ...createInitialState(1), recursos: {} };
     const atacante = u('m', 'militia', LADO_DO_JOGADOR, 57, 60);
     let s: GameState = { ...s0, unidades: { porId: Object.fromEntries([atacante, ...bloco].map((x) => [x.id, x])), ordem: ['m', ...bloco.map((b) => b.id)] } };
     s = step(s, [{ type: 'AttackUnit', unidades: ['m'], alvo: 'b11' }], gameData);

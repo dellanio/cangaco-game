@@ -19,6 +19,8 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { validarInterface } from '../tools/data-rules.js';
 import { ARQUIVOS, ARQUIVOS_DA_INTERFACE } from '../tools/data-schema.js';
 import { gravarEvidencia } from './helpers/evidence';
@@ -55,10 +57,19 @@ const gerador = requireCjs('../tools/gerar-mapa.js') as {
 
 const relevoJson = JSON.parse(readFileSync('data/relevo.json', 'utf8')) as { geracao: CfgDaGeracao } & Record<string, unknown>;
 const cfg = relevoJson.geracao;
+/** I-TERRENO-MINERAIS-PERTO-DAS-VILAS (2026-10-13): o gerador e chamado num PROCESSO FILHO, que le os dados de
+ *  autoria do disco sem a interceptacao de fs da suite transladada (o padrao da guarda do lajedo,
+ *  I-TERRENO-LAJEDO-TRES-TILES). No mundo transladado, o gerador lia a vila da IA andada de +K e as
+ *  jazidas novas na coordenada de autoria, e recusava o mapa. As guardas medem o relevo que o gerador emite
+ *  sobre o mapa que ele mesmo monta, e continuam valendo assim. */
+const doGerador = <T>(funcao: 'montarArquivo' | 'montarArquivoDeRelevo'): T => JSON.parse(execFileSync(process.execPath, [
+  '-e', `process.stdout.write(JSON.stringify(require(process.argv[1]).${funcao}()))`,
+  fileURLToPath(new URL('../tools/gerar-mapa.js', import.meta.url)),
+], { encoding: 'utf8', maxBuffer: 1 << 26 })) as T;
 /** O mapa que o gerador monta, e o relevo que ele emite sobre ESSE mapa: o mesmo mundo. */
-const mapa = gerador.montarArquivo();
+const mapa = doGerador<ReturnType<typeof gerador.montarArquivo>>('montarArquivo');
 const grade: Grade = mapa.linhas.map((linha) => [...linha].map((ch) => mapa.legenda[ch] as string));
-const gerado = gerador.montarArquivoDeRelevo();
+const gerado = doGerador<ArquivoDeRelevo>('montarArquivoDeRelevo');
 const h = gerado.linhas.flatMap((linha) => [...linha].map((ch) => gerador.DIGITOS_DO_RELEVO.indexOf(ch)));
 
 /** Os 4 cantos do tile (gx, gy), na grade de vertices de largura `vl`. */
@@ -67,7 +78,7 @@ const cantos = (gx: number, gy: number, vl: number): number[] =>
 
 describe('D-TERRENO-ALTURA — altura so de render no gerador', () => {
   it('1. a mesma semente emite o mesmo relevo; outra semente, outro relevo', () => {
-    const a = gerador.serializarRelevo(gerador.montarArquivoDeRelevo());
+    const a = gerador.serializarRelevo(doGerador<ArquivoDeRelevo>('montarArquivoDeRelevo'));
     expect(a).toBe(gerador.serializarRelevo(gerado));
     const outro = gerador.montarRelevo(grade, { ...cfg, semente: cfg.semente + 1 });
     expect(outro.h).not.toEqual(h);
