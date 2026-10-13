@@ -22034,3 +22034,17 @@ fase                     pedra  árvore  inimigo   (custo do A* em ticks, do in�
   `test-output/diagnostico-timeouts/verify-rapido.log`.
   Correção de F35 preparada para commit separado; novo plano e diagnóstico
   ainda não encerram a task 1 nem autorizam improvisar correções.
+
+### Timeouts — task 2, varredura redundante da nevoa, 2026-10-12
+
+- Aceite causal anterior ao codigo: commit `0c0f5528` no plano de timeouts.
+- RED permanente: `TIMEOUTS-nevoa-custo` mediu 16.384 leituras para 348 tiles
+  visiveis. O fallback agora percorre um Set derivado dos tiles com contagem
+  positiva; carimbo/descarimbo mantem esse indice fora do GameState/save.
+- Apos a correcao, zero leituras de contagem no fallback. Indice comparado com
+  reconstrucao completa apos movimento, morte, lado, obra, demolicao e load.
+- Dirigido transladado: tres arquivos/17 testes aprovados (nevoa, rebrota e guarda
+  novo), evidencia `test-output/diagnostico-timeouts/nevoa-transladado.log`.
+  Limites, ticks e contratos de rebrota/visao preservados.
+- Portao rapido da task 2 aprovado: typecheck, lint, dados e 257 arquivos/2.305
+  testes normais. Log `test-output/diagnostico-timeouts/nevoa-verify-rapido.log`.

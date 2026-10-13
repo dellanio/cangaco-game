@@ -49,6 +49,8 @@ export interface Visao {
   readonly altura: number;
   /** Quantos olhos veem cada tile. Visivel = contagem > 0. */
   readonly contagem: Uint16Array;
+  /** Indices cuja contagem e positiva; evita varrer o mapa ao conferir um load/ramo. */
+  readonly tilesVisiveis: Set<number>;
   /** Olho por id de entidade (unidade ou predio; os ids nao colidem). */
   readonly olhos: Map<string, Olho>;
   /** Eixo deterministico (aceite d): tiles carimbados ou descarimbados no ultimo avanco. */
@@ -128,6 +130,8 @@ function carimbar(v: Visao, o: Olho, delta: 1 | -1, aoAcender: ((i: number) => v
       const i = y * v.largura + x;
       const c = (v.contagem[i] ?? 0) + delta;
       v.contagem[i] = c;
+      if (c === 0) v.tilesVisiveis.delete(i);
+      else if (c === 1 && delta === 1) v.tilesVisiveis.add(i);
       n += 1;
       if (c === 1 && delta === 1 && aoAcender !== null) aoAcender(i);
     }
@@ -187,7 +191,7 @@ function atualizarOlhos(v: Visao, state: GameState, dados: GameData, acender: (i
 /** A visao inteira, do zero. */
 function visaoInteira(state: GameState, dados: GameData): Visao {
   const { largura, altura } = dados.mapa;
-  const v: Visao = { dados, largura, altura, contagem: new Uint16Array(largura * altura), olhos: olhosDoEstado(state, dados), carimbados: 0, descobertoConferido: null, dono: state, geracao: 0 };
+  const v: Visao = { dados, largura, altura, contagem: new Uint16Array(largura * altura), tilesVisiveis: new Set(), olhos: olhosDoEstado(state, dados), carimbados: 0, descobertoConferido: null, dono: state, geracao: 0 };
   for (const o of v.olhos.values()) v.carimbados += carimbar(v, o, 1, null);
   return v;
 }
@@ -240,7 +244,7 @@ function aceso(bits: readonly number[], i: number): boolean {
 export function descobertoInicial(state: GameState, dados: GameData = gameData): NonNullable<GameState['descoberto']> {
   const v = visaoDe(state, dados);
   const bits: number[] = new Array<number>(palavras(dados)).fill(0);
-  for (let i = 0; i < v.contagem.length; i++) if ((v.contagem[i] ?? 0) > 0) ligar(bits, i);
+  for (const i of v.tilesVisiveis) ligar(bits, i);
   return { [String(LADO_DO_JOGADOR)]: bits };
 }
 
@@ -278,7 +282,7 @@ export function avancarNevoa(antes: GameState, depois: GameState, dados: GameDat
     v = visaoInteira(depois, dados);
   }
   if (v.descobertoConferido !== bitsAntes) {
-    for (let i = 0; i < v.contagem.length; i++) if ((v.contagem[i] ?? 0) > 0) acender(i);
+    for (const i of v.tilesVisiveis) acender(i);
   }
   const bitsDepois: readonly number[] = bits ?? bitsAntes;
   const resultado: GameState = bits === null ? depois : { ...depois, descoberto: { ...depois.descoberto, [chave]: bitsDepois } };
