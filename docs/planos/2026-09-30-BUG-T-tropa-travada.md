@@ -309,3 +309,22 @@ alvo antigo). A troca mútua do BUG-T faz o resto, na hora. Inimigo nunca troca,
    todos vivos. Se ainda houver preso, a medida do ciclo dele vai para cá antes de qualquer mudança.
 4. Os testes de troca mútua, formação e colisão continuam passando (`verify:rapido`).
 5. A fase 4 da campanha, medida de novo pelo `jogar-campanha` depois da correção (evidência).
+
+**Emenda 14a (2026-10-13, antes do código; pela medida do aceite 3).** Com o DODGE, o ciclo de três sai,
+mas a varredura ainda deixa presos (18: ordem 363, 4 presos; 24: ordens 85, 89 e 252). A forma é outra:
+o marchante parado na largada tem o tile seguinte ocupado por um soldado PARADO (ocioso) da própria
+formação, e o desvio não acha caminho em volta do bloco (ex.: 24, k = 85: u19 em 31,42 quer 31,41, de
+u32 parado, e a vaga dele, 29,39, já tem um parado). As trocas de vaga que existem (emparedada, tomada,
+cruzada) exigem casos de dois que não valem aqui.
+- **A correção, do KaM:** o PUSH seguido da troca forçada (`KM_UnitActionWalkTo.pas:713-752` e `:754-830`;
+  só o parado é empurrado, e sem tile livre o empurrado troca). Aqui, como ÚLTIMO recurso, depois das
+  trocas de vaga que já existem: o marchante parado na largada há `ticksDesvioMilitar`, com um militar
+  PARADO do mesmo lado no tile seguinte e sem contorno (o desvio, contando todos os militares), troca de
+  tile com ele pela troca mútua. O parado volta para o tile dele depois. Se o tile do parado é o destino
+  do marchante, o parado fica no tile de onde o marchante saiu (senão ele quereria de volta a vaga do outro).
+- O aceite 3 fica igual (zero presos, zero sobreposições, todos vivos). Divergência declarada: o conjunto
+  exato das vagas pode mudar nesse caso (o parado que estava fora da vaga dele termina no tile do
+  marchante), e a varredura não confere vaga, só preso e sobreposição.
+- Aceite novo **1b**: cenário isolado, pelo `step`, de uma fila de três parados entre o marchante e o
+  destino, num corredor de um tile de largura: o marchante chega, os três parados voltam aos tiles
+  deles, sem sobreposição em nenhum tick.
