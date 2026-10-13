@@ -8,6 +8,7 @@
   "eventos": {
     "troop-hungry": "tropaComFome",
     "peace-ended": "fimDaPaz",
-    "season-changed": "estacao"
+    "season-changed": "estacao",
+    "wave-arrived": "ondaChegou"
   }
 }

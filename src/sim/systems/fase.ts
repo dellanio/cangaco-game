@@ -12,7 +12,7 @@
  * `ADD_GOAL`/`ADD_LOST_GOAL` do KaM. O capturar e a regra que o operador aprovou em 2026-10-12.
  */
 import type { GameData, ObjetivoDaFaseData } from '../data/types';
-import type { EstadoDaFase, GameState, Unidade } from '../state';
+import type { EstadoDaFase, GameEvent, GameState, Unidade } from '../state';
 import { LADO_DO_JOGADOR } from '../state';
 import { classeDaUnidade, condicaoCheiaDoTipo } from '../condicao';
 import { faseDaCampanha, tilesParaNascer } from '../fase';
@@ -66,6 +66,7 @@ export function sistemaDaFase(state: GameState, dados: GameData, tick: number): 
   let s = state;
   let estado: EstadoDaFase = state.fase;
   const decorrido = tick - estado.inicio;
+  const events: GameEvent[] = [];
 
   while (estado.ondasDisparadas < fase.ondas.length && (fase.ondas[estado.ondasDisparadas]?.tick ?? Infinity) <= decorrido) {
     const onda = fase.ondas[estado.ondasDisparadas];
@@ -85,6 +86,8 @@ export function sistemaDaFase(state: GameState, dados: GameData, tick: number): 
     for (const u of comAlvo) porId[u.id] = u;
     s = { ...s, proximoId: n, unidades: { porId, ordem: [...s.unidades.ordem, ...comAlvo.map((u) => u.id)] } };
     estado = { ...estado, ondasDisparadas: estado.ondasDisparadas + 1, tropasDasOndas: [...estado.tropasDasOndas, ...comAlvo.map((u) => u.id)] };
+    // I-TELA-JORNAL-ONDA-DA-FASE: o aviso da onda
+    events.push({ type: 'wave-arrived', atacante: onda.lado, unidades: comAlvo.length });
   }
 
   // BUG-ONDA-PARA-DEPOIS-DA-LUTA: a tropa da onda que ficou ociosa (o alvo caiu, ou ela lutou com quem
@@ -109,7 +112,7 @@ export function sistemaDaFase(state: GameState, dados: GameData, tick: number): 
     contagem[chave] = vale ? (contagem[chave] ?? 0) + 1 : 0;
   });
   estado = { ...estado, contagem };
-  return { state: { ...s, fase: estado }, events: [] };
+  return { state: { ...s, fase: estado }, events };
 }
 
 /** Um objetivo de VITORIA vale no estado. */

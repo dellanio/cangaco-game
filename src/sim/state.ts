@@ -466,6 +466,13 @@ export type GameEvent =
       readonly para: number;
     }
   | {
+      /** I-TELA-JORNAL-ONDA-DA-FASE — uma onda da fase nasceu neste tick (`systems/fase.ts`). O lado da onda
+       *  vai em `atacante`, e nao em `lado`: o jornal so noticia o `lado` do jogador. */
+      readonly type: 'wave-arrived';
+      readonly atacante: number;
+      readonly unidades: number;
+    }
+  | {
       /** I-CLIMA-ESTACAO — a estacao do ano mudou neste tick (`sim/clima.ts`). */
       readonly type: 'season-changed';
       readonly estacao: string;

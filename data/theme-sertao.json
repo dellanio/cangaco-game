@@ -582,6 +582,10 @@
         "texto": "As nuvens voltam a se juntar no céu. O inverno está perto."
       },
       "predioSemTrabalhador": { "manchete": "Parado: {predio} sem {trabalhador}", "texto": "Faz {minutos} minutos que {predio} espera um {trabalhador} e não produz nada. Mande formar um na Casa do Coronel." },
+      "ondaChegou": {
+        "manchete": "O Cabo Branco ataca!",
+        "texto": "{n} cabras do Cabo Branco apontaram na estrada e vêm direto para a vila. Junte a tropa e defenda as casas."
+      },
       "fimDaPaz": {
         "manchete": "Acabou a trégua!",
         "texto": "O tempo de paz chegou ao fim. O inimigo já pode marchar sobre a vila: guarneça as torres e junte a tropa."
