@@ -328,3 +328,11 @@ cruzada) exigem casos de dois que não valem aqui.
 - Aceite novo **1b**: cenário isolado, pelo `step`, de uma fila de três parados entre o marchante e o
   destino, num corredor de um tile de largura: o marchante chega, os três parados voltam aos tiles
   deles, sem sobreposição em nenhum tick.
+
+**Emenda 14b (2026-10-13, antes do código; pela medida do aceite 1b).** "O parado volta para o tile dele"
+não funciona: o empurrado recebe como destino o tile em que ainda está, e a marcha o dá por chegado no
+tick seguinte, antes de a troca andar; o marchante fica segurado no fim do passo. Como no PUSH do KaM
+(o empurrado sai do caminho e não volta sozinho), **o empurrado fica no tile de onde o marchante saiu**.
+O conjunto de tiles ocupados pela tropa não muda; quem está em qual tile muda. O aceite 1b passa a ter
+o destino tomado (como na ordem 85) e afirma: ninguém em `marchando` no fim, nenhuma sobreposição, e o
+marchante saiu do tile inicial.
