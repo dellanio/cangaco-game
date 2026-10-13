@@ -21,3 +21,14 @@ Aceite, antes da arte/código:
 6. Testes/roteiros pela trava; verify rápido verde antes de commits; verify completo ao final da entrega. Nenhum arquivo de src/sim, GameState, teste de prazo, AGENTS.md, .claude ou test-results.json muda.
 
 Depois de A09: A10 cana, A11 cavalos e retoques de ataque, na ordem do CSV. Bloqueios ficam registrados e não são considerados entregas.
+
+## I-ARTE-CANA-CRESCENDO — A10, cana-de-açúcar em três estágios
+
+Aceite antes da arte/código:
+
+1. A entrada recurso/grapes recebe exatamente semeado, muda e verde. Presente, bytes da arte madura, origem.base, canvas64x64, footprint1x1 e anchor[0.5,1] são preservados. Originais/masters128x128/metadados de geração e hashes em assets/base/grapes/crescimento/; derivados em assets/sprites/resources/. É cana-de-açúcar: nenhuma uva ou videira.
+2. Semeado mostra toletes parcialmente enterrados e marcas locais pequenas, sem chão quadrado fundido; muda mostra brotos de cana com folhas estreitas; verde mostra colmos segmentados e folhas alongadas. Desenhos próprios, não madura encolhida. Mesmo pé alfa>0 da madura; altura opaca crescente, menor que a madura. Luz única superior/sul, sem componente leste-oeste, fundo transparente, pintura no estilo dos prédios aprovados. Duas tentativas no máximo por estágio; candidata reprovada não é instalada.
+3. O seletor puro de textura de culturas passa a admitir grapes além de corn, só quando o PNG do estágio existe. O tick da maturidade, as dimensões e a textura madura não mudam. Falta de PNG conserva fallback anterior; outras culturas não ganham arte por engano.
+4. Emenda explícita da guarda de A09: o teste de que a cana fica no fallback passa a afirmar isso quando o PNG está ausente. Uma espécie desconhecida continua no fallback mesmo se o callback disser que há textura. Novos testes A10 afirmam, caminho por caminho, escolha dos três PNGs de cana, fallback sem PNG, preservação da madura e de todos os arquivos corn de A09 por hash. Nenhuma verificação é excluída ou desativada.
+5. Novo tests/I-ARTE-CANA-CRESCENDO.test.ts mede tamanho, linha dos pés, porte crescente, transparência, masters, estados do manifesto, geração/hash e seleção; cenário real semeado pelo step usa cenarioDeCanavial, sem editar sim/GameState. Roteiro tools/shots/I-ARTE-CANA-CRESCENDO.js avança pela maturação existente, afirma fontes PNG, texturas, quatro estágios e captura nos zooms0.5/1/2. Antes e depois usam a mesma partida. Prancha quatro estágios/três solos/normal e RGBx0.8, nos três zooms, aberta; validador original e revisão independente. Homologação do operador separada.
+6. Reutilizar as ferramentas técnicas de A09 por parâmetro de id, preservando comportamento padrão do milho; não regenerar nem substituir seus PNGs. Testes/roteiros sempre pela trava, verify rápido verde antes do commit e verify completo ao terminar. Nenhum src/sim, prazo, GameState, .claude, AGENTS.md ou test-results.json muda. Sem merge/push.
