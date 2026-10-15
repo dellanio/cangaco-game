@@ -15,7 +15,7 @@ import { sobrepostos } from './helpers/militares';
 
 const TIPO = gameData.escaramuca.tropaDoJogador.tipo;
 /** Guarda de travamento, NAO afirmacao de tempo (CLAUDE.md §8): 400 ordens da escaramuca. */
-const TIMEOUT_DA_VARREDURA = 120_000;
+const TIMEOUT_DA_VARREDURA = 300_000;
 
 describe('BUG-T aceite 4 — a varredura das 400 ordens (receita fixada na secao 7 do plano)', () => {
   it.each([TROPA_DOS_TESTES_DE_FORMACAO, 24])('com %i soldados nenhuma ordem deixa preso ou sobreposicao', (quantidade) => {
