@@ -39,7 +39,8 @@ async function roteiro({ page, capturar, afirmar }) {
   await page.keyboard.press('p');
   const b = await fundo();
   afirmar(b.quadrosComAmbiente > a.quadrosComAmbiente, `o ambiente toca quadro a quadro: ${a.quadrosComAmbiente} -> ${b.quadrosComAmbiente}`);
-  afirmar(b.niveis.paz > a.niveis.paz, `a musica da paz sobe em passagem: ${a.niveis.paz} -> ${b.niveis.paz}`);
+  // a passagem (3 s de relogio) pode ja ter terminado na primeira leitura: vale subir OU estar cheia (a rampa e do teste de `misturar`)
+  afirmar(b.niveis.paz > a.niveis.paz || b.niveis.paz === 1, `a musica da paz sobe em passagem ou ja esta cheia: ${a.niveis.paz} -> ${b.niveis.paz}`);
   await page.waitForTimeout(300);
   const c = await fundo();
   afirmar(c.quadrosComAmbiente > b.quadrosComAmbiente, 'pausado, o ambiente continua (o sertao nao para com o relogio)');
