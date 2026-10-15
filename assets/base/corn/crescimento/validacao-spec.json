@@ -1,0 +1,48 @@
+{
+  "id": "corn",
+  "kind": "resource",
+  "mode": "trial",
+  "frameSize": [
+    64,
+    64
+  ],
+  "masterSize": [
+    128,
+    128
+  ],
+  "frames": [
+    {
+      "state": "semeado",
+      "direction": "S",
+      "index": 0,
+      "pivot": [
+        0.5,
+        1
+      ],
+      "path": "assets/sprites/resources/corn-semeado-20261013.png",
+      "masterPath": "assets/base/corn/crescimento/corn-semeado-20261013-master-2x.png"
+    },
+    {
+      "state": "muda",
+      "direction": "S",
+      "index": 0,
+      "pivot": [
+        0.5,
+        1
+      ],
+      "path": "assets/sprites/resources/corn-muda-20261013.png",
+      "masterPath": "assets/base/corn/crescimento/corn-muda-20261013-master-2x.png"
+    },
+    {
+      "state": "verde",
+      "direction": "S",
+      "index": 0,
+      "pivot": [
+        0.5,
+        1
+      ],
+      "path": "assets/sprites/resources/corn-verde-20261013.png",
+      "masterPath": "assets/base/corn/crescimento/corn-verde-20261013-master-2x.png"
+    }
+  ]
+}

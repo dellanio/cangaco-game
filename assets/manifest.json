@@ -2520,13 +2520,17 @@
         1
       ],
       "estados": {
-        "presente": "sprites/resources/corn-D.png"
+        "presente": "sprites/resources/corn-D.png",
+        "semeado": "sprites/resources/corn-semeado-20261013.png",
+        "muda": "sprites/resources/corn-muda-20261013.png",
+        "verde": "sprites/resources/corn-verde-20261013.png"
       },
       "licenca": "arte propria do projeto, candidata D gerada em 2026-09-30",
       "origem": {
         "base": "base/resources/corn-D-master-2x.png",
         "semente": null,
-        "nota": "Candidato D derivado de candidatos/D/corn-tile/generation-01-raw.png; milho maduro no tile."
+        "nota": "Candidato D derivado de candidatos/D/corn-tile/generation-01-raw.png; milho maduro no tile.",
+        "crescimento": "base/corn/crescimento/derivacao.json"
       }
     },
     {

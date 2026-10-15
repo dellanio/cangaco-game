@@ -7,7 +7,7 @@
 "A06","P0","bakery/madeira","Mesmo telhado, fachada, anchors de trabalho/estoque/fumaça; não embutir estoque permanente","a executar","feito (09167113), aguarda homologação"
 "A07","P0","storehouse/madeira","Substituir madeira provisória pela estrutura do completo aprovado. Divergência registrada no manifest; manter anchors normalizados","a executar","feito (e62ff481), aguarda homologação"
 "A08","P0","tree: muda, crescendo_1, crescendo_2","Três derivados específicos, mesma base/linha dos pés e canvas compartilhado. Consumidor de crescimento já existe; hoje encolhe adulta como fallback","a executar","feito (6cad2982), aprovado pelo operador em 2026-10-13"
-"A09","P0","corn: semeado, muda, verde","Três estados próprios. Pronto continua a base madura; transição visual no mesmo tick da simulação","a executar","a executar"
+"A09","P0","corn: semeado, muda, verde","Três estados próprios. Pronto continua a base madura; transição visual no mesmo tick da simulação","a executar","feito (4a2de62e), aguarda homologação"
 "A10","P0","grapes: semeado, muda, verde","Três estados de cana-de-açúcar; nenhuma videira. Preservar leitura sobre campoCana","a executar","a executar"
 "A11","P0","horses: idade1/2/3, quatro quadros cada","12 quadros de cavalos para Cocheira, mesmo contrato animal dos bodes; pivô fixo, idades legíveis, cinco animais no curral sem fallback","a executar","a executar"
 "A12","P0","rogue/atacar — Emboscador","Inspecionar todos os 8 frames por direção e retocar estilingue, mão e trajetória; arma visível no zoom 0,5, sem mudança em combate","a executar","a executar"
