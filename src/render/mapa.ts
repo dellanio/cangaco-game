@@ -28,6 +28,8 @@ import type { CoresDaNevoa } from './nevoa';
 
 export interface ConfigDoMapa {
   readonly tilePx: number;
+  /** I-TERRENO-FASE-8-MAPA-MAIOR / D-TELA-LUZ-RELEVO: o id do mapa da pagina (o do sertao, ou o da fase). */
+  readonly idDoMapa: string;
   readonly largura: number;
   readonly altura: number;
   readonly larguraPx: number;
@@ -50,6 +52,7 @@ export function criarConfigDoMapa(): ConfigDoMapa {
   const { nevoa } = dadosDoTerreno;
   return {
     tilePx,
+    idDoMapa: gameData.mapa.id,
     largura: mapaPadrao.largura,
     altura: mapaPadrao.altura,
     larguraPx: mapaPadrao.largura * tilePx,

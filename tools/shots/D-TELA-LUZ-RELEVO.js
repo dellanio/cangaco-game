@@ -63,7 +63,7 @@ async function roteiro(ctx) {
     await page.goto(`${base}?pausado${busca}`);
     await page.waitForFunction(() => Boolean(window.__cangaco && window.__cangaco.pronto), { timeout: TETO_PRONTO_MS });
     const s = await estado();
-    afirmar(s.tick === 0, `a pagina ${busca || '(sem relevo)'} deveria nascer no tick 0, veio ${s.tick}`);
+    afirmar(s.tick === 0, `a pagina ${busca || '(padrao)'} deveria nascer no tick 0, veio ${s.tick}`);
   }
 
   /** A roda no centro do canvas ate o zoom do quadro: passos discretos, entao o mesmo gesto da a
@@ -82,10 +82,12 @@ async function roteiro(ctx) {
   const foto = async () => (await page.screenshot({ type: 'png' })).toString('base64');
 
   // ---- 0. a referencia, sem relevo ----------------------------------------------------------
+  // o relevo liga por padrao (2026-10-15): a referencia pede o chao liso com `?semRelevo`
+  await abrir('&semRelevo');
   const canvas = await retanguloDoCanvas(page);
   const camera = await aoZoomDoQuadro(canvas);
   const inicio = await estado();
-  afirmar(inicio.relevo === undefined, `sem ?relevo o debug nao deveria ter o campo relevo, veio ${JSON.stringify(inicio.relevo)}`);
+  afirmar(inicio.relevo === undefined, `com ?semRelevo o debug nao deveria ter o campo relevo, veio ${JSON.stringify(inicio.relevo)}`);
   const fotoSem = await foto();
   await capturar('sem-relevo');
 

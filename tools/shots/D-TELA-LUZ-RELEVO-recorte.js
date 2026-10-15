@@ -71,6 +71,8 @@ async function roteiro(ctx) {
   }
 
   // ---- A. a arvore da vila na encosta mais iluminada ---------------------------------------
+  // o relevo liga por padrao (2026-10-15): a referencia pede o chao liso com `?semRelevo`
+  await abrir(ctx, '&semRelevo');
   const camVila = await aoZoom(ctx, canvas, ZOOM);
   const fotoSem = await foto(page);
   await abrir(ctx, '&relevo');

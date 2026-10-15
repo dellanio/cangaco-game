@@ -144,9 +144,23 @@ export function tintDoSprite(f: number, p: ParametrosDaLuz): number {
   return tintDoFator(Math.min(f, p.tetoDoTintDoSprite));
 }
 
-/** O relevo foi pedido: a flag do dado, ou `?relevo` na URL (o roteiro). */
+/** O relevo foi pedido: a flag do dado ou `?relevo` na URL (o roteiro), e `?semRelevo` vence os dois. */
 export function relevoPedido(busca: string, ligadoNoDado: boolean): boolean {
-  return ligadoNoDado || new URLSearchParams(busca).has('relevo');
+  const q = new URLSearchParams(busca);
+  if (q.has('semRelevo')) return false;
+  return ligadoNoDado || q.has('relevo');
+}
+
+/** O mapa a que a altura emitida pertence (`data/maps/sertao-128.relevo.json`, campo `id`). */
+export const idDoMapaDoRelevo: string = alturaDoSertao.id;
+
+/**
+ * A altura e de UM mapa. Uma fase da campanha tem terreno proprio (mesmo quando tem 128x128, como as
+ * nove primeiras): desenhar nela a luz do relevo do sertao poria sombra onde nao ha serra. So o mapa dono
+ * da altura a desenha.
+ */
+export function relevoServeAoMapa(idDoMapa: string): boolean {
+  return idDoMapa === idDoMapaDoRelevo;
 }
 
 /** `?relevoPx=<n>` troca o px por degrau SO para o roteiro comparar as duas geometrias (decisao 9

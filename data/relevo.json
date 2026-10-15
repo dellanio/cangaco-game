@@ -1,6 +1,6 @@
 {
-  "_doc": "Relevo SO DE RENDER, opcao A (docs/planos/estudo-relevo.md secao 7; plano em docs/planos/relevo-a.md). sim/ nunca le este arquivo nem a altura emitida (data/maps/<id>.relevo.json): nada disto muda regra de jogo. `ligado` e a flag: false ate a arte de terreno da F-TR entrar. `?relevo` na URL liga para o roteiro.",
-  "ligado": false,
+  "_doc": "Relevo SO DE RENDER, opcao A (docs/planos/estudo-relevo.md secao 7; plano em docs/planos/relevo-a.md). sim/ nunca le este arquivo nem a altura emitida (data/maps/<id>.relevo.json): nada disto muda regra de jogo. `ligado` e a flag: true desde 2026-10-15 (decisao do operador: ligar o relevo; antes, false ate a arte de terreno da F-TR entrar). `?relevo` liga e `?semRelevo` desliga para o roteiro. So o mapa dono da altura (o `id` de data/maps/<id>.relevo.json) a desenha: fase da campanha nao.",
+  "ligado": true,
   "_docPlano": "O chao plano e 1,0 EXATO: a sombra (MULTIPLY) e a luz ([DST_COLOR, ONE]) sao neutras no plano, e a arte e pintada para ele sem compensacao (decisao do operador, 2026-09-30). Nao ha fator do plano: um campo `fatorDoPlano` aqui e erro de dado.",
   "fatorMinimo": 0.5,
   "_docFatorMinimo": "Piso de seguranca da luz do chao. Com o declive suave do gerador, a encosta mais escura fica bem acima dele.",

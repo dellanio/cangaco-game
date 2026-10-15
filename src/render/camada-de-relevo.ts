@@ -16,7 +16,7 @@
  */
 import Phaser from 'phaser';
 import {
-  alturasDoMapa, calcularLuz, fatorEm, parametrosDaLuz, pxPorDegrauDaBusca, relevoLigadoNoDado,
+  alturasDoMapa, calcularLuz, fatorEm, parametrosDaLuz, pxPorDegrauDaBusca, relevoLigadoNoDado, relevoServeAoMapa,
   relevoPedido, texturasDaLuz, tintDoSprite,
   type MapaDeLuz, type ParametrosDaLuz,
 } from './relevo';
@@ -82,14 +82,13 @@ function criarImagem(cena: Phaser.Scene, chave: string, luz: MapaDeLuz, tilePx: 
 }
 
 export function criarCamadaDeRelevo(
-  cena: Phaser.Scene, config: { readonly tilePx: number; readonly largura: number; readonly altura: number },
+  cena: Phaser.Scene, config: { readonly tilePx: number; readonly idDoMapa: string },
   busca: string, debug: EstadoDebug,
 ): LuzDoRelevo | null {
   if (!relevoPedido(busca, relevoLigadoNoDado)) return null;
-  // I-TERRENO-FASE-8-MAPA-MAIOR: o relevo e do `sertao-128` (um vertice a mais que os tiles); num mapa de
-  // outro tamanho (a fase 8, 192) ele nao cobre o mundo, e a camada nao nasce
+  // a altura e do `sertao-128`: uma fase da campanha (mapa proprio, de qualquer tamanho) nao a desenha
+  if (!relevoServeAoMapa(config.idDoMapa)) return null;
   const alturas = alturasDoMapa();
-  if (alturas.largura !== config.largura + 1 || alturas.altura !== config.altura + 1) return null;
 
   const { tilePx } = config;
   const p: ParametrosDaLuz = {

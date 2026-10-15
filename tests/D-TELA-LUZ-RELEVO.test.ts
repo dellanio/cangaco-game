@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import {
-  alturasDoMapa, calcularLuz, fatorEm, parametrosDaLuz, pxPorDegrauDaBusca, relevoPedido,
+  alturasDoMapa, calcularLuz, fatorEm, idDoMapaDoRelevo, parametrosDaLuz, pxPorDegrauDaBusca, relevoPedido, relevoServeAoMapa,
   texturasDaLuz, tintDoFator, tintDoSprite,
   type AlturasDoRelevo, type ParametrosDaLuz,
 } from '../src/render/relevo';
@@ -110,10 +110,22 @@ describe('D-TELA-LUZ-RELEVO — a luz do relevo', () => {
     expect(tintDoSprite(0.83, p)).toBe(0xd4d4d4);
   });
 
-  it('o pedido: flag do dado ou ?relevo; o ?relevoPx so vale com numero positivo', () => {
+  it('so o mapa dono da altura a desenha: o sertao sim, uma fase da campanha (qualquer tamanho) nao', () => {
+    expect(idDoMapaDoRelevo).toBe('sertao-128');
+    expect(relevoServeAoMapa('sertao-128')).toBe(true);
+    for (const fase of ['fase-01-pianco', 'fase-06-areia', 'fase-08-santa-rita', 'fase-10-cabedelo', '']) {
+      expect(relevoServeAoMapa(fase), fase).toBe(false);
+    }
+  });
+
+  it('o pedido: flag do dado ou ?relevo, e ?semRelevo vence os dois; o ?relevoPx so vale com numero positivo', () => {
     expect(relevoPedido('?pausado', false)).toBe(false);
     expect(relevoPedido('?pausado&relevo', false)).toBe(true);
     expect(relevoPedido('?pausado', true)).toBe(true);
+    // D-TELA-LUZ-RELEVO, emenda de 2026-10-15 (aceite 1 e 2): o relevo liga por padrao, e o roteiro o desliga
+    expect(relevoPedido('?pausado&semRelevo', true)).toBe(false);
+    expect(relevoPedido('?pausado&relevo&semRelevo', true)).toBe(false);
+    expect(relevoPedido('?pausado&relevo&semRelevo', false)).toBe(false);
     expect(pxPorDegrauDaBusca('?pausado&relevo', 8)).toBe(8);
     expect(pxPorDegrauDaBusca('?relevo&relevoPx=12.8', 8)).toBe(12.8);
     expect(pxPorDegrauDaBusca('?relevo&relevoPx=abc', 8)).toBe(8);

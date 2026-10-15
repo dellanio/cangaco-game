@@ -188,10 +188,10 @@ describe('D-TERRENO-ALTURA — data/relevo.json validado', () => {
     expect(ARQUIVOS).not.toContain('relevo');
   });
 
-  it('o dado real passa, e nasce desligado e sem k', () => {
+  it('o dado real passa, e nasce LIGADO (decisao do operador, 2026-10-15) e sem k', () => {
     expect(errosDoRelevo(ui)).toEqual([]);
     const r = ui['relevo'] as Record<string, unknown>;
-    expect(r['ligado']).toBe(false);
+    expect(r['ligado']).toBe(true);
     expect('fatorDoPlano' in r).toBe(false);
     expect(r['tetoDoTintDoSprite']).toBe(1);
   });
