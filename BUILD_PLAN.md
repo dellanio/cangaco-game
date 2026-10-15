@@ -10187,8 +10187,13 @@ versionada (CLAUDE.md §9), por recorte e escala, sem desenho novo; um desenho d
 - **Aceite:**
   1. `assets/manifest.json > icones.predios.reservoir` aponta um PNG novo de 72x72, derivado por recorte quadrado
      de `base/reservoir/cheio-master-2x.png` (o recorte e a escala ficam na `origem`); o PNG antigo fica no disco.
-  2. O ícone novo preenche o quadrado (mais de 85% dos pixels com alfa) e difere do anterior; o teste de ícones
+  2. O ícone novo cobre pelo menos 65% do quadrado (pixels com alfa > 16) e difere do anterior; o teste de ícones
      existente (`icones-ui`) passa, e um teste novo mede a cobertura.
+     - **Emenda (2026-10-15, antes do código; pela medida):** o aceite dizia 85%, número que escrevi sem medir.
+       Medido sobre cinco recortes quadrados da base: 66% a 76%, contra **44,0% do ícone atual**. Os cantos de um
+       quadrado em volta de uma elipse ficam vazios por natureza, e passar de 85% exigiria cortar fundo na água e
+       perder o muro e o sangradouro, que são o que diz "açude". Escolhido o recorte 330x330 em (150,110), com
+       **67,5%**, que no tamanho real do botão (36 px) é o que mostra o contorno inteiro do tanque.
   3. O roteiro `tools/shots/I-ARTE-ICONE-ACUDE-MENU.js` abre a aba De Comer e fotografa o botão do Açude (trancado,
      como na abertura); captura aberta ao lado do ícone anterior.
   4. A homologação entra em `docs/homologacao/2026-10-artes.md` como pendente.
