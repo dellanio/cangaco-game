@@ -4645,7 +4645,7 @@
     }
   },
   "reservoir": {
-    "arquivo": "sprites/reservoir/icone-atual.png",
+    "arquivo": "sprites/reservoir/icone-recorte-20261015.png",
     "tamanho": [
       72,
       72
@@ -4656,7 +4656,7 @@
       "semente": null,
       "fonteCompleta": "sprites/reservoir/cheio.png",
       "sha256": "92700662b97fe75dc474d227314bf7d3f9cb27126c7031c23bb5f1b26aa12b60",
-      "nota": "Derivado do completo ATUAL por tools/atualizar-icones-completos.mjs"
+      "nota": "I-ARTE-ICONE-ACUDE-MENU (2026-10-15, pedido do operador): recorte quadrado 330x330 em (150,110) da base de 512x448, escala Lanczos para 72x72 (ffmpeg crop=330:330:150:110,scale=72:72:flags=lanczos). Sem desenho novo: a cobertura do quadrado sobe de 44,0% para 67,5% e o muro e o sangradouro ficam legiveis em 36 px. O icone anterior continua em sprites/reservoir/icone-atual.png. Homologacao do operador pendente."
     }
   }
 },
