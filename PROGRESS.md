@@ -22432,3 +22432,19 @@ npm run verify completo no HEAD4a2de62e, rebaseado sobre main7ef796df, com CANGA
 A09 entregue tecnicamente e CSV atualizado com4a2de62e, aguarda homologação. Documentação deste resultado posterior ao código testado, sem alterar código/dado/arte. Não foi feito merge/push; main só contém os aceites/candidatas que a outra sessão integrou. Plano/arte/render da entrega permanecem em codex-correcoes. Próximo item executável: A10 cana-de-açúcar, ainda não iniciado. Pedreiro, carga infinita e minerais continuam bloqueados conforme plano; restante da fila e avaliações humanas não concluídos. Test:longo/shot:todos de fechamento geral não executados. Parada após verify completo, conforme AGENTS.md.
 
 Build de A09: npm run build saída0; 550 arquivos/44,56 MB, 25 sons/12,60 MB, nenhum assets/base no dist (406 fontes conferidas), sem página de depuração. Log test-output/milho-build.log. Documentação final: verificação rápida saída0, três arquivos/zero testes relacionados, 27 s; log test-output/milho-documentacao-rapido.log. Nenhum código/dado/arte mudou após o verify completo de4a2de62e.
+
+## 2026-10-15 — fechamento da teste-jogo-3 (tag em 9df9a34a)
+
+Verificado (corridas desta sessão):
+- `verify` completo no 4e60813+roteiro: 3 111 testes normal, 3 109 + 5 pulados transladado; verde na 2ª corrida.
+- `test:longo` verde sozinho no 9df9a34 (480 s); `selo:longo` OK. Build 551 arquivos, 44,57 MB, sem `assets/base/`.
+- `shot:todos` no 4e60813: 191 de 192 verdes; a falha, H-TELA-AMBIENTE-E-MUSICA, é anterior ao relevo.
+- Decisões do operador aplicadas: relevo ligado (chave D-TELA-LUZ-RELEVO-luz-do-relevo = true), codex-correcoes juntada, ícone do Açude, branches e pastas apagadas, fase 8 em 192 aprovada, brejo da fase 6 pedido ao Codex (A22).
+
+Achados medidos (causa confirmada por sonda):
+- H-TELA-AMBIENTE-E-MUSICA: nível da paz já em 1 na 1ª leitura (1 -> 1, 119 quadros); falha igual no 58aa4e7a e com `?semRelevo`. A asserção dependia de ritmo; passou a aceitar "sobe ou já cheia".
+- Varredura do BUG-T levou 121–157 s com a máquina em uso e estourou o teto de 120 s (guarda de travamento, não asserção); teto em 300 s.
+
+Hipótese, não confirmada: `tests/SHOT-vite-orfao.test.ts` aceite 2b falhou 1 vez no `verify` completo (espera de 500 ms pelo vite) e passou isolado 2 vezes e na 2ª corrida completa. Parece corrida sob carga; vale endurecer a espera por condição.
+
+Aberto: a tag teste-jogo-2 segue em 8e6cf305 (sem a fase 8 maior); brejo da fase 6 espera a arte A22 do Codex.
