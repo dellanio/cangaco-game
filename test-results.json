@@ -528,7 +528,7 @@
     "passes": true
   },
   "D-TELA-LUZ-RELEVO-luz-do-relevo": {
-    "passes": false
+    "passes": true
   },
   "D-TERRENO-ALTURA-altura-so-de-render": {
     "passes": true
