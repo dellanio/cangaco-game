@@ -89,3 +89,4 @@
 "M10","conferir no plano","Duas frentes, conclusão, persistência e epílogo","Rio/margens/porto, tela de conclusão","a executar","a executar"
 "M11","P2","Briefings, diálogos e epílogo em UI de campanha","Retratos de Severino, Vicente Cabo Branco, Coronel Antônio e Dona Esperança; outros personagens somente após roteiro confirmar uso","a executar","a executar"
 "M12","P2","Missões encadeadas e replay determinístico","Dez miniaturas dos mapas, seleção bloqueada/liberada e mapa regional; identidade deriva dos mapas finais","a executar","a executar"
+"A22","P1","Chão de brejo (terreno novo) para a fase 6","Pedido do operador em 2026-10-15; plano em docs/planos/2026-10-15-brejo-fase-6-pedido-ao-codex.md. 64x64 com padrao/v1/v2/v3 e as 16 bordas contra a grama; transitável, nunca lido como água; prévias em 0,5/1/2 e RGB×0,8. Integração no manifesto só depois de brejo entrar em TERRENOS_DE_MAPA (Claude); src/sim fora do escopo","a executar","a executar"

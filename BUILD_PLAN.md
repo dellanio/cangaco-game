@@ -10161,6 +10161,52 @@ as outras nove fases não mudam.
   6. A campanha jogada (`tools/jogar-campanha.js fase-08-santa-rita`): os alvos A, C, D e E da fase 8
      continuam ok. Se algum errar, os números da fase são acertados no gerador, com a tabela no plano.
 
+#### D-TELA-LUZ-RELEVO — emenda: o relevo liga por padrão (decisão do operador, 2026-10-15: "ligar o relevo")
+Substitui a nota "ligar a flag por padrão espera a arte de terreno da F-TR" e o aceite 1 do item (nada muda com a
+flag desligada), que a flag ligada torna sem objeto. O `pxDeMundoPorDegrau` segue 12,8 (provisório; recalibrar
+quando a arte nova de terreno entrar). **Feature de integração** (CLAUDE.md §10): é dado (`data/relevo.json`) e
+render (`src/render/`); `src/sim/` não muda.
+- **Aceite:**
+  1. `data/relevo.json` nasce com `ligado: true`. O sertão (jogo livre e escaramuça) desenha a luz sem `?relevo`
+     (o campo `relevo` existe na ponte). `?semRelevo` a desliga, só para o roteiro comparar com o chão liso.
+  2. A camada só nasce no mapa para o qual a altura foi emitida: o id do mapa da página é o `id` do arquivo de
+     altura (`sertao-128`). Uma fase da campanha (mapa próprio, mesmo de 128x128) não desenha relevo, sem erro de
+     console; sem esta regra, as nove fases de 128 receberiam a luz do relevo do sertão sobre um terreno que não é
+     o dele. Regra pura, por tabela: mesmo id desenha, outro id não, e `?semRelevo` vence o dado.
+  3. Tela: o sertão aberto tem `relevo` na ponte, e a fase 1 aberta não tem. Capturas abertas das duas.
+  4. Cada teste ou roteiro que assumia o relevo desligado passa a assumir o novo padrão, nomeado no commit e sem
+     afrouxar asserção: `D-TERRENO-ALTURA` (o dado nasce `ligado: true`) e o que o `shot:todos` reprovar por isso.
+  5. `verify` completo e `shot:todos` verdes. A chave `D-TELA-LUZ-RELEVO-luz-do-relevo` só volta a `true`, pelo
+     Edit, com o `shot:todos` fechado e as capturas do aceite 3 abertas.
+
+#### I-ARTE-ICONE-ACUDE-MENU — o ícone do Açude no menu de construir
+Pedido do operador (2026-10-15): "Preciso de ícone para o Açude no menu do game". O ícone de hoje
+(`sprites/reservoir/icone-atual.png`) é o açude inteiro encaixado num quadrado de 72 px: o corpo d'água achatado
+ocupa ~40 px de altura e perde o muro e o sangradouro, que são o que diz "açude". A arte nova é DERIVADA da base
+versionada (CLAUDE.md §9), por recorte e escala, sem desenho novo; um desenho do zero vai pela fila do Codex.
+- **Aceite:**
+  1. `assets/manifest.json > icones.predios.reservoir` aponta um PNG novo de 72x72, derivado por recorte quadrado
+     de `base/reservoir/cheio-master-2x.png` (o recorte e a escala ficam na `origem`); o PNG antigo fica no disco.
+  2. O ícone novo preenche o quadrado (mais de 85% dos pixels com alfa) e difere do anterior; o teste de ícones
+     existente (`icones-ui`) passa, e um teste novo mede a cobertura.
+  3. O roteiro `tools/shots/I-ARTE-ICONE-ACUDE-MENU.js` abre a aba De Comer e fotografa o botão do Açude (trancado,
+     como na abertura); captura aberta ao lado do ícone anterior.
+  4. A homologação entra em `docs/homologacao/2026-10-artes.md` como pendente.
+
+#### I-TERRENO-BREJO-FASE-6 — o chão de brejo da fase 6 (pedido ao Codex)
+Decisão do operador (2026-10-15): "Brejo da fase 6 (peça ao Codex chão e arte)". O desenho da fase 6 pede o brejo,
+e o vocabulário de terreno não tem esse chão (`docs/planos/2026-10-10-campanha-dez-fases.md` §4). **Arte entra por
+decisão humana (CLAUDE.md §9): a decisão veio, e a arte é do Codex.** `src/sim/` nunca sai daqui (CLAUDE.md §11),
+então o item se parte em duas entregas, com o contrato no plano
+`docs/planos/2026-10-15-brejo-fase-6-pedido-ao-codex.md`.
+- **Aceite do pedido (esta leva):** o plano existe com a especificação da arte (o que o Codex entrega, o arquivo, o
+  manifesto, o aceite visual) e com o contrato da sim (o que este lado faz quando a arte chegar), e a tarefa A12
+  entra na fila `docs/planos/2026-10-07-fila-execucao.csv` com status "a executar". O terreno e a fase 6 não mudam
+  nesta leva.
+- **Aceite da entrega da sim (depois da arte):** `brejo` entra em `TERRENOS_DE_MAPA` (no fim da lista: a ordem é o
+  código), na legenda, no tema e na regra de dados, transponível e construível, com o custo de movimento da grama;
+  a fase 6 é regenerada com o brejo na mata densa; as outras nove fases e o sertão ficam byte a byte iguais.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
