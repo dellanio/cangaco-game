@@ -10488,6 +10488,21 @@ percorrida de cada uma, e a virada já é suave.
      sem ela (fase 0), o mesmo quadro;
   3. os roteiros de unidade seguem verdes.
 
+#### I-ARTE-SERF-PIXELLAB-V2 — o serf novo do PixelLab, com respiração no parado
+Pedido do operador (2026-10-16): "aumentar a qualidade do pixel art; mais movimentos por unidade, que hoje parecem
+robotizadas; começar gerando um novo serf no PixelLab". Plano da leva na resposta ao operador; o serf é o piloto. Medido:
+as 29 unidades têm o parado com 1 quadro; a `pianco-units` pede 4.
+- **Decisão:** o serf atual de frente vira o personagem v3 do PixelLab (8 direções, 64x96), e o jogo usa as 5 canônicas
+  (s, se, l, ne, n; o oeste é espelho, como hoje). Animações: parado 4 quadros (respiração), andar 8, carregando 8
+  (braços à frente, mãos vazias: a mercadoria é desenhada pelo jogo, `data/carga-nas-maos.json`) e morrer 7 (o modelo
+  de queda do PixelLab). O atlas sai por `tools/pixellab-atlas.mjs`, no formato de hoje, com o pé na linha de antes.
+  O de antes fica em `assets/base/units/serf-pixellab-v2/antes/`.
+- **Aceite:**
+  1. o atlas tem as 4 animações nas 5 direções, com as contagens do manifesto (parado 4, andar 8, carregando 8,
+     morrer 7), quadros 64x96 e o pé na mesma linha em todos;
+  2. o manifesto do serf declara essas contagens (o parado em laço, com `fps`);
+  3. captura no jogo do serf parado, andando e carregando, ao lado do de antes; os roteiros do serf seguem verdes.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
