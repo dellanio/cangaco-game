@@ -22470,6 +22470,9 @@ Pedidos do operador depois da teste-jogo-3, um item de cada vez, aceite antes do
 - `I-COMIDA-REFEICAO-COM-TEMPO` (cca7e03a): `comendo` durava um tick (D6). Agora 11,6 s por comida na base, o do KaM
   (`src/units/tasks/KM_UnitTaskGoEat.pas:139`): 58 ticks por comida na escala 2. A tela dos comensais à mesa
   (`I-TELA-COMENSAIS-NA-BODEGA`) espera a arte do comensal, pedida ao Codex (`docs/planos/2026-10-15-comensais-na-bodega.md`).
+- `I-TELA-COMENSAIS-NA-BODEGA` (844c1fd9): a arte chegou (Codex, 4 quadros de 64x96; o primeiro `codex exec` travou lendo o
+  stdin e foi encerrado; o segundo, com `< /dev/null`, entregou). Quem esta `comendo` senta num dos 4 lugares das duas mesas,
+  1,2 s por garfada (constante de tela). Roteiro com 3 comensais, despausado, e o quadro anda. Homologacao pendente.
 
 Ruído de máquina (não corrigido, só registrado): `F-REPL-a-toco-rebrota` estourou os 10 s uma vez no `verify:rapido`
 e passou isolado (21 s para 4 testes); é o mesmo padrão do `SHOT-vite-orfao` 2b.
