@@ -236,6 +236,8 @@ export interface EstadoDebug {
   canteiroComArte: boolean;
   /** I-TELA-CORDA-ENTRE-AS-ESTACAS: quantas cordas de canteiro a cena ja desenhou (so cresce) */
   cordasDoCanteiro: number;
+  /** I-TELA-OBRA-EM-ORDEM-DE-CONSTRUCAO: o passo desenhado de cada camada das obras em ordem de construcao */
+  passosDasObrasEmOrdem: Readonly<Record<string, number>>;
   /** I-TELA-MODO-ADMIN — o modo admin desta pagina, e quantos rotulos de predio a cena escreveu (fora dele, 0). */
   modoAdmin: boolean;
   /** I-TELA-PREMIUM-PROTOTIPO — o visual premium esta ligado, quantas sombras de contato estao desenhadas e se a
@@ -505,6 +507,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     comensaisDaBodega: {},
     canteiroComArte: false,
     cordasDoCanteiro: 0,
+    passosDasObrasEmOrdem: {},
     modoAdmin: false,
     premium: { ligado: false, sombras: 0, gradacao: false },
     rotulosDePredio: 0,

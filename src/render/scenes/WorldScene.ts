@@ -84,6 +84,8 @@ import { medidorDaObra } from '../medidor-obra';
 import type { LinhaDoMedidor } from '../medidor-obra';
 import { canteiroDaObra, chaveDoCanteiro, ordemDeNivelamento } from '../nivelamento-obra';
 import { cordasDoLote } from '../corda-do-canteiro';
+import { ordemDeConstrucao, PASSOS as PASSOS_DA_OBRA } from '../ordem-de-construcao';
+import type { CamadaDaObra } from '../ordem-de-construcao';
 import type { CanteiroDaObra } from '../nivelamento-obra';
 import {
   chaveDaRevelacao, contagemDeEstagios, estagioDoPredio, estaEmObra, ORDEM_DOS_ESTAGIOS,
@@ -2419,6 +2421,7 @@ export class WorldScene extends Phaser.Scene {
     debug.premium = { ligado: this.sombrasDeContato !== null, sombras: this.sombrasDeContato?.quantas() ?? 0, gradacao: this.gradacaoDeCor };
     debug.rotulosDePredio = this.rotulosDePredio;
     debug.cordasDoCanteiro = this.cordasDoCanteiroDesenhadas;
+    debug.passosDasObrasEmOrdem = { ...this.passosDasObrasEmOrdem };
     debug.canteiroComArte = PECAS_DO_CANTEIRO.every((e) => this.textures.exists(chaveDeTextura('interface', `${ID_DO_CANTEIRO}-${e}`, 'normal')));
     debug.camadasEmPx = camadasNoDebug;
     debug.sinaisDePausado = sinaisNoDebug;
@@ -2636,8 +2639,8 @@ export class WorldScene extends Phaser.Scene {
     const corpo = revelacao !== null && par !== null
       ? [
         ...this.desenharLote(estagio, larguraPx, alturaPx, canteiro, largura),
-        ...this.desenharRevelado(par.madeira, revelacao.madeira, larguraPx, alturaPx, `${predio.id}:madeira`),
-        ...this.desenharRevelado(par.pedra, revelacao.pedra, larguraPx, alturaPx, `${predio.id}:pedra`),
+        ...this.desenharCamadaDaObra(predio.tipo, 'madeira', par.madeira, revelacao.madeira, larguraPx, alturaPx, `${predio.id}:madeira`),
+        ...this.desenharCamadaDaObra(predio.tipo, 'pedra', par.pedra, revelacao.pedra, larguraPx, alturaPx, `${predio.id}:pedra`),
       ]
       : sprite === null
         ? this.desenharPlaceholder(estagio, nome, larguraPx, alturaPx, canteiro, largura)
@@ -2693,6 +2696,57 @@ export class WorldScene extends Phaser.Scene {
    *  de baixo para cima e, na linha, na ordem embaralhada pela `semente` (o predio e a camada). Uma
    *  imagem por bloco visivel, recortada no quadro da textura (px do arquivo); escala e ancoragem
    *  continuam as de `desenharSprite`. Fracao zero nao desenha nada. */
+/** I-TELA-OBRA-EM-ORDEM-DE-CONSTRUCAO — a camada da obra: em ordem de construcao para os tipos da lista
+   *  (`obra-revelacao.json: ordemDeConstrucao`), na grade de blocos para os outros. */
+  private desenharCamadaDaObra(
+    tipo: string, camada: CamadaDaObra, sprite: { readonly chave: string; readonly entrada: EntradaDeAsset }, fracao: Fracao,
+    larguraPx: number, alturaPx: number, semente: string,
+  ): Phaser.GameObjects.Image[] {
+    const lista = (dadosDaObraRevelada as { readonly ordemDeConstrucao?: readonly string[] }).ordemDeConstrucao ?? [];
+    if (!lista.includes(tipo)) return this.desenharRevelado(sprite, fracao, larguraPx, alturaPx, semente);
+    const [num, den] = fracao;
+    const passos = num <= 0 || den <= 0 ? 0 : num >= den ? PASSOS_DA_OBRA : Math.floor((PASSOS_DA_OBRA * num) / den);
+    this.passosDasObrasEmOrdem[semente] = passos;
+    if (passos <= 0) return [];
+    if (passos >= PASSOS_DA_OBRA) return [this.desenharSprite(sprite.chave, sprite.entrada, larguraPx, alturaPx)];
+    const chave = this.texturaDaObraNoPasso(sprite.chave, camada, passos);
+    return chave === null ? this.desenharRevelado(sprite, fracao, larguraPx, alturaPx, semente)
+      : [this.desenharSprite(chave, sprite.entrada, larguraPx, alturaPx)];
+  }
+
+  /** I-TELA-OBRA-EM-ORDEM-DE-CONSTRUCAO — os pixels e a ordem de cada arte (lidos uma vez), e a textura de cada passo
+   *  (feita uma vez): so os pixels cuja ordem e menor que `passos`. `null` sem a arte carregada. */
+  /** I-TELA-OBRA-EM-ORDEM-DE-CONSTRUCAO: o passo desenhado de cada camada (`<id>:madeira`, `<id>:pedra`), para o roteiro */
+  private readonly passosDasObrasEmOrdem: Record<string, number> = {};
+  private readonly ordensDaObra = new Map<string, { readonly pixels: Uint8ClampedArray; readonly ordem: Uint8Array; readonly w: number; readonly h: number }>();
+  private texturaDaObraNoPasso(chave: string, camada: CamadaDaObra, passos: number): string | null {
+    const alvo = `obra-em-ordem:${chave}:${passos}`;
+    if (this.textures.exists(alvo)) return alvo;
+    if (!this.textures.exists(chave)) return null;
+    let lida = this.ordensDaObra.get(`${chave}|${camada}`);
+    if (lida === undefined) {
+      const fonte = this.textures.get(chave).getSourceImage() as CanvasImageSource & { readonly width: number; readonly height: number };
+      const tela = document.createElement('canvas');
+      tela.width = fonte.width; tela.height = fonte.height;
+      const ctx = tela.getContext('2d');
+      if (ctx === null) return null;
+      ctx.drawImage(fonte, 0, 0);
+      const dados = ctx.getImageData(0, 0, tela.width, tela.height);
+      lida = { pixels: dados.data, ordem: ordemDeConstrucao({ width: tela.width, height: tela.height, data: dados.data }, camada), w: tela.width, h: tela.height };
+      this.ordensDaObra.set(`${chave}|${camada}`, lida);
+    }
+    const textura = this.textures.createCanvas(alvo, lida.w, lida.h);
+    if (textura === null) return null;
+    const ctx = textura.getContext();
+    const saida = ctx.createImageData(lida.w, lida.h);
+    for (let i = 0; i < lida.ordem.length; i++) {
+      if (lida.ordem[i]! < passos) saida.data.set(lida.pixels.subarray(i * 4, i * 4 + 4), i * 4);
+    }
+    ctx.putImageData(saida, 0, 0);
+    textura.refresh();
+    return alvo;
+  }
+
   private desenharRevelado(
     sprite: { readonly chave: string; readonly entrada: EntradaDeAsset }, fracao: Fracao,
     larguraPx: number, alturaPx: number, semente: string,
