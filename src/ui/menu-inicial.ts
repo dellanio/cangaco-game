@@ -11,6 +11,19 @@ import { textoDaGaveta } from './arquivo';
 import { mmss } from './contador-de-paz';
 import { faseAberta } from '../campanha';
 import type { ResumoDaFase } from '../campanha';
+import urlDoVideoDaCapa from '../../assets/sprites/ui/menu/capa-video.mp4?url';
+
+/**
+ * I-TELA-MENU-VIDEO-DE-CAPA (pedido do operador, 2026-10-16) — o video que anima a capa, em laco de ida e volta e sem
+ * som. A capa estatica (o fundo do `#menu-inicial` no CSS) continua por baixo: e o poster, e a volta. Para voltar so
+ * para a imagem, troque por `null`.
+ */
+export const VIDEO_DA_CAPA: string | null = urlDoVideoDaCapa;
+
+/** O video toca nesta pagina: ha video, o jogador nao pediu menos movimento e a URL nao pede a capa fixa. */
+export function tocaVideoNaCapa(video: string | null, busca: string, menosMovimento: boolean): boolean {
+  return video !== null && !menosMovimento && !new URLSearchParams(busca).has('capaFixa');
+}
 
 const rotulos = temaSertao.menuInicial;
 
@@ -241,7 +254,30 @@ export function montarMenuInicial(
   );
 
   caixa.append(logo, lema, principal, novo, carregar, configurar, listaDaCampanha, telaDaFase);
-  raiz.append(caixa);
+  // I-TELA-MENU-VIDEO-DE-CAPA: o video entra por cima da capa com um fade quando pode tocar; o veu (degrade, vinheta e
+  // grao) fica por cima dos dois, e a caixa por cima de tudo. Sem controle, sem clique; se falhar, sai e fica a capa.
+  const menosMovimento = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (VIDEO_DA_CAPA !== null && tocaVideoNaCapa(VIDEO_DA_CAPA, window.location.search, menosMovimento)) {
+    const video = document.createElement('video');
+    video.className = 'video-da-capa';
+    video.muted = true;
+    video.loop = true;
+    video.autoplay = true;
+    video.playsInline = true;
+    video.disablePictureInPicture = true;
+    video.setAttribute('aria-hidden', 'true');
+    video.tabIndex = -1;
+    video.preload = 'auto';
+    video.src = VIDEO_DA_CAPA;
+    video.addEventListener('playing', () => { video.classList.add('tocando'); }, { once: true });
+    video.addEventListener('error', () => { video.remove(); }, { once: true });
+    raiz.append(video);
+    void video.play().catch(() => { video.remove(); });
+  }
+  const veu = document.createElement('div');
+  veu.className = 'veu-da-capa';
+  veu.setAttribute('aria-hidden', 'true');
+  raiz.append(veu, caixa);
   document.body.append(raiz);
 
   return {

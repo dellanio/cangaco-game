@@ -1,0 +1,8 @@
+{
+  "item": "I-TELA-MENU-VIDEO-DE-CAPA",
+  "origem": "video gerado pelo operador (Gemini), entregue em 2026-10-16 como gemini_generated_video_c5fdf84d.mp4; anima a capa da tela inicial (base/ui/menu-capa/capa-master.png)",
+  "licenca": "gerado pelo operador para o projeto; sem asset do jogo de 1998",
+  "original": "video-original.mp4 (1280x720, 10 s, 24 fps, H.264 com AAC; sem marca-d'agua)",
+  "derivado": "sprites/ui/menu/capa-video.mp4",
+  "processamento": "ffmpeg: o video seguido do proprio video invertido (laco de ida e volta, 20 s, sem salto no recomeco), sem audio, H.264 yuv420p crf 24 preset slow, +faststart"
+}
