@@ -22448,3 +22448,33 @@ Achados medidos (causa confirmada por sonda):
 Hipótese, não confirmada: `tests/SHOT-vite-orfao.test.ts` aceite 2b falhou 1 vez no `verify` completo (espera de 500 ms pelo vite) e passou isolado 2 vezes e na 2ª corrida completa. Parece corrida sob carga; vale endurecer a espera por condição.
 
 Aberto: a tag teste-jogo-2 segue em 8e6cf305 (sem a fase 8 maior); brejo da fase 6 espera a arte A22 do Codex.
+
+## 2026-10-15/16 — capa, pedra nas fases, Açude na Vila, rua com três batidas, refeição com tempo
+
+Pedidos do operador depois da teste-jogo-3, um item de cada vez, aceite antes do código:
+- `I-TELA-MENU-ARTE-DE-CAPA` (3008e7e5): capa do Codex (gerada 1672x941, ampliada a 2560x1440) em cover, véu e caixa à
+  esquerda; roteiro em seis resoluções (1024x768 a 3440x1440) e os nove roteiros do menu verdes. Homologação pendente.
+- `I-TERRENO-PEDRA-EM-TODAS-AS-FASES` (cac6c7e3): **medido antes**, nas fases 1, 2, 5 e 6 nenhuma pedra à vista no
+  início, e na fase 1 a pedreira não se ligava ao armazém (10 pedras; 7 de prédios e 28 tiles de rua). Agora um
+  lajedo a até 8 tiles de cada armazém (16 a 41 tiles descobertos no tick 0), pedra nas fases de lutar, ouro e carvão
+  da fase 3 em diante e ferro da 6 (a 30+ tiles), estoque pela tabela do plano
+  `docs/planos/2026-10-15-pedra-e-estoque-das-fases.md`. A lógica do KaM ali é **referência, não citação**: o clone não
+  tem as missões da campanha original. Os testes da campanha (51) e o jogador automático seguem verdes.
+  Consequência: save de fase de versão anterior não abre (o hash do mapa mudou).
+- `I-TELA-ACUDE-NA-ABA-VILA` (92d65ae1 + cb901453): o Açude na sub-aba Vila. O 92d65ae1 saiu com o `verify:rapido`
+  vermelho (encadeei o commit com `;`): uma asserção antiga da I-PRODUCAO-ACUDE-PREDIO; corrigida no cb901453.
+- `I-OBRA-RUA-TRES-BATIDAS` (488d56e5): **medido**, o tile de rua levava uma martelada (5 ticks, 0,5 s) e a animação
+  de trabalho do obreiro tem ciclo de 0,8 s. Agora `segundosAssentarEstradaPorTile_base` 5 (25 ticks, 3,1 ciclos).
+  **Hipótese de arte:** um ciclo da animação é uma batida (não abri os quadros). Efeito na velocidade das ruas no
+  `BALANCE_LOG.md`.
+- `I-COMIDA-REFEICAO-COM-TEMPO` (cca7e03a): `comendo` durava um tick (D6). Agora 11,6 s por comida na base, o do KaM
+  (`src/units/tasks/KM_UnitTaskGoEat.pas:139`): 58 ticks por comida na escala 2. A tela dos comensais à mesa
+  (`I-TELA-COMENSAIS-NA-BODEGA`) espera a arte do comensal, pedida ao Codex (`docs/planos/2026-10-15-comensais-na-bodega.md`).
+
+Ruído de máquina (não corrigido, só registrado): `F-REPL-a-toco-rebrota` estourou os 10 s uma vez no `verify:rapido`
+e passou isolado (21 s para 4 testes); é o mesmo padrão do `SHOT-vite-orfao` 2b.
+
+### Perguntas em aberto (2026-10-16)
+- **Teto de assentos na Bodega.** O KaM tem 6 (`src/houses/KM_HouseInn.pas:11`) e quem chega com a casa cheia sai
+  com fome. Aqui não há teto (D6). Com a refeição durando, o teto muda o jogo. Fica sem teto até a decisão.
+- **A rua mais lenta** (2,5 s por tile na escala 2) pode deixar a abertura das fases lenta; observar no playtest.
