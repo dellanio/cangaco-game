@@ -291,10 +291,9 @@ function passoMartelando(state: GameState, u: Unidade, dados: GameData): Passo {
 }
 
 /**
- * F18d-1b — assentar e UM ciclo de martelada: o mesmo `construcao.ticksPorMartelada`
- * que a obra usa, e nao um numero novo (pergunta em aberto no PROGRESS; se o playtest
- * pedir tempo proprio para a estrada, o campo nasce em `terrain.json` e so esta linha
- * muda).
+ * F18d-1b — assentar um tile de rua. Desde a I-OBRA-RUA-TRES-BATIDAS (o playtest pediu, 2026-10-15)
+ * o tile tem tempo proprio, `construcao.ticksAssentarEstradaPorTile`, e nao mais UMA martelada
+ * da obra: pelo menos tres ciclos da animacao de trabalho do obreiro.
  *
  * No tick que fecha, a pedra sai do TILE (`pedraNoCanteiro`, F18g — ate entao saia do
  * armazem gravado na tarefa) e o tile passa do canteiro para a rede — os dois no
@@ -304,7 +303,7 @@ function passoAssentando(
   state: GameState, u: Unidade, tarefa: TarefaAssentarEstrada, dados: GameData,
 ): Passo {
   const progresso = (u.fsmData.progresso ?? 0) + 1;
-  if (progresso < dados.construcao.ticksPorMartelada) {
+  if (progresso < dados.construcao.ticksAssentarEstradaPorTile) {
     return semEventos(comUnidade(state, { ...u, fsmData: dadosDaFsm({ posto: u.fsmData.posto, tarefa: tarefa.id, progresso }) }));
   }
   const assentado = comOTileAssentado(state, tarefa.destinoTile, dados);
@@ -343,7 +342,7 @@ function passosSobreARuaNova(state: GameState, tile: TileDeGrid, dados: GameData
  * (`resources.json: tipos.<t>.aradura.segundos_base`), nao de
  * `construcao.ticksPorMartelada`: arar um tile e mais do que assentar uma pedra, e a
  * medida e da roca e nao da obra. Por isso a aradura tem numero proprio desde o
- * primeiro dia, e o assentamento nao tem (ver a pergunta em aberto do PROGRESS).
+ * primeiro dia; o assentamento ganhou o dele na I-OBRA-RUA-TRES-BATIDAS.
  *
  * No tick que fecha, o tile passa do canteiro para a camada de recurso, em pousio.
  * Nao ha material a debitar hoje — o milho nao custa nada — e e por isso que o unico

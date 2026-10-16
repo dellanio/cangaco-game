@@ -81,7 +81,10 @@ export function violacoesDaFsmDoLaborer(estado: GameState, dados: GameData = gam
       }
       if (!proximo && progresso !== 0) v.push(`${id}: progresso ${progresso} sem caminho`);
     }
-    if (u.fsm === 'martelando' && progresso >= dados.construcao.ticksPorMartelada) {
+    // I-OBRA-RUA-TRES-BATIDAS: o tile de rua tem tempo proprio; a martelada da obra continua a mesma
+    const tarefaAtual = dadosDaFsm.tarefa === undefined ? undefined : estado.jobs.tarefas.porId[dadosDaFsm.tarefa];
+    const teto = tarefaAtual?.tipo === 'assentar-estrada' ? dados.construcao.ticksAssentarEstradaPorTile : dados.construcao.ticksPorMartelada;
+    if (u.fsm === 'martelando' && progresso >= teto) {
       v.push(`${id}: progresso ${progresso} ja completou a martelada`);
     }
   }

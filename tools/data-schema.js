@@ -57,6 +57,8 @@ const CAMPOS_ESCALONADOS = [
     unidade: 'segundos', declaraEscalaEm: 'construcao.escala' },
   { arquivo: 'buildings', caminho: 'construcao.segundosNivelamentoPorTile_base',
     unidade: 'segundos', declaraEscalaEm: 'construcao.escala' },
+  { arquivo: 'buildings', caminho: 'construcao.segundosAssentarEstradaPorTile_base',
+    unidade: 'segundos', declaraEscalaEm: 'construcao.escala' },
   { arquivo: 'economy', caminho: 'schoolhouse.segundosPorTreino_base',
     unidade: 'segundos', declaraEscalaEm: 'schoolhouse.escala' },
   { arquivo: 'economy', caminho: 'prefeito.revisao_segundos_base',

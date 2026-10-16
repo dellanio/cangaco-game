@@ -47,6 +47,8 @@ export interface ConstrucaoData {
   readonly laborersMaximosPorObra: number;
   readonly ticksPorMartelada: Ticks;
   readonly ticksNivelamentoPorTile: Ticks;
+  /** I-OBRA-RUA-TRES-BATIDAS — o tempo do obreiro em um tile de rua. */
+  readonly ticksAssentarEstradaPorTile: Ticks;
   readonly devolucaoAoDemolir: number;
   /** I-OBRA-UM-TILE-ENTRE-PREDIOS — o vao minimo, em tiles, entre o lote novo e o de outro predio. */
   readonly distanciaMinimaEntrePredios: number;

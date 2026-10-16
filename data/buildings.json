@@ -40,6 +40,8 @@
     "laborersMaximosPorObra": 4,
     "segundosPorMartelada_base": 1.0,
     "segundosNivelamentoPorTile_base": 2.0,
+    "segundosAssentarEstradaPorTile_base": 5.0,
+    "_docAssentarEstrada": "I-OBRA-RUA-TRES-BATIDAS (pedido do operador, 2026-10-15: pelo menos 3 batidas por tile de rua): o tempo do obreiro em UM tile de rua. Antes era uma martelada (segundosPorMartelada_base). 5 s na base, 2,5 s na escala de construcao 2: 3,1 ciclos da animacao trabalhar do obreiro (8 quadros a 10 fps).",
     "escala": "construcao",
     "devolucaoAoDemolir": 0.5, "distanciaMinimaEntrePredios_tiles": 1, "_docDistanciaMinima": "I-OBRA-UM-TILE-ENTRE-PREDIOS (pedido do operador, 2026-10-05): o lote de um predio novo fica a pelo menos esta distancia (Chebyshev, em tiles) do lote de qualquer predio ou obra; colado, `canPlace` recusa com o motivo `colado`. Tiles, nao tempo: sem escala."
   },

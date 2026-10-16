@@ -1572,3 +1572,14 @@ C  clima + Açude perto         128     122     120        4,3 %              2,
   três roças tiram ~72 da água na seca, mais ~12 de evaporação, e cabem num Açude cheio, que é o "2 a 3
   roças" do plano. A sonda só tinha uma roça e não exercita esse teto;
 - depois de aplicado, roda-se a mesma medida (A/B/C) uma vez e o F-CAL-b, que segue com o clima desligado.
+
+## 2026-10-15 — o tile de rua mais lento (I-OBRA-RUA-TRES-BATIDAS) e o estoque das fases
+
+- **Rua.** Pedido do operador, pela animação: o obreiro pregava o tile em 0,5 s (uma martelada, 5 ticks), antes de
+  um ciclo inteiro da animação de trabalho (0,8 s). O tile passa a durar `segundosAssentarEstradaPorTile_base` 5,
+  ou 25 ticks na escala 2 (2,5 s, 3,1 ciclos). **Efeito esperado, não medido:** uma rua de 20 tiles com um obreiro
+  sobe de ~10 s para ~50 s de martelo, sem contar o transporte da pedra. Observar no playtest se a abertura das
+  fases (a rua até o lajedo) fica lenta demais; a saída é baixar o número, nunca abaixo de 3 ciclos (2,4 s).
+- **Estoque das fases** (I-TERRENO-PEDRA-EM-TODAS-AS-FASES): pedra 20/25/30/30/30/30/25, madeira
+  25/30/30/30/35/35/35 e uma refeição por unidade inicial, nas fases de construir. Critério no
+  `docs/planos/2026-10-15-pedra-e-estoque-das-fases.md` §4.

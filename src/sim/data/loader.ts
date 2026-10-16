@@ -474,6 +474,11 @@ export function loadGameData(raw: RawGameData): GameData {
       raw.buildings.construcao.segundosNivelamentoPorTile_base, 'segundos',
       paraTicksDeDuracao(raw.buildings.construcao.segundosNivelamentoPorTile_base, 'segundos', escalaConstrucao, tickHz),
     ),
+    ticksAssentarEstradaPorTile: registrar(
+      'buildings.construcao.segundosAssentarEstradaPorTile_base', escalaConstrucaoNome,
+      raw.buildings.construcao.segundosAssentarEstradaPorTile_base, 'segundos',
+      paraTicksDeDuracao(raw.buildings.construcao.segundosAssentarEstradaPorTile_base, 'segundos', escalaConstrucao, tickHz),
+    ),
     devolucaoAoDemolir: raw.buildings.construcao.devolucaoAoDemolir,
     distanciaMinimaEntrePredios: raw.buildings.construcao.distanciaMinimaEntrePredios_tiles,
   };
