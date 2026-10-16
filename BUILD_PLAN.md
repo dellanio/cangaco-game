@@ -10265,6 +10265,16 @@ e 28 tiles de rua). Só muda o gerador e os dados das fases (`tools/gerar-fases.
   6. A prancha das fases (`tools/gerar-fases.mjs`) é regerada, e a captura da fase 1 no início mostra o lajedo
      da vila à vista.
 
+#### I-TELA-ACUDE-NA-ABA-VILA — o Açude sai de De Comer e vai para a sub-aba Vila
+Pedido do operador (2026-10-15): "transfira o menu açude para o submenu Vila (remova-o de comer)". Só dado de
+interface (`data/menu-build.json`, que nenhuma regra da sim lê).
+- **Aceite:**
+  1. `reservoir` está no grupo `vila`, depois da Igreja (a ordem do grupo é a de `buildings.json`, regra
+     `interface/menu-build`), e não está mais em `comida`. O `validate:data` passa.
+  2. O teste das sub-abas (`tests/I-TELA-SUBABAS-DO-CONSTRUIR.test.ts`) afirma as listas novas de Vila e De Comer.
+  3. O roteiro do ícone (`tools/shots/I-ARTE-ICONE-ACUDE-MENU.js`) abre a sub-aba Vila, encontra o botão do Açude
+     nela e afirma que ele não está em De Comer; captura da aba Vila.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
