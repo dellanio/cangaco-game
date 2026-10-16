@@ -1,0 +1,71 @@
+﻿{
+    "ferramenta":  "image_gen built-in",
+    "tentativas":  [
+                       {
+                           "numero":  1,
+                           "prompt":  "Use case: historical-scene. Create one premium professionally hand-painted commercial strategy-game key art background for PiancÃ³ â€” Ferro e Mandacaru, rural ParaÃ­ba sertÃ£o Brazil in the 1930s. NO TEXT whatsoever. Wide landscape exactly 16:9, request highest available resolution ideally 3840x2160.\nReference images supplied are STYLE ONLY: warm ochre aged paper, ink-dark restrained contours, painterly handcrafted earthy treatment. Do not copy their compositions, borders, symbols, lettering or map. Paint a full immersive landscape, no frame.\nScene: dry Brazilian caatinga at warm late afternoon, rocky serras in distance, broad lajedo stone outcrop, authentic mandacaru and xique-xique cacti, dry sparse scrub, golden airborne dust. Main narrative on CENTER-RIGHT: a small welcoming settlement of humble whitewashed taipa houses with terracotta tile roofs, one simple rural chapel, and a small aÃ§ude reservoir reflecting the warm sky. On a foreground rocky rise a compact group of authentic Brazilian cangaceiros, some mounted on horses and some standing, looking toward the village. Their distinctive crescent leather hats have upturned brims, crossed bandoliers and worn shoulder satchels; historically grounded, no cowboy hats. Show convincing horse anatomy and readable silhouettes. Layered landscape depth and deliberate painterly detail.\nMANDATORY layout using normalized full-canvas coordinates: left 0%-33% is quiet low-detail medium-dark earth/sky/sparse scrub, a usable calm menu background without people, buildings, prominent cacti or high contrast. Village and entire cangaceiro group between x45% and x85%; all important elements within x12.5%-87.5%. Place village around x57%-72%, y39%-57%, reservoir x55%-73% y56%-65%; foreground group x69%-83%, y49%-81%, all feet and horses visible. Keep all essential story elements within y15%-85% so a central 21:9 crop also works. Top and bottom 8% completely expendable. Composition unified naturally, no visible vertical division or panel. Main group must not extend into rightmost 12.5%.\nLighting: ONE warm frontal overhead light from behind viewer slightly above, mildly from south; illuminated visible fronts, short shadows receding into background. No bright sun disc, no lateral backlight, no dramatic rim lighting.\nMedium: masterful visible brush strokes in gouache and oil-like pigment on subtly aged paper, discreet dark hand-painted contours, rich ochre, terracotta, sienna, muted gray-green caatinga, warm evening sky. Premium detailed historical illustration with controlled focal hierarchy and painterly edges. Not pixel art, not photography, not plastic 3D. No UI, no typography, letters, logo, signature, watermark, ornamental borders. Do not use Knights and Merchants (1998) in any way.",
+                           "arquivo":  "variante-1.png",
+                           "recusada":  true,
+                           "motivo":  "Grupo ultrapassa x87.5%; personagens cortados no 4:3 central."
+                       },
+                       {
+                           "numero":  2,
+                           "recusada":  true,
+                           "motivo":  "Personagem direito encosta no limite x87.5%; ceu esquerdo luminoso."
+                       },
+                       {
+                           "numero":  3,
+                           "prompt":  "Use case: historical-scene. Create one premium professionally hand-painted commercial strategy-game key art background for Piancó — Ferro e Mandacaru, rural Paraíba sertão Brazil in the 1930s. NO TEXT whatsoever. Wide landscape exactly 16:9, request highest available resolution ideally 3840x2160.\nReference images supplied are STYLE ONLY: warm ochre aged paper, ink-dark restrained contours, painterly handcrafted earthy treatment. Do not copy their compositions, borders, symbols, lettering or map. Paint a full immersive landscape, no frame.\nScene: dry Brazilian caatinga at warm late afternoon, rocky serras in distance, broad lajedo stone outcrop, authentic mandacaru and xique-xique cacti, dry sparse scrub, golden airborne dust. Main narrative on CENTER-RIGHT: a small welcoming settlement of humble whitewashed taipa houses with terracotta tile roofs, one simple rural chapel, and a small açude reservoir reflecting the warm sky. On a foreground rocky rise a compact group of authentic Brazilian cangaceiros, some mounted on horses and some standing, looking toward the village. Their distinctive crescent leather hats have upturned brims, crossed bandoliers and worn shoulder satchels; historically grounded, no cowboy hats. Show convincing horse anatomy and readable silhouettes. Layered landscape depth and deliberate painterly detail.\nMANDATORY layout using normalized full-canvas coordinates: left 0%-33% is quiet low-detail medium-dark earth/sky/sparse scrub, a usable calm menu background without people, buildings, prominent cacti or high contrast. Village and entire cangaceiro group between x45% and x85%; all important elements within x12.5%-87.5%. Place village around x57%-72%, y39%-57%, reservoir x55%-73% y56%-65%; foreground group x69%-83%, y49%-81%, all feet and horses visible. Keep all essential story elements within y15%-85% so a central 21:9 crop also works. Top and bottom 8% completely expendable. Composition unified naturally, no visible vertical division or panel. Main group must not extend into rightmost 12.5%.\nLighting: ONE warm frontal overhead light from behind viewer slightly above, mildly from south; illuminated visible fronts, short shadows receding into background. No bright sun disc, no lateral backlight, no dramatic rim lighting.\nMedium: masterful visible brush strokes in gouache and oil-like pigment on subtly aged paper, discreet dark hand-painted contours, rich ochre, terracotta, sienna, muted gray-green caatinga, warm evening sky. Premium detailed historical illustration with controlled focal hierarchy and painterly edges. Not pixel art, not photography, not plastic 3D. No UI, no typography, letters, logo, signature, watermark, ornamental borders. Do not use Knights and Merchants (1998) in any way.\nCRITICAL COMPOSITION CORRECTION: All cangaceiros and ALL horses must form a SMALL compact group entirely between x60% and x81%, y48% and y80%, with ample empty landscape to their right. Only FOUR people total: TWO mounted riders and TWO on foot. Do not make a huge foreground rider. Entire group occupies at most 21% canvas width and 32% canvas height. Village entirely x46%-72%. Rightmost 15% is only expendable landscape/cacti. Left third soft broad washes and sparse subdued scrub, substantially less detail than focal area. Keep horse hooves above y80%. This is a WIDE LANDSCAPE view, not a character close-up.\nFINAL STRICT LAYOUT: Rightmost person ends at x82%, not x88%. Group centered x70%, compact width 20%, consisting of two mounted and two standing. Village buildings all end at x83%. Left third sky must be subdued gray-ochre medium-dark not luminous yellow. Keep sky warmth and frontal illumination, not a bright left light.",
+                           "recusada":  false,
+                           "arquivo":  "capa-master.png"
+                       }
+                   ],
+    "id_semente":  null,
+    "nota_id":  "A ferramenta nÃ£o devolveu ID de geraÃ§Ã£o ou semente; identificadores de arquivo nÃ£o sÃ£o sementes.",
+    "referencias_somente_estilo":  [
+                                       "D:\\projetos-pessoal\\cangaco-game\\assets\\sprites\\ui\\menu\\titulo-mandacaru.png",
+                                       "D:\\projetos-pessoal\\cangaco-game\\assets\\sprites\\ui\\menu\\campanha.png",
+                                       "D:\\projetos-pessoal\\cangaco-game\\assets\\sprites\\ui\\logo-pianco-completo.png"
+                                   ],
+    "selecionada":  3,
+    "escolha":  "Terceira variante: grupo completo com margem no 4:3 e 21:9; esquerda mais escura e menor contraste; pincelada e paleta terrosa preservadas. Conferencia visual, sem homologacao do operador.",
+    "resolucao_original":  [
+                               1672,
+                               941
+                           ],
+    "resolucao_master":  [
+                             2560,
+                             1440
+                         ],
+    "processamento":  "Fonte menor que o minimo: ampliada para 2560x1440 com Pillow LANCZOS. Pequena normalizacao de proporcao para 16:9. Sem recorte ou retoque de conteudo.",
+    "jpeg":  {
+                 "resolucao":  [
+                                   2560,
+                                   1440
+                               ],
+                 "qualidade":  85,
+                 "bytes":  803671,
+                 "subsampling":  "4:2:0"
+             },
+    "cortes":  {
+                   "4:3":  [
+                               320,
+                               0,
+                               2240,
+                               1440
+                           ],
+                   "21:9":  [
+                                0,
+                                171,
+                                2560,
+                                1269
+                            ],
+                   "terco_esquerdo":  [
+                                          0,
+                                          0,
+                                          853.3333,
+                                          1440
+                                      ]
+               },
+    "identificador_arquivo_fonte":  "exec-de50df52-7fd8-4cf4-8db2-341a0073c7e1.png"
+}
