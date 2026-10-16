@@ -67,7 +67,7 @@
 },
     {
   "id": "woodcutters",
-  "tipo": "predio", "escalaDeExibicao": 1.3,
+  "tipo": "predio", "escalaDeExibicao": 1.17,
   "footprint": [
     3,
     2
@@ -139,7 +139,7 @@
 },
     {
       "id": "sawmill",
-      "tipo": "predio",
+      "tipo": "predio", "escalaDeExibicao": 1.1,
       "footprint": [
         4,
         2
