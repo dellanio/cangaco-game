@@ -93,6 +93,15 @@ export interface AnimalNoDebug {
   readonly sprite: boolean;
 }
 
+/** I-TELA-COMENSAIS-NA-BODEGA — um comensal desenhado a mesa: o lugar, quem, para onde olha, o quadro e se ha PNG. */
+export interface ComensalNoDebug {
+  readonly i: number;
+  readonly unidade: string;
+  readonly olha: 'leste' | 'oeste';
+  readonly quadro: number;
+  readonly sprite: boolean;
+}
+
 /** F-VIVO-d — o tamanho em px de MUNDO de cada camada de um predio com receita, lido
  *  da mesma geometria que o desenho usa. Na tela e isto vezes `camera.zoom`. */
 /** F-ESC (c) — ver `caixasDesenhadas`. */
@@ -222,6 +231,7 @@ export interface EstadoDebug {
   /** F-VIVO-c — os animais que a cena DESENHOU agora, por id de predio. So tem
    *  criacao com curral cheio (`animais.ts`); curral vazio nao aparece. */
   animaisDoCurral: Readonly<Record<string, readonly AnimalNoDebug[]>>;
+  comensaisDaBodega: Readonly<Record<string, readonly ComensalNoDebug[]>>;
   /** F-VIVO-d — as camadas desenhadas, em px de mundo, por id de predio com receita. */
   camadasEmPx: Readonly<Record<string, CamadasEmPx>>;
   /** F-ESC (c) — a caixa que o sprite do predio COMPLETO ocupa na tela, em px de mundo,
@@ -480,6 +490,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     quadrosDaEscola: {},
     sinaisDePausado: {},
     animaisDoCurral: {},
+    comensaisDaBodega: {},
     camadasEmPx: {},
     caixasDesenhadas: {},
     selecaoMilitar: [],

@@ -59,7 +59,7 @@ import type { LuzDoRelevo } from '../camada-de-relevo';
 import { marcadorVisivel } from '../marcador-de-destino';
 import type { MarcadorDeDestino } from '../marcador-de-destino';
 import type {
-  AnimalNoDebug, CaixaDesenhada, CamadasEmPx, CrescimentoNoDebug, EstadoDebug, OciosoNoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel, SinalDePausadoNoDebug,
+  AnimalNoDebug, CaixaDesenhada, ComensalNoDebug, CamadasEmPx, CrescimentoNoDebug, EstadoDebug, OciosoNoDebug, PilhaNoDebug, PredioNoDebug, QuadroNoDebug, RelogioVisivel, SinalDePausadoNoDebug,
 } from '../debug';
 import { aparenciaDoPredio, capacidadeDoAcude, corDaPilha, dadosDasPilhas, dadosDosAnimais, dadosDoTrabalho, ordemDasMercadorias, raioDaBencao } from '../predios';
 import dadosDoAcudeVisualCru from '../../../data/acude-visual.json';
@@ -69,11 +69,13 @@ const dadosDoAcudeVisual = dadosDoAcudeVisualCru as ConfigDoAcudeVisual;
 import { animaisDoCurral, curralDesenhado, quadroDoAnimal } from '../animais';
 import { MAX_PASSOS_POR_QUADRO } from '../../laco';
 import type { AnimalDoCurral } from '../animais';
+import { comensaisDaBodega, quadroDoComensal } from '../comensais';
+import type { ComensalNaMesa } from '../comensais';
 import type { PilhaDesenhada } from '../pilhas';
 import { areaDoTrabalho, quadroDaEscola, quadroDaFumaca, quadroDeTrabalho, quadroOcioso } from '../trabalho';
 import type { QuadroDeTrabalho } from '../trabalho';
 import { caixaDoSinalDePausado, temSinalDePausado, TEXTO_DO_SINAL_DE_PAUSADO } from '../sinal-de-pausado';
-import { CASO_DO_PREDIO, ID_DA_FUMACA, ID_DO_OCIOSO, LACO_DA_ESCOLA } from '../manifesto-camadas';
+import { CASO_DO_PREDIO, ID_DA_FUMACA, ID_DO_COMENSAL, ID_DO_OCIOSO, LACO_DA_ESCOLA, LACO_DO_COMENSAL } from '../manifesto-camadas';
 import { medidorDaObra } from '../medidor-obra';
 import type { LinhaDoMedidor } from '../medidor-obra';
 import { canteiroDaObra, chaveDoCanteiro } from '../nivelamento-obra';
@@ -2186,6 +2188,7 @@ export class WorldScene extends Phaser.Scene {
     // F-VIVO-h: a escola treinando, idem.
     const escolasNoDebug: Record<string, OciosoNoDebug> = {};
     const animaisNoDebug: Record<string, readonly AnimalNoDebug[]> = {};
+    const comensaisNoDebug: Record<string, readonly ComensalNoDebug[]> = {};
     const camadasNoDebug: Record<string, CamadasEmPx> = {};
     // D-TELA-07: a placa de pausado, em px de mundo, da MESMA caixa que `criarPredio` desenha.
     const sinaisNoDebug: Record<string, SinalDePausadoNoDebug> = {};
@@ -2312,6 +2315,15 @@ export class WorldScene extends Phaser.Scene {
         camadasNoDebug[id] = this.camadasEmPx(predio.tipo, caso, quadro, pilhas.length > 0, animais, tilePx);
       }
       const chaveDosAnimais = animais.length === 0 ? '-' : `${animais.map((a) => a.idade).join('')}/${quadroAnimal}`;
+      // I-TELA-COMENSAIS-NA-BODEGA: quem come aparece a mesa; o quadro anda com o tick, e entra na chave como o animal
+      const comensais = this.comensaisDoPredio(estadoDoJogo, predio);
+      if (comensais.length > 0) {
+        comensaisNoDebug[id] = comensais.map((c) => ({
+          i: c.i, unidade: c.unidade, olha: c.lugar.olha, quadro: quadroDoComensal(estadoDoJogo.tick, c.i),
+          sprite: this.texturaDoComensal(quadroDoComensal(estadoDoJogo.tick, c.i)) !== null,
+        }));
+      }
+      const chaveDosComensais = comensais.length === 0 ? '-' : `${comensais.length}/${quadroDoComensal(estadoDoJogo.tick, 0)}`;
       // D-TELA-07: pausar e retomar mudam so `pausado`; entra na chave pelo mesmo motivo da pilha.
       const sinal = temSinalDePausado(predio);
       if (sinal) {
@@ -2329,7 +2341,7 @@ export class WorldScene extends Phaser.Scene {
       // I-TELA-ACUDE-NA-TELA: o nivel muda sem mexer em estado nem em estagio; entra na chave pelo mesmo motivo da pilha
       const nivel = this.nivelDoAcude(predio);
       if (nivel !== null) acudesNoDebug[id] = { agua: (predio as PredioCompleto).agua ?? 0, estado: nivel, sprite: sprites[id] ?? null };
-      const assinatura = `${linhas.map((l) => l.entregue).join(',')}|${chaveDoCanteiro(canteiro)}|${chaveDasPilhas}|${chaveDoTrabalho}|${chaveDosAnimais}|${chaveDoCorpo}|${sinal ? 'P' : '-'}|${nivel ?? '-'}`;
+      const assinatura = `${linhas.map((l) => l.entregue).join(',')}|${chaveDoCanteiro(canteiro)}|${chaveDasPilhas}|${chaveDoTrabalho}|${chaveDosAnimais}|${chaveDoCorpo}|${sinal ? 'P' : '-'}|${nivel ?? '-'}|${chaveDosComensais}`;
       const existente = this.desenhados.get(id);
       if (existente && existente.estado === predio.estado && existente.estagio === estagio
         && existente.assinatura === assinatura) continue;
@@ -2342,6 +2354,7 @@ export class WorldScene extends Phaser.Scene {
         estado: predio.estado, estagio, assinatura,
         objeto: this.criarPredio(
           predio, estagio, revelacao, linhas, canteiro, pilhas, quadroDesenhado, fumaca, animais, quadroAnimal, tilePx,
+          comensais, estadoDoJogo.tick,
         ),
       });
     }
@@ -2369,6 +2382,7 @@ export class WorldScene extends Phaser.Scene {
     debug.quadrosOciosos = ociososNoDebug;
     debug.quadrosDaEscola = escolasNoDebug;
     debug.animaisDoCurral = animaisNoDebug;
+    debug.comensaisDaBodega = comensaisNoDebug;
     debug.camadasEmPx = camadasNoDebug;
     debug.sinaisDePausado = sinaisNoDebug;
     debug.caixasDesenhadas = this.caixasDesenhadas(estadoDoJogo, sprites, tilePx);
@@ -2529,6 +2543,7 @@ export class WorldScene extends Phaser.Scene {
     canteiro: CanteiroDaObra | null, pilhas: readonly PilhaDesenhada[],
     quadro: QuadroDeTrabalho | null, fumaca: number | null,
     animais: readonly AnimalDoCurral[], quadroAnimal: number, tilePx: number,
+    comensais: readonly ComensalNaMesa[] = [], tick = 0,
   ): Phaser.GameObjects.Container {
     const { largura, altura, nome } = aparenciaDoPredio(predio.tipo);
     const canto = gridToScreen({ gx: predio.gx, gy: predio.gy }, tilePx, ESCALA_DO_MUNDO);
@@ -2564,6 +2579,7 @@ export class WorldScene extends Phaser.Scene {
       ...corpo,
       ...this.desenharTrabalho(predio.tipo, quadro, fumaca, caixa),
       ...this.desenharAnimais(animais, quadroAnimal, caixa, tilePx),
+      ...this.desenharComensais(comensais, tick, caixa),
       ...this.desenharPilhas(predio.tipo, pilhas, caixa, tilePx),
       ...this.desenharMedidor(linhas, larguraPx, alturaPx, canteiro === null || canteiro.nivelada),
       ...this.desenharBandeira(predio, tilePx, contatoDaBandeira),
@@ -2663,6 +2679,36 @@ export class WorldScene extends Phaser.Scene {
   private fonteNoDebug(mercadoria: string, tipo?: string): { readonly sprite: boolean; readonly fonte: 'pilha' | 'icone' | 'quadrado' } {
     const { fonte } = this.fonteDaPilha(mercadoria, tipo);
     return { sprite: fonte === 'pilha', fonte };
+  }
+
+  /** I-TELA-COMENSAIS-NA-BODEGA — os comensais desta Bodega, nos lugares do manifesto. Outro predio: nenhum. */
+  private comensaisDoPredio(estado: GameState, predio: Predio): readonly ComensalNaMesa[] {
+    const lugares = DADOS_DAS_PILHAS.ancoras[predio.tipo]?.comensais;
+    if (lugares === undefined) return [];
+    const { largura, altura } = aparenciaDoPredio(predio.tipo);
+    return comensaisDaBodega(estado, predio, [largura, altura], lugares);
+  }
+
+  /** I-TELA-COMENSAIS-NA-BODEGA — a textura do comensal no quadro, ou `null` (sem arte, nada: placeholder e so de predio). */
+  private texturaDoComensal(quadro: number): string | null {
+    const chave = chaveDeTextura('trabalho', ID_DO_COMENSAL, `${LACO_DO_COMENSAL}_${quadro}`);
+    return this.textures.exists(chave) ? chave : null;
+  }
+
+  /** I-TELA-COMENSAIS-NA-BODEGA — cada comensal com o pe no lugar, espelhado quando olha para oeste. */
+  private desenharComensais(
+    comensais: readonly ComensalNaMesa[], tick: number,
+    caixa: { readonly x: number; readonly y: number; readonly w: number; readonly h: number },
+  ): Phaser.GameObjects.GameObject[] {
+    const objetos: Phaser.GameObjects.GameObject[] = [];
+    for (const c of comensais) {
+      const textura = this.texturaDoComensal(quadroDoComensal(tick, c.i));
+      if (textura === null) continue;
+      const imagem = this.add.image(caixa.x + caixa.w * c.lugar.ponto[0], caixa.y + caixa.h * c.lugar.ponto[1], textura);
+      imagem.setOrigin(0.5, 1).setFlipX(c.lugar.olha === 'oeste');
+      objetos.push(imagem);
+    }
+    return objetos;
   }
 
   /** F-VIVO-c — a textura do animal na idade e no quadro, ou `null` (losango do §9). */

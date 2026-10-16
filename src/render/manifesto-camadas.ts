@@ -55,6 +55,12 @@ export const ID_DA_ESCOLA = 'schoolhouse';
 export const LACO_DA_ESCOLA = 'treino';
 export const LACOS_DA_ESCOLA: Readonly<Record<string, number>> = { [LACO_DA_ESCOLA]: 8 };
 
+/** I-TELA-COMENSAIS-NA-BODEGA — o comensal sentado a mesa da Bodega: uma entrada `trabalho` generica, como a
+ *  fumaca, com um laco de 4 (a mao vai da tigela a boca). Excecao NOMEADA, como a escola. */
+export const ID_DO_COMENSAL = 'comensal';
+export const LACO_DO_COMENSAL = 'comer';
+export const LACOS_DO_COMENSAL: Readonly<Record<string, number>> = { [LACO_DO_COMENSAL]: 4 };
+
 /** O animal de cada criacao: o id da entrada `animal` e a mercadoria que ele vira. */
 export const ANIMAL_DA_CRIACAO: Readonly<Record<string, string>> = { swine_farm: 'pigs', stables: 'horses' };
 
@@ -140,6 +146,7 @@ export function violacoesDaCamadaViva(e: EntradaDeCamada, ctx: ContextoDasCamada
     if (e.id === ID_DA_FUMACA) return violacoesDosLacos(rotulo, e.estados, LACOS_DA_FUMACA);
     if (e.id === ID_DO_OCIOSO) return violacoesDosLacos(rotulo, e.estados, LACOS_DO_OCIOSO);
     if (e.id === ID_DA_ESCOLA) return violacoesDosLacos(rotulo, e.estados, LACOS_DA_ESCOLA);
+    if (e.id === ID_DO_COMENSAL) return violacoesDosLacos(rotulo, e.estados, LACOS_DO_COMENSAL);
     const caso = CASO_DO_PREDIO[e.id];
     if (caso === undefined) return [`${rotulo}: nao e predio com receita nem '${ID_DA_FUMACA}', '${ID_DO_OCIOSO}' ou '${ID_DA_ESCOLA}'`];
     if (caso === 'guarda') return [`${rotulo}: caso 1 (so guarda) nao tem animacao dentro`];
@@ -247,6 +254,15 @@ export function violacoesDasAncoras(e: EntradaDeAsset, ctx: ContextoDasCamadas):
     if (ANIMAL_DA_CRIACAO[e.id] === undefined) erros.push(`${r}: curral fora da criacao`);
     if (a.curral.length !== ANIMAIS_NO_CURRAL) erros.push(`${r}: curral tem ${a.curral.length} pontos, precisa de ${ANIMAIS_NO_CURRAL}`);
     a.curral.forEach((p, i) => guardar(`curral[${i}]`, p));
+  }
+
+  // I-TELA-COMENSAIS-NA-BODEGA — os lugares a mesa: so na Bodega, cada um com o pe e o lado
+  if (a.comensais !== undefined) {
+    if (e.id !== ctx.idDaBodega) erros.push(`${r}: comensais fora da Bodega`);
+    a.comensais.forEach((l, i) => {
+      guardar(`comensais[${i}].ponto`, l.ponto);
+      if (l.olha !== 'leste' && l.olha !== 'oeste') erros.push(`${r}: comensais[${i}].olha nao e leste nem oeste`);
+    });
   }
 
   if (a.obra !== undefined) {

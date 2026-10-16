@@ -81,6 +81,15 @@ export interface AncorasDoPredio {
   /** Um ponto por material da obra (`timber`, `stone`): a pilha do entregue e ainda
    *  nao pregado, como o `BuildSupply` do kam_remake. */
   readonly obra?: Readonly<Record<string, PontoFracionario>>;
+  /** I-TELA-COMENSAIS-NA-BODEGA — os lugares a mesa, so na Bodega: o pe do comensal e para onde ele olha. */
+  readonly comensais?: readonly LugarDeComensal[];
+}
+
+/** I-TELA-COMENSAIS-NA-BODEGA — um lugar a mesa: o pe (fracao do canvas do sprite) e o lado para onde o comensal
+ *  olha. A arte olha para leste; `oeste` e o espelho. */
+export interface LugarDeComensal {
+  readonly ponto: PontoFracionario;
+  readonly olha: 'leste' | 'oeste';
 }
 
 /** Os tipos de asset fora do predio (F-SPR). F-VIVO-0 acrescentou os tres do predio

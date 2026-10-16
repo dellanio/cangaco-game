@@ -1,0 +1,39 @@
+{
+  "prompt": "Use case: stylized-concept. Create a production sprite animation strip for Pianco â€” Ferro e Mandacaru, a 1930s Paraiba sertao village RTS. Input 1 is ONLY painted style/clothing/scale reference; input 2 is ONLY architecture and camera reference. No asset from Knights and Merchants 1998.\nExactly FOUR evenly spaced full-body poses in ONE horizontal row on genuine transparent background, equal cells, no text or separators. Same identical humble male civilian in all four: straw hat, light off-white cotton shirt, brown cotton trousers, leather alpercata sandals. He is SEATED ON a small rustic backless wooden bench, facing RIGHT/EAST in all four poses, side profile seen from elevated top-down 3/4 camera, orthogonal game grid. Knees bent naturally and feet supported on ground to the right. No table in sprite. Holds a small piece of bread and brings it to mouth: frame 1 hand low forward near tabletop height, frame 2 hand halfway raised, frame 3 bread touches mouth, frame 4 hand halfway lowering. Left hand rests on thigh, body head bench feet stay perfectly registered across all frames; animate only right forearm/hand minimally. Bread avoids needing a floating bowl.\nMatch the supplied small painted unit: warm muted earth colors, precise dark contours, readable compact silhouette, hand-painted game sprite rather than realistic illustration. Single overhead light slightly from screen south, NO east-west directional lighting. No cast ground shadow except tiny contact shadow directly under bench. Bench INCLUDED, table NOT INCLUDED, no dish, no environment.\nFinal intended cell 64x96 px with seated character plus bench about 44 pixels wide by 58 pixels high (standing reference visible height about 74 px), anchored bottom center. Generate large clean source with same proportions: four equal 64:96 cells side by side (overall aspect ratio 8:3); each figure fits completely within its cell and occupies lower 60 percent, with transparent headroom. Keep identical scale and fixed bottom baseline across all four. No labels, letters, watermark, extra figures or objects.",
+  "tool": "image_gen built-in",
+  "id": "exec-84455c40-68a1-4bc8-9f40-fb5e9e75965a",
+  "seed": null,
+  "seed_note": "Semente nao exposta pela ferramenta.",
+  "generation_directory": "01a142ab-c05d-7fa3-b565-641cde417017",
+  "references": [
+    "D:/projetos-pessoal/cangaco-game/assets/sprites/units/serf/parado.png",
+    "D:/projetos-pessoal/cangaco-game/assets/sprites/inn/inn_completo-D-plus50.png"
+  ],
+  "processing": "Fonte RGBA 2048x768 preservada. Divisao em quatro celulas 512x768. Limpeza de alpha residual abaixo de 16. Recorte visual por alpha>64; escala uniforme para altura sentada de 60px. Alinhamento pelo centro do banco e base comum y=94; Lanczos. Folha 256x96 RGBA. Prancha: folha 1x e 2x nearest; composicao sobre Bodega sem redimensionar edificio nem sprites, nas duas mesas. Sem alteracao do repositorio; sem testes ou commit.",
+  "processing_exact": {
+    "source_crop_per_cell": [
+      70,
+      184,
+      440,
+      718
+    ],
+    "uniform_scale": 0.11560693641618497,
+    "destination_bottom": 94,
+    "frame_size": [
+      64,
+      96
+    ],
+    "placements_on_original_inn": [
+      [
+        39,
+        157,
+        0
+      ],
+      [
+        189,
+        191,
+        2
+      ]
+    ]
+  }
+}
