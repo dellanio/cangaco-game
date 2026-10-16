@@ -6,7 +6,7 @@
   "animacoes": {
     "parado": "template breathing-idle, 4 quadros, 5 direcoes",
     "andar": "template walking-8-frames, 8 quadros, 5 direcoes (sudeste refeito: 502 na primeira)",
-    "morrer": "template falling-back-death, 7 quadros, 5 direcoes",
+    "morrer": "template falling-back-death, 7 quadros, 5 direcoes; mais 1 parado e 4 esmaecendo (alfa 0,75/0,5/0,3/0,15), o contrato de 12 quadros",
     "carregando": "o do serf de antes: tres tentativas v3 personalizadas nao fecharam o laco (cesto nas costas; brilho magico; transicao do braco caido)"
   },
   "geracoes_gastas": 25,

@@ -23,7 +23,12 @@ describe('G-ARTE-OBREIRO-MAIOR', () => {
     expect(o.pe).toBe(PE);
   });
   it('o serf continua com a altura de antes (a regua da comparacao)', () => {
-    expect(altura('serf', 'serf/parado/s/0000').altura).toBe(ALTURA_DE_ANTES);
+    // I-ARTE-SERF-PIXELLAB-V2 (2026-10-16): o serf novo, girado do de antes no PixelLab, mede 73 px, a regua humana da
+    // `pianco-units` (H=73); o de antes media 74. A comparacao do obreiro usa a constante, nao le o serf.
+    const a = altura('serf', 'serf/parado/s/0000');
+    expect(a.altura).toBeGreaterThanOrEqual(ALTURA_DE_ANTES - 1);
+    expect(a.altura).toBeLessThanOrEqual(ALTURA_DE_ANTES);
+    expect(a.pe).toBe(PE);
   });
   it('o obreiro tem os gestos da tarefa no atlas', () => {
     const m = JSON.parse(readFileSync('assets/manifest.json', 'utf8')) as { assets: { id: string; tipo: string; animacoes?: Record<string, unknown> }[] };

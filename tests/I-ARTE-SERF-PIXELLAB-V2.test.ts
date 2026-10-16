@@ -22,6 +22,7 @@ function linhaDoPe(q: Quadro): number {
 describe('I-ARTE-SERF-PIXELLAB-V2', () => {
   it('cada animacao do manifesto tem os quadros nas 5 direcoes, em 64x96', () => {
     expect(serf.animacoes['parado']).toMatchObject({ quadros: 4, laco: true });
+    expect(serf.animacoes['morrer']).toMatchObject({ quadros: 12, laco: false });
     for (const [anim, a] of Object.entries(serf.animacoes)) for (const dir of DIRECOES) for (let i = 0; i < a.quadros; i++) {
       const q = atlas.frames[`serf/${anim}/${dir}/${String(i).padStart(4, '0')}`];
       expect(q, `${anim}/${dir}/${i}`).toBeDefined();
