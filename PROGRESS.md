@@ -22510,3 +22510,5 @@ e passou isolado (21 s para 4 testes); é o mesmo padrão do `SHOT-vite-orfao` 2
   cinza para a terra) e `I-TELA-MENU-VIDEO-DE-CAPA` (o vídeo do operador em laço ida e volta, 20 s, mudo, 3,5 MB,
   sobre a capa; **voltar para a imagem: `VIDEO_DA_CAPA = null` em `src/ui/menu-inicial.ts`**; `?menu&capaFixa` mostra
   só a capa). O registro do vídeo fica em `assets/base/ui/menu-capa/video-geracao.json` (o manifesto só aceita imagem).
+- `I-TELA-MENU-VIDEO-DE-CAPA`, emenda do operador (2026-10-16): sem laço. O vídeo toca uma vez (10 s, só para frente)
+  e some num fade de 2,4 s antes do último quadro; o elemento sai e fica a capa. Roteiro verde em 1280x720 e 1920x1080.
