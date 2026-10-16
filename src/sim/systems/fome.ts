@@ -205,8 +205,11 @@ function passoIndoComer(state: GameState, u: Unidade, dados: GameData): Passo {
   const semATarefa = removerTarefa(state, tarefa.id);
   const refeicao = servirRefeicao(bodega, andou, dados);
   if (refeicao === null) return ficarOcioso(semATarefa, andou);
+  // I-COMIDA-REFEICAO-COM-TEMPO: a comida sai e a condicao sobe na chegada (o KaM alimenta no comeco da acao,
+  // KM_UnitTaskGoEat.pas:140), e ele fica `comendo` o tempo de cada comida servida; `progresso` conta o que falta
+  const ticks = refeicao.consumido.length * dados.condicao.ticksComendoPorComida;
   return semEventos(comUnidade(comPredio(semATarefa, refeicao.bodega), {
-    ...andou, fsm: FSM_COMENDO, fsmData: {}, condicao: refeicao.condicao,
+    ...andou, fsm: FSM_COMENDO, fsmData: dadosDaFsm({ progresso: ticks }), condicao: refeicao.condicao,
   }));
 }
 
@@ -218,9 +221,12 @@ function passoDeFome(state: GameState, u: Unidade, dados: GameData): Passo {
   const comDreno = comUnidade(state, drenado);
   if (morreuDeFome(drenado, dados)) return morrer(comDreno, drenado, dados);
 
-  // `comendo` dura um tick: não existe duração de refeição em `data/`, e inventar um
-  // número de balanceamento em `.ts` é proibido.
-  if (drenado.fsm === FSM_COMENDO) return ficarOcioso(comDreno, drenado);
+  // I-COMIDA-REFEICAO-COM-TEMPO: `comendo` dura o que a chegada gravou em `progresso`; no tick que zera, ocioso
+  if (drenado.fsm === FSM_COMENDO) {
+    const falta = (drenado.fsmData.progresso ?? 0) - 1;
+    if (falta <= 0) return ficarOcioso(comDreno, drenado);
+    return semEventos(comUnidade(comDreno, { ...drenado, fsmData: dadosDaFsm({ progresso: falta }) }));
+  }
   if (drenado.fsm === FSM_INDO_COMER) return passoIndoComer(comDreno, drenado, dados);
   if (precisaComer(drenado, dados)) return tentarSairParaComer(comDreno, drenado, dados);
   return semEventos(comDreno);

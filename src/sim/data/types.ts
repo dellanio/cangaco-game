@@ -427,6 +427,8 @@ export interface CondicaoData {
   /** I-COMIDA-AVISO-DA-TROPA-COM-FOME — de quantos em quantos ticks o aviso da tropa com fome se
    *  repete (`condition.json` `avisoDaTropaComFome.lembrete_segundos_base`, convertido no carregamento). */
   readonly ticksDoLembreteDaTropaComFome: Ticks;
+  /** I-COMIDA-REFEICAO-COM-TEMPO — quantos ticks o civil fica `comendo` por comida servida. */
+  readonly ticksComendoPorComida: Ticks;
   readonly populacao: RawGameData['condition']['populacao'];
 }
 

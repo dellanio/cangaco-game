@@ -219,10 +219,14 @@ describe('F20b-3 — a refeicao', () => {
     expect(tarefasDoTipo(chegou.estado, 'comer').length).toBeLessThanOrEqual(tarefasAntes);
     expect(violacoesDeInvariantes(chegou.estado)).toEqual([]);
 
-    // `comendo` dura UM tick: no seguinte ele ja esta ocioso e de volta ao trabalho
-    const depois = step(chegou.estado, []);
+    // I-COMIDA-REFEICAO-COM-TEMPO: `comendo` dura uma porcao do tempo do KaM por comida servida, e entao ocioso
+    const duracao = COMIDAS.length * gameData.condicao.ticksComendoPorComida;
+    let depois = chegou.estado;
+    for (let t = 1; t < duracao; t++) depois = step(depois, []);
+    expect(unidadeDo(depois, 'u3').fsm).toBe('comendo');
+    depois = step(depois, []);
     expect(unidadeDo(depois, 'u3').fsm).not.toBe('comendo');
-    expect(condicaoDe(depois, 'u3')).toBe(CHEIA_CIVIL - 1);
+    expect(condicaoDe(depois, 'u3')).toBe(CHEIA_CIVIL - duracao);
   });
 });
 

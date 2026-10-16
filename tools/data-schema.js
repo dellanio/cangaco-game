@@ -110,6 +110,8 @@ const CAMPOS_ESCALONADOS = [
     unidade: 'min', declaraEscalaEm: 'escala' },
   { arquivo: 'condition', caminho: 'avisoDaTropaComFome.lembrete_segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escala' },
+  { arquivo: 'condition', caminho: 'inn.segundosComendoPorComida_base',
+    unidade: 'segundos', declaraEscalaEm: 'escala' },
   // I-CLIMA-ESTACAO — a duracao de cada fase do ciclo. `[]` casa qualquer indice do array.
   { arquivo: 'clima', caminho: 'ciclo[].duracao_segundos_base',
     unidade: 'segundos', declaraEscalaEm: 'escala' },

@@ -823,6 +823,11 @@ export function loadGameData(raw: RawGameData): GameData {
       raw.condition.avisoDaTropaComFome.lembrete_segundos_base, 'segundos',
       paraTicksDeDuracao(raw.condition.avisoDaTropaComFome.lembrete_segundos_base, 'segundos', escalaCondicao, tickHz),
     ),
+    ticksComendoPorComida: registrar(
+      'condition.inn.segundosComendoPorComida_base', escalaCondicaoNome,
+      raw.condition.inn.segundosComendoPorComida_base, 'segundos',
+      paraTicksDeDuracao(raw.condition.inn.segundosComendoPorComida_base, 'segundos', escalaCondicao, tickHz),
+    ),
   };
 
   // --- entrega (delivery) — escala null e decisao explicita, nao ausencia ---
