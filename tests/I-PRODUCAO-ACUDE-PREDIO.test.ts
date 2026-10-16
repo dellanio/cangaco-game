@@ -20,12 +20,13 @@ const RUA = [...Array.from({ length: 41 - 29 }, (_, i) => ({ gx: 29 + i, gy: 33 
 const comPedreiraConstruida = (s: GameState): GameState => ({ ...s, tiposJaConstruidos: [...s.tiposJaConstruidos, 'quarry'] });
 
 describe('I-PRODUCAO-ACUDE-PREDIO', () => {
-  it('o dado: 4x3, sem trabalhador, liberado pela Pedreira, na sub-aba De Comer e com nome no tema', () => {
+  it('o dado: 4x3, sem trabalhador, liberado pela Pedreira, na sub-aba Vila (I-TELA-ACUDE-NA-ABA-VILA) e com nome no tema', () => {
     const def = gameData.predios.find((p) => p.id === 'reservoir');
     expect(def).toMatchObject({ tamanho: [4, 3], desbloqueadoPor: 'quarry', trabalhador: null });
     expect(trabalhadorDoTipo('reservoir')).toBeNull();
     const menu = JSON.parse(readFileSync('data/menu-build.json', 'utf8')) as { grupos: { id: string; predios: string[] }[] };
-    expect(menu.grupos.find((g) => g.id === 'comida')?.predios).toContain('reservoir');
+    expect(menu.grupos.find((g) => g.id === 'vila')?.predios).toContain('reservoir');
+    expect(menu.grupos.find((g) => g.id === 'comida')?.predios).not.toContain('reservoir');
     const tema = JSON.parse(readFileSync('data/theme-sertao.json', 'utf8')) as { predios: Record<string, { nome: string }> };
     expect(tema.predios['reservoir']?.nome).toBe('Açude');
   });
