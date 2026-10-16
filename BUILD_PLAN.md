@@ -10393,6 +10393,22 @@ saltar do cinza para a terra.
   2. O roteiro da I-TELA-RUA-SENDO-ASSENTADA continua verde, com as capturas novas; captura de uma rua de vários
      tiles marcados.
 
+#### I-TELA-RUA-MARCADA-CORDEL — a rua marcada com estacas e cordel cinza, como o lote do prédio
+Pedido do operador (2026-10-16): "a área de marcação da rua está uma imagem cinza, precisa ser uma marcação quadrada
+semelhante à marcação do edifício; as cores das cordas porém você usa cinza para diferenciar um pouco da marcação do
+edifício. Atenção pra ficar no máximo do tamanho do tile." Revoga o fundo cinza da I-TELA-RUA-MARCADA-CINZA.
+- **Decisão:** sem arte nova. O tile `marcado` é montado das peças do canteiro do prédio (I-ARTE-MARCACAO-DO-CANTEIRO):
+  as quatro estacas reduzidas a 1/3, com a cor de madeira, e o cordel em cinza, num retângulo dentro do tile; o chão
+  aparece por baixo. Os estágios `pedras`, `obra-1` e `obra-2` assentam sobre a marcação, e não mais sobre o cinza: as
+  pedras separadas do tile antigo (o cinza antigo fica em `assets/base/road/rua-em-obra/cinza-2026-10-16/`) e os
+  estágios sem fundo do Codex. Ferramenta repetível: `tools/derivar-rua-marcada.mjs`.
+- **Aceite:**
+  1. os quatro PNGs `sprites/road/rua-em-obra-*.png` têm 64x64; no `marcado`, nenhum pixel opaco fora do tile (vale por
+     construção) e o miolo do tile transparente: o chão aparece; os pixels opacos da borda são o cordel cinza (croma
+     baixa) e as estacas;
+  2. o roteiro `I-TELA-RUA-SENDO-ASSENTADA` segue verde (os quatro estágios na ordem até a rua pronta) e captura a
+     rua marcada com vários tiles.
+
 #### I-TELA-MENU-VIDEO-DE-CAPA — o vídeo do operador na tela inicial, integrado à capa
 Pedido do operador (2026-10-16): um vídeo gerado por ele (`gemini_generated_video_c5fdf84d.mp4`, 1280x720, 10 s,
 24 fps, com áudio) na tela inicial, "sem apagar a imagem atual; se o vídeo não ficar legal voltamos para ela", e com
@@ -10424,6 +10440,11 @@ marca-d'água.
     2. roteiro em 1280x720 e 1920x1080: o `<video>` existe, mudo, **sem laço** (`loop === false`), sem controles, toca e
        cobre a janela; depois do fim, não há mais `<video>` no menu, a capa de fundo e a caixa continuam, e os botões
        respondem. Captura durante o vídeo e depois do fim; com `?capaFixa`, nada de vídeo.
+  - **Revogado (operador, 2026-10-16): o vídeo sai do jogo.** "Pode remover o vídeo da capa do jogo, não ficou legal."
+    A tela inicial volta a ser só a capa da I-TELA-MENU-ARTE-DE-CAPA. Saem o derivado `sprites/ui/menu/capa-video.mp4`,
+    o código, o CSS e o roteiro; o original e o registro ficam em `assets/base/ui/menu-capa/` (fora do bundle). **Aceite:**
+    nenhum `<video>` no `#menu-inicial`; o roteiro da I-TELA-MENU-ARTE-DE-CAPA e o do menu inicial seguem verdes; o
+    build não leva `.mp4`.
 
 ## Backlog com gatilho
 
