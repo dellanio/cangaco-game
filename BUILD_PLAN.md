@@ -10346,6 +10346,20 @@ raspada), e a tela monta o lote: uma estaca em cada canto, o cordel repetido nas
   peças, fica o retângulo (placeholder, §9). As peças entram no manifesto com licença e origem. Captura de um lote em
   marcação de 3x2 e de 4x3. A sim não muda.
 
+#### I-TELA-RUA-SENDO-ASSENTADA — o tile de rua aparece sendo calçado, batida a batida
+Pedido do operador (2026-10-16): "o builder construindo a rua dá 3 batidas, mas não existem sprites parciais para
+representar a rua sendo construída; no final da terceira batida aparece a rua já pronta. Precisamos dar mais
+realismo". Só a tela: o estágio sai do estado que já existe (a pedra no tile, `pedraNoCanteiro`, e o progresso do
+obreiro que assenta, `fsmData.progresso` contra `construcao.ticksAssentarEstradaPorTile`). A arte é do Codex.
+- **Aceite:**
+  1. Uma função pura dá o estágio de cada tile do canteiro: `marcado` (sem pedra), `pedras` (pedra no tile, ninguém
+     batendo), `obra-1` (batendo, primeira metade do tempo) e `obra-2` (segunda metade); o tile pronto é a rua de hoje.
+     Teste por tabela e pelo `step` (um obreiro assentando passa por `pedras`, `obra-1`, `obra-2` e vira rua).
+  2. A camada da rua desenha o PNG do estágio no tile do canteiro; sem a arte, o canteiro translúcido de hoje. Ela
+     redesenha quando o estágio muda, não só quando o conjunto de tiles muda.
+  3. O roteiro despausa com uma rua de um tile sendo assentada e afirma, pela ponte, que o tile passou pelos
+     estágios na ordem; captura de cada um. A sim não muda.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
