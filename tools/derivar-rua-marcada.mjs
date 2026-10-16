@@ -108,12 +108,33 @@ function pedrasSemCinza() {
   return img;
 }
 
+/**
+ * I-ARTE-RUA-DE-PEDRA-ANTIGA: os estagios de obra do Codex copiaram o calcado do road-m0 de barro pixel a pixel nas
+ * partes ja assentadas. Onde o pixel e o do road-m0 antigo, entra o do road-m0 novo: a obra termina na rua de pedra.
+ */
+function comACalcadaNova(obra) {
+  const antiga = ler('assets/base/road-tiles/barro-2026-09-26/road-m0.png');
+  const nova = ler('assets/sprites/road/road-m0.png');
+  const img = novo();
+  img.data.set(obra.data);
+  let trocados = 0;
+  for (let i = 0; i < LADO * LADO * 4; i += 4) {
+    if (obra.data[i + 3] === 0) continue;
+    const igual = [0, 1, 2, 3].every((k) => obra.data[i + k] === antiga.data[i + k]);
+    if (!igual) continue;
+    img.data.set(nova.data.subarray(i, i + 4), i);
+    trocados++;
+  }
+  console.log(`calcada nova: ${trocados} pixels`);
+  return img;
+}
+
 const base = marcado();
 const estagios = {
   marcado: base,
   pedras: pedrasSemCinza(),
-  'obra-1': ler('assets/base/road/rua-em-obra/obra-1-sem-cinza.png'),
-  'obra-2': ler('assets/base/road/rua-em-obra/obra-2-sem-cinza.png'),
+  'obra-1': comACalcadaNova(ler('assets/base/road/rua-em-obra/obra-1-sem-cinza.png')),
+  'obra-2': comACalcadaNova(ler('assets/base/road/rua-em-obra/obra-2-sem-cinza.png')),
 };
 for (const [estado, camada] of Object.entries(estagios)) {
   const img = novo();

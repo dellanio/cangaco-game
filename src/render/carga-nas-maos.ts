@@ -20,6 +20,15 @@ export interface CargaNasMaos {
 
 const ESPELHO: Readonly<Record<string, 'ne' | 'l' | 'se'>> = { no: 'ne', o: 'l', so: 'se' };
 
+/**
+ * A carga vai nas maos (sem a placa escura) na pose de carregar e sempre que a unidade tem sprite. A placa e do
+ * quadrado provisorio; com sprite, o serf parado com a pedra (esperando para larga-la) mostrava a placa no peito
+ * (BUG-PLACA-NO-PEITO, 2026-10-16).
+ */
+export function cargaVaiNasMaos(animacao: string, comSprite: boolean): boolean {
+  return animacao === 'carregando' || comSprite;
+}
+
 export function pontoDaCargaNasMaos(direcao: Direcao, config: CargaNasMaos): PontoDaCarga {
   const espelhada = ESPELHO[direcao];
   if (espelhada !== undefined) {

@@ -22517,3 +22517,9 @@ e passou isolado (21 s para 4 testes); é o mesmo padrão do `SHOT-vite-orfao` 2
   cordel cinza dentro do tile (`tools/derivar-rua-marcada.mjs`, das peças do canteiro do prédio); o miolo fica
   transparente (medido: 0 pixels opacos no miolo, 504 de cordel, 160 de estaca). O commit da remoção do vídeo
   (727fe57e) saiu antes do `verify:rapido`; a verificação seguinte passou com ele.
+- 2026-10-16, pedidos do operador na main: `BUG-PLACA-NO-PEITO` (o serf parado com a pedra mostrava a placa escura do
+  quadrado provisório; com sprite, a carga fica nas mãos; o roteiro reprova sem a correção), `BUG-ACUDE-COM-AGUA-NA-OBRA`
+  (o `completo` do Açude, que só serve a obra, era o `cheio`; agora o `vazio`: medido 7 968 px de água na obra antes,
+  34 depois), `I-ARTE-RUA-DE-PEDRA-ANTIGA` (calçamento de pedras arredondadas, material do Codex, família pelo pipeline;
+  a rua de barro fica em `assets/base/road-tiles/barro-2026-09-26/`) e `I-ARTE-BANDEIRA-COM-VOLUME` (o pano em faixas
+  com o tom da onda, mastro cilíndrico e ponta de latão, nas duas cores). Homologação das artes novas: pendente.

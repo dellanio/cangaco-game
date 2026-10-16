@@ -519,9 +519,9 @@
       },
       "licenca": "arte propria do projeto, gerada para o projeto em 2026-09-26",
       "origem": {
-        "base": "base/road-tiles/road-material-source.png",
+        "base": "base/road-tiles/calcamento-antigo/material.png",
         "semente": null,
-        "nota": "Dezesseis conexoes cardinais N/L/S/O e ponte diagonal derivadas de uma textura canonica pela skill pianco-art-pipeline."
+        "nota": "I-ARTE-RUA-DE-PEDRA-ANTIGA (2026-10-16): calcamento antigo de pedras arredondadas, material 128x128 sem costura gerado pelo Codex (registro em base/road-tiles/calcamento-antigo/geracao.json); dezesseis conexoes N/L/S/O e a ponte diagonal derivadas por skills/pianco-sprite-tools/scripts/process-road-tiles.mjs com o layout de la. A rua de barro de antes fica em base/road-tiles/barro-2026-09-26/."
       }
     },
     {
@@ -3849,7 +3849,7 @@
     "baixo": "sprites/reservoir/baixo.png",
     "medio": "sprites/reservoir/medio.png",
     "madeira": "sprites/reservoir/madeira.png",
-    "completo": "sprites/reservoir/cheio.png"
+    "completo": "sprites/reservoir/vazio.png"
   },
   "licenca": "arte original OpenAI para Piancó, 2026-10-10",
   "origem": {

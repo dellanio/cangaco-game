@@ -3,7 +3,7 @@ import { recursoSubmerso } from '../recurso-submerso';
 import { transformacaoDoClima } from '../cobertura-clima';
 import { candidatosAEnfeite, MemoriaDosEnfeites } from '../enfeites';
 import { sementeDoMapa, centroDaVilaInicial } from '../mapa';
-import { panoDaBandeira } from '../bandeira';
+import { corComTom, panoDaBandeira, tonsDoPano } from '../bandeira';
 import { configDaSerra, MemoriaDaSerra, texturaDaSerra } from '../serra';
 import { rendimentoDaRocha } from '../mapa';
 import { rendimentosDasFontes } from '../mapa';
@@ -176,6 +176,9 @@ const REGRA_DE_LARGURA = regraDeLarguraDoManifesto(manifestoDoJogo);
 const LADO_DA_UNIDADE_EM_TILES = 1 / 5;
 /** C-IA-03c — hex do tema para o numero que o Phaser pinta. */
 const cor = (hex: string): number => Phaser.Display.Color.HexStringToColor(hex).color;
+/** I-ARTE-BANDEIRA-COM-VOLUME — o mastro e a ponta de latao, em px de mundo. */
+const LARGURA_DO_MASTRO = 3;
+const COR_DO_LATAO = 0xc9a24a;
 const COR_DA_SELECAO = 0xf2d16b;
 /** F28b — a pedra da torre na tela: cor e quanto tempo o traco fica. Numeros de TELA. */
 const COR_DA_PEDRA = 0xe8e2d0;
@@ -246,7 +249,7 @@ export class WorldScene extends Phaser.Scene {
   private repinturasDasFontes = 0;
   private ventoLigado = true;
   private readonly panosDasBandeiras = new Map<string, {
-    pano: Phaser.GameObjects.Polygon; mastro: Phaser.GameObjects.Rectangle; gx: number; gy: number;
+    pano: Phaser.GameObjects.Graphics; mastro: Phaser.GameObjects.Graphics; cor: number; gx: number; gy: number;
     quadro: { tick: number; alfa: number; vista: string } | null;
   }>();
   private ultimoQuadroDoVento: { tick: number; alfa: number; vista: string } | null = null;
@@ -2495,24 +2498,68 @@ export class WorldScene extends Phaser.Scene {
     predio: Predio, tilePx: number, contato: { readonly x: number; readonly y: number } = { x: 4, y: 4 },
   ): Phaser.GameObjects.GameObject[] {
     const altura = tilePx * 0.6;
+    const corDoPano = cor(corDoBando(predio.lado));
     const existente = this.panosDasBandeiras.get(predio.id);
     if (existente) {
       existente.mastro.setPosition(contato.x, contato.y - altura);
-      existente.pano.setPosition(contato.x + 3, contato.y - altura);
-      existente.pano.setFillStyle(cor(corDoBando(predio.lado)), 1);
+      existente.pano.setPosition(contato.x + LARGURA_DO_MASTRO, contato.y - altura);
       existente.gx = predio.gx;
       existente.gy = predio.gy;
       existente.quadro = null;
+      if (existente.cor !== corDoPano) {
+        existente.cor = corDoPano;
+        this.pintarPano(existente.pano, corDoPano, this.pontosDoPano(predio.gx, predio.gy, tilePx));
+      }
       return [existente.mastro, existente.pano];
     }
-    const mastro = this.add.rectangle(contato.x, contato.y - altura, 3, altura, cor(temaSertao.paleta.madeira), 1).setOrigin(0, 0);
-    const pontos = panoDaBandeira(dadosDoVento, {
-      ...dadosDaBandeira, larguraPx: tilePx * 0.35, alturaPx: tilePx * 0.22,
-    }, this.ponte.atual?.tick ?? 0, this.relogio.alfa(), predio.gx, predio.gy);
-    const pano = this.add.polygon(contato.x + 3, contato.y - altura, pontos, cor(corDoBando(predio.lado)), 1).setOrigin(0, 0);
-    this.panosDasBandeiras.set(predio.id, { pano, mastro, gx: predio.gx, gy: predio.gy, quadro: null });
-    pano.setStrokeStyle(1, cor(temaSertao.paleta.madeira));
+    const mastro = this.add.graphics().setPosition(contato.x, contato.y - altura);
+    this.pintarMastro(mastro, altura);
+    const pano = this.add.graphics().setPosition(contato.x + LARGURA_DO_MASTRO, contato.y - altura);
+    this.pintarPano(pano, corDoPano, this.pontosDoPano(predio.gx, predio.gy, tilePx));
+    this.panosDasBandeiras.set(predio.id, { pano, mastro, cor: corDoPano, gx: predio.gx, gy: predio.gy, quadro: null });
     return [mastro, pano];
+  }
+
+  private pontosDoPano(gx: number, gy: number, tilePx: number, tick = this.ponte.atual?.tick ?? 0, alfa = this.relogio.alfa()): { x: number; y: number }[] {
+    return panoDaBandeira(dadosDoVento, {
+      ...dadosDaBandeira, larguraPx: tilePx * 0.35, alturaPx: tilePx * 0.22,
+    }, tick, alfa, gx, gy);
+  }
+
+  /** I-ARTE-BANDEIRA-COM-VOLUME — o mastro como cilindro de madeira (bordas escuras, meio claro: a luz e de cima, sem
+   *  leste-oeste) e uma ponta de latao no topo. */
+  private pintarMastro(g: Phaser.GameObjects.Graphics, altura: number): void {
+    const madeira = cor(temaSertao.paleta.madeira);
+    const w = LARGURA_DO_MASTRO;
+    g.clear();
+    g.fillStyle(corComTom(madeira, 0.7), 1).fillRect(0, 0, w, altura);
+    g.fillStyle(corComTom(madeira, 1.25), 1).fillRect(w * 0.3, 0, w * 0.4, altura);
+    g.fillStyle(0x000000, 0.25).fillEllipse(w / 2, altura, w * 3, w * 1.2);
+    const r = w * 0.85;
+    g.fillStyle(COR_DO_LATAO, 1).fillCircle(w / 2, -r * 0.6, r);
+    g.fillStyle(corComTom(COR_DO_LATAO, 0.65), 1).fillCircle(w / 2, -r * 0.35, r * 0.7);
+    g.fillStyle(COR_DO_LATAO, 1).fillCircle(w / 2, -r * 0.75, r * 0.7);
+    g.fillStyle(0xfff4c8, 0.9).fillCircle(w / 2 - r * 0.25, -r * 0.95, r * 0.3);
+  }
+
+  /** I-ARTE-BANDEIRA-COM-VOLUME — o pano em faixas, cada uma no tom da inclinacao da onda (`tonsDoPano`), com a bainha
+   *  de cima clara, a de baixo escura e o contorno. */
+  private pintarPano(g: Phaser.GameObjects.Graphics, corDoPano: number, pontos: readonly { x: number; y: number }[]): void {
+    const segmentos = dadosDaBandeira.segmentos;
+    const tons = tonsDoPano(pontos, segmentos);
+    const topo = (i: number) => pontos[i]!;
+    const base = (i: number) => pontos[pontos.length - 1 - i]!;
+    g.clear();
+    tons.forEach((tom, i) => {
+      g.fillStyle(corComTom(corDoPano, tom), 1);
+      g.fillPoints([topo(i), topo(i + 1), base(i + 1), base(i)], true);
+    });
+    g.lineStyle(1, corComTom(corDoPano, 1.35), 0.9);
+    g.strokePoints(Array.from({ length: segmentos + 1 }, (_, i) => ({ x: topo(i).x, y: topo(i).y + 1 })), false);
+    g.lineStyle(1, corComTom(corDoPano, 0.5), 0.9);
+    g.strokePoints(Array.from({ length: segmentos + 1 }, (_, i) => ({ x: base(i).x, y: base(i).y - 1 })), false);
+    g.lineStyle(1, corComTom(cor(temaSertao.paleta.madeira), 0.8), 1);
+    g.strokePoints([...pontos], true);
   }
 
   private atualizarBandeiras(tilePx: number): number {
@@ -2529,11 +2576,8 @@ export class WorldScene extends Phaser.Scene {
       const margem = dadosDaBandeira.amplitudeMaximaPx;
       if (x > vista.right || x + tilePx * 0.35 < vista.x ||
         y - margem > vista.bottom || y + tilePx * 0.22 + margem < vista.y) continue;
-      const pontos = panoDaBandeira(dadosDoVento, {
-        ...dadosDaBandeira, larguraPx: tilePx * 0.35, alturaPx: tilePx * 0.22,
-      }, quadro.tick, quadro.alfa, memoria.gx, memoria.gy);
-      // Mantem o objeto Phaser e suas cores/tint; troca apenas a geometria.
-      memoria.pano.setTo(pontos);
+      // Mantem o objeto Phaser; redesenha o pano com a geometria e os tons da onda deste quadro.
+      this.pintarPano(memoria.pano, memoria.cor, this.pontosDoPano(memoria.gx, memoria.gy, tilePx, quadro.tick, quadro.alfa));
       memoria.quadro = quadro;
       redesenhadas += 1;
     }
