@@ -236,6 +236,9 @@ export interface EstadoDebug {
   canteiroComArte: boolean;
   /** I-TELA-MODO-ADMIN — o modo admin desta pagina, e quantos rotulos de predio a cena escreveu (fora dele, 0). */
   modoAdmin: boolean;
+  /** I-TELA-PREMIUM-PROTOTIPO — o visual premium esta ligado, quantas sombras de contato estao desenhadas e se a
+   *  camera tem a gradacao de cor. */
+  premium: { ligado: boolean; sombras: number; gradacao: boolean };
   rotulosDePredio: number;
   /** F-VIVO-d — as camadas desenhadas, em px de mundo, por id de predio com receita. */
   camadasEmPx: Readonly<Record<string, CamadasEmPx>>;
@@ -500,6 +503,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     comensaisDaBodega: {},
     canteiroComArte: false,
     modoAdmin: false,
+    premium: { ligado: false, sombras: 0, gradacao: false },
     rotulosDePredio: 0,
     camadasEmPx: {},
     caixasDesenhadas: {},

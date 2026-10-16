@@ -71,6 +71,9 @@ import { MAX_PASSOS_POR_QUADRO } from '../../laco';
 import type { AnimalDoCurral } from '../animais';
 import { comensaisDaBodega, ESCALA_DO_COMENSAL, quadroDoComensal } from '../comensais';
 import { lerModoAdmin } from '../modo-admin';
+import { ligarGradacaoDeCor, ligarSombrasDeContato } from '../visual-premium';
+import { visualPremium } from '../visual-premium-regra';
+import type { SombrasDeContato } from '../visual-premium';
 import type { ComensalNaMesa } from '../comensais';
 import type { PilhaDesenhada } from '../pilhas';
 import { areaDoTrabalho, quadroDaEscola, quadroDaFumaca, quadroDeTrabalho, quadroOcioso } from '../trabalho';
@@ -250,6 +253,9 @@ export class WorldScene extends Phaser.Scene {
   private vegetacaoNova = true;
   private readonly ultimoTickDaVegetacao = new Map<string, number>();
   private arvoresNaVista: Array<readonly [string, Phaser.GameObjects.Image]> = [];
+  /** I-TELA-PREMIUM-PROTOTIPO — as sombras de contato e a gradacao, so com `?premium`. */
+  private sombrasDeContato: SombrasDeContato | null = null;
+  private gradacaoDeCor = false;
   /** D-TELA-LUZ-RELEVO — a luz do relevo, ou `null` com ele desligado (o padrao): todo gancho e `luz?.`. */
   private luz: LuzDoRelevo | null = null;
   /** BUG-N3 — os tiles cujo sprite de vegetacao NASCEU de rocha. Guardado na hora de
@@ -514,6 +520,11 @@ export class WorldScene extends Phaser.Scene {
 
     const camera = this.cameras.main;
     camera.setBounds(0, 0, larguraPx, alturaPx);
+    // I-TELA-PREMIUM-PROTOTIPO: so com `?premium`; sem ele, nada nasce
+    if (visualPremium(window.location.search)) {
+      this.sombrasDeContato = ligarSombrasDeContato(this);
+      this.gradacaoDeCor = ligarGradacaoDeCor(camera);
+    }
     // D-TELA-CAPTURA-DETERMINISTICA: o roteiro poe a camera exata pela ponte (harness)
     estado.fixarCamera = ({ scrollX, scrollY }) => {
       if (scrollX !== undefined) camera.scrollX = scrollX;
@@ -2394,6 +2405,7 @@ export class WorldScene extends Phaser.Scene {
     debug.animaisDoCurral = animaisNoDebug;
     debug.comensaisDaBodega = comensaisNoDebug;
     debug.modoAdmin = lerModoAdmin();
+    debug.premium = { ligado: this.sombrasDeContato !== null, sombras: this.sombrasDeContato?.quantas() ?? 0, gradacao: this.gradacaoDeCor };
     debug.rotulosDePredio = this.rotulosDePredio;
     debug.canteiroComArte = PECAS_DO_CANTEIRO.every((e) => this.textures.exists(chaveDeTextura('interface', `${ID_DO_CANTEIRO}-${e}`, 'normal')));
     debug.camadasEmPx = camadasNoDebug;

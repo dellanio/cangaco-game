@@ -65,6 +65,8 @@ import { predioClicavel } from './render/nevoa';
 import { classeDaUnidade } from './sim/condicao';
 import { criarSelecaoMilitar } from './input/selecao-militar';
 import { montarPainelGrupo } from './ui/painel-grupo';
+import { montarBarraDaTropa } from './ui/barra-da-tropa';
+import { visualPremium } from './render/visual-premium-regra';
 import { montarContadorDePaz } from './ui/contador-de-paz';
 import { montarAvisoDeOrdem, recusaDaPaz } from './ui/aviso-de-ordem';
 import { ordemDeConversao, ordemDoBotaoDireito } from './ui/ordem-militar';
@@ -322,6 +324,10 @@ export function iniciarPartida(
   const painelGrupo = montarPainelGrupo(selecaoMilitar, (comando) => {
     enviar(comando);
   }, soldadosDoJogador, gameData);
+  // I-TELA-PREMIUM-PROTOTIPO: a barra de baixo da tropa, so com `?premium`
+  const premium = visualPremium(window.location.search);
+  document.body.classList.toggle('premium', premium);
+  const barraDaTropa = premium ? montarBarraDaTropa(selecaoMilitar, soldadosDoJogador, gameData, urlsDeSprites) : null;
   // predio e grupo nao convivem (F26b): escolher predio pela aba solta o grupo aqui tambem
   selecao.aoMudar(() => {
     if (selecao.predio !== null) selecaoMilitar.limpar();
@@ -404,6 +410,7 @@ export function iniciarPartida(
     menu.atualizar(s);
     painel.atualizar(s);
     painelGrupo.atualizar(s);
+    barraDaTropa?.atualizar(s);
     alertas.atualizar(s);
     contadorDePaz.atualizar(s);
     avisoDeOrdem.atualizar(s);
