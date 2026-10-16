@@ -10393,6 +10393,24 @@ saltar do cinza para a terra.
   2. O roteiro da I-TELA-RUA-SENDO-ASSENTADA continua verde, com as capturas novas; captura de uma rua de vários
      tiles marcados.
 
+#### I-TELA-MENU-VIDEO-DE-CAPA — o vídeo do operador na tela inicial, integrado à capa
+Pedido do operador (2026-10-16): um vídeo gerado por ele (`gemini_generated_video_c5fdf84d.mp4`, 1280x720, 10 s,
+24 fps, com áudio) na tela inicial, "sem apagar a imagem atual; se o vídeo não ficar legal voltamos para ela", e com
+"um background atrás que não deixe o jogador perceber que está vendo um vídeo". O vídeo anima a própria capa (a câmera
+se aproxima do bando); o último quadro é mais fechado que o primeiro, então o laço direto daria um salto. Medido: sem
+marca-d'água.
+- **Decisão:** laço ida e volta (o vídeo para frente e de trás para frente, 20 s), sem áudio (o menu tem a música
+  dele). A capa estática continua por baixo, como pôster e como volta: o vídeo entra com um fade quando pode tocar, sob
+  o mesmo véu da caixa, com uma vinheta e um grão leve por cima dos dois, para parecer parte da tela e não um player.
+  Sem controle, sem clique, sem tela cheia. Com `prefers-reduced-motion`, ou se o vídeo falhar, fica a capa.
+  **Voltar para a imagem:** a constante `VIDEO_DA_CAPA` em `src/ui/menu-inicial.ts` (uma linha).
+- **Aceite:**
+  1. O derivado em `assets/sprites/ui/menu/capa-video.mp4` (H.264, sem áudio, ida e volta), o original em
+     `assets/base/ui/menu-capa/`, a entrada no manifesto com a origem.
+  2. Roteiro em 1280x720 e 1920x1080: o `<video>` existe, mudo, em laço, sem controles, toca (o `currentTime` anda) e
+     cobre a janela; a caixa do menu, os botões e a capa de fundo continuam (o roteiro da I-TELA-MENU-ARTE-DE-CAPA
+     segue verde); com `?capaFixa` não há vídeo. Captura de dois instantes.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
