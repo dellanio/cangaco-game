@@ -1,6 +1,9 @@
 {
   "_doc": "G-TELA-OBREIRO-POR-TAREFA e G-TELA-ROCEIRO-NO-CAMPO (pedidos do operador, 2026-10-04): o gesto de quem trabalha e onde ele e desenhado. So render; a sim nao le. obreiroPorTarefa: animacao do laborer pelo tipo da tarefa. roceiroPorEstado: animacao do roceiro pelo estado da FSM. avancoDoMartelarPx: quanto o desenho do obreiro avanca na direcao da obra ao martelar. colheitaPorPredio: o icone que o roceiro leva nas maos voltando da colheita.",
   "obreiroPorTarefa": { "construir": "martelar", "reparar": "martelar", "assentar-estrada": "assentar", "arar": "arar" },
+  "obreiroNivelando": "arar",
+  "velocidadeNoLoteTilesPorSegundo": 3,
+  "_docNivelando": "I-TELA-OBREIRO-NIVELA-O-LOTE (pedido do operador, 2026-10-16): o obreiro que aplaina o lote e desenhado no tile em curso (zigue-zague, como no KaM), com a enxada (arar), avanca pelo zigue-zague no ritmo do nivelamento; entrar no lote e voltar ao posto e andar, a esta velocidade de desenho. So render.",
   "roceiroPorEstado": { "semeando": "semear", "colhendo": "colher" },
   "avancoDoMartelarPx": 10,
   "colheitaPorPredio": { "farm": "corn", "wineyard": "grapes" },

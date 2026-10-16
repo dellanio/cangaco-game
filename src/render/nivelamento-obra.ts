@@ -70,3 +70,31 @@ export function chaveDoCanteiro(canteiro: CanteiroDaObra | null): string {
   if (canteiro === null) return '';
   return `${canteiro.tilesProntos}/${canteiro.tilesTotais}:${canteiro.oitavosDoTileEmCurso}`;
 }
+
+/** Um tile do lote, relativo ao canto (0, 0) do footprint. */
+export interface TileDoLote { readonly gx: number; readonly gy: number }
+
+/**
+ * I-TELA-OBREIRO-NIVELA-O-LOTE — a ordem em que o lote e aplainado: fileira a fileira, em zigue-zague (a fileira
+ * seguinte volta no sentido contrario), para cada tile ser vizinho do anterior e o obreiro andar um passo so entre
+ * eles, como no KaM (`src/units/tasks/KM_UnitTaskBuild.pas:681-766`). O chao raspado e o desenho do obreiro usam esta
+ * mesma ordem.
+ */
+export function ordemDeNivelamento(largura: number, altura: number): readonly TileDoLote[] {
+  const tiles: TileDoLote[] = [];
+  for (let gy = 0; gy < altura; gy++) {
+    for (let k = 0; k < largura; k++) tiles.push({ gx: gy % 2 === 0 ? k : largura - 1 - k, gy });
+  }
+  return tiles;
+}
+
+/**
+ * I-TELA-OBREIRO-NIVELA-O-LOTE — o indice, na ordem de nivelamento, do tile em que o obreiro de posicao `ordem`
+ * (0, 1, ... entre os obreiros que nivelam a mesma obra) e desenhado: o primeiro tile ainda por aplainar, mais a
+ * ordem dele, e nunca alem do ultimo tile. Assim dois obreiros nunca ficam no mesmo tile enquanto houver tile, e um
+ * tile ja aplainado nao e escolhido de novo.
+ */
+export function indiceDoObreiroNoLote(canteiro: Pick<CanteiroDaObra, 'tilesProntos' | 'tilesTotais'>, ordem: number): number {
+  if (canteiro.tilesTotais <= 0) return 0;
+  return Math.min(canteiro.tilesTotais - 1, canteiro.tilesProntos + Math.max(0, ordem));
+}

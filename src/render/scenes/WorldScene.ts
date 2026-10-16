@@ -82,7 +82,7 @@ import { caixaDoSinalDePausado, temSinalDePausado, TEXTO_DO_SINAL_DE_PAUSADO } f
 import { CASO_DO_PREDIO, ID_DA_FUMACA, ID_DO_COMENSAL, ID_DO_OCIOSO, LACO_DA_ESCOLA, LACO_DO_COMENSAL } from '../manifesto-camadas';
 import { medidorDaObra } from '../medidor-obra';
 import type { LinhaDoMedidor } from '../medidor-obra';
-import { canteiroDaObra, chaveDoCanteiro } from '../nivelamento-obra';
+import { canteiroDaObra, chaveDoCanteiro, ordemDeNivelamento } from '../nivelamento-obra';
 import type { CanteiroDaObra } from '../nivelamento-obra';
 import {
   chaveDaRevelacao, contagemDeEstagios, estagioDoPredio, estaEmObra, ORDEM_DOS_ESTAGIOS,
@@ -2626,12 +2626,12 @@ export class WorldScene extends Phaser.Scene {
     // marteladas e so o medidor no gramado, sem dizer quanto chao vai ocupar.
     const corpo = revelacao !== null && par !== null
       ? [
-        ...this.desenharLote(estagio, larguraPx, alturaPx),
+        ...this.desenharLote(estagio, larguraPx, alturaPx, canteiro, largura),
         ...this.desenharRevelado(par.madeira, revelacao.madeira, larguraPx, alturaPx, `${predio.id}:madeira`),
         ...this.desenharRevelado(par.pedra, revelacao.pedra, larguraPx, alturaPx, `${predio.id}:pedra`),
       ]
       : sprite === null
-        ? this.desenharPlaceholder(estagio, nome, larguraPx, alturaPx)
+        ? this.desenharPlaceholder(estagio, nome, larguraPx, alturaPx, canteiro, largura)
         : [this.desenharSprite(sprite.chave, sprite.entrada, larguraPx, alturaPx)];
     const caixa = this.caixaDoPredio(predio.tipo, larguraPx, alturaPx);
 
@@ -2938,6 +2938,7 @@ export class WorldScene extends Phaser.Scene {
    *  em cada canto (as pecas do Codex, `interface:canteiro:*`). Sem as pecas, ou fora da obra, o retangulo de antes. */
   private desenharLote(
     estagio: EstagioDaObra, larguraPx: number, alturaPx: number,
+    canteiro: CanteiroDaObra | null = null, larguraEmTiles = 1,
   ): Phaser.GameObjects.GameObject[] {
     const peca = (estado: string): string => chaveDeTextura('interface', `${ID_DO_CANTEIRO}-${estado}`, 'normal');
     const comArte = PECAS_DO_CANTEIRO.every((e) => this.textures.exists(peca(e)));
@@ -2948,7 +2949,24 @@ export class WorldScene extends Phaser.Scene {
     }
     const escala = configDoMapa.tilePx / TILE_DA_ARTE_DO_CANTEIRO;
     const fio = ESPESSURA_DO_CORDEL * escala;
-    const terra = this.add.tileSprite(larguraPx / 2, alturaPx / 2, larguraPx, alturaPx, peca('terra')).setTileScale(escala, escala);
+    // I-TELA-OBREIRO-NIVELA-O-LOTE: a terra raspada so nos tiles ja aplainados, na ordem em zigue-zague do obreiro; o tile
+    // em curso aparece aos poucos (pelos oitavos da chave do canteiro). Sem leitura do canteiro, ou nivelado, o lote todo.
+    const terra: Phaser.GameObjects.GameObject[] = [];
+    if (canteiro === null || canteiro.nivelada || canteiro.tilesTotais <= 0) {
+      terra.push(this.add.tileSprite(larguraPx / 2, alturaPx / 2, larguraPx, alturaPx, peca('terra')).setTileScale(escala, escala));
+    } else {
+      const lado = configDoMapa.tilePx;
+      const ordem = ordemDeNivelamento(Math.max(1, larguraEmTiles), Math.ceil(canteiro.tilesTotais / Math.max(1, larguraEmTiles)));
+      const tile = (n: number, alfa: number): void => {
+        const t = ordem[n];
+        if (t === undefined || alfa <= 0) return;
+        // o recorte da textura acompanha o tile no mundo, e o chao raspado nao se repete igual em cada tile
+        terra.push(this.add.tileSprite(t.gx * lado + lado / 2, t.gy * lado + lado / 2, lado, lado, peca('terra'))
+          .setTileScale(escala, escala).setTilePosition((t.gx * lado) / escala, (t.gy * lado) / escala).setAlpha(alfa));
+      };
+      for (let n = 0; n < canteiro.tilesProntos; n++) tile(n, 1);
+      tile(canteiro.tilesProntos, canteiro.oitavosDoTileEmCurso / 8);
+    }
     const cordel = (x: number, y: number, w: number, h: number, estado: string): Phaser.GameObjects.TileSprite =>
       this.add.tileSprite(x, y, w, h, peca(estado)).setTileScale(escala, escala);
     const bordas = [
@@ -2960,11 +2978,12 @@ export class WorldScene extends Phaser.Scene {
     // a estaca com o pe no canto (a origem e o centro da borda de baixo, como a arte foi pedida)
     const estacas = ([[0, 0], [larguraPx, 0], [0, alturaPx], [larguraPx, alturaPx]] as const).map(([x, y]) =>
       this.add.image(x, y + fio / 2, peca('estaca')).setOrigin(0.5, 1).setScale(escala));
-    return [terra, ...bordas, ...estacas];
+    return [...terra, ...bordas, ...estacas];
   }
 
   private desenharPlaceholder(
     estagio: EstagioDaObra, nome: string, larguraPx: number, alturaPx: number,
+    canteiro: CanteiroDaObra | null = null, larguraEmTiles = 1,
   ): Phaser.GameObjects.GameObject[] {
     const emObra = estaEmObra(estagio);
     const cara = CARA_DO_ESTAGIO[estagio];
@@ -2972,7 +2991,7 @@ export class WorldScene extends Phaser.Scene {
 
     // O lote, sempre: e o que diz ao jogador quanto chao a obra vai ocupar,
     // inclusive quando ainda nao ha volume nenhum em cima dele.
-    objetos.push(...this.desenharLote(estagio, larguraPx, alturaPx));
+    objetos.push(...this.desenharLote(estagio, larguraPx, alturaPx, canteiro, larguraEmTiles));
 
     // O volume, ancorado no PE do footprint: a obra sobe do chao para cima, e nao
     // cresce a partir do meio.
@@ -3015,15 +3034,19 @@ export class WorldScene extends Phaser.Scene {
     canteiro: CanteiroDaObra | null, larguraEmTiles: number, tilePx: number,
   ): Phaser.GameObjects.GameObject[] {
     if (canteiro === null || canteiro.tilesTotais <= 0) return [];
+    // I-TELA-OBREIRO-NIVELA-O-LOTE: com as pecas do canteiro, o aplainado e a terra raspada do lote (`desenharLote`)
+    if (PECAS_DO_CANTEIRO.every((e) => this.textures.exists(chaveDeTextura('interface', `${ID_DO_CANTEIRO}-${e}`, 'normal')))) return [];
     const COR = 0x8a6a4a;
     const OPACIDADE = 0.55;
     const OITAVOS = 8;
     const objetos: Phaser.GameObjects.GameObject[] = [];
     const porLinha = Math.max(1, larguraEmTiles);
+    // I-TELA-OBREIRO-NIVELA-O-LOTE: a mesma ordem em zigue-zague do obreiro e da terra raspada
+    const ordem = ordemDeNivelamento(porLinha, Math.ceil(canteiro.tilesTotais / porLinha));
     const bloco = (n: number, largura: number): void => {
-      if (largura <= 0) return;
-      const coluna = n % porLinha;
-      const fileira = Math.floor(n / porLinha);
+      if (largura <= 0 || ordem[n] === undefined) return;
+      const coluna = ordem[n].gx;
+      const fileira = ordem[n].gy;
       // origem no canto superior esquerdo do tile: o tile em curso enche da
       // esquerda para a direita, e nao a partir do centro
       const r = this.add.rectangle(coluna * tilePx, fileira * tilePx, largura, tilePx,

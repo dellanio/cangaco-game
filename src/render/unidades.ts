@@ -70,8 +70,8 @@ import type { MemoriaDaVirada } from './virada-de-unidade';
 import { acaoDaUnidade, animacaoComCarga, direcaoDaOracao, direcaoDoTrabalho } from './acao-de-unidade';
 import dadosDaCargaNasMaos from '../../data/carga-nas-maos.json';
 import { cargaVaiNasMaos, pontoDaCargaNasMaos } from './carga-nas-maos';
-import { animacaoDoGesto, colheitaNasMaos, deslocamentoDoTrabalho } from './gesto-do-trabalho';
-import type { GestoDoTrabalho } from './gesto-do-trabalho';
+import { animacaoDoGesto, colheitaNasMaos, deslocamentoDoTrabalho, passoNoLote, tileDoNivelamento } from './gesto-do-trabalho';
+import type { DesenhoNoLote, GestoDoTrabalho } from './gesto-do-trabalho';
 import { caixaDeTipoNoMapa } from './predios';
 import dadosDoGesto from '../../data/gesto-do-trabalho.json';
 
@@ -95,6 +95,8 @@ export interface UnidadeRenderizada {
   /** Borda inferior do recorte realmente desenhado, relativa ao container. */
   readonly peY?: number;
   readonly espelhado?: boolean;
+  /** I-TELA-OBREIRO-NIVELA-O-LOTE: o desenho do obreiro dentro do lote (px a partir do tile logico) e o tile alvo */
+  readonly noLote?: { readonly x: number; readonly y: number; readonly andando: boolean; readonly tile: { readonly gx: number; readonly gy: number } | null } | null;
   readonly id: string;
   readonly tipo: string;
   /** Posicao do TICK, em tiles, FRACIONARIA no meio de um passo. Deterministica: e o que os
@@ -214,6 +216,8 @@ interface Desenhado {
   animacao: string;
   /** A acao que o estado pede (antes do gesto): o deslocamento do trabalho le esta. */
   acaoDoTrabalho: string;
+  /** I-TELA-OBREIRO-NIVELA-O-LOTE: o desenho do obreiro dentro do lote que ele aplaina, ou `null` */
+  noLote: DesenhoNoLote | null;
   quadro: number;
   spriteAnimado: SpriteAnimado | null;
   readonly container: Phaser.GameObjects.Container;
@@ -283,7 +287,7 @@ export function criarCamadaDeUnidades(
     marcadorDeFome.setVisible(false);
     const container = cena.add.container(0, 0, [retangulo, marcadorDeCarga, marcadorDeFome]);
     return { container, retangulo, imagem: null, direcao: 's', nome: rotulo, marcadorDeCarga, iconeDaCarga: null, placaDoIcone: null, marcadorDeFome, balao: null,
-      distancia: 0, ultimaPosicao: null, ultimoTickAnimado: -1, animacao: 'parado', acaoDoTrabalho: 'parado', inicioDaAcao: 0, quadro: 0, spriteAnimado: null,
+      distancia: 0, ultimaPosicao: null, ultimoTickAnimado: -1, animacao: 'parado', acaoDoTrabalho: 'parado', noLote: null, inicioDaAcao: 0, quadro: 0, spriteAnimado: null,
       virada: iniciarVirada('s', 0), ladoDoRotulo: ladoDaUnidade };
   }
 
@@ -506,6 +510,15 @@ export function criarCamadaDeUnidades(
         }
         const centro = gridToScreenCentro(desenhada, tilePx, ESCALA_DO_MUNDO);
         const desvio = deslocamentoDaUnidade(id, tilePx, ESCALA_DO_MUNDO);
+        // I-TELA-OBREIRO-NIVELA-O-LOTE: o obreiro que aplaina o lote e desenhado no tile em curso, e anda ate ele
+        const ladoDoTile = gridToScreenCentro({ gx: 1, gy: 0 }, tilePx, ESCALA_DO_MUNDO).x - gridToScreenCentro({ gx: 0, gy: 0 }, tilePx, ESCALA_DO_MUNDO).x;
+        const pontoNoLote = tileDoNivelamento(estado, unidade, caixaDeTipoNoMapa);
+        const tileNoLote = pontoNoLote === null ? null : pontoNoLote.tile;
+        item.noLote = passoNoLote(item.noLote,
+          pontoNoLote === null ? null : { x: (pontoNoLote.gx - unidade.gx) * ladoDoTile, y: (pontoNoLote.gy - unidade.gy) * ladoDoTile },
+          tempoDeAnimacao(estado.tick, alfa), ((gestoDoTrabalho.velocidadeNoLoteTilesPorSegundo ?? 1.5) * ladoDoTile) / tempo.tickHz,
+          ladoDoTile / 2);
+        const noLote = item.noLote;
         if (entradaAnimada?.atlas && mudouAnimacao) {
           const naVista = unidadeNaVista({ x: centro.x + desvio.x, y: centro.y + desvio.y },
             entradaAnimada.tamanho, entradaAnimada.anchor, vista) && !invisiveis.has(id);
@@ -518,11 +531,12 @@ export function criarCamadaDeUnidades(
             const salto = Math.hypot(posicao.gx - anterior.gx, posicao.gy - anterior.gy) > SALTO_MAXIMO_EM_TILES;
             item.distancia = somarDistancia(item.distancia, voltou ? null : item.ultimaPosicao, desenhada, SALTO_MAXIMO_EM_TILES, salto);
             const andando = posicao.gx !== anterior.gx || posicao.gy !== anterior.gy;
-            const acao = acaoDaUnidade(unidade, andando, !invisiveis.has(id)) ?? 'parado';
+            const acao = noLote?.andando && !invisiveis.has(id) ? 'andar' : acaoDaUnidade(unidade, andando, !invisiveis.has(id)) ?? 'parado';
             const registro = memoriasDeAcao?.get(id);
             if (item.animacao !== acao) item.inicioDaAcao = estado.tick;
             if (registro?.animacao === acao) item.inicioDaAcao = registro.inicio;
-            const alvo = acao === 'trabalhar' ? direcaoDoTrabalho(estado, unidade)
+            const alvo = noLote !== null && (noLote.dx !== 0 || noLote.dy !== 0) ? alvoDaDirecao(unidade.tipo, unidade.direcao, noLote.dx, noLote.dy, direcoes)
+              : acao === 'trabalhar' ? direcaoDoTrabalho(estado, unidade)
               : acao === 'rezar' ? direcaoDaOracao(estado, unidade)
               : alvoDaDirecao(unidade.tipo, unidade.direcao, posicao.gx - anterior.gx, posicao.gy - anterior.gy, direcoes);
             item.virada = acao === 'atacar' && alvo ? iniciarVirada(alvo, tempoDeAnimacao(estado.tick, alfa))
@@ -537,7 +551,8 @@ export function criarCamadaDeUnidades(
             if (animacao) {
               const decorrido = acao === 'atacar' || acao === 'trabalhar' || acao === 'rezar'
                 ? Math.max(0, tempoDeAnimacao(estado.tick, alfa) - item.inicioDaAcao) : tempoDeAnimacao(estado.tick, alfa) + faseDaUnidade(id);
-              item.quadro = acao === 'andar' ? quadroDoAndar(item.distancia, animacao.tilesPorCiclo ?? 1, animacao.quadros)
+              item.quadro = acao === 'andar' && noLote?.andando ? quadroDoAndar(noLote.distanciaPx / ladoDoTile, animacao.tilesPorCiclo ?? 1, animacao.quadros)
+                : acao === 'andar' ? quadroDoAndar(item.distancia, animacao.tilesPorCiclo ?? 1, animacao.quadros)
                 : quadroPeloTempo(decorrido, tempo.tickHz, animacao);
               item.spriteAnimado = spriteDoAtlas(manifestoAnimado, unidade.tipo, item.animacao, item.direcao, item.quadro,
                 (chave, frame) => cena.textures.exists(chave) && cena.textures.get(chave).has(frame));
@@ -554,7 +569,8 @@ export function criarCamadaDeUnidades(
         // G-TELA-OBREIRO-POR-TAREFA / G-TELA-ROCEIRO-NO-CAMPO: o desenho de quem trabalha vai para o lugar
         // do trabalho (o roceiro para dentro do campo, o obreiro alguns px para dentro da obra); a
         // posicao logica nao muda.
-        const noTrabalho = deslocamentoDoTrabalho(estado, unidade, item.acaoDoTrabalho, gridToScreenCentro({ gx: 1, gy: 0 }, tilePx, ESCALA_DO_MUNDO).x - gridToScreenCentro({ gx: 0, gy: 0 }, tilePx, ESCALA_DO_MUNDO).x, gestoDoTrabalho, caixaDeTipoNoMapa);
+        const noTrabalhoDaTarefa = deslocamentoDoTrabalho(estado, unidade, item.acaoDoTrabalho, ladoDoTile, gestoDoTrabalho, caixaDeTipoNoMapa);
+        const noTrabalho = noLote === null ? noTrabalhoDaTarefa : { x: noTrabalhoDaTarefa.x + noLote.x, y: noTrabalhoDaTarefa.y + noLote.y };
         item.container.setPosition(centro.x + desvio.x + noTrabalho.x, centro.y + desvio.y + noTrabalho.y);
         item.container.setDepth(depthDeY(centro.y + desvio.y + noTrabalho.y));
         luz?.tingirPelaPosicao(item.imagem, centro.x + desvio.x + noTrabalho.x, centro.y + desvio.y + noTrabalho.y, `unidade:${id}`);
@@ -581,6 +597,7 @@ export function criarCamadaDeUnidades(
           id, tipo: unidade.tipo, gx: posicao.gx, gy: posicao.gy,
           gxDesenhado: desenhada.gx, gyDesenhado: desenhada.gy, fsm: unidade.fsm, lado: unidade.lado, corDoBando: corDoBando(unidade.lado), corDoRotulo: item.nome.style.backgroundColor, carga, rotuloDaCarga: carga === null ? null : rotuloDaCarga(carga), marcaDaCarga: marca, placaDaCarga: item.placaDoIcone?.visible === true,
           deslocamentoPx: { x: desvio.x, y: desvio.y },
+          noLote: noLote === null ? null : { x: noLote.x, y: noLote.y, andando: noLote.andando, tile: tileNoLote },
           marcadorDeFome: comFome, fracaoDeCondicao: fracaoDeCondicao(unidade),
           pensamento: pensamento === null ? null : pensamento.tipo === 'mercadoria' ? pensamento.mercadoria : pensamento.tipo, balaoComo,
           balaoOpacidade: balaoComo === null || item.balao === null ? null : item.balao.fundo.alpha,
