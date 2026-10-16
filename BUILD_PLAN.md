@@ -10244,6 +10244,27 @@ humana (CLAUDE.md §9): a decisão veio, e a imagem é do Codex.** O item tem du
   6. A capa entra em `assets/manifest.json` com licença e origem, e a homologação em
      `docs/homologacao/2026-10-artes.md` como pendente.
 
+#### I-TERRENO-PEDRA-EM-TODAS-AS-FASES — pedra à vista em toda fase, minério pela liberação e o estoque inicial
+Pedido do operador (2026-10-15): "em todas as fases do jogo pedra deve existir", a curva de dificuldade na lógica do
+KaM (o ferro e o carvão só a partir da fase que os libera) e o balanceamento do estoque inicial (pedra, madeira,
+comida). A análise e a medida estão em `docs/planos/2026-10-15-pedra-e-estoque-das-fases.md`: nas fases 1, 2, 5 e 6
+o jogador não vê pedra nenhuma no começo, e na fase 1 a pedreira não se liga ao armazém (10 pedras para 7 de prédio
+e 28 tiles de rua). Só muda o gerador e os dados das fases (`tools/gerar-fases.mjs`, `data/campanha/`, os `.tmj`);
+`src/sim/` não muda.
+- **Aceite:**
+  1. Toda fase tem pedra no mapa (`recursos.rock` não vazio), as de lutar inclusive.
+  2. Toda fase de construir tem um **lajedo da vila**: pelo menos 6 tiles de pedra descobertos no tick 0
+     (`ehDescoberto` sobre `criarFase`), o mais perto a no máximo 12 tiles do armazém do jogador, e um caminho
+     andável do armazém até um tile vizinho dele.
+  3. Minério pela liberação: as fases 1 e 2 sem minério; da fase 3 em diante, toda fase de construir tem ouro e
+     carvão; da 6 em diante, também ferro. Nenhum minério a menos de 25 tiles do armazém.
+  4. O estoque inicial do jogador é a tabela do §4 do plano: pedra 20/25/30/30/30/30/25, madeira 25/30/30/30/35/35/35
+     e comida de pelo menos uma refeição por unidade inicial, nas fases 1, 2, 3, 4, 5, 6 e 8.
+  5. O teste novo afirma os itens 1 a 4 por tabela. O gerador continua batendo com o disco (`--conferir`), e os
+     testes da campanha continuam verdes (o jogador automático cumpre os alvos de cada fase).
+  6. A prancha das fases (`tools/gerar-fases.mjs`) é regerada, e a captura da fase 1 no início mostra o lajedo
+     da vila à vista.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
