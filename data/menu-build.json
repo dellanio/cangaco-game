@@ -7,7 +7,7 @@
         "storehouse",
         "schoolhouse",
         "inn",
-        "marketplace", "church"
+        "marketplace", "church", "reservoir"
       ]
     },
     {
@@ -16,7 +16,6 @@
         "farm",
         "wineyard",
         "fishermans",
-        "reservoir",
         "mill",
         "bakery",
         "swine_farm",
