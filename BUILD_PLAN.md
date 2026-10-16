@@ -10381,6 +10381,18 @@ Pedido do operador (2026-10-16, com captura): o comensal "ficou muito grande em 
 - **Aceite:** a figura do comensal desenhada a 0,65 do tamanho nativo (constante de tela em `comensais.ts`, testada);
   o roteiro da I-TELA-COMENSAIS-NA-BODEGA continua verde, com captura nova.
 
+#### I-TELA-RUA-MARCADA-CINZA — o tile marcado da rua cinza, e as pedras empilhadas na entrega
+Pedido do operador (2026-10-16, com captura): "a marcação para construir estrada ainda não tem sprite de canteiro de
+obras (coloque algo cinza); atualmente exibe o desenho de controle do sistema" e "o primeiro sprite do serf
+entregando a pedra na estrada deve ser o das 2 ou 3 pedras umas sobre as outras". Arte do Codex (o chão cinza e as
+pedras), composta aqui: os estágios `obra-1` e `obra-2` passam a vir sobre o mesmo chão cinza, para a sequência não
+saltar do cinza para a terra.
+- **Aceite:**
+  1. `rua-em-obra` ganha o estado `marcado` (cinza); `pedras` é o cinza com 2 a 3 pedras empilhadas no meio; `obra-1` e
+     `obra-2` são os de antes sobre o cinza. A camada desenha o `marcado` com a arte (sem ela, o canteiro translúcido).
+  2. O roteiro da I-TELA-RUA-SENDO-ASSENTADA continua verde, com as capturas novas; captura de uma rua de vários
+     tiles marcados.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
