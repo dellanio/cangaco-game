@@ -3849,7 +3849,7 @@
     "baixo": "sprites/reservoir/baixo.png",
     "medio": "sprites/reservoir/medio.png",
     "madeira": "sprites/reservoir/madeira.png",
-    "completo": "sprites/reservoir/cheio.png"
+    "completo": "sprites/reservoir/vazio.png"
   },
   "licenca": "arte original OpenAI para Piancó, 2026-10-10",
   "origem": {

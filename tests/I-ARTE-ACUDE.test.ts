@@ -29,7 +29,9 @@ describe('I-ARTE-ACUDE', () => {
   it('contrato e cinco estados têm base, derivado, mesmo canvas, alfa e pé', () => {
     expect(entrada.tipo).toBe('predio'); expect(entrada.footprint).toEqual([4, 3]); expect(entrada.anchor).toEqual(config.anchor);
     expect(Object.keys(estados).sort()).toEqual([...config.estados, 'completo'].sort());
-    expect(estados['completo']).toBe(estados['cheio']);
+    // BUG-ACUDE-COM-AGUA-NA-OBRA (2026-10-16): o `completo` so serve a obra (o pronto escolhe pelo nivel de agua), e a
+    // obra sobe seca: a agua so aparece quando a sim enche o acude
+    expect(estados['completo']).toBe(estados['vazio']);
     expect(entrada.origem.base).toBe('base/reservoir/cheio-master-2x.png');
     expect(entrada.licenca).toContain('original');
     const cheio = png('cheio');
@@ -77,5 +79,13 @@ describe('I-ARTE-ACUDE', () => {
       const state = { ...base, predios: { ordem: [...base.predios.ordem, p.id], porId: { ...base.predios.porId, [p.id]: p } } };
       writeFileSync(`${dir}/I-ARTE-ACUDE-${s}.save.txt`, salvar(state));
     }
+    // BUG-ACUDE-COM-AGUA-NA-OBRA: a obra no meio da pedra (a madeira inteira e metade da pedra), o momento em que o
+    // operador viu agua na obra; o roteiro afirma que ela sobe seca
+    const hpNaPedra = Math.round(def.hp * (def.timber + def.stone / 2) / (def.timber + def.stone));
+    const naPedra = { id: 'acude-arte', tipo: 'reservoir', ...local, lado: LADO_DO_JOGADOR, estado: 'obra' as const, hp: hpNaPedra, obra: { faltam: {}, nivelamento: 0 } };
+    const revelacao = revelacaoDaObra(naPedra.hp, def.hp, def.timber, def.stone)!;
+    expect(revelacao.pedra[0]).toBeGreaterThan(0);
+    expect(revelacao.pedra[0]).toBeLessThan(revelacao.pedra[1]);
+    writeFileSync(`${dir}/I-ARTE-ACUDE-obra-na-pedra.save.txt`, salvar({ ...base, predios: { ordem: [...base.predios.ordem, naPedra.id], porId: { ...base.predios.porId, [naPedra.id]: naPedra } } }));
   });
 });
