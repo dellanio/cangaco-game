@@ -35,6 +35,8 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   }
   const s = await estado();
   afirmar(s.canteiroComArte === true, 'as quatro pecas do canteiro carregadas');
+  // I-TELA-CORDA-ENTRE-AS-ESTACAS: as quatro cordas de cada lote (o contador so cresce: pelo menos 4 por lote)
+  afirmar(s.cordasDoCanteiro >= 8, `as cordas dos dois lotes: ${s.cordasDoCanteiro}`);
   afirmar((s.estagiosDeObraRenderizados.marcacao ?? 0) === 2, `os dois lotes em marcacao: ${JSON.stringify(s.estagiosDeObraRenderizados)}`);
   await capturar('lotes-em-marcacao');
 }

@@ -234,6 +234,8 @@ export interface EstadoDebug {
   comensaisDaBodega: Readonly<Record<string, readonly ComensalNoDebug[]>>;
   /** I-ARTE-MARCACAO-DO-CANTEIRO — as quatro pecas do canteiro estao carregadas (o lote em obra usa a arte). */
   canteiroComArte: boolean;
+  /** I-TELA-CORDA-ENTRE-AS-ESTACAS: quantas cordas de canteiro a cena ja desenhou (so cresce) */
+  cordasDoCanteiro: number;
   /** I-TELA-MODO-ADMIN — o modo admin desta pagina, e quantos rotulos de predio a cena escreveu (fora dele, 0). */
   modoAdmin: boolean;
   /** I-TELA-PREMIUM-PROTOTIPO — o visual premium esta ligado, quantas sombras de contato estao desenhadas e se a
@@ -502,6 +504,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     animaisDoCurral: {},
     comensaisDaBodega: {},
     canteiroComArte: false,
+    cordasDoCanteiro: 0,
     modoAdmin: false,
     premium: { ligado: false, sombras: 0, gradacao: false },
     rotulosDePredio: 0,

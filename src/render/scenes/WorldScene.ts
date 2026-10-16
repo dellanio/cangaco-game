@@ -83,6 +83,7 @@ import { CASO_DO_PREDIO, ID_DA_FUMACA, ID_DO_COMENSAL, ID_DO_OCIOSO, LACO_DA_ESC
 import { medidorDaObra } from '../medidor-obra';
 import type { LinhaDoMedidor } from '../medidor-obra';
 import { canteiroDaObra, chaveDoCanteiro, ordemDeNivelamento } from '../nivelamento-obra';
+import { cordasDoLote } from '../corda-do-canteiro';
 import type { CanteiroDaObra } from '../nivelamento-obra';
 import {
   chaveDaRevelacao, contagemDeEstagios, estagioDoPredio, estaEmObra, ORDEM_DOS_ESTAGIOS,
@@ -164,6 +165,11 @@ const ID_DO_CANTEIRO = 'canteiro';
 const PECAS_DO_CANTEIRO = ['estaca', 'cordel-h', 'cordel-v', 'terra'] as const;
 const TILE_DA_ARTE_DO_CANTEIRO = 64;
 const ESPESSURA_DO_CORDEL = 8;
+/** I-TELA-CORDA-ENTRE-AS-ESTACAS — a corda amarrada a 34 px do pe da estaca (de 40, na arte), cedendo 3% do vao, ate 6 px;
+ *  sisal com uma linha escura por baixo. Desenho, nao balanceamento. */
+const FORMA_DA_CORDA = { alturaDoNo: 34, cedePorPx: 0.03, barrigaMaxima: 6 } as const;
+const COR_DA_CORDA = 0xd8b77a;
+const COR_DA_SOMBRA_DA_CORDA = 0x4a321c;
 /** F-VIVO-b — o dado do quadro de trabalho, com as ancoras do manifesto. Montado uma vez. */
 const DADOS_DO_TRABALHO = dadosDoTrabalho(manifestoDoJogo);
 /** F-ESC — o teto da altura do predio, do manifesto. Montado uma vez. */
@@ -279,6 +285,8 @@ export class WorldScene extends Phaser.Scene {
   private readonly curralGuardado = new Map<string, readonly AnimalDoCurral[]>();
   /** I-TELA-MODO-ADMIN — quantos rotulos de predio (nome e estagio) a cena ja escreveu; fora do admin, 0. */
   private rotulosDePredio = 0;
+  /** I-TELA-CORDA-ENTRE-AS-ESTACAS: quantas cordas de canteiro a cena ja desenhou (so cresce), para o roteiro */
+  private cordasDoCanteiroDesenhadas = 0;
   private tickDoCurral: number | null = null;
   /** Memoria e pool exclusivos de render, alocados uma vez por chamine. */
   private readonly chamines = new Map<string, {
@@ -2410,6 +2418,7 @@ export class WorldScene extends Phaser.Scene {
     debug.modoAdmin = lerModoAdmin();
     debug.premium = { ligado: this.sombrasDeContato !== null, sombras: this.sombrasDeContato?.quantas() ?? 0, gradacao: this.gradacaoDeCor };
     debug.rotulosDePredio = this.rotulosDePredio;
+    debug.cordasDoCanteiro = this.cordasDoCanteiroDesenhadas;
     debug.canteiroComArte = PECAS_DO_CANTEIRO.every((e) => this.textures.exists(chaveDeTextura('interface', `${ID_DO_CANTEIRO}-${e}`, 'normal')));
     debug.camadasEmPx = camadasNoDebug;
     debug.sinaisDePausado = sinaisNoDebug;
@@ -2978,7 +2987,24 @@ export class WorldScene extends Phaser.Scene {
     // a estaca com o pe no canto (a origem e o centro da borda de baixo, como a arte foi pedida)
     const estacas = ([[0, 0], [larguraPx, 0], [0, alturaPx], [larguraPx, alturaPx]] as const).map(([x, y]) =>
       this.add.image(x, y + fio / 2, peca('estaca')).setOrigin(0.5, 1).setScale(escala));
-    return [...terra, ...bordas, ...estacas];
+    // I-TELA-CORDA-ENTRE-AS-ESTACAS: a corda de no a no, nos quatro lados; a de cima e as dos lados atras das estacas da
+    // frente, a de baixo na frente delas
+    const cordas = cordasDoLote(larguraPx, alturaPx, {
+      alturaDoNo: FORMA_DA_CORDA.alturaDoNo * escala - fio / 2, cedePorPx: FORMA_DA_CORDA.cedePorPx, barrigaMaxima: FORMA_DA_CORDA.barrigaMaxima * escala,
+    });
+    const desenho = (lados: readonly string[]): Phaser.GameObjects.Graphics => {
+      const g = this.add.graphics();
+      for (const c of cordas.filter((k) => lados.includes(k.lado))) {
+        const curva = new Phaser.Curves.QuadraticBezier(new Phaser.Math.Vector2(c.de.x, c.de.y), new Phaser.Math.Vector2(c.meio.x, c.meio.y), new Phaser.Math.Vector2(c.ate.x, c.ate.y));
+        g.lineStyle(Math.max(1, 3 * escala), COR_DA_SOMBRA_DA_CORDA, 0.9);
+        curva.draw(g, 24);
+        g.lineStyle(Math.max(1, 1.5 * escala), COR_DA_CORDA, 1);
+        curva.draw(g, 24);
+      }
+      this.cordasDoCanteiroDesenhadas += cordas.filter((k) => lados.includes(k.lado)).length;
+      return g;
+    };
+    return [...terra, ...bordas, desenho(['cima', 'esquerda', 'direita']), ...estacas, desenho(['baixo'])];
   }
 
   private desenharPlaceholder(
