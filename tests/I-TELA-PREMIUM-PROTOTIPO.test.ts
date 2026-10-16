@@ -19,6 +19,8 @@ describe('I-TELA-PREMIUM-PROTOTIPO', () => {
     for (const chave of ['predio:inn:completo', 'unidade:militia:atlas', 'vegetacao:arvore:normal', 'enfeite:cacto:normal', 'animal:bode:normal']) {
       expect(fatorDaSombra(chave), chave).not.toBeNull();
     }
+    // a obra (o esqueleto de madeira) nao tem sombra; o predio pronto tem
+    expect(fatorDaSombra('predio:inn:madeira')).toBeNull();
     for (const chave of ['terreno:grama:padrao', 'estrada:estrada:m0', 'interface:canteiro-estaca:normal', 'recurso:stone:normal', 'premium:sombra-de-contato']) {
       expect(fatorDaSombra(chave), chave).toBeNull();
     }

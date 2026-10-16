@@ -62,6 +62,9 @@ export function ligarSombrasDeContato(cena: Phaser.Scene): SombrasDeContato {
       return;
     }
     if (!ehObjetoComTextura(o) || !visivelAcima || !o.visible || o.alpha <= 0 || o.originY < ORIGEM_MINIMA) return;
+    // o bloco recortado e a obra subindo (F17g, I-TELA-OBRA-PARTE-A-PARTE): cada bloco e a imagem inteira recortada, e
+    // uma sombra por bloco empilhava o chao ate o preto. Obra nao tem sombra; o predio pronto tem uma
+    if (o.isCropped) return;
     const fator = fatorDaSombra(o.texture.key);
     if (fator === null) return;
     o.getWorldTransformMatrix(matriz);

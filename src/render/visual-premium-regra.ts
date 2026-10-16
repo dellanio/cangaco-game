@@ -22,9 +22,14 @@ const ACHATAMENTO = 0.32;
 
 export interface FormaDaSombra { readonly largura: number; readonly subida: number }
 
+/** O estado do predio em obra (o esqueleto de madeira): obra nao tem sombra, so o predio pronto (pedido do operador,
+ *  2026-10-16: a obra e revelada em blocos e a sombra escurecia o chao embaixo dela). */
+export const ESTADO_DA_OBRA = 'madeira';
+
 /** A forma da sombra pela chave da textura (`<tipo>:<id>:<estado>`), ou `null` se o objeto nao ganha sombra. */
 export function fatorDaSombra(chave: string): FormaDaSombra | null {
-  const tipo = chave.split(':', 1)[0] ?? '';
+  const [tipo = '', , estado] = chave.split(':');
+  if (tipo === 'predio' && estado === ESTADO_DA_OBRA) return null;
   return SOMBRA_POR_TIPO[tipo] ?? null;
 }
 

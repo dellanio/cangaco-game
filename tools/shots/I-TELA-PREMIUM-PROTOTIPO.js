@@ -4,6 +4,7 @@
 // `premium`. Com ele: sombras de contato, gradacao, e a barra com um retrato por soldado e os comandos espelhados.
 // A selecao e a caixa arrastada despausada (§8), como na C-COMBATE-01c.
 const { URL } = require('node:url');
+const { readFileSync } = require('node:fs');
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
 
@@ -93,6 +94,34 @@ async function roteiro({ page, capturar, estado, afirmar }) {
     `todo comando da barra deveria existir no painel do grupo: ${JSON.stringify(barra)}`);
   console.log(`I-TELA-PREMIUM-PROTOTIPO: ${s.selecaoMilitar.length} selecionados, ${barra.retratos} retratos, comandos ${barra.comandos.join(', ')}`);
   await capturar('tropa-premium');
+
+  // 4. uma obra (a Padaria no esqueleto de madeira, o save da I-ARTE-PADARIA-EM-OBRA, gerado pelo teste dela): obra
+  // nao tem sombra de contato, so o predio pronto (pedido do operador, 2026-10-16)
+  const save = readFileSync('test-output/I-ARTE-PADARIA-EM-OBRA-madeira.save.txt', 'utf8');
+  await abrir('?pausado&premium&semNevoa');
+  await page.evaluate((v) => window.localStorage.setItem('cangaco:partida', v), save);
+  await page.keyboard.press('h');
+  await esperarFrame();
+  const carregar = await page.locator('#ajuda [data-acao="carregar"][data-gaveta="1"]').boundingBox();
+  afirmar(carregar !== null, 'o botao de carregar existe');
+  await page.keyboard.press('p');
+  await page.mouse.move(carregar.x + carregar.width / 2, carregar.y + carregar.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(150);
+  await page.mouse.up();
+  await esperarFrame();
+  await page.keyboard.press('Escape');
+  if (!(await estado()).pausado) await page.keyboard.press('p');
+  s = await estado();
+  const obra = s.prediosDoEstado['bakery-arte'];
+  afirmar(s.spritesDePredio['bakery-arte'] === 'predio:bakery:madeira', `a Padaria deveria estar em obra: ${s.spritesDePredio['bakery-arte']}`);
+  await page.evaluate(([x, y]) => window.__cangaco.fixarCamera({ scrollX: x, scrollY: y }),
+    [(obra.gx + 1.5) * TILE_PX - canvas.width / 2, (obra.gy + 1.5) * TILE_PX - canvas.height / 2]);
+  await page.mouse.move(20, 20);
+  await esperarFrame();
+  const semSombraNaObra = (await estado()).premium;
+  console.log(`I-TELA-PREMIUM-PROTOTIPO: na obra, ${JSON.stringify(semSombraNaObra)}`);
+  await capturar('obra-premium');
 }
 
 module.exports = { roteiro };
