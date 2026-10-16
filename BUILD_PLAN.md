@@ -10212,6 +10212,38 @@ então o item se parte em duas entregas, com o contrato no plano
   código), na legenda, no tema e na regra de dados, transponível e construível, com o custo de movimento da grama;
   a fase 6 é regenerada com o brejo na mata densa; as outras nove fases e o sertão ficam byte a byte iguais.
 
+#### I-TELA-MENU-ARTE-DE-CAPA — a arte de capa da tela inicial
+Pedido do operador (2026-10-15, com captura da tela): a tela inicial "está feia"; quer "uma imagem artística
+condizente com o jogo, nível premium e profissional", gerada pelo Codex, com "cuidado na estrutura do menu e aos
+diferentes tipos de resolução de monitor". O fundo de hoje é `sprites/ui/resource-plank.png` (a tábua da barra de
+recursos) esticado a 100% da largura e repetido na vertical: daí as faixas com rebites. **Arte entra por decisão
+humana (CLAUDE.md §9): a decisão veio, e a imagem é do Codex.** O item tem duas entregas: a arte (Codex) e a tela
+(este lado, `src/ui/` e `index.html`; `src/sim/` não muda).
+- **A arte (Codex):** uma ilustração pintada, sem texto, paisagem 16:9, master de 2560x1440 ou maior em
+  `assets/base/ui/menu-capa/`, com o registro da geração (prompt, id). O derivado que o jogo carrega fica em
+  `assets/sprites/ui/menu/capa.jpg`, 2560x1440, até 900 KB. Mesmo estilo pintado das peças de `sprites/ui/menu/`,
+  luz única de cima e levemente do sul (CLAUDE.md §9). Composição: o terço esquerdo calmo (céu e chão de pouco
+  detalhe, onde fica o menu); o motivo principal entre 45% e 85% da largura, dentro da faixa central 4:3, para
+  sobreviver ao corte de monitor 4:3 e ultrawide 21:9; nada essencial nos 8% de cima e de baixo. Nada do jogo de
+  1998.
+- **Aceite da tela:**
+  1. O `#menu-inicial` usa a capa em `cover`, sem repetir e sem distorcer, posicionada para manter o motivo à
+     direita; a tábua repetida sai do fundo do menu. Sem o arquivo, o fundo é a cor lisa escura (placeholder é
+     comportamento normal, §9).
+  2. O painel do menu fica à esquerda, sobre um véu escuro em degradê que garante o contraste do texto, com a
+     mesma estrutura de hoje (logo, lema, as opções, o motivo do Continuar, Voltar nas telas internas): nenhum
+     botão, `data-acao` ou tela some ou muda de ordem.
+  3. O roteiro `tools/shots/I-TELA-MENU-ARTE-DE-CAPA.js` abre o menu em seis resoluções: 1024x768, 1280x720,
+     1366x768, 1920x1080, 2560x1440 e 3440x1440. Em cada uma: a capa carregou (largura natural > 0) e cobre a
+     janela inteira; a caixa do menu cabe inteira na janela; cada botão da tela principal está visível e é o
+     elemento do ponto central dele (`elementFromPoint`); a página não tem barra de rolagem. Uma captura por
+     resolução.
+  4. O roteiro abre também a tela da Campanha e a de Novo jogo em 1280x720, e a caixa cabe na janela nas duas
+     (rolagem interna da caixa é aceita; a da página não).
+  5. Os roteiros do menu que já existem continuam verdes.
+  6. A capa entra em `assets/manifest.json` com licença e origem, e a homologação em
+     `docs/homologacao/2026-10-artes.md` como pendente.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
