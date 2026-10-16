@@ -82,6 +82,7 @@ import dadosDoPensamento from '../../data/pensamento.json';
 import { anguloDoMartelo, CHAVE_DO_MARTELO, mercadoriaDoBalao, pensamentoNaTela } from './pensamento';
 import type { ConfigDoPensamento, Pensamento } from './pensamento';
 import { chaveDoIcone } from './icone-da-mercadoria';
+import { lerModoAdmin } from './modo-admin';
 
 /** O que a camada desenhou de uma unidade, para o roteiro afirmar (`window.__cangaco`). */
 export interface UnidadeRenderizada {
@@ -555,7 +556,8 @@ export function criarCamadaDeUnidades(
         luz?.tingirPelaPosicao(item.imagem, centro.x + desvio.x + noTrabalho.x, centro.y + desvio.y + noTrabalho.y, `unidade:${id}`);
         const visivel = !invisiveis.has(id);
         item.container.setVisible(visivel);
-        item.nome.setVisible(visivel);
+        // I-TELA-MODO-ADMIN: o nome escrito sobre a unidade e depuracao, so no modo admin
+        item.nome.setVisible(visivel && lerModoAdmin());
         if (item.ladoDoRotulo !== unidade.lado) {
           item.ladoDoRotulo = unidade.lado;
           item.nome.setBackgroundColor(corDoBando(unidade.lado));

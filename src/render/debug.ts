@@ -234,6 +234,9 @@ export interface EstadoDebug {
   comensaisDaBodega: Readonly<Record<string, readonly ComensalNoDebug[]>>;
   /** I-ARTE-MARCACAO-DO-CANTEIRO — as quatro pecas do canteiro estao carregadas (o lote em obra usa a arte). */
   canteiroComArte: boolean;
+  /** I-TELA-MODO-ADMIN — o modo admin desta pagina, e quantos rotulos de predio a cena escreveu (fora dele, 0). */
+  modoAdmin: boolean;
+  rotulosDePredio: number;
   /** F-VIVO-d — as camadas desenhadas, em px de mundo, por id de predio com receita. */
   camadasEmPx: Readonly<Record<string, CamadasEmPx>>;
   /** F-ESC (c) — a caixa que o sprite do predio COMPLETO ocupa na tela, em px de mundo,
@@ -494,6 +497,8 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     animaisDoCurral: {},
     comensaisDaBodega: {},
     canteiroComArte: false,
+    modoAdmin: false,
+    rotulosDePredio: 0,
     camadasEmPx: {},
     caixasDesenhadas: {},
     selecaoMilitar: [],

@@ -70,6 +70,7 @@ import { animaisDoCurral, curralDesenhado, quadroDoAnimal } from '../animais';
 import { MAX_PASSOS_POR_QUADRO } from '../../laco';
 import type { AnimalDoCurral } from '../animais';
 import { comensaisDaBodega, quadroDoComensal } from '../comensais';
+import { lerModoAdmin } from '../modo-admin';
 import type { ComensalNaMesa } from '../comensais';
 import type { PilhaDesenhada } from '../pilhas';
 import { areaDoTrabalho, quadroDaEscola, quadroDaFumaca, quadroDeTrabalho, quadroOcioso } from '../trabalho';
@@ -267,6 +268,8 @@ export class WorldScene extends Phaser.Scene {
    *  entra no save: esvazia quando o tick volta ou salta mais do que um quadro roda
    *  (`MAX_PASSOS_POR_QUADRO`), que e a partida carregada. */
   private readonly curralGuardado = new Map<string, readonly AnimalDoCurral[]>();
+  /** I-TELA-MODO-ADMIN — quantos rotulos de predio (nome e estagio) a cena ja escreveu; fora do admin, 0. */
+  private rotulosDePredio = 0;
   private tickDoCurral: number | null = null;
   /** Memoria e pool exclusivos de render, alocados uma vez por chamine. */
   private readonly chamines = new Map<string, {
@@ -2389,6 +2392,8 @@ export class WorldScene extends Phaser.Scene {
     debug.quadrosDaEscola = escolasNoDebug;
     debug.animaisDoCurral = animaisNoDebug;
     debug.comensaisDaBodega = comensaisNoDebug;
+    debug.modoAdmin = lerModoAdmin();
+    debug.rotulosDePredio = this.rotulosDePredio;
     debug.canteiroComArte = PECAS_DO_CANTEIRO.every((e) => this.textures.exists(chaveDeTextura('interface', `${ID_DO_CANTEIRO}-${e}`, 'normal')));
     debug.camadasEmPx = camadasNoDebug;
     debug.sinaisDePausado = sinaisNoDebug;
@@ -2781,7 +2786,8 @@ export class WorldScene extends Phaser.Scene {
         imagem.setOrigin(0, 0);
         imagem.setDisplaySize(w, h);
         objetos.push(imagem);
-      } else {
+      } else if (lerModoAdmin()) {
+        // I-TELA-MODO-ADMIN: o quadro sem arte (o retangulo com `<laco>_<n>`) e depuracao, so no modo admin
         const fundo = this.add.rectangle(x + w / 2, y + h / 2, w, h, 0x2c1d12, 0.55);
         fundo.setStrokeStyle(1, 0xf2d6a2);
         const rotulo = this.add.text(x + w / 2, y + h / 2, `${quadro.laco}_${quadro.n}`, {
@@ -2914,6 +2920,8 @@ export class WorldScene extends Phaser.Scene {
       ));
     }
 
+    // I-TELA-MODO-ADMIN: o nome e o estagio escritos sao texto de depuracao, so no modo admin
+    if (!lerModoAdmin()) return objetos;
     const texto = emObra ? `${nome}\n(${temaSertao.obra[estagio]})` : nome;
     const rotulo = this.add.text(larguraPx / 2, alturaPx / 2, texto, {
       fontSize: '14px',
@@ -2923,6 +2931,7 @@ export class WorldScene extends Phaser.Scene {
     });
     rotulo.setOrigin(0.5, 0.5);
     objetos.push(rotulo);
+    this.rotulosDePredio += 1;
     return objetos;
   }
 

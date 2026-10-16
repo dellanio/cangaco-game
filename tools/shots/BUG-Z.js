@@ -6,6 +6,7 @@
 // tem o nome na camada dos nomes, acima do corpo mais alto; o nome acende e apaga com o corpo
 // (BUG-X, especialista dentro); e o texto e o do tema. Nao clica em painel.
 const { readFileSync, existsSync } = require('node:fs');
+const { URL } = require('node:url');
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
 
@@ -54,6 +55,14 @@ async function roteiro(ctx) {
   }
   const plano = JSON.parse(readFileSync('test-output/F-VIVO-h.partida.json', 'utf8'));
   const tema = require('../../data/theme-sertao.json');
+  // I-TELA-MODO-ADMIN: o nome sobre a unidade so aparece no modo admin; a pagina abre de novo com `?admin`
+  {
+    const url = new URL(page.url());
+    url.search = '?pausado&admin';
+    await page.goto(url.href);
+    await page.waitForFunction(() => Boolean(window.__cangaco && window.__cangaco.pronto), undefined, { timeout: 10_000 });
+    afirmar((await estado()).modoAdmin === true, 'a pagina abriu no modo admin');
+  }
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync('test-output/F-VIVO-h.save.txt', 'utf8')]);
   await page.keyboard.press('h');
   await esperarFrame();
