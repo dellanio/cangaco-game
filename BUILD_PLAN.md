@@ -10360,6 +10360,27 @@ obreiro que assenta, `fsmData.progresso` contra `construcao.ticksAssentarEstrada
   3. O roteiro despausa com uma rua de um tile sendo assentada e afirma, pela ponte, que o tile passou pelos
      estágios na ordem; captura de cada um. A sim não muda.
 
+#### I-ARTE-SERRARIA-E-LENHADOR-AJUSTE — serraria +10%, lenhador -10%
+Pedido do operador (2026-10-16): "aumente o tamanho da serraria em 10% e diminua a casa do lenhador em 10%".
+- **Aceite:** `escalaDeExibicao` da serraria 1,1 e do lenhador 1,17 (1,3 x 0,9); o teste da I-ARTE-PREDIOS-MAIORES
+  com os dois na tabela; lote e sim iguais.
+
+#### I-TELA-LENHA-NO-DEQUE-DO-LENHADOR — a lenha da cabana no deque, maior e girada
+Pedido do operador (2026-10-16, com captura): "a lenha coletada pela casa do lenhador está no local errado e muito
+pequena; gire-a para ficar corretamente alocada no espaço de estoque das lenhas". Medido na arte
+(`woodcutters_completo-D.png`): o deque fica em ~(0,83; 0,80) do sprite, com as tábuas descendo para a direita a ~25°.
+Hoje a pilha cai no ponto padrão (sem âncora), no tamanho padrão.
+- **Aceite:**
+  1. `woodcutters.ancoras.estoque.saida` com um ponto no deque; `estoque-visual.json` com a escala da lenha na cabana
+     (1,8) e uma rotação por prédio e mercadoria (25°), lida por uma função pura; a fileira da pilha segue a rotação.
+  2. Teste da função pura (a rotação da lenha na cabana é 25°, das outras mercadorias 0, e as posições giram juntas).
+  3. Roteiro: a cabana com lenha no estoque, captura do deque. A sim não muda.
+
+#### I-TELA-COMENSAL-MENOR — o comensal da Bodega menor
+Pedido do operador (2026-10-16, com captura): o comensal "ficou muito grande em relação ao tamanho do edifício".
+- **Aceite:** a figura do comensal desenhada a 0,65 do tamanho nativo (constante de tela em `comensais.ts`, testada);
+  o roteiro da I-TELA-COMENSAIS-NA-BODEGA continua verde, com captura nova.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
