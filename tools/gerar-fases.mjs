@@ -143,11 +143,13 @@ class Prancheta {
       for (let x = Math.floor(cx - r - 2); x <= cx + r + 2; x++) if (this.get(x, y) === 'r' && Math.hypot(x - cx, y - cy) <= r + 1.5) this.recurso(x, y, 'rock');
     }
   }
-  /** Pedra ou minerio na rocha que encosta no chao (onde a pedreira e a mina alcancam), numa area. */
-  veio(tipo, n, x0, y0, x1, y1) {
+  /** Pedra ou minerio na rocha que encosta no chao (onde a pedreira e a mina alcancam), numa area; com `longe`, so a
+   *  pelo menos `longe.d` tiles de `(longe.gx, longe.gy)` (I-TERRENO-PEDRA-EM-TODAS-AS-FASES: o minerio pede expansao). */
+  veio(tipo, n, x0, y0, x1, y1, longe = null) {
     const candidatos = [];
     for (let y = Math.max(0, y0); y <= Math.min(A - 1, y1); y++) {
       for (let x = Math.max(0, x0); x <= Math.min(L - 1, x1); x++) {
+        if (longe !== null && Math.hypot(x - longe.gx, y - longe.gy) < longe.d) continue;
         if (this.t[y][x] === 'r' && this.vizinhoDe(x, y, (c) => TRANSPONIVEL.has(c)) && !this.r.has(`${x},${y}`)) candidatos.push([x, y]);
       }
     }
@@ -231,7 +233,7 @@ const FASES = [
       p.manchas('a', 22, 0, 0, L, A, 2, 5);
       p.elipse(64, 62, 7, 5, 'w', 0.4); // o Olho d'Agua
       p.serra([[96, 104], [112, 112], [122, 124]], 4);
-      p.lajedo(36, 44, 2.2); // o unico lajedo
+      p.lajedo(14, 30, 2.2); // o unico lajedo, a vista da vila (I-TERRENO-PEDRA-EM-TODAS-AS-FASES)
       p.moitas('tree', 9, 8, 8, 60, 60, 2, 4, 0.5);
       p.vegetacao('tree', 0.035, 0, 0, L - 1, A - 1);
       p.peixe();
@@ -239,7 +241,7 @@ const FASES = [
       const inimigo = [predio(p, 'barracks', 78, 54), predio(p, 'storehouse', 85, 56)];
       return {
         lados: [
-          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 10, timber: 25, stone: 10, loaves: 10 }, predios: jogador,
+          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 10, timber: 25, stone: 20, loaves: 10 }, predios: jogador,
             unidades: [tropa(p, 'serf', 4, 21, 27), tropa(p, 'laborer', 2, 25, 27), tropa(p, 'militia', 4, 30, 30)] },
           { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo, unidades: [tropa(p, 'militia', 6, 82, 62)] },
         ],
@@ -272,11 +274,12 @@ const FASES = [
       p.moitas('tree', 8, 60, 80, 127, 127, 2, 4, 0.45);
       p.vegetacao('tree', 0.03, 0, 0, L - 1, A - 1);
       p.peixe();
+      p.lajedo(12, 38, 2.5); // o lajedo da vila
       const jogador = vila(p, 16, 28, ['storehouse', 'schoolhouse', 'inn']);
       const inimigo = [predio(p, 'storehouse', 86, 90), predio(p, 'barracks', 92, 90), predio(p, 'farm', 86, 97)];
       return {
         lados: [
-          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 15, timber: 30, stone: 20, loaves: 12, sausages: 6 }, predios: jogador,
+          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 15, timber: 30, stone: 25, loaves: 12, sausages: 6 }, predios: jogador,
             unidades: [tropa(p, 'serf', 6, 20, 36), tropa(p, 'laborer', 3, 26, 36), tropa(p, 'militia', 8, 32, 40)] },
           { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo, unidades: [tropa(p, 'militia', 8, 96, 102), tropa(p, 'bowman', 4, 90, 104)] },
         ],
@@ -307,11 +310,12 @@ const FASES = [
       p.vegetacao('tree', 0.06, 0, 50, 127, 80);
       p.manchas('a', 10, 0, 52, 127, 78, 1, 3);
       p.peixe();
+      p.lajedo(2, 64, 2.5); // o lajedo da vila
       const jogador = vila(p, 6, 58, ['storehouse', 'schoolhouse', 'barracks']);
       const inimigo = [predio(p, 'barracks', 56, 56), predio(p, 'watchtower', 62, 58), predio(p, 'barracks', 68, 66), predio(p, 'watchtower', 74, 68)];
       return {
         lados: [
-          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 20, timber: 30, stone: 30, loaves: 15, sausages: 10 }, predios: jogador,
+          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 20, timber: 30, stone: 30, loaves: 15, sausages: 13 }, predios: jogador,
             unidades: [tropa(p, 'serf', 6, 8, 68), tropa(p, 'laborer', 3, 14, 68), tropa(p, 'militia', 10, 24, 70), tropa(p, 'axe_fighter', 4, 30, 70), tropa(p, 'bowman', 4, 36, 70)] },
           { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo, unidades: [tropa(p, 'militia', 16, 64, 72), tropa(p, 'bowman', 8, 60, 66), tropa(p, 'axe_fighter', 6, 70, 72)] },
         ],
@@ -354,11 +358,14 @@ const FASES = [
       p.vegetacao('tree', 0.08, 0, 60, L - 1, A - 1);
       p.manchas('a', 10, 0, 64, L, A, 2, 4);
       p.peixe();
+      p.lajedo(59, 81, 2.2); // o lajedo da vila
+      p.veio('gold_ore', 8, 0, 0, L - 1, A - 1, { gx: 52, gy: 72, d: 30 });
+      p.veio('coal', 12, 0, 0, L - 1, A - 1, { gx: 52, gy: 72, d: 30 });
       const jogador = vila(p, 52, 72, ['storehouse', 'schoolhouse', 'inn']);
       jogador.push(predio(p, 'barracks', 54, 86), predio(p, 'reservoir', 62, 64));
       return {
         lados: [
-          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 25, timber: 30, stone: 25, loaves: 20, sausages: 10 }, predios: jogador,
+          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 25, timber: 30, stone: 30, loaves: 20, sausages: 10 }, predios: jogador,
             unidades: [tropa(p, 'serf', 6, 64, 88), tropa(p, 'laborer', 3, 70, 88), tropa(p, 'militia', 8, 60, 93), tropa(p, 'axe_fighter', 4, 66, 93), tropa(p, 'bowman', 4, 72, 92)] },
           { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: [], unidades: [] },
         ],
@@ -391,11 +398,14 @@ const FASES = [
       p.moitas('tree', 14, 0, 0, L, A, 2, 4, 0.4);
       p.vegetacao('tree', 0.025, 0, 0, L - 1, A - 1);
       p.peixe();
+      p.lajedo(11, 66, 2.5); // o lajedo da vila
+      p.veio('gold_ore', 8, 0, 0, L - 1, A - 1, { gx: 14, gy: 58, d: 30 });
+      p.veio('coal', 12, 0, 0, L - 1, A - 1, { gx: 14, gy: 58, d: 30 });
       const jogador = vila(p, 14, 58, ['storehouse', 'schoolhouse', 'inn', 'barracks']);
       jogador.push(predio(p, 'marketplace', 62, 62));
       return {
         lados: [
-          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 30, timber: 35, stone: 25, loaves: 20, sausages: 12 }, predios: jogador,
+          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 30, timber: 35, stone: 30, loaves: 20, sausages: 12 }, predios: jogador,
             unidades: [tropa(p, 'serf', 8, 18, 68), tropa(p, 'laborer', 3, 24, 68), tropa(p, 'militia', 8, 34, 70), tropa(p, 'bowman', 6, 40, 70), tropa(p, 'lance_carrier', 4, 46, 70)] },
           { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: [], unidades: [] },
         ],
@@ -426,11 +436,13 @@ const FASES = [
       p.vegetacao('tree', 0.22, 0, 0, 90, A - 1); // a mata do brejo
       p.vegetacao('tree', 0.1, 104, 0, L - 1, A - 1);
       p.peixe();
+      p.lajedo(8, 77, 2.5); // o lajedo da vila
+      p.veio('gold_ore', 8, 0, 0, L - 1, A - 1, { gx: 10, gy: 70, d: 30 });
       const jogador = vila(p, 10, 70, ['storehouse', 'schoolhouse', 'inn', 'barracks']);
       const inimigo = [predio(p, 'metallurgists', 114, 52), predio(p, 'storehouse', 114, 62), predio(p, 'barracks', 112, 72)];
       return {
         lados: [
-          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 30, timber: 30, stone: 25, loaves: 20, sausages: 15 }, predios: jogador,
+          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 30, timber: 35, stone: 30, loaves: 20, sausages: 20 }, predios: jogador,
             unidades: [tropa(p, 'serf', 8, 14, 80), tropa(p, 'laborer', 3, 20, 80), tropa(p, 'militia', 12, 30, 84), tropa(p, 'axe_fighter', 6, 36, 84), tropa(p, 'bowman', 6, 42, 84), tropa(p, 'lance_carrier', 4, 48, 84)] },
           { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo, unidades: [tropa(p, 'sword_fighter', 8, 108, 62), tropa(p, 'crossbowman', 6, 118, 70), tropa(p, 'militia', 10, 106, 54), tropa(p, 'axe_fighter', 4, 110, 76)] },
         ],
@@ -491,11 +503,16 @@ const FASES = [
       p.manchas('c', 14, 0, 0, L, 150, 2, 4);
       p.vegetacao('tree', 0.03, 0, 0, L - 1, A - 1);
       p.peixe();
+      p.lajedo(4, 15, 2.5); // o lajedo da vila
+      p.disco(100, 40, 5, 'r', 0.4); // o serrote do minerio, longe da vila
+      p.veio('gold_ore', 8, 92, 32, 108, 48);
+      p.veio('coal', 12, 92, 32, 108, 48);
+      p.veio('iron_ore', 10, 92, 32, 108, 48);
       const jogador = vila(p, 8, 8, ['storehouse', 'schoolhouse', 'barracks', 'stables']);
       const inimigo = [predio(p, 'mill', 144, 30), predio(p, 'mill', 90, 129), predio(p, 'storehouse', 162, 114), predio(p, 'stables', 36, 135)];
       return {
         lados: [
-          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 40, timber: 30, stone: 20, loaves: 25, sausages: 15 }, predios: jogador,
+          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 40, timber: 35, stone: 25, loaves: 25, sausages: 15 }, predios: jogador,
             unidades: [tropa(p, 'serf', 6, 12, 18), tropa(p, 'scout', 6, 24, 20), tropa(p, 'knight', 2, 30, 20), tropa(p, 'militia', 6, 36, 20)] },
           { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo,
             unidades: [tropa(p, 'lance_carrier', 5, 150, 42), tropa(p, 'lance_carrier', 5, 96, 141), tropa(p, 'lance_carrier', 5, 168, 126), tropa(p, 'lance_carrier', 5, 42, 147)] },
@@ -530,6 +547,7 @@ const FASES = [
       p.moitas('tree', 10, 0, 0, 50, A, 2, 4, 0.4);
       p.vegetacao('tree', 0.03, 0, 0, 50, A - 1);
       p.peixe();
+      p.lajedo(14, 48, 2.5); // pedra fora do muro
       const inimigo = [
         predio(p, 'schoolhouse', 84, 60), predio(p, 'barracks', 90, 58),
         predio(p, 'watchtower', 60, 33), predio(p, 'watchtower', 114, 33), predio(p, 'watchtower', 60, 95), predio(p, 'watchtower', 114, 95),
@@ -568,6 +586,7 @@ const FASES = [
       p.moitas('tree', 10, 0, 0, 90, A, 2, 4, 0.4);
       p.vegetacao('tree', 0.03, 0, 0, 90, A - 1);
       p.peixe();
+      p.lajedo(20, 72, 2.2); // pedra perto do inicio
       const inimigo = [
         predio(p, 'barracks', 104, 48), predio(p, 'watchtower', 111, 50), predio(p, 'watchtower', 101, 54),
         predio(p, 'storehouse', 96, 84),
