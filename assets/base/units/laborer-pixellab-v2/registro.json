@@ -1,0 +1,14 @@
+{
+  "item": "I-ARTE-UNIDADES-PIXELLAB-V2",
+  "ferramenta": "PixelLab (MCP), assinatura do operador",
+  "personagem": "0952e988-73f2-4b5d-96d8-916827de2b6c",
+  "criacao": "create_character mode v3, reference_image = o parado de frente do atlas de antes, 8 direcoes, 64x96, low top-down",
+  "animacoes": {
+    "parado": "v3 personalizado (respirar em pe, sem agachar), 4 quadros, 5 direcoes; o template breathing-idle agachava o obreiro para 76 px, contra 81 do andar e do trabalhar (G-ARTE-OBREIRO-MAIOR)",
+    "andar": "template walking-8-frames, 8 quadros, 5 direcoes",
+    "morrer": "template falling-back-death, 7 quadros, 5 direcoes; mais 1 parado e 4 esmaecendo",
+    "oficio": "as de antes, mantidas por tools/pixellab-atlas.mjs --manter"
+  },
+  "geracoes_gastas": 21,
+  "montagem": "node tools/pixellab-atlas.mjs laborer <pasta dos quadros> --manter assets/base/units/laborer-pixellab-v2/antes/laborer.json"
+}

@@ -29,7 +29,8 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   });
   await page.waitForTimeout(300);
   const fator = manifesto.assets.find((a) => a.id === 'woodcutters' && a.tipo === 'predio').escalaDeExibicao;
-  afirmar(fator === 1.3, `o lenhador com o fator 1,3: ${fator}`);
+  // pedido do operador (2026-10-16): o lenhador 10% menor que o +30% (1,3 x 0,9 = 1,17), e ainda maior que o original
+  afirmar(fator === 1.17, `o lenhador com o fator 1,17: ${fator}`);
   afirmar(typeof (await estado()).spritesDePredio['woodcutters-1'] === 'string', 'a cabana desenhada com PNG');
   await capturar('lenhador-e-obreiro');
 }

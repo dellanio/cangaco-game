@@ -1,108 +1,8 @@
 {
  "frames": {
-  "militia/parado/n/0000": {
-   "frame": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/parado/ne/0000": {
-   "frame": {
-    "x": 64,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/parado/l/0000": {
-   "frame": {
-    "x": 128,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/parado/se/0000": {
-   "frame": {
-    "x": 192,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/parado/s/0000": {
-   "frame": {
-    "x": 256,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
   "militia/andar/n/0000": {
    "frame": {
-    "x": 320,
+    "x": 0,
     "y": 0,
     "w": 64,
     "h": 96
@@ -122,7 +22,7 @@
   },
   "militia/andar/n/0001": {
    "frame": {
-    "x": 384,
+    "x": 64,
     "y": 0,
     "w": 64,
     "h": 96
@@ -142,7 +42,7 @@
   },
   "militia/andar/n/0002": {
    "frame": {
-    "x": 448,
+    "x": 128,
     "y": 0,
     "w": 64,
     "h": 96
@@ -162,8 +62,8 @@
   },
   "militia/andar/n/0003": {
    "frame": {
-    "x": 0,
-    "y": 96,
+    "x": 192,
+    "y": 0,
     "w": 64,
     "h": 96
    },
@@ -182,8 +82,8 @@
   },
   "militia/andar/n/0004": {
    "frame": {
-    "x": 64,
-    "y": 96,
+    "x": 256,
+    "y": 0,
     "w": 64,
     "h": 96
    },
@@ -202,8 +102,8 @@
   },
   "militia/andar/n/0005": {
    "frame": {
-    "x": 128,
-    "y": 96,
+    "x": 320,
+    "y": 0,
     "w": 64,
     "h": 96
    },
@@ -222,8 +122,8 @@
   },
   "militia/andar/n/0006": {
    "frame": {
-    "x": 192,
-    "y": 96,
+    "x": 384,
+    "y": 0,
     "w": 64,
     "h": 96
    },
@@ -242,8 +142,8 @@
   },
   "militia/andar/n/0007": {
    "frame": {
-    "x": 256,
-    "y": 96,
+    "x": 448,
+    "y": 0,
     "w": 64,
     "h": 96
    },
@@ -262,7 +162,7 @@
   },
   "militia/andar/ne/0000": {
    "frame": {
-    "x": 320,
+    "x": 0,
     "y": 96,
     "w": 64,
     "h": 96
@@ -282,7 +182,7 @@
   },
   "militia/andar/ne/0001": {
    "frame": {
-    "x": 384,
+    "x": 64,
     "y": 96,
     "w": 64,
     "h": 96
@@ -302,7 +202,7 @@
   },
   "militia/andar/ne/0002": {
    "frame": {
-    "x": 448,
+    "x": 128,
     "y": 96,
     "w": 64,
     "h": 96
@@ -322,8 +222,8 @@
   },
   "militia/andar/ne/0003": {
    "frame": {
-    "x": 0,
-    "y": 192,
+    "x": 192,
+    "y": 96,
     "w": 64,
     "h": 96
    },
@@ -342,8 +242,8 @@
   },
   "militia/andar/ne/0004": {
    "frame": {
-    "x": 64,
-    "y": 192,
+    "x": 256,
+    "y": 96,
     "w": 64,
     "h": 96
    },
@@ -362,8 +262,8 @@
   },
   "militia/andar/ne/0005": {
    "frame": {
-    "x": 128,
-    "y": 192,
+    "x": 320,
+    "y": 96,
     "w": 64,
     "h": 96
    },
@@ -382,8 +282,8 @@
   },
   "militia/andar/ne/0006": {
    "frame": {
-    "x": 192,
-    "y": 192,
+    "x": 384,
+    "y": 96,
     "w": 64,
     "h": 96
    },
@@ -402,8 +302,8 @@
   },
   "militia/andar/ne/0007": {
    "frame": {
-    "x": 256,
-    "y": 192,
+    "x": 448,
+    "y": 96,
     "w": 64,
     "h": 96
    },
@@ -422,7 +322,7 @@
   },
   "militia/andar/l/0000": {
    "frame": {
-    "x": 320,
+    "x": 0,
     "y": 192,
     "w": 64,
     "h": 96
@@ -442,7 +342,7 @@
   },
   "militia/andar/l/0001": {
    "frame": {
-    "x": 384,
+    "x": 64,
     "y": 192,
     "w": 64,
     "h": 96
@@ -462,7 +362,7 @@
   },
   "militia/andar/l/0002": {
    "frame": {
-    "x": 448,
+    "x": 128,
     "y": 192,
     "w": 64,
     "h": 96
@@ -482,8 +382,8 @@
   },
   "militia/andar/l/0003": {
    "frame": {
-    "x": 0,
-    "y": 288,
+    "x": 192,
+    "y": 192,
     "w": 64,
     "h": 96
    },
@@ -502,8 +402,8 @@
   },
   "militia/andar/l/0004": {
    "frame": {
-    "x": 64,
-    "y": 288,
+    "x": 256,
+    "y": 192,
     "w": 64,
     "h": 96
    },
@@ -522,8 +422,8 @@
   },
   "militia/andar/l/0005": {
    "frame": {
-    "x": 128,
-    "y": 288,
+    "x": 320,
+    "y": 192,
     "w": 64,
     "h": 96
    },
@@ -542,8 +442,8 @@
   },
   "militia/andar/l/0006": {
    "frame": {
-    "x": 192,
-    "y": 288,
+    "x": 384,
+    "y": 192,
     "w": 64,
     "h": 96
    },
@@ -562,8 +462,8 @@
   },
   "militia/andar/l/0007": {
    "frame": {
-    "x": 256,
-    "y": 288,
+    "x": 448,
+    "y": 192,
     "w": 64,
     "h": 96
    },
@@ -582,7 +482,7 @@
   },
   "militia/andar/se/0000": {
    "frame": {
-    "x": 320,
+    "x": 0,
     "y": 288,
     "w": 64,
     "h": 96
@@ -602,7 +502,7 @@
   },
   "militia/andar/se/0001": {
    "frame": {
-    "x": 384,
+    "x": 64,
     "y": 288,
     "w": 64,
     "h": 96
@@ -622,7 +522,7 @@
   },
   "militia/andar/se/0002": {
    "frame": {
-    "x": 448,
+    "x": 128,
     "y": 288,
     "w": 64,
     "h": 96
@@ -642,8 +542,8 @@
   },
   "militia/andar/se/0003": {
    "frame": {
-    "x": 0,
-    "y": 384,
+    "x": 192,
+    "y": 288,
     "w": 64,
     "h": 96
    },
@@ -662,8 +562,8 @@
   },
   "militia/andar/se/0004": {
    "frame": {
-    "x": 64,
-    "y": 384,
+    "x": 256,
+    "y": 288,
     "w": 64,
     "h": 96
    },
@@ -682,8 +582,8 @@
   },
   "militia/andar/se/0005": {
    "frame": {
-    "x": 128,
-    "y": 384,
+    "x": 320,
+    "y": 288,
     "w": 64,
     "h": 96
    },
@@ -702,8 +602,8 @@
   },
   "militia/andar/se/0006": {
    "frame": {
-    "x": 192,
-    "y": 384,
+    "x": 384,
+    "y": 288,
     "w": 64,
     "h": 96
    },
@@ -722,8 +622,8 @@
   },
   "militia/andar/se/0007": {
    "frame": {
-    "x": 256,
-    "y": 384,
+    "x": 448,
+    "y": 288,
     "w": 64,
     "h": 96
    },
@@ -742,7 +642,7 @@
   },
   "militia/andar/s/0000": {
    "frame": {
-    "x": 320,
+    "x": 0,
     "y": 384,
     "w": 64,
     "h": 96
@@ -762,7 +662,7 @@
   },
   "militia/andar/s/0001": {
    "frame": {
-    "x": 384,
+    "x": 64,
     "y": 384,
     "w": 64,
     "h": 96
@@ -782,7 +682,7 @@
   },
   "militia/andar/s/0002": {
    "frame": {
-    "x": 448,
+    "x": 128,
     "y": 384,
     "w": 64,
     "h": 96
@@ -802,8 +702,8 @@
   },
   "militia/andar/s/0003": {
    "frame": {
-    "x": 0,
-    "y": 480,
+    "x": 192,
+    "y": 384,
     "w": 64,
     "h": 96
    },
@@ -822,8 +722,8 @@
   },
   "militia/andar/s/0004": {
    "frame": {
-    "x": 64,
-    "y": 480,
+    "x": 256,
+    "y": 384,
     "w": 64,
     "h": 96
    },
@@ -842,8 +742,8 @@
   },
   "militia/andar/s/0005": {
    "frame": {
-    "x": 128,
-    "y": 480,
+    "x": 320,
+    "y": 384,
     "w": 64,
     "h": 96
    },
@@ -862,8 +762,8 @@
   },
   "militia/andar/s/0006": {
    "frame": {
-    "x": 192,
-    "y": 480,
+    "x": 384,
+    "y": 384,
     "w": 64,
     "h": 96
    },
@@ -882,808 +782,8 @@
   },
   "militia/andar/s/0007": {
    "frame": {
-    "x": 256,
-    "y": 480,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/n/0000": {
-   "frame": {
-    "x": 320,
-    "y": 480,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/n/0001": {
-   "frame": {
-    "x": 384,
-    "y": 480,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/n/0002": {
-   "frame": {
     "x": 448,
-    "y": 480,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/n/0003": {
-   "frame": {
-    "x": 0,
-    "y": 576,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/n/0004": {
-   "frame": {
-    "x": 64,
-    "y": 576,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/n/0005": {
-   "frame": {
-    "x": 128,
-    "y": 576,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/n/0006": {
-   "frame": {
-    "x": 192,
-    "y": 576,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/n/0007": {
-   "frame": {
-    "x": 256,
-    "y": 576,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/ne/0000": {
-   "frame": {
-    "x": 320,
-    "y": 576,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/ne/0001": {
-   "frame": {
-    "x": 384,
-    "y": 576,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/ne/0002": {
-   "frame": {
-    "x": 448,
-    "y": 576,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/ne/0003": {
-   "frame": {
-    "x": 0,
-    "y": 672,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/ne/0004": {
-   "frame": {
-    "x": 64,
-    "y": 672,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/ne/0005": {
-   "frame": {
-    "x": 128,
-    "y": 672,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/ne/0006": {
-   "frame": {
-    "x": 192,
-    "y": 672,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/ne/0007": {
-   "frame": {
-    "x": 256,
-    "y": 672,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/l/0000": {
-   "frame": {
-    "x": 320,
-    "y": 672,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/l/0001": {
-   "frame": {
-    "x": 384,
-    "y": 672,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/l/0002": {
-   "frame": {
-    "x": 448,
-    "y": 672,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/l/0003": {
-   "frame": {
-    "x": 0,
-    "y": 768,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/l/0004": {
-   "frame": {
-    "x": 64,
-    "y": 768,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/l/0005": {
-   "frame": {
-    "x": 128,
-    "y": 768,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/l/0006": {
-   "frame": {
-    "x": 192,
-    "y": 768,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/l/0007": {
-   "frame": {
-    "x": 256,
-    "y": 768,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/se/0000": {
-   "frame": {
-    "x": 320,
-    "y": 768,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/se/0001": {
-   "frame": {
-    "x": 384,
-    "y": 768,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/se/0002": {
-   "frame": {
-    "x": 448,
-    "y": 768,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/se/0003": {
-   "frame": {
-    "x": 0,
-    "y": 864,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/se/0004": {
-   "frame": {
-    "x": 64,
-    "y": 864,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/se/0005": {
-   "frame": {
-    "x": 128,
-    "y": 864,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/se/0006": {
-   "frame": {
-    "x": 192,
-    "y": 864,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/se/0007": {
-   "frame": {
-    "x": 256,
-    "y": 864,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/s/0000": {
-   "frame": {
-    "x": 320,
-    "y": 864,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/s/0001": {
-   "frame": {
-    "x": 384,
-    "y": 864,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/s/0002": {
-   "frame": {
-    "x": 448,
-    "y": 864,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/s/0003": {
-   "frame": {
-    "x": 0,
-    "y": 960,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/s/0004": {
-   "frame": {
-    "x": 64,
-    "y": 960,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/s/0005": {
-   "frame": {
-    "x": 128,
-    "y": 960,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/s/0006": {
-   "frame": {
-    "x": 192,
-    "y": 960,
-    "w": 64,
-    "h": 96
-   },
-   "rotated": false,
-   "trimmed": false,
-   "spriteSourceSize": {
-    "x": 0,
-    "y": 0,
-    "w": 64,
-    "h": 96
-   },
-   "sourceSize": {
-    "w": 64,
-    "h": 96
-   }
-  },
-  "militia/atacar/s/0007": {
-   "frame": {
-    "x": 256,
-    "y": 960,
+    "y": 384,
     "w": 64,
     "h": 96
    },
@@ -1702,8 +802,8 @@
   },
   "militia/morrer/n/0000": {
    "frame": {
-    "x": 320,
-    "y": 960,
+    "x": 0,
+    "y": 480,
     "w": 64,
     "h": 96
    },
@@ -1722,8 +822,8 @@
   },
   "militia/morrer/n/0001": {
    "frame": {
-    "x": 384,
-    "y": 960,
+    "x": 64,
+    "y": 480,
     "w": 64,
     "h": 96
    },
@@ -1742,8 +842,8 @@
   },
   "militia/morrer/n/0002": {
    "frame": {
-    "x": 448,
-    "y": 960,
+    "x": 128,
+    "y": 480,
     "w": 64,
     "h": 96
    },
@@ -1762,8 +862,8 @@
   },
   "militia/morrer/n/0003": {
    "frame": {
-    "x": 0,
-    "y": 1056,
+    "x": 192,
+    "y": 480,
     "w": 64,
     "h": 96
    },
@@ -1782,8 +882,8 @@
   },
   "militia/morrer/n/0004": {
    "frame": {
-    "x": 64,
-    "y": 1056,
+    "x": 256,
+    "y": 480,
     "w": 64,
     "h": 96
    },
@@ -1802,8 +902,8 @@
   },
   "militia/morrer/n/0005": {
    "frame": {
-    "x": 128,
-    "y": 1056,
+    "x": 320,
+    "y": 480,
     "w": 64,
     "h": 96
    },
@@ -1822,8 +922,8 @@
   },
   "militia/morrer/n/0006": {
    "frame": {
-    "x": 192,
-    "y": 1056,
+    "x": 384,
+    "y": 480,
     "w": 64,
     "h": 96
    },
@@ -1842,8 +942,8 @@
   },
   "militia/morrer/n/0007": {
    "frame": {
-    "x": 256,
-    "y": 1056,
+    "x": 448,
+    "y": 480,
     "w": 64,
     "h": 96
    },
@@ -1862,8 +962,8 @@
   },
   "militia/morrer/n/0008": {
    "frame": {
-    "x": 320,
-    "y": 1056,
+    "x": 0,
+    "y": 576,
     "w": 64,
     "h": 96
    },
@@ -1882,8 +982,8 @@
   },
   "militia/morrer/n/0009": {
    "frame": {
-    "x": 384,
-    "y": 1056,
+    "x": 64,
+    "y": 576,
     "w": 64,
     "h": 96
    },
@@ -1902,8 +1002,8 @@
   },
   "militia/morrer/n/0010": {
    "frame": {
-    "x": 448,
-    "y": 1056,
+    "x": 128,
+    "y": 576,
     "w": 64,
     "h": 96
    },
@@ -1922,8 +1022,8 @@
   },
   "militia/morrer/n/0011": {
    "frame": {
-    "x": 0,
-    "y": 1152,
+    "x": 192,
+    "y": 576,
     "w": 64,
     "h": 96
    },
@@ -1942,8 +1042,8 @@
   },
   "militia/morrer/ne/0000": {
    "frame": {
-    "x": 64,
-    "y": 1152,
+    "x": 256,
+    "y": 576,
     "w": 64,
     "h": 96
    },
@@ -1962,8 +1062,8 @@
   },
   "militia/morrer/ne/0001": {
    "frame": {
-    "x": 128,
-    "y": 1152,
+    "x": 320,
+    "y": 576,
     "w": 64,
     "h": 96
    },
@@ -1982,8 +1082,8 @@
   },
   "militia/morrer/ne/0002": {
    "frame": {
-    "x": 192,
-    "y": 1152,
+    "x": 384,
+    "y": 576,
     "w": 64,
     "h": 96
    },
@@ -2002,8 +1102,8 @@
   },
   "militia/morrer/ne/0003": {
    "frame": {
-    "x": 256,
-    "y": 1152,
+    "x": 448,
+    "y": 576,
     "w": 64,
     "h": 96
    },
@@ -2022,8 +1122,8 @@
   },
   "militia/morrer/ne/0004": {
    "frame": {
-    "x": 320,
-    "y": 1152,
+    "x": 0,
+    "y": 672,
     "w": 64,
     "h": 96
    },
@@ -2042,8 +1142,8 @@
   },
   "militia/morrer/ne/0005": {
    "frame": {
-    "x": 384,
-    "y": 1152,
+    "x": 64,
+    "y": 672,
     "w": 64,
     "h": 96
    },
@@ -2062,8 +1162,8 @@
   },
   "militia/morrer/ne/0006": {
    "frame": {
-    "x": 448,
-    "y": 1152,
+    "x": 128,
+    "y": 672,
     "w": 64,
     "h": 96
    },
@@ -2082,8 +1182,8 @@
   },
   "militia/morrer/ne/0007": {
    "frame": {
-    "x": 0,
-    "y": 1248,
+    "x": 192,
+    "y": 672,
     "w": 64,
     "h": 96
    },
@@ -2102,8 +1202,8 @@
   },
   "militia/morrer/ne/0008": {
    "frame": {
-    "x": 64,
-    "y": 1248,
+    "x": 256,
+    "y": 672,
     "w": 64,
     "h": 96
    },
@@ -2122,8 +1222,8 @@
   },
   "militia/morrer/ne/0009": {
    "frame": {
-    "x": 128,
-    "y": 1248,
+    "x": 320,
+    "y": 672,
     "w": 64,
     "h": 96
    },
@@ -2142,8 +1242,8 @@
   },
   "militia/morrer/ne/0010": {
    "frame": {
-    "x": 192,
-    "y": 1248,
+    "x": 384,
+    "y": 672,
     "w": 64,
     "h": 96
    },
@@ -2162,8 +1262,8 @@
   },
   "militia/morrer/ne/0011": {
    "frame": {
-    "x": 256,
-    "y": 1248,
+    "x": 448,
+    "y": 672,
     "w": 64,
     "h": 96
    },
@@ -2182,8 +1282,8 @@
   },
   "militia/morrer/l/0000": {
    "frame": {
-    "x": 320,
-    "y": 1248,
+    "x": 0,
+    "y": 768,
     "w": 64,
     "h": 96
    },
@@ -2202,8 +1302,8 @@
   },
   "militia/morrer/l/0001": {
    "frame": {
-    "x": 384,
-    "y": 1248,
+    "x": 64,
+    "y": 768,
     "w": 64,
     "h": 96
    },
@@ -2222,8 +1322,8 @@
   },
   "militia/morrer/l/0002": {
    "frame": {
-    "x": 448,
-    "y": 1248,
+    "x": 128,
+    "y": 768,
     "w": 64,
     "h": 96
    },
@@ -2242,8 +1342,8 @@
   },
   "militia/morrer/l/0003": {
    "frame": {
-    "x": 0,
-    "y": 1344,
+    "x": 192,
+    "y": 768,
     "w": 64,
     "h": 96
    },
@@ -2262,8 +1362,8 @@
   },
   "militia/morrer/l/0004": {
    "frame": {
-    "x": 64,
-    "y": 1344,
+    "x": 256,
+    "y": 768,
     "w": 64,
     "h": 96
    },
@@ -2282,8 +1382,8 @@
   },
   "militia/morrer/l/0005": {
    "frame": {
-    "x": 128,
-    "y": 1344,
+    "x": 320,
+    "y": 768,
     "w": 64,
     "h": 96
    },
@@ -2302,8 +1402,8 @@
   },
   "militia/morrer/l/0006": {
    "frame": {
-    "x": 192,
-    "y": 1344,
+    "x": 384,
+    "y": 768,
     "w": 64,
     "h": 96
    },
@@ -2322,8 +1422,8 @@
   },
   "militia/morrer/l/0007": {
    "frame": {
-    "x": 256,
-    "y": 1344,
+    "x": 448,
+    "y": 768,
     "w": 64,
     "h": 96
    },
@@ -2342,8 +1442,8 @@
   },
   "militia/morrer/l/0008": {
    "frame": {
-    "x": 320,
-    "y": 1344,
+    "x": 0,
+    "y": 864,
     "w": 64,
     "h": 96
    },
@@ -2362,8 +1462,8 @@
   },
   "militia/morrer/l/0009": {
    "frame": {
-    "x": 384,
-    "y": 1344,
+    "x": 64,
+    "y": 864,
     "w": 64,
     "h": 96
    },
@@ -2382,8 +1482,8 @@
   },
   "militia/morrer/l/0010": {
    "frame": {
-    "x": 448,
-    "y": 1344,
+    "x": 128,
+    "y": 864,
     "w": 64,
     "h": 96
    },
@@ -2402,8 +1502,8 @@
   },
   "militia/morrer/l/0011": {
    "frame": {
-    "x": 0,
-    "y": 1440,
+    "x": 192,
+    "y": 864,
     "w": 64,
     "h": 96
    },
@@ -2422,8 +1522,8 @@
   },
   "militia/morrer/se/0000": {
    "frame": {
-    "x": 64,
-    "y": 1440,
+    "x": 256,
+    "y": 864,
     "w": 64,
     "h": 96
    },
@@ -2442,8 +1542,8 @@
   },
   "militia/morrer/se/0001": {
    "frame": {
-    "x": 128,
-    "y": 1440,
+    "x": 320,
+    "y": 864,
     "w": 64,
     "h": 96
    },
@@ -2462,8 +1562,8 @@
   },
   "militia/morrer/se/0002": {
    "frame": {
-    "x": 192,
-    "y": 1440,
+    "x": 384,
+    "y": 864,
     "w": 64,
     "h": 96
    },
@@ -2482,8 +1582,8 @@
   },
   "militia/morrer/se/0003": {
    "frame": {
-    "x": 256,
-    "y": 1440,
+    "x": 448,
+    "y": 864,
     "w": 64,
     "h": 96
    },
@@ -2502,8 +1602,8 @@
   },
   "militia/morrer/se/0004": {
    "frame": {
-    "x": 320,
-    "y": 1440,
+    "x": 0,
+    "y": 960,
     "w": 64,
     "h": 96
    },
@@ -2522,8 +1622,8 @@
   },
   "militia/morrer/se/0005": {
    "frame": {
-    "x": 384,
-    "y": 1440,
+    "x": 64,
+    "y": 960,
     "w": 64,
     "h": 96
    },
@@ -2542,8 +1642,8 @@
   },
   "militia/morrer/se/0006": {
    "frame": {
-    "x": 448,
-    "y": 1440,
+    "x": 128,
+    "y": 960,
     "w": 64,
     "h": 96
    },
@@ -2562,8 +1662,8 @@
   },
   "militia/morrer/se/0007": {
    "frame": {
-    "x": 0,
-    "y": 1536,
+    "x": 192,
+    "y": 960,
     "w": 64,
     "h": 96
    },
@@ -2582,8 +1682,8 @@
   },
   "militia/morrer/se/0008": {
    "frame": {
-    "x": 64,
-    "y": 1536,
+    "x": 256,
+    "y": 960,
     "w": 64,
     "h": 96
    },
@@ -2602,6 +1702,906 @@
   },
   "militia/morrer/se/0009": {
    "frame": {
+    "x": 320,
+    "y": 960,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/morrer/se/0010": {
+   "frame": {
+    "x": 384,
+    "y": 960,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/morrer/se/0011": {
+   "frame": {
+    "x": 448,
+    "y": 960,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/morrer/s/0000": {
+   "frame": {
+    "x": 0,
+    "y": 1056,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/morrer/s/0001": {
+   "frame": {
+    "x": 64,
+    "y": 1056,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/morrer/s/0002": {
+   "frame": {
+    "x": 128,
+    "y": 1056,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/morrer/s/0003": {
+   "frame": {
+    "x": 192,
+    "y": 1056,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/morrer/s/0004": {
+   "frame": {
+    "x": 256,
+    "y": 1056,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/morrer/s/0005": {
+   "frame": {
+    "x": 320,
+    "y": 1056,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/morrer/s/0006": {
+   "frame": {
+    "x": 384,
+    "y": 1056,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/morrer/s/0007": {
+   "frame": {
+    "x": 448,
+    "y": 1056,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/morrer/s/0008": {
+   "frame": {
+    "x": 0,
+    "y": 1152,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/morrer/s/0009": {
+   "frame": {
+    "x": 64,
+    "y": 1152,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/morrer/s/0010": {
+   "frame": {
+    "x": 128,
+    "y": 1152,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/morrer/s/0011": {
+   "frame": {
+    "x": 192,
+    "y": 1152,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/n/0000": {
+   "frame": {
+    "x": 256,
+    "y": 1152,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/n/0001": {
+   "frame": {
+    "x": 320,
+    "y": 1152,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/n/0002": {
+   "frame": {
+    "x": 384,
+    "y": 1152,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/n/0003": {
+   "frame": {
+    "x": 448,
+    "y": 1152,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/ne/0000": {
+   "frame": {
+    "x": 0,
+    "y": 1248,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/ne/0001": {
+   "frame": {
+    "x": 64,
+    "y": 1248,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/ne/0002": {
+   "frame": {
+    "x": 128,
+    "y": 1248,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/ne/0003": {
+   "frame": {
+    "x": 192,
+    "y": 1248,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/l/0000": {
+   "frame": {
+    "x": 256,
+    "y": 1248,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/l/0001": {
+   "frame": {
+    "x": 320,
+    "y": 1248,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/l/0002": {
+   "frame": {
+    "x": 384,
+    "y": 1248,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/l/0003": {
+   "frame": {
+    "x": 448,
+    "y": 1248,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/se/0000": {
+   "frame": {
+    "x": 0,
+    "y": 1344,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/se/0001": {
+   "frame": {
+    "x": 64,
+    "y": 1344,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/se/0002": {
+   "frame": {
+    "x": 128,
+    "y": 1344,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/se/0003": {
+   "frame": {
+    "x": 192,
+    "y": 1344,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/s/0000": {
+   "frame": {
+    "x": 256,
+    "y": 1344,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/s/0001": {
+   "frame": {
+    "x": 320,
+    "y": 1344,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/s/0002": {
+   "frame": {
+    "x": 384,
+    "y": 1344,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/parado/s/0003": {
+   "frame": {
+    "x": 448,
+    "y": 1344,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/n/0000": {
+   "frame": {
+    "x": 0,
+    "y": 1440,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/n/0001": {
+   "frame": {
+    "x": 64,
+    "y": 1440,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/n/0002": {
+   "frame": {
+    "x": 128,
+    "y": 1440,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/n/0003": {
+   "frame": {
+    "x": 192,
+    "y": 1440,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/n/0004": {
+   "frame": {
+    "x": 256,
+    "y": 1440,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/n/0005": {
+   "frame": {
+    "x": 320,
+    "y": 1440,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/n/0006": {
+   "frame": {
+    "x": 384,
+    "y": 1440,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/n/0007": {
+   "frame": {
+    "x": 448,
+    "y": 1440,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/ne/0000": {
+   "frame": {
+    "x": 0,
+    "y": 1536,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/ne/0001": {
+   "frame": {
+    "x": 64,
+    "y": 1536,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/ne/0002": {
+   "frame": {
     "x": 128,
     "y": 1536,
     "w": 64,
@@ -2620,7 +2620,7 @@
     "h": 96
    }
   },
-  "militia/morrer/se/0010": {
+  "militia/atacar/ne/0003": {
    "frame": {
     "x": 192,
     "y": 1536,
@@ -2640,7 +2640,7 @@
     "h": 96
    }
   },
-  "militia/morrer/se/0011": {
+  "militia/atacar/ne/0004": {
    "frame": {
     "x": 256,
     "y": 1536,
@@ -2660,7 +2660,7 @@
     "h": 96
    }
   },
-  "militia/morrer/s/0000": {
+  "militia/atacar/ne/0005": {
    "frame": {
     "x": 320,
     "y": 1536,
@@ -2680,7 +2680,7 @@
     "h": 96
    }
   },
-  "militia/morrer/s/0001": {
+  "militia/atacar/ne/0006": {
    "frame": {
     "x": 384,
     "y": 1536,
@@ -2700,7 +2700,7 @@
     "h": 96
    }
   },
-  "militia/morrer/s/0002": {
+  "militia/atacar/ne/0007": {
    "frame": {
     "x": 448,
     "y": 1536,
@@ -2720,7 +2720,7 @@
     "h": 96
    }
   },
-  "militia/morrer/s/0003": {
+  "militia/atacar/l/0000": {
    "frame": {
     "x": 0,
     "y": 1632,
@@ -2740,7 +2740,7 @@
     "h": 96
    }
   },
-  "militia/morrer/s/0004": {
+  "militia/atacar/l/0001": {
    "frame": {
     "x": 64,
     "y": 1632,
@@ -2760,7 +2760,7 @@
     "h": 96
    }
   },
-  "militia/morrer/s/0005": {
+  "militia/atacar/l/0002": {
    "frame": {
     "x": 128,
     "y": 1632,
@@ -2780,7 +2780,7 @@
     "h": 96
    }
   },
-  "militia/morrer/s/0006": {
+  "militia/atacar/l/0003": {
    "frame": {
     "x": 192,
     "y": 1632,
@@ -2800,7 +2800,7 @@
     "h": 96
    }
   },
-  "militia/morrer/s/0007": {
+  "militia/atacar/l/0004": {
    "frame": {
     "x": 256,
     "y": 1632,
@@ -2820,7 +2820,7 @@
     "h": 96
    }
   },
-  "militia/morrer/s/0008": {
+  "militia/atacar/l/0005": {
    "frame": {
     "x": 320,
     "y": 1632,
@@ -2840,7 +2840,7 @@
     "h": 96
    }
   },
-  "militia/morrer/s/0009": {
+  "militia/atacar/l/0006": {
    "frame": {
     "x": 384,
     "y": 1632,
@@ -2860,7 +2860,7 @@
     "h": 96
    }
   },
-  "militia/morrer/s/0010": {
+  "militia/atacar/l/0007": {
    "frame": {
     "x": 448,
     "y": 1632,
@@ -2880,10 +2880,310 @@
     "h": 96
    }
   },
-  "militia/morrer/s/0011": {
+  "militia/atacar/se/0000": {
    "frame": {
     "x": 0,
     "y": 1728,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/se/0001": {
+   "frame": {
+    "x": 64,
+    "y": 1728,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/se/0002": {
+   "frame": {
+    "x": 128,
+    "y": 1728,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/se/0003": {
+   "frame": {
+    "x": 192,
+    "y": 1728,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/se/0004": {
+   "frame": {
+    "x": 256,
+    "y": 1728,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/se/0005": {
+   "frame": {
+    "x": 320,
+    "y": 1728,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/se/0006": {
+   "frame": {
+    "x": 384,
+    "y": 1728,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/se/0007": {
+   "frame": {
+    "x": 448,
+    "y": 1728,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/s/0000": {
+   "frame": {
+    "x": 0,
+    "y": 1824,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/s/0001": {
+   "frame": {
+    "x": 64,
+    "y": 1824,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/s/0002": {
+   "frame": {
+    "x": 128,
+    "y": 1824,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/s/0003": {
+   "frame": {
+    "x": 192,
+    "y": 1824,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/s/0004": {
+   "frame": {
+    "x": 256,
+    "y": 1824,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/s/0005": {
+   "frame": {
+    "x": 320,
+    "y": 1824,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/s/0006": {
+   "frame": {
+    "x": 384,
+    "y": 1824,
+    "w": 64,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 96
+   }
+  },
+  "militia/atacar/s/0007": {
+   "frame": {
+    "x": 448,
+    "y": 1824,
     "w": 64,
     "h": 96
    },
@@ -2905,7 +3205,7 @@
   "image": "militia.png",
   "size": {
    "w": 512,
-   "h": 1824
+   "h": 1920
   },
   "scale": "1"
  }
