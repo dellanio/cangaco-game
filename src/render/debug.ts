@@ -360,6 +360,8 @@ export interface EstadoDebug {
    *  Os dois numeros juntos sao o que o roteiro afirma: o arrasto planeja, o tempo
    *  ergue, e a soma fecha em todo passo. */
   estradasPlanejadasRenderizadas: number;
+  /** I-TELA-RUA-SENDO-ASSENTADA — o estagio de cada tile do canteiro da rua desenhado agora (`gx,gy`). */
+  estagiosDaRuaEmObra: Readonly<Record<string, string>>;
   /** F18g — quanta pedra um serf ja entregou no canteiro e nenhum laborer assentou
    *  (soma de `state.pedraNoCanteiro`). `NoEstado` porque nao e desenhada: existe para
    *  o roteiro fechar a conta da pedra — a que saiu do armazem e a de pe, mais esta,
@@ -552,6 +554,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     ligarVento: () => undefined,
     estradasRenderizadas: 0,
     estradasPlanejadasRenderizadas: 0,
+    estagiosDaRuaEmObra: {},
     pedraNoCanteiroNoEstado: 0,
     previaDeEstrada: null,
     camposPlanejadosRenderizados: 0,

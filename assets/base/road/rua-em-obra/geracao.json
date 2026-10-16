@@ -1,0 +1,17 @@
+﻿{
+    "id":  "01a142f4-50ed-7ee3-b8cf-2e25f0a61148",
+    "formato":  "PNG RGBA 64x64",
+    "semente":  null,
+    "prompt":  "Edit the road-m0 reference into a construction-stage sprite sheet for Pianco — Ferro e Mandacaru, rural Paraiba Brazil 1930s. Reference 1 is the exact isolated finished stone road footprint; reference 2 only shows connected road style. Make a horizontal strip of THREE equally sized square cells, transparent exterior. Each cell represents exactly the same 64x64 tile coordinate system and round irregular worked-earth footprint as reference 1, centered same scale, NOT an isometric diamond. First: tamped warm brown earth with subtle work marks and a small loose pile of the same tiny tan stones in bottom right corner, no laid paving. Second: upper third of original road stones laid, remaining lower portion tamped earth with loose stones. Third: upper two thirds laid, lower third earth with only a few loose stones. Preserve exact reference stone size, color, painterly texture, overhead three-quarter view, light from above slightly south, no east-west directional light. Tiny stones, no big cobbles. Consistent footprint and placement. No text, no borders, no tools, people, plants or extra objects. Actual transparent background outside worked ground. Output wide 3:1 strip; three identical square cells filling canvas with no gaps. The finished original will be composited back into laid areas to guarantee literal pixel continuity.",
+    "ferramenta":  "image_gen nativa",
+    "semente_observacao":  "Nao exposta pela ferramenta",
+    "referencia":  "D:/projetos-pessoal/cangaco-game/assets/sprites/road/road-m0.png",
+    "processamento":  [
+                          "Original preservado integralmente em base.png",
+                          "Tres celulas recortadas pelo limite alfa e reduzidas para a caixa do road-m0 com System.Drawing bicubico",
+                          "Alfa do road-m0 preservado em todos os estagios",
+                          "Terra comum da primeira celula em pedras e obra-1; ultima celula fornece terra e poucas pedras restantes em obra-2",
+                          "Pixels originais de road-m0 copiados nas regioes assentadas superiores: ate y=27 e y=38, com variacao de 1 pixel; inclusao monotona garante continuidade literal",
+                          "Prancha com quatro estagios em 1x e 3x nearest-neighbor sobre terra marrom texturizada"
+                      ]
+}

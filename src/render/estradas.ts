@@ -13,6 +13,9 @@ import type { TileDeGrid } from '../sim/estradas';
 import type { ModoDaFerramenta } from '../input/ferramenta';
 import { gridToScreen, ESCALA_DO_MUNDO } from './grid';
 import { chaveDeTextura } from './manifesto';
+import { gameData } from '../sim/data';
+import { assinaturaDosEstagios, estagiosDaRuaEmObra } from './rua-em-obra';
+import type { EstagioDaRua } from './rua-em-obra';
 
 // Acima do chao (depth 0) e abaixo dos predios (depth = y em px, >= dezenas de
 // milhares aqui) e da planta/prévia.
@@ -27,6 +30,9 @@ const ESPESSURA_DO_CANTEIRO = 2;
 /** Meia-diagonal da ponte, em fracao do tile. Cobre o pinch sem engordar a rua. */
 const RAIO_DA_PONTE = 0.34;
 const ID_DA_ESTRADA = 'estrada';
+/** I-TELA-RUA-SENDO-ASSENTADA — a arte de cada estagio do tile em obra (entrada `estrada` `rua-em-obra`). O
+ *  `marcado` nao tem arte: e o canteiro translucido de sempre. */
+const ID_DA_RUA_EM_OBRA = 'rua-em-obra';
 const ESTADO_DA_DIAGONAL = 'diagonal';
 
 /**
@@ -69,6 +75,8 @@ export interface PreviaDeEstrada {
 export interface ContagemDeEstradas {
   readonly dePe: number;
   readonly planejadas: number;
+  /** I-TELA-RUA-SENDO-ASSENTADA — o estagio de cada tile do canteiro desenhado agora. */
+  readonly estagios: Readonly<Record<string, EstagioDaRua>>;
 }
 
 export interface CamadaDeEstradas {
@@ -116,14 +124,18 @@ export function criarCamadaDeEstradas(cena: Phaser.Scene, tilePx: number): Camad
   let desenhada: GameState['estradas'] | null = null;
   let desenhadoOCanteiro: GameState['estradasPlanejadas'] | null = null;
   let desenhadaComPredios: GameState['predios']['ordem'] | null = null;
-  let contagem: ContagemDeEstradas = { dePe: 0, planejadas: 0 };
+  let desenhadosOsEstagios = '';
+  let contagem: ContagemDeEstradas = { dePe: 0, planejadas: 0, estagios: {} };
 
   return {
     atualizar(estado) {
       const estradas = estado?.estradas ?? {};
       const planejadas = estado?.estradasPlanejadas ?? {};
       const ordem = estado?.predios.ordem ?? null;
-      if (estradas !== desenhada || planejadas !== desenhadoOCanteiro || ordem !== desenhadaComPredios) {
+      // I-TELA-RUA-SENDO-ASSENTADA: a batida do obreiro muda o estagio sem mudar o conjunto de tiles
+      const estagios = estado === null ? {} : estagiosDaRuaEmObra(estado, gameData.construcao.ticksAssentarEstradaPorTile);
+      const assinatura = assinaturaDosEstagios(estagios);
+      if (estradas !== desenhada || planejadas !== desenhadoOCanteiro || ordem !== desenhadaComPredios || assinatura !== desenhadosOsEstagios) {
         const tiles = tilesOrdenados(estradas);
         const canteiro = tilesOrdenados(planejadas);
         grafico.clear();
@@ -145,6 +157,9 @@ export function criarCamadaDeEstradas(cena: Phaser.Scene, tilePx: number): Camad
         grafico.lineStyle(ESPESSURA_DO_CANTEIRO, corDoContorno, 1);
         for (const tile of canteiro) {
           const canto = gridToScreen(tile, tilePx, ESCALA_DO_MUNDO);
+          const estagio = estagios[`${tile.gx},${tile.gy}`] ?? 'marcado';
+          if (estagio !== 'marcado'
+            && desenharImagem(chaveDeTextura('estrada', ID_DA_RUA_EM_OBRA, estagio), canto.x, canto.y, 0, 0)) continue;
           grafico.fillRect(canto.x, canto.y, tilePx, tilePx);
           grafico.strokeRect(canto.x + 1, canto.y + 1, tilePx - 2, tilePx - 2);
         }
@@ -173,7 +188,8 @@ export function criarCamadaDeEstradas(cena: Phaser.Scene, tilePx: number): Camad
         desenhada = estradas;
         desenhadoOCanteiro = planejadas;
         desenhadaComPredios = ordem;
-        contagem = { dePe: tiles.length, planejadas: canteiro.length };
+        desenhadosOsEstagios = assinatura;
+        contagem = { dePe: tiles.length, planejadas: canteiro.length, estagios };
       }
       return contagem;
     },
