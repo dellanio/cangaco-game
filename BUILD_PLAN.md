@@ -10293,6 +10293,31 @@ o tile de rua ganha tempo próprio, como o comentário da F18d-1b previa. Só a 
   4. Os testes que fixavam o tempo da rua em uma martelada passam a ler o campo novo; a suíte inteira e a longa
      continuam verdes (o ritmo da rua fica mais lento: medida para o `BALANCE_LOG.md`, não asserção).
 
+#### I-COMIDA-REFEICAO-COM-TEMPO — a refeição na Bodega dura, como no KaM
+Pedido do operador (2026-10-15): "as unidades estão praticamente só encostando no inn e já ficam saciadas. Precisa
+ter o tempo de alimentação delas, de preferência animação delas sentadas na mesa comendo". **Medido:** o estado
+`comendo` dura um tick (`systems/fome.ts`, "comendo dura um tick: não existe duração de refeição em data/"; a D6
+da F20b). No KaM a unidade entra na estalagem, toma um lugar à mesa e fica `29*4` ticks (11,6 s) por comida
+(`src/units/tasks/KM_UnitTaskGoEat.pas:139`, `:150`, `:163`, `:176`). Este item é só a SIM; os comensais à mesa
+na tela são o item seguinte (`I-TELA-COMENSAIS-NA-BODEGA`), que depende de arte nova.
+- **Aceite:**
+  1. `condition.json > inn.segundosComendoPorComida_base` 11,6 (o KaM; escala `economia`, declarado no
+     `data-schema`) vira `ticksComendoPorComida` UMA vez no carregamento.
+  2. Pelo `step`: o civil que chega à Bodega e come N comidas fica `comendo` exatamente `N x ticksComendoPorComida`
+     ticks e depois fica `ocioso`. A comida sai da gaveta e a condição sobe no tick da chegada, como hoje (o KaM
+     também alimenta no começo da ação, `KM_UnitTaskGoEat.pas:140`).
+  3. Enquanto come, a unidade não anda, não pega tarefa e continua invisível (dentro da Bodega, como hoje).
+  4. Não há teto de assentos nesta leva (a D6 continua; o KaM tem 6, `src/houses/KM_HouseInn.pas:11`): a pergunta
+     vai para o PROGRESS. Os testes da fome e da Bodega continuam verdes; a suíte longa também.
+
+#### I-TELA-COMENSAIS-NA-BODEGA — quem come aparece sentado à mesa da Bodega
+Continuação do pedido acima: "de preferência animação delas sentadas na mesa comendo". Depende de arte (CLAUDE.md
+§9: a decisão veio do operador, e a arte é do Codex): uma figura de comensal sentado, comendo, em laço curto, que a
+tela põe nas mesas da Bodega. O pedido de arte está em `docs/planos/2026-10-15-comensais-na-bodega.md`.
+- **Aceite da tela (depois da arte):** com a Bodega completa e K unidades `comendo` nela, a tela desenha
+  min(K, lugares) comensais nos lugares da mesa, animados; com K = 0, nenhum. O roteiro despausa e fotografa a
+  Bodega com comensais. A sim não muda.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
