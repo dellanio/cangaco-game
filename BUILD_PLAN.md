@@ -10275,6 +10275,24 @@ interface (`data/menu-build.json`, que nenhuma regra da sim lê).
   3. O roteiro do ícone (`tools/shots/I-ARTE-ICONE-ACUDE-MENU.js`) abre a sub-aba Vila, encontra o botão do Açude
      nela e afirma que ele não está em De Comer; captura da aba Vila.
 
+#### I-OBRA-RUA-TRES-BATIDAS — o obreiro bate pelo menos três vezes em cada tile de rua
+Pedido do operador (2026-10-15): "a animação do obreiro colocando a pedra na rua está muito rápida, precisa ser
+pelo menos 3 batidas para pregar a rua no chão". **Medido:** o tile de rua leva UMA martelada
+(`passoAssentando`, `construcao.ticksPorMartelada`), 1 s na base e 5 ticks (0,5 s) na escala de construção 2. O
+ciclo da animação `trabalhar` do obreiro tem 8 quadros a 10 fps (0,8 s, `assets/manifest.json`): o tile fica pronto
+antes de um ciclo inteiro. **Decisão:** uma batida é um ciclo da animação (hipótese de arte, sem abrir os quadros), e
+o tile de rua ganha tempo próprio, como o comentário da F18d-1b previa. Só a sim e o dado mudam; a tela não muda.
+- **Aceite:**
+  1. `buildings.json > construcao.segundosAssentarEstradaPorTile_base` (escala `construcao`, declarado no
+     `data-schema`) vira `construcao.ticksAssentarEstradaPorTile` UMA vez no carregamento; `passoAssentando` usa
+     ele no lugar de `ticksPorMartelada`. A obra de prédio não muda.
+  2. Pelo `step`: um obreiro com a pedra no tile assenta a rua em exatamente `ticksAssentarEstradaPorTile` ticks
+     (não antes, e o tile entra na rede no tick que fecha).
+  3. O tempo do tile cobre pelo menos 3 ciclos da animação `trabalhar` do obreiro no manifesto: `ticks / tickHz >=
+     3 * quadros / fps`. Com o número escolhido (5 s na base), são 25 ticks, 3,1 ciclos.
+  4. Os testes que fixavam o tempo da rua em uma martelada passam a ler o campo novo; a suíte inteira e a longa
+     continuam verdes (o ritmo da rua fica mais lento: medida para o `BALANCE_LOG.md`, não asserção).
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
