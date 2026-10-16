@@ -54,7 +54,7 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   afirmar(JSON.stringify(vistos) === JSON.stringify(['marcado', 'pedras', 'obra-1', 'obra-2']), `os estagios na ordem: ${JSON.stringify(vistos)}`);
   await capturar('rua-pronta');
 
-  // I-TELA-RUA-MARCADA-CINZA: uma rua de varios tiles recem-desenhada, toda marcada em cinza
+  // I-TELA-RUA-MARCADA-CORDEL: uma rua de varios tiles recem-desenhada, cada tile com estacas e cordel cinza
   {
     const { camera: cam } = await estado();
     const de = { x: canvas.left + (alvo.gx + 1) * px + px / 2 - cam.scrollX, y: canvas.top + (alvo.gy + 1) * px + px / 2 - cam.scrollY };
