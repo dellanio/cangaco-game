@@ -1,0 +1,14 @@
+{
+  "item": "I-ARTE-SERF-PIXELLAB-V2",
+  "ferramenta": "PixelLab (MCP), assinatura do operador",
+  "personagem": "77320113-bf89-4b4a-bf70-e360bf4160d0",
+  "criacao": "create_character mode v3, reference_image = assets/sprites/units/serf/parado.png de antes (de frente), 8 direcoes, 64x96, low top-down",
+  "animacoes": {
+    "parado": "template breathing-idle, 4 quadros, 5 direcoes",
+    "andar": "template walking-8-frames, 8 quadros, 5 direcoes (sudeste refeito: 502 na primeira)",
+    "morrer": "template falling-back-death, 7 quadros, 5 direcoes",
+    "carregando": "o do serf de antes: tres tentativas v3 personalizadas nao fecharam o laco (cesto nas costas; brilho magico; transicao do braco caido)"
+  },
+  "geracoes_gastas": 25,
+  "montagem": "tools/pixellab-atlas.mjs serf <pasta dos quadros>; o pe na linha y=90 de antes"
+}

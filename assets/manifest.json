@@ -1030,34 +1030,9 @@
         "parado:s": "sprites/units/serf/parado.png"
       },
       "atlas": "sprites/units/serf/serf.json",
-      "animacoes": {
-        "parado": {
-          "quadros": 1,
-          "fps": 10,
-          "laco": true
-        },
-        "andar": {
-          "quadros": 8,
-          "tilesPorCiclo": 2,
-          "laco": true
-        },
-        "carregando": {
-          "quadros": 8,
-          "tilesPorCiclo": 2,
-          "laco": true
-        },
-        "morrer": {
-          "quadros": 12,
-          "fps": 10,
-          "laco": false
-        }
-      },
-      "licenca": "arte propria do projeto, gerada no ComfyUI local por decisao do operador em 2026-10-03",
-      "origem": {
-        "base": "base/units/serf-comfyui/registro.json",
-        "semente": 20261005,
-        "nota": "D-ARTE-SERF-COMFYUI: SDXL DreamShaper XL Turbo + IP-Adapter Plus (referencia base/units/serf-comfyui/referencia-ip-adapter.png) + ControlNet OpenPose (poses em base/units/serf-comfyui/poses.png), 5 direcoes x (parado 1 + andar 8). Os estados parado:* continuam como fallback."
-      }
+      "animacoes": {"parado": {"quadros": 4, "fps": 5, "laco": true}, "andar": {"quadros": 8, "tilesPorCiclo": 2, "laco": true}, "carregando": {"quadros": 8, "tilesPorCiclo": 2, "laco": true}, "morrer": {"quadros": 7, "fps": 10, "laco": false}},
+      "licenca": "gerado no PixelLab (assinatura do operador) a partir da arte propria do projeto, 2026-10-16",
+      "origem": {"base": "base/units/serf-pixellab-v2/registro.json", "semente": null, "nota": "I-ARTE-SERF-PIXELLAB-V2: o serf de antes (de frente) girado em 8 direcoes no PixelLab v3 (personagem 77320113-bf89-4b4a-bf70-e360bf4160d0); parado breathing-idle 4, andar walking-8-frames 8, morrer falling-back-death 7, nas 5 direcoes canonicas; o carregando e o do serf de antes (a pose personalizada do PixelLab nao fechou o laco). O atlas de antes fica em base/units/serf-pixellab-v2/antes/."}
     },
     {
       "id": "laborer",
