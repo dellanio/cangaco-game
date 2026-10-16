@@ -10551,6 +10551,27 @@ corda de cima, da estaca da bandeira à outra), "analise as 4 direções de cada
   2. no jogo, os lotes do I-ARTE-MARCACAO-DO-CANTEIRO mostram as quatro cordas de cada um (contadas na ponte) e a
      captura.
 
+#### I-TELA-OBRA-EM-ORDEM-DE-CONSTRUCAO — a obra sobe na ordem de uma construção de verdade (teste: a cabana do lenhador)
+Pedido do operador (2026-10-16): a obra da cabana do lenhador "ainda está muito artificial e quadrada (...) a ideia era
+simular a mesma lógica de construção de uma casa onde os pilares verticais são colocados primeiro, depois o teto e
+seguindo uma lógica racional. Hoje parece que cada quadrado do sprite vai aparecendo aleatório". "Reveja isso na casa do
+lenhador como teste. Se você encontrar um algoritmo bom, replicamos nas demais casas."
+- **Decisão:** só tela; a fração de cada camada continua a da F17g (`render/estagio-obra.ts`). No lugar da grade de
+  blocos da I-TELA-OBRA-PARTE-A-PARTE, cada pixel da arte ganha o momento em que entra, lido da própria arte:
+  - **camada de madeira** (a estrutura): fundação (os pixels de pedra, de baixo saturação) primeiro, da frente para trás;
+    depois os **pilares** (a madeira em corrida vertical longa e estreita), subindo do chão; por último as **vigas e
+    tesouras** (o resto da madeira), de baixo para a cumeeira;
+  - **camada completa** (o acabamento): sobe do chão para cima, e o telhado cobre por último, do beiral à cumeeira.
+  - A revelação é em passos (32 por camada), com a textura do passo feita uma vez e guardada.
+  - Vale só para os tipos listados em `data/obra-revelacao.json` (`ordemDeConstrucao`): hoje, `woodcutters`. Os outros
+    continuam com a grade até o operador aprovar.
+- **Aceite:**
+  1. a regra pura, na arte real da cabana do lenhador: todo pixel de pedra da madeira entra antes de todo pilar; todo
+     pilar antes de toda viga; dentro dos pilares, o de baixo antes do de cima; os pixels transparentes nunca entram; na
+     camada completa, a linha de baixo antes da de cima;
+  2. no jogo, uma obra de lenhador em três momentos (só fundação, pilares de pé, estrutura e parede subindo), com
+     capturas; os tipos fora da lista continuam com a grade (o teste da I-TELA-OBRA-PARTE-A-PARTE segue verde).
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
