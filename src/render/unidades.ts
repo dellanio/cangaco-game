@@ -69,7 +69,7 @@ import { atualizarVirada, iniciarVirada } from './virada-de-unidade';
 import type { MemoriaDaVirada } from './virada-de-unidade';
 import { acaoDaUnidade, animacaoComCarga, direcaoDaOracao, direcaoDoTrabalho } from './acao-de-unidade';
 import dadosDaCargaNasMaos from '../../data/carga-nas-maos.json';
-import { pontoDaCargaNasMaos } from './carga-nas-maos';
+import { cargaVaiNasMaos, pontoDaCargaNasMaos } from './carga-nas-maos';
 import { animacaoDoGesto, colheitaNasMaos, deslocamentoDoTrabalho } from './gesto-do-trabalho';
 import type { GestoDoTrabalho } from './gesto-do-trabalho';
 import { caixaDeTipoNoMapa } from './predios';
@@ -118,6 +118,8 @@ export interface UnidadeRenderizada {
   readonly rotuloDaCarga: string | null;
   /** D-TELA-03a — como a carga foi desenhada: `icone` (D-ARTE-01) ou `texto` (o BUG-O); null sem carga. */
   readonly marcaDaCarga: 'icone' | 'texto' | null;
+  /** BUG-PLACA-NO-PEITO — a placa escura do icone da carga esta acesa neste quadro? */
+  readonly placaDaCarga?: boolean;
   /**
    * F18f — o quanto o desenho sai do centro do tile, em px de mundo. Nao e posicao de
    * jogo: `gx/gy` continuam sendo o tile, e e por eles que os roteiros medem caminho e
@@ -326,8 +328,10 @@ export function criarCamadaDeUnidades(
       }
       // D-ARTE-PIXEL-ART-CIVIS: com a pose de carregar, a mercadoria vai entre as maos, sem placa;
       // sem ela, o icone sobre a cabeca de hoje (D-TELA-03a).
+      // BUG-PLACA-NO-PEITO (2026-10-16): a placa escura e do quadrado provisorio. Unidade com sprite parada com a carga (o
+      // serf esperando para largar a pedra) mostrava a placa no peito; com sprite, a carga fica sempre nas maos.
       const config = dadosDaCargaNasMaos as unknown as CargaNasMaos;
-      if (item.animacao === 'carregando') {
+      if (cargaVaiNasMaos(item.animacao, item.imagem?.visible === true)) {
         const ponto = pontoDaCargaNasMaos(item.direcao, config);
         item.iconeDaCarga.setPosition(ponto.x, ponto.y);
         item.iconeDaCarga.setDisplaySize(config.tamanhoPx, config.tamanhoPx);
@@ -575,7 +579,7 @@ export function criarCamadaDeUnidades(
         const balaoComo = desenharPensamento(item, pensamento, id, estado.tick);
         renderizadas.push({
           id, tipo: unidade.tipo, gx: posicao.gx, gy: posicao.gy,
-          gxDesenhado: desenhada.gx, gyDesenhado: desenhada.gy, fsm: unidade.fsm, lado: unidade.lado, corDoBando: corDoBando(unidade.lado), corDoRotulo: item.nome.style.backgroundColor, carga, rotuloDaCarga: carga === null ? null : rotuloDaCarga(carga), marcaDaCarga: marca,
+          gxDesenhado: desenhada.gx, gyDesenhado: desenhada.gy, fsm: unidade.fsm, lado: unidade.lado, corDoBando: corDoBando(unidade.lado), corDoRotulo: item.nome.style.backgroundColor, carga, rotuloDaCarga: carga === null ? null : rotuloDaCarga(carga), marcaDaCarga: marca, placaDaCarga: item.placaDoIcone?.visible === true,
           deslocamentoPx: { x: desvio.x, y: desvio.y },
           marcadorDeFome: comFome, fracaoDeCondicao: fracaoDeCondicao(unidade),
           pensamento: pensamento === null ? null : pensamento.tipo === 'mercadoria' ? pensamento.mercadoria : pensamento.tipo, balaoComo,
