@@ -33,7 +33,7 @@ import type { ConfigDoPadreVisual } from '../padre-visual';
 const dadosDoPadreVisual = dadosDoPadreVisualCru as ConfigDoPadreVisual;
 const dadosDoClimaVisual = dadosDoClimaVisualCru as ConfigDoClimaVisual;
 import dadosDaObraRevelada from '../../../data/obra-revelacao.json';
-import { ladoDaMercadoriaNoEstoque, ladoPadraoDoEstoque, pilhasVisiveisDoPredio, posicoesDaMercadoriaNoEstoque, pontosDosPeixesPendurados } from '../estoque-visual';
+import { ladoDaMercadoriaNoEstoque, ladoPadraoDoEstoque, pilhasVisiveisDoPredio, posicoesDaMercadoriaNoEstoque, posicoesGiradas, pontosDosPeixesPendurados, rotacaoDaMercadoriaNoEstoque } from '../estoque-visual';
 import { blocosVisiveis, recorteDoBloco, revelacaoVisualDaObra } from '../obra-revelacao';
 import type { GradeDaObra } from '../obra-revelacao';
 import { chaminesRemovidas, particulasDaFumaca, type ParticulaDaFumaca } from '../fumaca';
@@ -2841,7 +2841,10 @@ export class WorldScene extends Phaser.Scene {
         continue;
       }
       const cor = Phaser.Display.Color.HexStringToColor(corDaPilha(pilha.mercadoria)).color;
-      for (const [dx, dy] of posicoesDaMercadoriaNoEstoque(tipo, pilha.mercadoria, pilha.n)) {
+      // I-TELA-LENHA-NO-DEQUE-DO-LENHADOR: a pilha gira inteira (a fileira e cada peca)
+      const graus = rotacaoDaMercadoriaNoEstoque(tipo, pilha.mercadoria);
+      const inicio = objetos.length;
+      for (const [dx, dy] of posicoesGiradas(posicoesDaMercadoriaNoEstoque(tipo, pilha.mercadoria, pilha.n), graus)) {
         const x = px + dx * lado;
         const y = py + dy * lado - lado / 2;
         if (fonte.fonte === 'icone') {
@@ -2860,6 +2863,9 @@ export class WorldScene extends Phaser.Scene {
           unidade.setStrokeStyle(1, COR_DA_PLACA_DO_ICONE);
           objetos.push(unidade);
         }
+      }
+      if (graus !== 0) {
+        for (const o of objetos.slice(inicio)) (o as Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle).setAngle(graus);
       }
     }
     return objetos;

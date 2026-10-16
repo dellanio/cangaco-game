@@ -90,7 +90,7 @@
     "semente": null,
     "nota": "Proposta D de troncos e palha geracao 01 derivada em 192x176. Estado madeira preservado da arte antiga e ainda requer par compativel."
   },
-  "ancoras": { "bandeira": [0.26042, 0.01136] }
+  "ancoras": { "bandeira": [0.26042, 0.01136], "estoque": { "entrada": [], "saida": [[0.83, 0.86]] } }
 },
     {
   "id": "quarry",

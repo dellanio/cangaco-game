@@ -36,6 +36,21 @@ export function ladoDaMercadoriaNoEstoque(tipo: string, mercadoria: string, lado
   return ladoPadrao * (porPredio[tipo]?.[mercadoria] ?? dados.escalaPadrao);
 }
 
+/** I-TELA-LENHA-NO-DEQUE-DO-LENHADOR — a rotacao da pilha em graus (horario na tela); sem entrada, 0. */
+export function rotacaoDaMercadoriaNoEstoque(tipo: string, mercadoria: string): number {
+  const porPredio: Readonly<Record<string, Readonly<Record<string, number>> | undefined>> = dados.rotacaoPorPredio;
+  return porPredio[tipo]?.[mercadoria] ?? 0;
+}
+
+/** As posicoes da pilha giradas de `graus` em torno do ponto (em lados de unidade, dy negativo subindo). */
+export function posicoesGiradas(posicoes: readonly (readonly [number, number])[], graus: number): readonly (readonly [number, number])[] {
+  if (graus === 0) return posicoes;
+  const r = (graus * Math.PI) / 180;
+  const c = Math.cos(r);
+  const s = Math.sin(r);
+  return posicoes.map(([x, y]) => [x * c - y * s, x * s + y * c] as const);
+}
+
 /** Fileira na area de estoque; os outros estoques conservam a pilha tradicional. */
 export function posicoesDaMercadoriaNoEstoque(tipo: string, mercadoria: string, n: number): readonly (readonly [number, number])[] {
   const regras: Readonly<Record<string, Readonly<Record<string, { readonly espacamentoEmLados: number }>> | undefined>> = dados.fileirasPorPredio;

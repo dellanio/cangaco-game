@@ -18,21 +18,42 @@
     },
     "wineyard": {
       "wine": 1.8
+    },
+    "woodcutters": {
+      "tree_trunk": 1.8
     }
   },
   "peixesPendurados": {
     "predio": "inn",
     "mercadoria": "fish",
     "teto": 6,
-    "laterais": [[0.09, 0.71], [0.82, 0.83]],
+    "laterais": [
+      [
+        0.09,
+        0.71
+      ],
+      [
+        0.82,
+        0.83
+      ]
+    ],
     "passoX": 0.045,
-    "passoY": [0.015, -0.015]
+    "passoY": [
+      0.015,
+      -0.015
+    ]
   },
   "fileirasPorPredio": {
     "wineyard": {
       "wine": {
         "espacamentoEmLados": 1.05
       }
+    }
+  },
+  "_docRotacao": "I-TELA-LENHA-NO-DEQUE-DO-LENHADOR (pedido do operador, 2026-10-16): graus, sentido horario na tela, por predio e mercadoria. A pilha inteira gira junto: cada peca e a fileira. Sem entrada, 0.",
+  "rotacaoPorPredio": {
+    "woodcutters": {
+      "tree_trunk": 25
     }
   }
 }
