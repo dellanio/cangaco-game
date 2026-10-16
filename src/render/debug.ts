@@ -232,6 +232,8 @@ export interface EstadoDebug {
    *  criacao com curral cheio (`animais.ts`); curral vazio nao aparece. */
   animaisDoCurral: Readonly<Record<string, readonly AnimalNoDebug[]>>;
   comensaisDaBodega: Readonly<Record<string, readonly ComensalNoDebug[]>>;
+  /** I-ARTE-MARCACAO-DO-CANTEIRO — as quatro pecas do canteiro estao carregadas (o lote em obra usa a arte). */
+  canteiroComArte: boolean;
   /** F-VIVO-d — as camadas desenhadas, em px de mundo, por id de predio com receita. */
   camadasEmPx: Readonly<Record<string, CamadasEmPx>>;
   /** F-ESC (c) — a caixa que o sprite do predio COMPLETO ocupa na tela, em px de mundo,
@@ -491,6 +493,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     sinaisDePausado: {},
     animaisDoCurral: {},
     comensaisDaBodega: {},
+    canteiroComArte: false,
     camadasEmPx: {},
     caixasDesenhadas: {},
     selecaoMilitar: [],

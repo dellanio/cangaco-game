@@ -1,0 +1,72 @@
+{
+  "prompt": "Create a production source atlas for four tiny painted RTS construction-site ground marker sprites for Piancó — Ferro e Mandacaru, rural Paraíba Brazil 1930s. Transparent RGBA background. Orthogonal world grid viewed top-down three-quarter, NOT diamond isometric. Match rustic hand-painted earthy brown game sprites, detailed dark weathered wood and warm sisal. Lighting overhead slightly from south/bottom, NO east-west bias. No text, no labels, no borders, no UI, no characters, no building, no tools, no Knights and Merchants imagery.\nUse a square 1024x1024 atlas with three isolated elements, separated by large transparent gaps, exact placements:\n1) upper left quadrant x80..320 y60..460: ONE short rough wooden stake driven into ground, upright on screen, knee-high in game, flat chopped top and a small sisal string knot tied near its top, no long loose rope tail. Base centered at x200 y460. Wood shaft substantial, uneven painted grain, modest foreshortened top, subtle tiny ground contact shadow only. Sprite silhouette fits a 24:40 rectangle.\n2) upper right x500..1000 y190..250: one straight taut HORIZONTAL sisal cord segment, uniform narrow thickness, extends cleanly through both ends, no knots or stakes, NO sag, no strong directional end shadows; tan twisted fibers, painted, intended to repeat horizontally and rotate vertically. Centerline perfectly horizontal.\n3) lower left x70..470 y570..970: square sample of gently scraped dry ochre-brown earth, soft fine irregular scuff grain, very low contrast, no stones, grass, cracks or objects, uniformly filled to all four square edges, intended seamless tile both axes. Texture must be unobtrusive when opacity reduced to 40%.\nKeep ALL remaining area transparent. These are source elements to crop and reduce to 24x40 stake, 64x8 cord and 64x64 earth. Crisp painted game art, not photoreal macro rope, no white outlines.",
+  "tool": "image_gen.imagegen (built-in)",
+  "generation_id": "01a142d4-9a00-7ed0-9a69-e6683a5b1e10",
+  "image_id": "exec-b923188d-d14c-40be-8715-3d11b9064cc2",
+  "seed": null,
+  "seed_note": "Nao disponibilizada pela ferramenta",
+  "source": "base.png",
+  "references_read_only": [
+    "D:\\projetos-pessoal\\cangaco-game\\assets\\sprites\\woodcutters\\woodcutters_completo.png",
+    "D:\\projetos-pessoal\\cangaco-game\\assets\\sprites\\units\\laborer\\parado.png"
+  ],
+  "operations": [
+    "Original RGBA 1254x1254 preservado byte a byte em base.png.",
+    "Estaca: recorte [158,103,346,543], Lanczos com proporcao preservada dentro de 24x40, alinhamento inferior central.",
+    "Cordel: recorte [595,246,1235,273], Lanczos 64x3, centralizado em 64x8 transparente; mistura simetrica dos 5 pixels de cada extremidade e extremidades identicas.",
+    "Cordel vertical: rotacao de 90 graus do horizontal.",
+    "Terra: recorte [80,640,650,1210], Lanczos 64x64, contraste 42%, mistura simetrica de 10 pixels em bordas opostas; alfa uniforme 102/255.",
+    "Prancha: lotes ortogonais 192x128 e 256x192, quatro estacas cada, repeticao real das pecas; 1x e 2x nearest-neighbor; chao de demonstracao derivado da base, saturacao 60% e brilho 70%.",
+    "Cordel ligado ao no 29 pixels acima da ancora inferior da estaca. Retangulo de terra acompanha a projecao do cordel na prancha."
+  ],
+  "validation": "Inspecao dos PNGs e prancha; sem testes do repositorio.",
+  "processing_script": "from PIL import Image, ImageEnhance, ImageDraw, ImageFont\nimport numpy as np, json, hashlib\nfrom pathlib import Path\n\nroot=Path(__file__).parent\nbase=Image.open(root/'base.png').convert('RGBA')\nstake=base.crop((158,103,346,543))\nstake.thumbnail((24,40),Image.Resampling.LANCZOS)\nout=Image.new('RGBA',(24,40)); out.alpha_composite(stake,((24-stake.width)//2,40-stake.height)); out.save(root/'estaca.png')\nrope=base.crop((595,246,1235,273)).resize((64,3),Image.Resampling.LANCZOS)\na=np.array(rope)\n# Match both ends exactly; blend only the short seam neighborhood.\nfor i in range(5):\n    w=(5-i)/10\n    left=a[:,i,:].astype(float); right=a[:,-1-i,:].astype(float)\n    a[:,i,:]=np.rint(left*(1-w)+right*w)\n    a[:,-1-i,:]=np.rint(right*(1-w)+left*w)\nedge=np.rint((a[:,0,:].astype(float)+a[:,-1,:])/2).astype('uint8'); a[:,0,:]=edge; a[:,-1,:]=edge\nh=Image.new('RGBA',(64,8)); h.alpha_composite(Image.fromarray(a),(0,2)); h.save(root/'cordel-h.png')\nv=h.transpose(Image.Transpose.ROTATE_270); v.save(root/'cordel-v.png')\nearth=base.crop((80,640,650,1210)).resize((64,64),Image.Resampling.LANCZOS).convert('RGB')\nearth=ImageEnhance.Contrast(earth).enhance(.42)\na=np.array(earth).astype(float)\n# Symmetric overlap at every opposite edge, preserving the central generated texture.\nfor axis in (0,1):\n    b=np.moveaxis(a,axis,0).copy()\n    for i in range(10):\n        w=.5*(1-i/10)\n        lo=b[i].copy(); hi=b[-1-i].copy()\n        b[i]=lo*(1-w)+hi*w; b[-1-i]=hi*(1-w)+lo*w\n    a=np.moveaxis(b,0,axis)\nearth=Image.fromarray(np.rint(a).astype('uint8')).convert('RGBA'); earth.putalpha(102); earth.save(root/'terra.png')\n\ndef lot(nx,ny):\n    w,h=nx*64,ny*64\n    panel=Image.new('RGBA',(w+64,h+80),(0,0,0,0))\n    # Muted earth underlay derived from the generated source; preview only.\n    ground=ImageEnhance.Color(base.crop((80,640,650,1210)).convert('RGB')).enhance(.6)\n    ground=ImageEnhance.Brightness(ground).enhance(.70).resize(panel.size,Image.Resampling.LANCZOS)\n    panel.alpha_composite(ground.convert('RGBA'))\n    x0,y0=32,48\n    for y in range(ny):\n        for x in range(nx): panel.alpha_composite(earth,(x0+x*64,y0+y*64-29))\n    # Rope joins the knot 29 px above each stake's bottom-center anchor.\n    for x in range(nx):\n        for y in (y0,y0+h): panel.alpha_composite(globals()['h'],(x0+x*64,y-32))\n    for y in range(ny):\n        for x in (x0,x0+w): panel.alpha_composite(v,(x-3,y0+y*64-29))\n    for y in (y0,y0+h):\n        for x in (x0,x0+w): panel.alpha_composite(out,(x-12,y-39))\n    return panel\n\nsheet=Image.new('RGBA',(1216,900),(44,37,29,255)); d=ImageDraw.Draw(sheet)\nfor nx,ny,x in ((3,2,16),(4,3,560)):\n    p=lot(nx,ny)\n    d.text((x,10),f'{nx} x {ny} tiles | {nx*64} x {ny*64} px | 1x',fill=(235,217,182))\n    sheet.alpha_composite(p,(x,30))\n    d.text((x,310),'2x (nearest-neighbor)',fill=(235,217,182))\n    sheet.alpha_composite(p.resize((p.width*2,p.height*2),Image.Resampling.NEAREST),(x,330))\nsheet.save(root/'prancha.png')\nchecks={}\nfor name,size in [('estaca.png',(24,40)),('cordel-h.png',(64,8)),('cordel-v.png',(8,64)),('terra.png',(64,64))]:\n    im=Image.open(root/name); ar=np.array(im)\n    checks[name]={'size':list(im.size),'mode':im.mode,'alpha_min':int(ar[:,:,3].min()),'alpha_max':int(ar[:,:,3].max()),'sha256':hashlib.sha256((root/name).read_bytes()).hexdigest()}\nprint(json.dumps(checks,indent=2))\n(root/'checks.tmp.json').write_text(json.dumps(checks),encoding='utf8')\n\n\n",
+  "files": {
+    "estaca.png": {
+      "size": [
+        24,
+        40
+      ],
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "sha256": "bcd6810d7d33022c35cc94452873125fcfcd11467bced40e556b8a9e1e4542d4"
+    },
+    "cordel-h.png": {
+      "size": [
+        64,
+        8
+      ],
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "sha256": "47724d622ec56e5b9644e5e5f7c703d320cec5e95b534c180ed712aceb224ecc"
+    },
+    "cordel-v.png": {
+      "size": [
+        8,
+        64
+      ],
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "sha256": "3c4caea5ee915b625be6b8a13362a6b6cc07254782c70a0df5cf66a3dc132d1d"
+    },
+    "terra.png": {
+      "size": [
+        64,
+        64
+      ],
+      "mode": "RGBA",
+      "alpha_min": 102,
+      "alpha_max": 102,
+      "sha256": "7569db3ee1322ef5fc7ceacf1763ba7d83306c6205a51daf1ee1c7a7c1f1f11a"
+    }
+  },
+  "seams": {
+    "cordel-h.png": true,
+    "terra.png": true,
+    "cordel-v.png": true,
+    "terra_vertical": true
+  }
+}

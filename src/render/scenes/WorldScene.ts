@@ -154,6 +154,12 @@ const DEPTH_DOS_RECURSOS = 0.5;
 /** F-VIVO-a — o dado das pilhas, com as ancoras do manifesto. Montado uma vez. */
 const DADOS_DAS_PILHAS = dadosDasPilhas(manifestoDoJogo);
 const DADOS_DOS_ANIMAIS = dadosDosAnimais(manifestoDoJogo);
+/** I-ARTE-MARCACAO-DO-CANTEIRO — as pecas do lote em obra (uma entrada `interface` `canteiro-<peca>` cada), a escala em que a arte
+ *  foi desenhada (um tile de 64 px) e a espessura do cordel nessa escala. */
+const ID_DO_CANTEIRO = 'canteiro';
+const PECAS_DO_CANTEIRO = ['estaca', 'cordel-h', 'cordel-v', 'terra'] as const;
+const TILE_DA_ARTE_DO_CANTEIRO = 64;
+const ESPESSURA_DO_CORDEL = 8;
 /** F-VIVO-b — o dado do quadro de trabalho, com as ancoras do manifesto. Montado uma vez. */
 const DADOS_DO_TRABALHO = dadosDoTrabalho(manifestoDoJogo);
 /** F-ESC — o teto da altura do predio, do manifesto. Montado uma vez. */
@@ -2383,6 +2389,7 @@ export class WorldScene extends Phaser.Scene {
     debug.quadrosDaEscola = escolasNoDebug;
     debug.animaisDoCurral = animaisNoDebug;
     debug.comensaisDaBodega = comensaisNoDebug;
+    debug.canteiroComArte = PECAS_DO_CANTEIRO.every((e) => this.textures.exists(chaveDeTextura('interface', `${ID_DO_CANTEIRO}-${e}`, 'normal')));
     debug.camadasEmPx = camadasNoDebug;
     debug.sinaisDePausado = sinaisNoDebug;
     debug.caixasDesenhadas = this.caixasDesenhadas(estadoDoJogo, sprites, tilePx);
@@ -2557,7 +2564,7 @@ export class WorldScene extends Phaser.Scene {
     // marteladas e so o medidor no gramado, sem dizer quanto chao vai ocupar.
     const corpo = revelacao !== null && par !== null
       ? [
-        this.desenharLote(estagio, larguraPx, alturaPx),
+        ...this.desenharLote(estagio, larguraPx, alturaPx),
         ...this.desenharRevelado(par.madeira, revelacao.madeira, larguraPx, alturaPx, `${predio.id}:madeira`),
         ...this.desenharRevelado(par.pedra, revelacao.pedra, larguraPx, alturaPx, `${predio.id}:pedra`),
       ]
@@ -2858,12 +2865,33 @@ export class WorldScene extends Phaser.Scene {
    *  e continua NAO sendo falha. */
   /** O contorno do footprint, vazado: do placeholder e, desde o BUG-M, tambem por
    *  baixo da obra revelada. */
+  /** O lote no chao. Em obra, I-ARTE-MARCACAO-DO-CANTEIRO: a terra raspada, o cordel nas quatro bordas e uma estaca
+   *  em cada canto (as pecas do Codex, `interface:canteiro:*`). Sem as pecas, ou fora da obra, o retangulo de antes. */
   private desenharLote(
     estagio: EstagioDaObra, larguraPx: number, alturaPx: number,
-  ): Phaser.GameObjects.Rectangle {
-    const lote = this.add.rectangle(larguraPx / 2, alturaPx / 2, larguraPx, alturaPx, CARA_DO_ESTAGIO[estagio].cor, 0);
-    lote.setStrokeStyle(2, estaEmObra(estagio) ? 0xede3d0 : 0x2c1d12);
-    return lote;
+  ): Phaser.GameObjects.GameObject[] {
+    const peca = (estado: string): string => chaveDeTextura('interface', `${ID_DO_CANTEIRO}-${estado}`, 'normal');
+    const comArte = PECAS_DO_CANTEIRO.every((e) => this.textures.exists(peca(e)));
+    if (!estaEmObra(estagio) || !comArte) {
+      const lote = this.add.rectangle(larguraPx / 2, alturaPx / 2, larguraPx, alturaPx, CARA_DO_ESTAGIO[estagio].cor, 0);
+      lote.setStrokeStyle(2, estaEmObra(estagio) ? 0xede3d0 : 0x2c1d12);
+      return [lote];
+    }
+    const escala = configDoMapa.tilePx / TILE_DA_ARTE_DO_CANTEIRO;
+    const fio = ESPESSURA_DO_CORDEL * escala;
+    const terra = this.add.tileSprite(larguraPx / 2, alturaPx / 2, larguraPx, alturaPx, peca('terra')).setTileScale(escala, escala);
+    const cordel = (x: number, y: number, w: number, h: number, estado: string): Phaser.GameObjects.TileSprite =>
+      this.add.tileSprite(x, y, w, h, peca(estado)).setTileScale(escala, escala);
+    const bordas = [
+      cordel(larguraPx / 2, fio / 2, larguraPx, fio, 'cordel-h'),
+      cordel(larguraPx / 2, alturaPx - fio / 2, larguraPx, fio, 'cordel-h'),
+      cordel(fio / 2, alturaPx / 2, fio, alturaPx, 'cordel-v'),
+      cordel(larguraPx - fio / 2, alturaPx / 2, fio, alturaPx, 'cordel-v'),
+    ];
+    // a estaca com o pe no canto (a origem e o centro da borda de baixo, como a arte foi pedida)
+    const estacas = ([[0, 0], [larguraPx, 0], [0, alturaPx], [larguraPx, alturaPx]] as const).map(([x, y]) =>
+      this.add.image(x, y + fio / 2, peca('estaca')).setOrigin(0.5, 1).setScale(escala));
+    return [terra, ...bordas, ...estacas];
   }
 
   private desenharPlaceholder(
@@ -2875,7 +2903,7 @@ export class WorldScene extends Phaser.Scene {
 
     // O lote, sempre: e o que diz ao jogador quanto chao a obra vai ocupar,
     // inclusive quando ainda nao ha volume nenhum em cima dele.
-    objetos.push(this.desenharLote(estagio, larguraPx, alturaPx));
+    objetos.push(...this.desenharLote(estagio, larguraPx, alturaPx));
 
     // O volume, ancorado no PE do footprint: a obra sobe do chao para cima, e nao
     // cresce a partir do meio.
