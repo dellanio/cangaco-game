@@ -10538,6 +10538,19 @@ terraplanagem. Atualmente ele fica fora da unidade batendo como se tivesse const
      diferentes e usa o gesto `arar`; a terra raspada cobre menos tiles no começo do que no fim do nivelamento;
   3. a posição lógica do obreiro não muda (a sim não muda): os testes da sim seguem verdes sem alteração.
 
+#### I-TELA-CORDA-ENTRE-AS-ESTACAS — a corda esticada entre as estacas do canteiro, nos quatro lados
+Pedido do operador (2026-10-16): "adicione uma corda ligando as bases de madeira para dar mais realismo" (marcou a
+corda de cima, da estaca da bandeira à outra), "analise as 4 direções de cada prédio".
+- **Decisão:** só tela. Uma corda amarrada perto do topo de cada estaca (a peça `canteiro-estaca`, 24x40) até a do
+  canto vizinho, nos quatro lados do lote, com uma barriga pequena no meio (corda real cede), proporcional ao vão e
+  com teto. Cor de corda de sisal, com uma linha escura por baixo para ler sobre a terra clara. O cordel rente ao chão
+  continua (é a marcação do contorno). Vale para todo lote em obra com as peças do canteiro.
+- **Aceite:**
+  1. a regra pura, por tabela: num lote 3x2 e 4x3, as quatro cordas ligam os nós de estacas vizinhas (cima, baixo,
+     esquerda, direita), a barriga é para baixo, cresce com o vão e não passa do teto;
+  2. no jogo, os lotes do I-ARTE-MARCACAO-DO-CANTEIRO mostram as quatro cordas de cada um (contadas na ponte) e a
+     captura.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
