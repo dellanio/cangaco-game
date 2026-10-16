@@ -22523,3 +22523,6 @@ e passou isolado (21 s para 4 testes); é o mesmo padrão do `SHOT-vite-orfao` 2
   34 depois), `I-ARTE-RUA-DE-PEDRA-ANTIGA` (calçamento de pedras arredondadas, material do Codex, família pelo pipeline;
   a rua de barro fica em `assets/base/road-tiles/barro-2026-09-26/`) e `I-ARTE-BANDEIRA-COM-VOLUME` (o pano em faixas
   com o tom da onda, mastro cilíndrico e ponta de latão, nas duas cores). Homologação das artes novas: pendente.
+- 2026-10-16: a branch `cangaco-game-3d` entrou na `main` por pedido do operador (`I-TELA-PREMIUM-PROTOTIPO`: plano em
+  `docs/planos/2026-10-16-migracao-visual-premium.md`; sombras de contato, gradação de cor e a barra da tropa, tudo só
+  com `?premium`; sem ele o jogo é o de antes, e os roteiros existentes rodados seguiram verdes).
