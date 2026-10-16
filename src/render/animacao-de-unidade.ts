@@ -5,6 +5,18 @@ import type { PontoEmTiles } from './interpolacao';
 export function quadroDoAndar(distanciaAcumulada: number, tilesPorCiclo: number, quadros: number): number {
   return Math.floor(distanciaAcumulada / tilesPorCiclo * quadros) % quadros;
 }
+/** I-TELA-ANIMACAO-FORA-DE-SINCRONIA — quantos ticks a fase de uma unidade pode deslocar o laco. */
+export const FASE_MAXIMA = 64;
+/** A fase da unidade, em ticks: um hash estavel do id (FNV-1a), so do render. Sem ela, todo laco pelo relogio global
+ *  troca de quadro junto em todas as unidades, e a vila parada respira em unissono. */
+export function faseDaUnidade(id: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h % FASE_MAXIMA;
+}
 export function tempoDeAnimacao(tick: number, alfa: number): number {
   return Math.max(0, tick - 1 + Math.min(1, Math.max(0, alfa)));
 }

@@ -58,7 +58,7 @@ import type { GameState } from '../sim/state';
 import type { LuzDoRelevo } from './camada-de-relevo';
 import configAnimacao from '../../data/animacao-unidade.json';
 import tempo from '../../data/time.json';
-import { depuracaoDeUnidade, quadroDoAndar, quadroPeloTempo, somarDistancia, spriteDoAtlas, tempoDeAnimacao, unidadeNaVista } from './animacao-de-unidade';
+import { depuracaoDeUnidade, quadroDoAndar, quadroPeloTempo, somarDistancia, spriteDoAtlas, faseDaUnidade, tempoDeAnimacao, unidadeNaVista } from './animacao-de-unidade';
 import { depuracaoRegistrada } from './registro-de-depuracao';
 import type { PontoEmTiles } from './interpolacao';
 import type { SpriteAnimado } from './animacao-de-unidade';
@@ -536,7 +536,7 @@ export function criarCamadaDeUnidades(
             item.quadro = 0;
             if (animacao) {
               const decorrido = acao === 'atacar' || acao === 'trabalhar' || acao === 'rezar'
-                ? Math.max(0, tempoDeAnimacao(estado.tick, alfa) - item.inicioDaAcao) : tempoDeAnimacao(estado.tick, alfa);
+                ? Math.max(0, tempoDeAnimacao(estado.tick, alfa) - item.inicioDaAcao) : tempoDeAnimacao(estado.tick, alfa) + faseDaUnidade(id);
               item.quadro = acao === 'andar' ? quadroDoAndar(item.distancia, animacao.tilesPorCiclo ?? 1, animacao.quadros)
                 : quadroPeloTempo(decorrido, tempo.tickHz, animacao);
               item.spriteAnimado = spriteDoAtlas(manifestoAnimado, unidade.tipo, item.animacao, item.direcao, item.quadro,
