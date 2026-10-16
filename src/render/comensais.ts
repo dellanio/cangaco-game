@@ -14,6 +14,10 @@ import { FSM_COMENDO } from '../sim/condicao';
  *  quadro, rapido demais para quem come. Constante de TELA: a sim nao le. */
 export const TICKS_POR_QUADRO_DO_COMENSAL = 3;
 
+/** I-TELA-COMENSAL-MENOR (pedido do operador, 2026-10-16): a figura desenhada a esta fracao do tamanho nativo (64x96),
+ *  para caber na varanda da Bodega. Constante de TELA. */
+export const ESCALA_DO_COMENSAL = 0.65;
+
 export interface ComensalNaMesa {
   /** O lugar, de 0 a `lugares.length - 1`. */
   readonly i: number;

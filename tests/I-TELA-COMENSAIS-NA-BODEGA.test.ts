@@ -4,7 +4,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { comensaisDaBodega, quadroDoComensal, TICKS_POR_QUADRO_DO_COMENSAL } from '../src/render/comensais';
+import { comensaisDaBodega, ESCALA_DO_COMENSAL, quadroDoComensal, TICKS_POR_QUADRO_DO_COMENSAL } from '../src/render/comensais';
 import type { LugarDeComensal } from '../src/render/manifesto';
 import { LACOS_DO_COMENSAL, LACO_DO_COMENSAL } from '../src/render/manifesto-camadas';
 import { bodegaDoCenario } from './helpers/bodega-cenario';
@@ -48,6 +48,10 @@ describe('I-TELA-COMENSAIS-NA-BODEGA', () => {
     const cheia = { unidades: { ...estado.unidades, porId } };
     expect(ids.length).toBeGreaterThan(LUGARES.length);
     expect(comensaisDaBodega(cheia, bodega, FOOTPRINT, LUGARES).length).toBe(LUGARES.length);
+  });
+
+  it('I-TELA-COMENSAL-MENOR: a figura sai a 0,65 do tamanho nativo', () => {
+    expect(ESCALA_DO_COMENSAL).toBe(0.65);
   });
 
   it('o quadro anda com o tick, de 1 a 4, e a defasagem por lugar', () => {

@@ -69,7 +69,7 @@ const dadosDoAcudeVisual = dadosDoAcudeVisualCru as ConfigDoAcudeVisual;
 import { animaisDoCurral, curralDesenhado, quadroDoAnimal } from '../animais';
 import { MAX_PASSOS_POR_QUADRO } from '../../laco';
 import type { AnimalDoCurral } from '../animais';
-import { comensaisDaBodega, quadroDoComensal } from '../comensais';
+import { comensaisDaBodega, ESCALA_DO_COMENSAL, quadroDoComensal } from '../comensais';
 import { lerModoAdmin } from '../modo-admin';
 import type { ComensalNaMesa } from '../comensais';
 import type { PilhaDesenhada } from '../pilhas';
@@ -2718,7 +2718,7 @@ export class WorldScene extends Phaser.Scene {
       const textura = this.texturaDoComensal(quadroDoComensal(tick, c.i));
       if (textura === null) continue;
       const imagem = this.add.image(caixa.x + caixa.w * c.lugar.ponto[0], caixa.y + caixa.h * c.lugar.ponto[1], textura);
-      imagem.setOrigin(0.5, 1).setFlipX(c.lugar.olha === 'oeste');
+      imagem.setOrigin(0.5, 1).setFlipX(c.lugar.olha === 'oeste').setScale(ESCALA_DO_COMENSAL);
       objetos.push(imagem);
     }
     return objetos;
