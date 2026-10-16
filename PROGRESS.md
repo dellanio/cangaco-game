@@ -22512,3 +22512,8 @@ e passou isolado (21 s para 4 testes); é o mesmo padrão do `SHOT-vite-orfao` 2
   só a capa). O registro do vídeo fica em `assets/base/ui/menu-capa/video-geracao.json` (o manifesto só aceita imagem).
 - `I-TELA-MENU-VIDEO-DE-CAPA`, emenda do operador (2026-10-16): sem laço. O vídeo toca uma vez (10 s, só para frente)
   e some num fade de 2,4 s antes do último quadro; o elemento sai e fica a capa. Roteiro verde em 1280x720 e 1920x1080.
+- 2026-10-16: `I-TELA-MENU-VIDEO-DE-CAPA` revogado pelo operador ("não ficou legal"): o vídeo saiu do jogo, a tela inicial
+  é só a capa; o original fica em `assets/base/ui/menu-capa/`. `I-TELA-RUA-MARCADA-CORDEL`: a rua marcada com estacas e
+  cordel cinza dentro do tile (`tools/derivar-rua-marcada.mjs`, das peças do canteiro do prédio); o miolo fica
+  transparente (medido: 0 pixels opacos no miolo, 504 de cordel, 160 de estaca). O commit da remoção do vídeo
+  (727fe57e) saiu antes do `verify:rapido`; a verificação seguinte passou com ele.
