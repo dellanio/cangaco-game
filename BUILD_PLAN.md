@@ -10474,6 +10474,20 @@ mais arredondado, com características de ruas antigas."
      antigo (o calçamento é cinza e bege; o antigo, ocre de barro);
   3. a captura de uma rua pronta com reta, curva e cruzamento no jogo, e o roteiro da rua sendo assentada seguem verdes.
 
+#### I-TELA-ANIMACAO-FORA-DE-SINCRONIA — cada unidade no seu ponto do laço
+Pedido do operador (2026-10-16): as unidades "parecem robotizadas". Medido: o quadro de todo laço que não é andar nem
+ação com início (o parado, e qualquer laço pelo tempo) sai do relógio global (`tempoDeAnimacao(tick)` em
+`src/render/unidades.ts`), então todas as unidades paradas trocam de quadro juntas. O andar já sai da distância
+percorrida de cada uma, e a virada já é suave.
+- **Decisão:** uma fase por unidade, derivada do id (hash estável, só no render; a sim não muda), somada ao tempo dos
+  laços do relógio global. As ações com início (atacar, trabalhar, rezar) e o andar não mudam.
+- **Aceite:**
+  1. regra pura: a fase é determinística por id, fica dentro de `[0, FASE_MAXIMA)` ticks e varia entre ids (em 100 ids
+     consecutivos, mais de 20 fases distintas);
+  2. com a fase, dois ids diferentes no mesmo tick dão quadros diferentes do parado de 4 quadros na maioria dos pares;
+     sem ela (fase 0), o mesmo quadro;
+  3. os roteiros de unidade seguem verdes.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
