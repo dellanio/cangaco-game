@@ -22526,3 +22526,13 @@ e passou isolado (21 s para 4 testes); é o mesmo padrão do `SHOT-vite-orfao` 2
 - 2026-10-16: a branch `cangaco-game-3d` entrou na `main` por pedido do operador (`I-TELA-PREMIUM-PROTOTIPO`: plano em
   `docs/planos/2026-10-16-migracao-visual-premium.md`; sombras de contato, gradação de cor e a barra da tropa, tudo só
   com `?premium`; sem ele o jogo é o de antes, e os roteiros existentes rodados seguiram verdes).
+- 2026-10-16, leva de pixel art (pedido do operador: "unidades robotizadas"): `I-TELA-ANIMACAO-FORA-DE-SINCRONIA` (fase
+  por unidade nos laços do relógio global; a vila parada não respira mais em uníssono) e `I-ARTE-SERF-PIXELLAB-V2` (o serf
+  girado em 8 direções no PixelLab v3, personagem 77320113…; parado com respiração em 4 quadros, andar 8, morrer 12 = 7 do
+  PixelLab + 1 parado + 4 esmaecendo). **O carregando continua o de antes:** três tentativas v3 personalizadas não fecharam
+  o laço (cesto nas costas, brilho mágico, transição de braço caído); a decisão de aceite dizia braços à frente e mãos
+  vazias, e isso fica para outra tentativa. 25 gerações gastas. O commit c41314cb saiu com o verify:rapido vermelho
+  (encadeado com ';'); 0b3fb90c corrige. A régua do serf passou de 74 para 73 px (a da pianco-units).
+- O piloto 3D (branch `cangaco-game-3d`, commits até a9d3b07e) foi revogado pelo operador: o acabamento do 3D ficou
+  abaixo da arte pintada; as ferramentas do Blender ficam na branch. Ali, a modelagem por código contrariou a pianco-units
+  ("não modele geometria por código"), registrado aqui como lição.
