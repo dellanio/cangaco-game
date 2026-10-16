@@ -22496,3 +22496,10 @@ e passou isolado (21 s para 4 testes); é o mesmo padrão do `SHOT-vite-orfao` 2
 - `I-TELA-RUA-SENDO-ASSENTADA` (e3234825): o tile do canteiro em `marcado`, `pedras`, `obra-1`, `obra-2`, derivado da
   pedra no tile e do progresso do obreiro; arte do Codex. Limite: o estágio não segue a ligação com a rua vizinha.
 - Homologação pendente das três artes novas em `docs/homologacao/2026-10-artes.md`.
+
+### Decisões do operador (2026-10-16)
+- Homologadas as artes novas: milho crescendo, ícone do Açude, capa, comensal, canteiro e rua em estágios
+  (`docs/homologacao/2026-10-artes.md`).
+- O modo admin por `?admin` na URL (lembrado no navegador; `?admin=0` desliga) está homologado como está.
+- Pedidos na mesma mensagem: serraria +10%, lenhador -10%, lenha da cabana no deque e maior, comensal menor, o tile
+  marcado da rua cinza e as pedras empilhadas no primeiro estágio. Itens no BUILD_PLAN.
