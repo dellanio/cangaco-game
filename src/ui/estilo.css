@@ -985,6 +985,8 @@ body:not([data-corpo="distribuicao"]) #distribuicao { display: none; }
   opacity: 0; transition: opacity 1.6s ease-in;
 }
 #menu-inicial .video-da-capa.tocando { opacity: 1; }
+/* o fim do video: some devagar e deixa a capa que esta por baixo (2,4 s, o SEGUNDOS_DO_FADE_FINAL do menu) */
+#menu-inicial .video-da-capa.saindo { opacity: 0; transition: opacity 2.4s ease-in-out; }
 /* o veu sobre a capa e o video: o degrade da caixa, uma vinheta nas bordas e o grao de papel do jogo, que tira o
    aspecto liso de video e casa a imagem com o resto da interface */
 #menu-inicial .veu-da-capa {

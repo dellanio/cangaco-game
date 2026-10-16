@@ -4,5 +4,5 @@
   "licenca": "gerado pelo operador para o projeto; sem asset do jogo de 1998",
   "original": "video-original.mp4 (1280x720, 10 s, 24 fps, H.264 com AAC; sem marca-d'agua)",
   "derivado": "sprites/ui/menu/capa-video.mp4",
-  "processamento": "ffmpeg: o video seguido do proprio video invertido (laco de ida e volta, 20 s, sem salto no recomeco), sem audio, H.264 yuv420p crf 24 preset slow, +faststart"
+  "processamento": "ffmpeg: so o video para frente (10 s; toca uma vez e some num fade sobre a capa, pedido do operador de 2026-10-16 que revogou o laco de ida e volta), sem audio, H.264 yuv420p crf 24 preset slow, +faststart"
 }
