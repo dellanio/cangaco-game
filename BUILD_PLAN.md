@@ -10318,6 +10318,34 @@ tela põe nas mesas da Bodega. O pedido de arte está em `docs/planos/2026-10-15
   min(K, lugares) comensais nos lugares da mesa, animados; com K = 0, nenhum. O roteiro despausa e fotografa a
   Bodega com comensais. A sim não muda.
 
+#### I-ARTE-LENHADOR-MAIOR — a cabana do lenhador 30% maior
+Pedido do operador (2026-10-16, com captura): "a cabana do lenhador está com a porta menor que o tamanho do
+builder; precisa ser aumentada sua proporção em uns 30%". O mesmo campo da I-ARTE-PREDIOS-MAIORES.
+- **Aceite:** `assets/manifest.json > woodcutters.escalaDeExibicao` 1,3; o teste da I-ARTE-PREDIOS-MAIORES passa com
+  o lenhador na tabela (fator 1,3, os outros iguais); o lote (footprint 3x2) e a sim não mudam; captura do lenhador
+  ao lado do obreiro.
+
+#### I-TELA-MODO-ADMIN — os textos de depuração só no modo admin
+Pedido do operador (2026-10-16): "remover os textos explicativos como nome do prédio e fase de construção; essas
+coisas só devem aparecer para mim num modo admin". **Decisão (conservadora, registrada no PROGRESS):** o modo admin
+liga abrindo o jogo com `?admin` na URL, fica lembrado no navegador (`localStorage` `cangaco:admin`) e desliga com
+`?admin=0`. O que passa a ser só do admin: o nome e o estágio escritos no prédio sem arte (placeholder), o nome
+escrito sobre cada unidade e o texto `<laço>_<n>` do quadro de trabalho sem arte. Continuam para todos: o marcador de
+fome, o de carga, o balão, o sinal de pausado e o medidor da obra (são informação de jogo). A sim não muda.
+- **Aceite:**
+  1. Uma função pura `modoAdmin(busca, guardado)` decide, por tabela: `?admin` liga e guarda; `?admin=0` desliga e
+     apaga; sem parâmetro vale o guardado.
+  2. Sem admin: nenhum `Text` de nome de prédio nem de unidade na cena (o debug conta); com admin, os de hoje.
+  3. O roteiro do BUG-Z (os nomes das unidades) abre com `?admin`, e um roteiro novo afirma o caso sem admin.
+
+#### I-ARTE-MARCACAO-DO-CANTEIRO — o lote marcado com estacas e cordel, no lugar das linhas brancas
+Pedido do operador (2026-10-16): "a marcação no chão não tem sprite para representar o canteiro de obras; peça ao
+Codex para gerar uma e substitua as linhas brancas". A arte é do Codex (estaca, cordel horizontal e vertical, terra
+raspada), e a tela monta o lote: uma estaca em cada canto, o cordel repetido nas quatro bordas e a terra no meio.
+- **Aceite:** o retângulo de traço branco do lote em obra (`desenharLote`) sai quando as peças existem; sem as
+  peças, fica o retângulo (placeholder, §9). As peças entram no manifesto com licença e origem. Captura de um lote em
+  marcação de 3x2 e de 4x3. A sim não muda.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
