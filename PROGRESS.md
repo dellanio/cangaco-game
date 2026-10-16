@@ -22481,3 +22481,18 @@ e passou isolado (21 s para 4 testes); é o mesmo padrão do `SHOT-vite-orfao` 2
 - **Teto de assentos na Bodega.** O KaM tem 6 (`src/houses/KM_HouseInn.pas:11`) e quem chega com a casa cheia sai
   com fome. Aqui não há teto (D6). Com a refeição durando, o teto muda o jogo. Fica sem teto até a decisão.
 - **A rua mais lenta** (2,5 s por tile na escala 2) pode deixar a abertura das fases lenta; observar no playtest.
+
+## 2026-10-16 — canteiro, modo admin, lenhador maior, rua em estágios
+
+- `I-ARTE-LENHADOR-MAIOR` (0ae34ebe + 7ea52ba7): a cabana +30% (`escalaDeExibicao` 1,3). O 0ae34ebe saiu com o
+  `verify:rapido` vermelho (de novo encadeei o commit com `;`): o C10 usava o lenhador como amostra da regra de largura;
+  corrigido no 7ea52ba7. Desde então o commit só roda depois da saída da verificação lida.
+- `I-ARTE-MARCACAO-DO-CANTEIRO` (a1cc479d): estacas, cordel e terra raspada do Codex no lugar do retângulo branco.
+  Quatro entradas `interface` `canteiro-<peça>` (o manifesto exige um tamanho por entrada).
+- `I-TELA-MODO-ADMIN` (dd15d445): **decisão conservadora, para o operador confirmar:** `?admin` na URL liga e fica
+  lembrado no navegador; `?admin=0` desliga. Só do admin: nome e estágio escritos na obra sem arte, nome sobre as
+  unidades, quadro de trabalho sem arte. Ficam para todos: fome, carga, balão, sinal de pausado, medidor da obra.
+  O BUG-Z abre com admin.
+- `I-TELA-RUA-SENDO-ASSENTADA` (e3234825): o tile do canteiro em `marcado`, `pedras`, `obra-1`, `obra-2`, derivado da
+  pedra no tile e do progresso do obreiro; arte do Codex. Limite: o estágio não segue a ligação com a rua vizinha.
+- Homologação pendente das três artes novas em `docs/homologacao/2026-10-artes.md`.
