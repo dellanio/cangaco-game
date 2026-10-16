@@ -10446,6 +10446,19 @@ marca-d'água.
     nenhum `<video>` no `#menu-inicial`; o roteiro da I-TELA-MENU-ARTE-DE-CAPA e o do menu inicial seguem verdes; o
     build não leva `.mp4`.
 
+#### I-TELA-PREMIUM-PROTOTIPO — o protótipo do visual premium atrás de `?premium` (branch `cangaco-game-3d`)
+Pedido do operador (2026-10-16). Plano: `docs/planos/2026-10-16-migracao-visual-premium.md` (Fase 0). Item de render e
+interface; `src/sim/` não muda.
+- **Aceite:**
+  1. sem `?premium`, nada muda: nenhuma sombra de contato, nenhum pós-processo na câmera, nenhuma classe `premium` no
+     `body`; os roteiros existentes seguem verdes;
+  2. com `?premium`, cada prédio, árvore, recurso e unidade de pé no chão ganha uma sombra de contato que acompanha o
+     objeto (posição, visibilidade, e some quando ele some), abaixo de todos os objetos e acima do chão; a câmera tem
+     gradação de cor e vinheta;
+  3. com `?premium` e uma tropa selecionada, a barra de baixo mostra um retrato por soldado (do sprite da unidade), a
+     barra de vida de cada um e os comandos que o painel do grupo já tem; nenhum comando novo nasce;
+  4. roteiro com a mesma vista com e sem `?premium`, e com a tropa selecionada.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
