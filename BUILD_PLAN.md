@@ -10407,6 +10407,9 @@ marca-d'água.
 - **Aceite:**
   1. O derivado em `assets/sprites/ui/menu/capa-video.mp4` (H.264, sem áudio, ida e volta), o original em
      `assets/base/ui/menu-capa/`, a entrada no manifesto com a origem.
+     - **Emenda (2026-10-16, antes do commit do codigo):** o manifesto so aceita imagem (o carregador de texturas e o
+       teste F17f leem o cabecalho do PNG); o registro do video (origem, licenca, o que foi feito) vai em
+       `assets/base/ui/menu-capa/video-geracao.json`, ao lado do original, e nao no manifesto.
   2. Roteiro em 1280x720 e 1920x1080: o `<video>` existe, mudo, em laço, sem controles, toca (o `currentTime` anda) e
      cobre a janela; a caixa do menu, os botões e a capa de fundo continuam (o roteiro da I-TELA-MENU-ARTE-DE-CAPA
      segue verde); com `?capaFixa` não há vídeo. Captura de dois instantes.
