@@ -10572,6 +10572,27 @@ lenhador como teste. Se você encontrar um algoritmo bom, replicamos nas demais 
   2. no jogo, uma obra de lenhador em três momentos (só fundação, pilares de pé, estrutura e parede subindo), com
      capturas; os tipos fora da lista continuam com a grade (o teste da I-TELA-OBRA-PARTE-A-PARTE segue verde).
 
+#### I-TELA-LENHADOR-CORTA-E-DERRUBA — o lenhador bate no tronco, as lascas voam, a árvore cai e ele leva o tronco
+Pedido do operador (2026-10-16): "O lenhador corta a árvore de longe, não tem realismo, ele precisa bater no meio da
+árvore, a cada batida a animação da árvore precisa mostrar lascas de madeira saindo da árvore. e no final a árvore
+precisa cair no chão e o lenhador pegar o tronco e levar no braço pra casa dele."
+- **Decisão:** só tela; a sim não muda. A árvore rende 4 troncos (`resources.json: tree.rendimentoPorTile`), e a sim
+  só a desconta no depósito, em casa (contrato da F-T2c). A tela lê disso uma árvore que cai no fim do PRIMEIRO corte
+  e fica deitada; nas viagens seguintes o lenhador corta pedaços do tronco caído (a árvore deitada encolhe), e no último
+  sobra o toco de hoje.
+  - **colado no tronco:** o desenho do lenhador que `colhe` uma árvore avança do tile vizinho até perto do pé dela
+    (fica a uma fração de tile do tronco), de frente para ela;
+  - **lascas:** a cada batida (o quadro do golpe da animação `trabalhar`), algumas lascas saltam do tronco e caem;
+  - **a queda:** a árvore em pé tomba (gira até o chão em menos de 1 s) quando o lenhador volta do primeiro corte
+    dela; depois, a árvore deitada, uma arte por tronco que sobra (4, 3, 2, 1), até o toco;
+  - **o tronco nas mãos:** o lenhador que volta da árvore leva o tronco nas mãos (o ícone da tora, como o roceiro leva
+    a colheita).
+- **Aceite:**
+  1. a regra pura, por tabela: o estado da árvore na tela (em pé, caindo/caída com N troncos, toco) pela quantidade e
+     por haver um lenhador voltando dela; o ponto de desenho do lenhador junto ao tronco; o quadro do golpe;
+  2. no jogo: o lenhador desenhado a menos de meio tile do tronco enquanto corta; lascas criadas nas batidas; a árvore
+     deitada depois do primeiro corte; o lenhador voltando com a tora nas mãos; capturas.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
