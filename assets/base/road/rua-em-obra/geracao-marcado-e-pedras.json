@@ -1,0 +1,48 @@
+{
+  "ferramenta": "image_gen (nativa)",
+  "semente": null,
+  "nota_semente": "Nao exposta pela ferramenta.",
+  "geracoes": [
+    {
+      "id": "exec-fbdb8d7d-db00-4bec-bab9-16a0156995cd",
+      "prompt": "Use case: stylized-concept. Create ONE square ground tile for Pianco Ferro e Mandacaru, rural Paraiba Brazil 1930s, painted RTS terrain viewed top-down 3/4 on an ORTHOGONAL 64x64 grid. Reference image is a magnified strip of the existing later construction stages and finished paving, for painted texture/style and light only. New stage MARCADO: an entire square tile filled edge-to-edge with compacted GRAY fine crushed-gravel road foundation, unmistakably neutral medium gray, subtly mottled fine granules, slightly scored/compacted edges. Continuous flat ground, not an isolated circular patch, no border frame, no perimeter dark outline; horizontal sides must join seamlessly when repeated. No big stones, no paving blocks, no objects, no writing. Matte hand-painted tiny-game-sprite treatment, restrained coarse detail that will read at 64x64. Single overhead light biased slightly from the south/bottom, no east-west bias. No grass, no brown dirt, no isometric diamond, no raised slab, no perspective background. Fill the entire image with the gray ground texture. Opaque image intended to become RGBA 64x64.",
+      "original": "base.png"
+    },
+    {
+      "id": "exec-d28a61c6-31b8-4654-ab57-37b2dbc3f704",
+      "prompt": "Edit image 1 (gray road foundation) to create the PEDRAS stage of the same 64x64 orthogonal RTS street tile. Image 2 is ONLY a reference for the existing paving stones and painterly style. Preserve the gray ground exactly over the full square. Add exactly THREE SMALL hand-hewn paving cobbles in a compact overlapping pile at the center, two below and one resting on top, visibly stacked with short contact shadows. The entire pile should occupy ONLY 24% of the tile width and 20% of height (roughly 15x13 pixels when reduced to 64x64). Each stone should resemble the warm dusty beige/tan gray irregular paving stones of reference 2, NOT huge rocks or boulders. Chunky low flattened cobbles with angular irregular top planes and small side faces, enough size to read 3 separate stones at tiny scale. Top-down 3/4 painted game sprite, Paraiba Brazil 1930s. Unified light overhead slightly from south/bottom, absolutely no east-west lighting bias. Gray ground remains visible on every side and corners. No other objects, text, grass, border, frame or perspective. Opaque full square tile.",
+      "original": "base-pedras.png"
+    }
+  ],
+  "operacoes": [
+    "Referencias abertas e ampliadas em referencias.png, somente leitura dos assets originais.",
+    "Geracao da base cinza opaca; segunda chamada acrescenta tres pedras centrais usando a base e referencias.",
+    "Conversao RGBA e reducao Lanczos para 64x64; sem pintura procedural.",
+    "Prancha composta sobre solo-pixel/solo-padrao.png em 1x e 3x (nearest), com quatro marcados contiguos."
+  ],
+  "validacao": {
+    "marcado": {
+      "dimensoes": [
+        64,
+        64
+      ],
+      "modo": "RGBA",
+      "alpha": [
+        255,
+        255
+      ]
+    },
+    "pedras": {
+      "dimensoes": [
+        64,
+        64
+      ],
+      "modo": "RGBA",
+      "alpha": [
+        255,
+        255
+      ]
+    }
+  },
+  "repositorio": "Nenhuma escrita, commit ou teste."
+}

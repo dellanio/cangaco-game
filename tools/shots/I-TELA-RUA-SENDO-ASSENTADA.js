@@ -54,6 +54,24 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   afirmar(JSON.stringify(vistos) === JSON.stringify(['marcado', 'pedras', 'obra-1', 'obra-2']), `os estagios na ordem: ${JSON.stringify(vistos)}`);
   await capturar('rua-pronta');
 
+  // I-TELA-RUA-MARCADA-CINZA: uma rua de varios tiles recem-desenhada, toda marcada em cinza
+  {
+    const { camera: cam } = await estado();
+    const de = { x: canvas.left + (alvo.gx + 1) * px + px / 2 - cam.scrollX, y: canvas.top + (alvo.gy + 1) * px + px / 2 - cam.scrollY };
+    await page.click('[data-ferramenta="estrada"]');
+    await esperarFrame();
+    await page.mouse.move(de.x, de.y);
+    await page.mouse.down();
+    await page.mouse.move(de.x + 3 * px, de.y, { steps: 6 });
+    await page.mouse.up();
+    await avancar(1);
+    await esperarFrame();
+    await page.keyboard.press('Escape');
+    const marcados = Object.values((await estado()).estagiosDaRuaEmObra).filter((e) => e === 'marcado').length;
+    afirmar(marcados >= 3, `a rua nova toda marcada: ${marcados}`);
+    await capturar('rua-marcada');
+  }
+
   // despausado um instante: o laco real redesenha sem quebrar
   await page.keyboard.press('p');
   await page.waitForTimeout(300);

@@ -30,8 +30,8 @@ const ESPESSURA_DO_CANTEIRO = 2;
 /** Meia-diagonal da ponte, em fracao do tile. Cobre o pinch sem engordar a rua. */
 const RAIO_DA_PONTE = 0.34;
 const ID_DA_ESTRADA = 'estrada';
-/** I-TELA-RUA-SENDO-ASSENTADA — a arte de cada estagio do tile em obra (entrada `estrada` `rua-em-obra`). O
- *  `marcado` nao tem arte: e o canteiro translucido de sempre. */
+/** I-TELA-RUA-SENDO-ASSENTADA — a arte de cada estagio do tile em obra (entrada `estrada` `rua-em-obra`). Desde a
+ *  I-TELA-RUA-MARCADA-CINZA o `marcado` tambem tem arte (cinza); sem ela, o canteiro translucido. */
 const ID_DA_RUA_EM_OBRA = 'rua-em-obra';
 const ESTADO_DA_DIAGONAL = 'diagonal';
 
@@ -158,8 +158,7 @@ export function criarCamadaDeEstradas(cena: Phaser.Scene, tilePx: number): Camad
         for (const tile of canteiro) {
           const canto = gridToScreen(tile, tilePx, ESCALA_DO_MUNDO);
           const estagio = estagios[`${tile.gx},${tile.gy}`] ?? 'marcado';
-          if (estagio !== 'marcado'
-            && desenharImagem(chaveDeTextura('estrada', ID_DA_RUA_EM_OBRA, estagio), canto.x, canto.y, 0, 0)) continue;
+          if (desenharImagem(chaveDeTextura('estrada', ID_DA_RUA_EM_OBRA, estagio), canto.x, canto.y, 0, 0)) continue;
           grafico.fillRect(canto.x, canto.y, tilePx, tilePx);
           grafico.strokeRect(canto.x + 1, canto.y + 1, tilePx - 2, tilePx - 2);
         }

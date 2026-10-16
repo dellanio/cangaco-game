@@ -482,7 +482,7 @@
         "nota": "Quarta celula da linha de solo rochoso do atlas autoral; derivacao 64x64."
       }
     },
-    {"id": "rua-em-obra", "tipo": "estrada", "footprint": [1, 1], "tamanho": [64, 64], "anchor": [0, 0], "estados": {"pedras": "sprites/road/rua-em-obra-pedras.png", "obra-1": "sprites/road/rua-em-obra-obra-1.png", "obra-2": "sprites/road/rua-em-obra-obra-2.png"}, "licenca": "gerado pelo Codex (image_generation) para o projeto em 2026-10-16; sem asset do jogo de 1998", "origem": {"base": "base/road/rua-em-obra/rua-em-obra-base.png", "semente": null, "nota": "I-TELA-RUA-SENDO-ASSENTADA: o tile de rua em obra, pedras soltas e um e dois tercos calcados, na sequencia ate road-m0; registro em base/road/rua-em-obra/geracao.json."}},
+    {"id": "rua-em-obra", "tipo": "estrada", "footprint": [1, 1], "tamanho": [64, 64], "anchor": [0, 0], "estados": {"marcado": "sprites/road/rua-em-obra-marcado.png", "pedras": "sprites/road/rua-em-obra-pedras.png", "obra-1": "sprites/road/rua-em-obra-obra-1.png", "obra-2": "sprites/road/rua-em-obra-obra-2.png"}, "licenca": "gerado pelo Codex (image_generation) para o projeto em 2026-10-16; sem asset do jogo de 1998", "origem": {"base": "base/road/rua-em-obra/rua-em-obra-base.png", "semente": null, "nota": "I-TELA-RUA-SENDO-ASSENTADA: o tile de rua em obra, pedras soltas e um e dois tercos calcados, na sequencia ate road-m0; registro em base/road/rua-em-obra/geracao.json. I-TELA-RUA-MARCADA-CINZA (2026-10-16): o marcado cinza do Codex (marcado-original.png); pedras = o cinza com as pedras do Codex (pedras-original.png) ampliadas 2x no meio; obra-1 e obra-2 = os de antes (obra-N-sem-cinza.png) sobre o cinza; registro em geracao-marcado-e-pedras.json."}},
     {
       "id": "estrada",
       "tipo": "estrada",
