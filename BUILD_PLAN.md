@@ -10446,6 +10446,22 @@ marca-d'água.
     nenhum `<video>` no `#menu-inicial`; o roteiro da I-TELA-MENU-ARTE-DE-CAPA e o do menu inicial seguem verdes; o
     build não leva `.mp4`.
 
+#### I-ARTE-RUA-DE-PEDRA-ANTIGA — a rua pronta como calçamento antigo de pedra
+Pedido do operador (2026-10-16): "precisamos de um sprite para as ruas que simbolize rua de pedra. Hoje o serf deixa uma
+pedra, mas na hora que a rua é construída parece uma rua de barro; preciso de sprite de ruas com um aspecto um pouco
+mais arredondado, com características de ruas antigas."
+- **Decisão:** o Codex gera uma textura de material de calçamento antigo (pedras arredondadas e gastas, juntas de terra),
+  128x128 e repetível sem costura; a família inteira da rua (as 16 máscaras N/L/S/O e a ponte diagonal) sai dela pelo
+  pipeline que já existe (`skills/pianco-sprite-tools/scripts/process-road-tiles.mjs`), com as bordas arredondadas que
+  ele já faz. Os estágios de obra (`obra-1`, `obra-2`) copiam o calçado do `road-m0` novo, para a sequência terminar
+  na rua nova. A rua de antes fica em `assets/base/road-tiles/` como registro.
+- **Aceite:**
+  1. os 17 PNGs `sprites/road/road-*.png` têm 64x64 e saem do material novo pelo pipeline; o original e o registro do
+     Codex ficam em `assets/base/road-tiles/calcamento-antigo/`;
+  2. a rua lê como pedra, e não como terra: a média de saturação dos pixels opacos do `road-m0` novo é menor que a do
+     antigo (o calçamento é cinza e bege; o antigo, ocre de barro);
+  3. a captura de uma rua pronta com reta, curva e cruzamento no jogo, e o roteiro da rua sendo assentada seguem verdes.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
