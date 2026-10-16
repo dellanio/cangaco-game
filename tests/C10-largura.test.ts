@@ -56,7 +56,10 @@ describe('C10 — a largura do predio tem regra, como a altura', () => {
   it('(c) o largo demais encolhe para k x lote; excecoes preservam escala', () => {
     const cabana = predios.find((e) => e.id === 'woodcutters') as EntradaDeAsset;
     const lote = cabana.footprint[0] * TILE;
-    const largo: EntradaDeAsset = { ...cabana, tamanho: [214, cabana.tamanho[1]] };
+    // a amostra sem o fator de exibicao (I-ARTE-LENHADOR-MAIOR, 1,3): ele multiplica depois do teto, e aqui se mede o teto
+    const { escalaDeExibicao: _fator, ...semFator } = cabana;
+    void _fator;
+    const largo: EntradaDeAsset = { ...semFator, tamanho: [214, cabana.tamanho[1]] };
     const escala = escalaDoSprite(largo, regraA, TILE, lote, regraL);
     expect(largo.tamanho[0] * escala).toBeCloseTo(lote, 6);
     expect(cabana.tamanho[0]).toBe(lote);
