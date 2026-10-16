@@ -10516,6 +10516,28 @@ Etapa 3 do plano de pixel art (pedido do operador, 2026-10-16), depois do I-ARTE
   2. o pé no mesmo lugar de antes (a linha do pé do parado de frente não muda mais que 2 px);
   3. os roteiros das 4 unidades seguem verdes, e capturas no jogo.
 
+#### I-TELA-OBREIRO-NIVELA-O-LOTE — o obreiro anda de tile em tile pelo lote enquanto nivela
+Pedido do operador (2026-10-16): "o builder não está no começo da construção andando em cada tile e simulando uma
+terraplanagem. Atualmente ele fica fora da unidade batendo como se tivesse construindo".
+- **Referência do KaM:** `src/units/tasks/KM_UnitTaskBuild.pas:681-766` (`TKMTaskBuildHouseArea.Execute`): o obreiro
+  anda até cada célula do lote, cava nela (`uaWork1`) e a aplaina, passa à seguinte e, no fim, sai do lote.
+- **Decisão:** só tela. A sim continua com o nivelamento por tempo acumulado e o obreiro no posto em volta da obra
+  (mover a unidade lógica para dentro do lote mexeria no caminho e na colisão do canteiro). O desenho do obreiro que
+  `nivelando` vai para o tile do lote que está sendo aplainado, como o roceiro já é desenhado dentro do campo
+  (`render/gesto-do-trabalho.ts`), e anda até ele. Mesma leitura do canteiro da F17d (`render/nivelamento-obra.ts`).
+  - a ordem dos tiles é em zigue-zague (fileira a fileira, alternando o sentido), para cada tile seguinte ser vizinho;
+  - com mais de um obreiro na obra, cada um fica num tile diferente;
+  - o gesto ao nivelar é a enxada (`arar`, que o obreiro já tem); andando entre tiles, `andar`;
+  - o chão: a terra raspada (a peça `terra` do canteiro) aparece só nos tiles já aplainados, na mesma ordem; o lote
+    ainda não nivelado mostra o chão de antes, com as estacas e o cordel.
+- **Aceite:**
+  1. a regra pura, por tabela: a ordem em zigue-zague de um lote 3x2 e 4x3 (cada tile vizinho do anterior); o tile
+     de cada obreiro pela leitura do canteiro (com 1 e com 2 obreiros, nunca o mesmo tile); um tile já aplainado não é
+     escolhido de novo enquanto houver tile por aplainar;
+  2. no jogo, com uma obra nova: o obreiro que nivela é desenhado dentro do lote, passa por pelo menos 2 tiles
+     diferentes e usa o gesto `arar`; a terra raspada cobre menos tiles no começo do que no fim do nivelamento;
+  3. a posição lógica do obreiro não muda (a sim não muda): os testes da sim seguem verdes sem alteração.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
