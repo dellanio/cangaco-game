@@ -10413,6 +10413,17 @@ marca-d'água.
   2. Roteiro em 1280x720 e 1920x1080: o `<video>` existe, mudo, em laço, sem controles, toca (o `currentTime` anda) e
      cobre a janela; a caixa do menu, os botões e a capa de fundo continuam (o roteiro da I-TELA-MENU-ARTE-DE-CAPA
      segue verde); com `?capaFixa` não há vídeo. Captura de dois instantes.
+  - **Emenda (pedido do operador, 2026-10-16, antes do código): sem laço; o vídeo toca uma vez e some na capa.** "O
+    vídeo da capa inicial não precisa ficar em loop; ao final de sua apresentação aplique um efeito pra não demonstrar ao
+    usuário e deixe a foto carregada." Revoga o laço de ida e volta. O derivado volta a ser só o vídeo para frente
+    (10 s, sem áudio). Perto do fim (a duração do fade antes do último quadro, para o quadro final não congelar à
+    vista), o vídeo começa a sumir num fade lento e, ao terminar, o elemento sai; fica a capa estática, que já está por
+    baixo. **Aceite revisto:**
+    1. o derivado tem ~10 s (a duração do original, ±0,5 s), sem áudio; o registro em `video-geracao.json` diz o novo
+       processamento;
+    2. roteiro em 1280x720 e 1920x1080: o `<video>` existe, mudo, **sem laço** (`loop === false`), sem controles, toca e
+       cobre a janela; depois do fim, não há mais `<video>` no menu, a capa de fundo e a caixa continuam, e os botões
+       respondem. Captura durante o vídeo e depois do fim; com `?capaFixa`, nada de vídeo.
 
 ## Backlog com gatilho
 
