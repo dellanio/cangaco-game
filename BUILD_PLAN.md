@@ -10503,6 +10503,19 @@ as 29 unidades têm o parado com 1 quadro; a `pianco-units` pede 4.
   2. o manifesto do serf declara essas contagens (o parado em laço, com `fps`);
   3. captura no jogo do serf parado, andando e carregando, ao lado do de antes; os roteiros do serf seguem verdes.
 
+#### I-ARTE-UNIDADES-PIXELLAB-V2 — obreiro, lenhador, cabra e lavrador no padrão do serf novo
+Etapa 3 do plano de pixel art (pedido do operador, 2026-10-16), depois do I-ARTE-SERF-PIXELLAB-V2.
+- **Decisão:** como no serf: o `parado` de frente de cada uma (`laborer`, `woodcutter`, `militia`, `farmer`) vira o
+  personagem v3 do PixelLab (8 direções, 64x96); o parado ganha a respiração (4 quadros), o andar e a morte são refeitos
+  (8 e 7 + 1 parado + 4 esmaecendo = 12), nas 5 direções canônicas. As animações de ofício e de ataque (trabalhar,
+  martelar, assentar, arar, semear, colher, carregando, atacar) continuam as de antes, que são o mesmo personagem.
+  `tools/pixellab-atlas.mjs --manter` monta o atlas. O de antes de cada uma fica em `assets/base/units/<id>-pixellab-v2/antes/`.
+- **Aceite:**
+  1. em cada uma das 4, o atlas tem o parado com 4 quadros em laço, o andar 8 e o morrer 12, nas 5 direções, e todas
+     as outras animações do manifesto de antes, com as mesmas contagens; quadros 64x96;
+  2. o pé no mesmo lugar de antes (a linha do pé do parado de frente não muda mais que 2 px);
+  3. os roteiros das 4 unidades seguem verdes, e capturas no jogo.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
