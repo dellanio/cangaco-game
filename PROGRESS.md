@@ -22503,3 +22503,10 @@ e passou isolado (21 s para 4 testes); é o mesmo padrão do `SHOT-vite-orfao` 2
 - O modo admin por `?admin` na URL (lembrado no navegador; `?admin=0` desliga) está homologado como está.
 - Pedidos na mesma mensagem: serraria +10%, lenhador -10%, lenha da cabana no deque e maior, comensal menor, o tile
   marcado da rua cinza e as pedras empilhadas no primeiro estágio. Itens no BUILD_PLAN.
+- Entregues na mesma leva: `I-ARTE-SERRARIA-E-LENHADOR-AJUSTE` (d80e93ab; serraria 1,1, lenhador 1,17),
+  `I-TELA-COMENSAL-MENOR` (078924f1; 0,65), `I-TELA-LENHA-NO-DEQUE-DO-LENHADOR` (8cabde13; ponto (0,83; 0,86) medido na
+  arte, 1,8x, 25°), `I-TELA-RUA-MARCADA-CINZA` (a3fdf46c; o cinza do Codex; as pedras ampliadas 2x e os estágios de
+  obra compostos sobre o cinza aqui, porque o `obra-1` do Codex tinha fundo transparente e a sequência saltava do
+  cinza para a terra) e `I-TELA-MENU-VIDEO-DE-CAPA` (o vídeo do operador em laço ida e volta, 20 s, mudo, 3,5 MB,
+  sobre a capa; **voltar para a imagem: `VIDEO_DA_CAPA = null` em `src/ui/menu-inicial.ts`**; `?menu&capaFixa` mostra
+  só a capa). O registro do vídeo fica em `assets/base/ui/menu-capa/video-geracao.json` (o manifesto só aceita imagem).
