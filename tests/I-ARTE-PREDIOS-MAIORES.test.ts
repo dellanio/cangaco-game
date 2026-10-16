@@ -21,7 +21,8 @@ const regraA = regraDoManifesto(manifesto);
 const regraL = regraDeLarguraDoManifesto(manifesto);
 const TILE = 64;
 const predios = manifesto.assets.filter((e): e is EntradaDeAsset => e.tipo === 'predio') as EntradaDeAsset[];
-const ESPERADO: Record<string, number> = { butchers: 1.2, armory_workshop: 1.2, tannery: 1.2, stables: 1.3, barracks: 1.2 };
+// I-ARTE-LENHADOR-MAIOR (pedido do operador, 2026-10-16): a cabana do lenhador +30%
+const ESPERADO: Record<string, number> = { butchers: 1.2, armory_workshop: 1.2, tannery: 1.2, stables: 1.3, barracks: 1.2, woodcutters: 1.3 };
 
 describe('I-ARTE-PREDIOS-MAIORES', () => {
   it('os quatro originais e o quartel do ajuste 9 saem maiores pelo fator pedido, e os outros nao mudam', () => {

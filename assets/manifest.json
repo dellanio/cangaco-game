@@ -67,7 +67,7 @@
 },
     {
   "id": "woodcutters",
-  "tipo": "predio",
+  "tipo": "predio", "escalaDeExibicao": 1.3,
   "footprint": [
     3,
     2

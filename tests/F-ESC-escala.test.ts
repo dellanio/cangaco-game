@@ -129,7 +129,8 @@ describe('F-ESC — altura maxima pela largura do lote', () => {
       });
     }
     // o caso que encolhe: o primeiro predio sem excecao com o dobro da altura do teto
-    const alvo = predios.find((e) => e.alturaMaxPorLargura === undefined);
+    // sem teto proprio e sem fator de exibicao (I-ARTE-LENHADOR-MAIOR: o lenhador, que era o primeiro, ganhou fator)
+    const alvo = predios.find((e) => e.alturaMaxPorLargura === undefined && e.escalaDeExibicao === undefined);
     if (!alvo) throw new Error('sem predio sem excecao');
     const lote = alvo.footprint[0] * tilePx;
     const alto: EntradaDeAsset = { ...alvo, tamanho: [alvo.tamanho[0], 2 * regra.k * lote] };
