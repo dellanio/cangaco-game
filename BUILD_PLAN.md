@@ -10687,6 +10687,27 @@ acionado abre um popup com as 3 posições pra salvar."
      seção Partida; capturas. Um passo despausado com mouse.down / 150 ms / mouse.up (CLAUDE.md §8);
   3. os roteiros que carregavam pelo H seguem verdes com o ajudante.
 
+#### I-TELA-TERRENO-NATURAL — a borda da areia arredondada e irregular, e manchas de tom de sertão (teste: fase 1)
+Pedido do operador (2026-10-17): "o jogo está muito quadrado, veja essa parte que simula grama, é um conjunto de
+quadrados, precisa ser mais natural e arredondado. E o terreno pelo mapa precisa ter mais variações e tons de terreno
+simulando uma região sertaneja (...) tente replicar na primeira fase da campanha para eu validar."
+- **Causa (medida):** a borda areia/grama escolhe a peça de cada tile pelos 4 vizinhos retos (`mascaraCardinal`, 16
+  peças): a mancha de areia sai em degraus de 64 px. E o chão é uma textura por terreno, com 4 variantes por tile.
+- **Decisão:** só tela; o mapa, a sim e a contagem de tiles não mudam. Nos mapas listados em
+  `data/terreno-natural.json` (hoje só `fase-01-pianco`):
+  - **borda:** um campo suave da areia (a ocupação dos tiles de areia desfocada, mais um ruído de 1 a 2 tiles, numa
+    grade de 8 amostras por tile) decide, ponto a ponto, areia ou grama. A areia avança sobre a grama vizinha onde o
+    campo passa do limiar, e a grama cobre os cantos da areia onde não passa: a mancha fica arredondada e irregular.
+    São duas camadas por cima do chão de hoje, cada uma com a sua máscara; as peças `borda-grama-m*` saem desses mapas.
+  - **tons:** por cima do chão, manchas grandes e suaves (de 6 a 20 tiles), de ruído com a semente do mapa: terra
+    avermelhada, chão pálido e capim seco, em alfa baixo.
+- **Aceite:**
+  1. a regra pura, por tabela: tile de areia cercado de areia dá campo 1 e de grama dá 0; a borda de um quadrado de areia
+     não tem degrau de tile (a linha do limiar corta os tiles de canto); a mesma semente dá o mesmo campo; o tom fica
+     dentro do alfa máximo do dado;
+  2. no jogo, na fase 1: as duas camadas e as manchas de tom criadas (na ponte), nada disso no sertão (jogo livre), e a
+     captura da mesma área da fase 1 antes e depois.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
