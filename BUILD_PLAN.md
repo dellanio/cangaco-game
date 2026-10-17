@@ -10633,6 +10633,24 @@ primeiras fases coloque pelo menos 50 pedras já de início e 50 madeiras." Subs
      antes;
   3. os alvos de dificuldade da campanha (o jogador automático) continuam ok.
 
+#### I-TELA-ENFEITES-EM-SITIOS — os enfeites de gente (carroça, cerca, poço, varal, lenha, cruz) só em poucos sítios abandonados
+Pedido do operador (2026-10-17): "esses enfeites que o codex colocou no passado era pra usar 1 vez ou outra no mapa em
+locais específicos pra simular uma casa velha com carroça e cercas abandonadas. remova essa repetição enorme desses
+itens que tem no mapa". Hoje (I-TELA-ENFEITES-NO-MAPA) 4% dos tiles de chão fora da vila ganham um enfeite qualquer, e
+os oito se repetem pelo mapa todo.
+- **Decisão:** só tela; a sim não muda.
+  - **Sítio abandonado:** os enfeites de gente (`ox_cart`, `stick_fence`, `well`, `drying_rack`, `firewood`,
+    `roadside_cross`) só aparecem juntos, num arranjo fixo em volta de um centro: a casa velha (a `tapera`, arte do
+    Codex, quando chegar), a carroça e a lenha de um lado, o poço e o varal do outro, uma linha de cerca na frente e a
+    cruz um pouco afastada. Poucos por mapa: 3 num mapa de 128x128 (proporcional à área), a pelo menos 32 tiles um do
+    outro e fora do raio da vila; só onde todo o arranjo cai em chão (grama ou areia).
+  - **Avulsos:** só o que é natural (`flat_slab`, `ox_bones`) continua espalhado, e bem mais raro (0,8% em vez de 4%).
+- **Aceite:**
+  1. a regra pura, no mapa do sertão: nenhum enfeite de gente fora de um sítio; no máximo 3 sítios, a 32 tiles ou mais
+     um do outro, cada um com o arranjo inteiro em chão e fora da vila; os avulsos só `flat_slab` e `ox_bones`, na
+     densidade nova (±20%); a mesma semente dá o mesmo mapa;
+  2. no jogo: a contagem de cada enfeite na ponte, e a captura de um sítio.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
