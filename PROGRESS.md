@@ -22536,3 +22536,31 @@ e passou isolado (21 s para 4 testes); é o mesmo padrão do `SHOT-vite-orfao` 2
 - O piloto 3D (branch `cangaco-game-3d`, commits até a9d3b07e) foi revogado pelo operador: o acabamento do 3D ficou
   abaixo da arte pintada; as ferramentas do Blender ficam na branch. Ali, a modelagem por código contrariou a pianco-units
   ("não modele geometria por código"), registrado aqui como lição.
+
+## 2026-10-16 — as quatro unidades do PixelLab e os cinco ajustes de realismo
+
+Verificado (teste, roteiro de tela e captura aberta em cada um; `verify:rapido` verde antes de cada commit):
+- `I-ARTE-UNIDADES-PIXELLAB-V2` (0eb2de3e): obreiro, lenhador, cabra e lavrador refeitos como o serf (parado com
+  respiração de 4 quadros, andar e morte novos; ofício e ataque os de antes). O parado do obreiro em v3 personalizado:
+  o template o agachava de 81 para 76 px. 69 gerações. `tools/pixellab-atlas.mjs` recusava a morte nas direções depois
+  da primeira (corrigido).
+- `I-TELA-OBREIRO-NIVELA-O-LOTE` (6a5212cd): o obreiro que nivela é desenhado dentro do lote, capinando pelo
+  zigue-zague (KaM `src/units/tasks/KM_UnitTaskBuild.pas:681-766`); a terra raspada aparece tile a tile. Só tela.
+- `I-TELA-CORDA-ENTRE-AS-ESTACAS` (cf5ba56d): corda de sisal amarrada no alto das quatro estacas, nos quatro lados.
+- `I-TELA-OBRA-EM-ORDEM-DE-CONSTRUCAO` (114ff7af): a obra da cabana do lenhador sobe em fundação, pilares, vigas,
+  paredes e telhado, lido da própria arte (`src/render/ordem-de-construcao.ts`). Só o lenhador
+  (`data/obra-revelacao.json: ordemDeConstrucao`); os outros esperam o operador aprovar.
+- `I-TELA-LENHADOR-CORTA-E-DERRUBA` (82c53015): o lenhador corta a 0,4 tile do tronco, lascas nos golpes, a árvore
+  tomba no fim do primeiro corte e fica deitada encolhendo (arte do Codex), a tora nas mãos na volta. Só tela.
+- `I-ARTE-MONTANHA-COM-VEIOS` (35ac8ae7): um bloco de granito em pé por tile de montanha, e o veio de ferro ou de ouro
+  na face (arte do Codex); o morrinho do veio saiu. O aceite supunha todo veio na montanha: o dado mostrou 4 de ferro e
+  5 de ouro na rocha encostada no maciço, e esses também ganham o bloco com veio.
+
+Ressalvas:
+- O Codex roda com `-s workspace-write` (o modo automático recusou `danger-full-access`).
+- `verify:rapido` estourou o teto de 5 s em dois testes sob carga (F24a, F17f), cada um numa corrida diferente; isolados
+  passam. Mesmo padrão intermitente do SHOT-vite-orfao.
+
+### Perguntas em aberto (2026-10-16, noite)
+- Aprovar a ordem de construção do lenhador para replicar nas outras casas.
+- Homologar a árvore caída e o maciço com veios (arte do Codex).
