@@ -10768,7 +10768,11 @@ em `assets/base/units/serf-pixellab-v2/rotacoes/`.
   1. o parado do serf tem 4 quadros em laço a 1,5 fps nas 5 direções; as outras animações do atlas são quadro a
      quadro iguais às de antes;
   2. em cada direção, entre um quadro e outro do parado, o topo da cabeça varia no máximo 1 px, e da cintura para baixo
-     os pixels são idênticos; o topo da cabeça no sul fica a no máximo 2 px do topo do andar (o serf não agacha);
+     os pixels são idênticos; o topo da cabeça no quadro 0 é o da imagem em pé da direção (`rotacoes/`), com o pé
+     na mesma linha (o serf não agacha);
+  - **Emenda do aceite 2 (2026-10-17, antes do teste; pela medida):** a primeira versão media o topo contra o andar.
+    Medido e visto numa prancha: a imagem em pé do sul tem o topo na linha 17, igual ao parado de antes; o andar do
+    PixelLab é que sai ampliado (topo 12). O serf de hoje não agacha; a referência certa é a imagem em pé.
   3. o roteiro do serf parado na vila, despausado, passa por mais de um quadro do parado; captura aberta.
 
 ## Backlog com gatilho
