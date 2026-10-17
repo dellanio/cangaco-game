@@ -10708,6 +10708,18 @@ simulando uma região sertaneja (...) tente replicar na primeira fase da campanh
   2. no jogo, na fase 1: as duas camadas e as manchas de tom criadas (na ponte), nada disso no sertão (jogo livre), e a
      captura da mesma área da fase 1 antes e depois.
 
+#### I-TELA-GAVETA-MOSTRA-A-FASE — a gaveta de um save da campanha diz a fase, e não "Jogo livre"
+Pendência anotada em I-TELA-PARTIDA-NAS-OPCOES (2026-10-17), na fila aprovada pelo operador no mesmo dia: o save de uma
+fase aparece na gaveta como "Jogo livre", porque o tipo da gaveta só distingue escaramuça e jogo livre.
+- **Decisão:** só tela; o save e o índice das gavetas não mudam. A gaveta pronta passa a trazer a fase do estado
+  guardado (o `fase.id` dele), com o número e o local lidos do dado da campanha. O texto usa o molde do tema
+  `Fase {numero} · {local}` no lugar do tipo.
+- **Aceite:**
+  1. a regra pura, por tabela: um save da fase 2 dá "Gaveta n: Fase 2 · Patos, tick ..."; um save do jogo livre continua
+     "Jogo livre" e um da escaramuça, "Escaramuça";
+  2. no jogo: um save da fase 1 guardado numa gaveta, e o popup de Carregar mostra "Fase 1 · Piancó" nessa gaveta
+     (captura).
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
