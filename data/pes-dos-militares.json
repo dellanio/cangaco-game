@@ -11,7 +11,7 @@
       "id": "militia",
       "atlas": "assets/sprites/units/militia/militia.json",
       "imagem": "assets/sprites/units/militia/militia.png",
-      "sha256": "8952c2ec43f7cd8f04906aa593c683bdd026e8af588795142a34c797369ca11a"
+      "sha256": "ec5cd387916541af5593160447bb1d21c1c5ae2a0f27449ee1f643b556149d0b"
     },
     {
       "id": "axe_fighter",
@@ -693,26 +693,6 @@
       "recuoInferiorPx": 0,
       "alturaDoQuadro": 96
     },
-    "militia/parado/n/0000": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/parado/ne/0000": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/parado/l/0000": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/parado/se/0000": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/parado/s/0000": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
     "militia/andar/n/0000": {
       "recuoInferiorPx": 5,
       "alturaDoQuadro": 96
@@ -870,6 +850,326 @@
       "alturaDoQuadro": 96
     },
     "militia/andar/s/0007": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/n/0000": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/n/0001": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/n/0002": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/n/0003": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/n/0004": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/n/0005": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/n/0006": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/n/0007": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/n/0008": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/n/0009": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/n/0010": {
+      "recuoInferiorPx": 0,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/n/0011": {
+      "recuoInferiorPx": 0,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/ne/0000": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/ne/0001": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/ne/0002": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/ne/0003": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/ne/0004": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/ne/0005": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/ne/0006": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/ne/0007": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/ne/0008": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/ne/0009": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/ne/0010": {
+      "recuoInferiorPx": 0,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/ne/0011": {
+      "recuoInferiorPx": 0,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/l/0000": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/l/0001": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/l/0002": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/l/0003": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/l/0004": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/l/0005": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/l/0006": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/l/0007": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/l/0008": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/l/0009": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/l/0010": {
+      "recuoInferiorPx": 0,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/l/0011": {
+      "recuoInferiorPx": 0,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/se/0000": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/se/0001": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/se/0002": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/se/0003": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/se/0004": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/se/0005": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/se/0006": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/se/0007": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/se/0008": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/se/0009": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/se/0010": {
+      "recuoInferiorPx": 0,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/se/0011": {
+      "recuoInferiorPx": 0,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/s/0000": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/s/0001": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/s/0002": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/s/0003": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/s/0004": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/s/0005": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/s/0006": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/s/0007": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/s/0008": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/s/0009": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/s/0010": {
+      "recuoInferiorPx": 0,
+      "alturaDoQuadro": 96
+    },
+    "militia/morrer/s/0011": {
+      "recuoInferiorPx": 0,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/n/0000": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/n/0001": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/n/0002": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/n/0003": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/ne/0000": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/ne/0001": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/ne/0002": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/ne/0003": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/l/0000": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/l/0001": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/l/0002": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/l/0003": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/se/0000": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/se/0001": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/se/0002": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/se/0003": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/s/0000": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/s/0001": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/s/0002": {
+      "recuoInferiorPx": 5,
+      "alturaDoQuadro": 96
+    },
+    "militia/parado/s/0003": {
       "recuoInferiorPx": 5,
       "alturaDoQuadro": 96
     },
@@ -1031,246 +1331,6 @@
     },
     "militia/atacar/s/0007": {
       "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/n/0000": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/n/0001": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/n/0002": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/n/0003": {
-      "recuoInferiorPx": 6,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/n/0004": {
-      "recuoInferiorPx": 6,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/n/0005": {
-      "recuoInferiorPx": 6,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/n/0006": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/n/0007": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/n/0008": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/n/0009": {
-      "recuoInferiorPx": 0,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/n/0010": {
-      "recuoInferiorPx": 0,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/n/0011": {
-      "recuoInferiorPx": 0,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/ne/0000": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/ne/0001": {
-      "recuoInferiorPx": 4,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/ne/0002": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/ne/0003": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/ne/0004": {
-      "recuoInferiorPx": 3,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/ne/0005": {
-      "recuoInferiorPx": 3,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/ne/0006": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/ne/0007": {
-      "recuoInferiorPx": 2,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/ne/0008": {
-      "recuoInferiorPx": 2,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/ne/0009": {
-      "recuoInferiorPx": 0,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/ne/0010": {
-      "recuoInferiorPx": 0,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/ne/0011": {
-      "recuoInferiorPx": 0,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/l/0000": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/l/0001": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/l/0002": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/l/0003": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/l/0004": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/l/0005": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/l/0006": {
-      "recuoInferiorPx": 8,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/l/0007": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/l/0008": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/l/0009": {
-      "recuoInferiorPx": 0,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/l/0010": {
-      "recuoInferiorPx": 0,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/l/0011": {
-      "recuoInferiorPx": 0,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/se/0000": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/se/0001": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/se/0002": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/se/0003": {
-      "recuoInferiorPx": 6,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/se/0004": {
-      "recuoInferiorPx": 7,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/se/0005": {
-      "recuoInferiorPx": 6,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/se/0006": {
-      "recuoInferiorPx": 4,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/se/0007": {
-      "recuoInferiorPx": 3,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/se/0008": {
-      "recuoInferiorPx": 3,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/se/0009": {
-      "recuoInferiorPx": 0,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/se/0010": {
-      "recuoInferiorPx": 0,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/se/0011": {
-      "recuoInferiorPx": 0,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/s/0000": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/s/0001": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/s/0002": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/s/0003": {
-      "recuoInferiorPx": 5,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/s/0004": {
-      "recuoInferiorPx": 7,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/s/0005": {
-      "recuoInferiorPx": 6,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/s/0006": {
-      "recuoInferiorPx": 6,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/s/0007": {
-      "recuoInferiorPx": 3,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/s/0008": {
-      "recuoInferiorPx": 3,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/s/0009": {
-      "recuoInferiorPx": 0,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/s/0010": {
-      "recuoInferiorPx": 0,
-      "alturaDoQuadro": 96
-    },
-    "militia/morrer/s/0011": {
-      "recuoInferiorPx": 0,
       "alturaDoQuadro": 96
     },
     "axe_fighter/parado/n/0000": {

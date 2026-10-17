@@ -13,7 +13,7 @@ import type { TileDeGrid } from '../sim/estradas';
 import type { ModoDaFerramenta } from '../input/ferramenta';
 import { gridToScreen, ESCALA_DO_MUNDO } from './grid';
 import { chaveDeTextura } from './manifesto';
-import { gameData } from '../sim/data';
+import { ticksAssentarEstradaPorTile } from './mapa';
 import { assinaturaDosEstagios, estagiosDaRuaEmObra } from './rua-em-obra';
 import type { EstagioDaRua } from './rua-em-obra';
 
@@ -133,7 +133,7 @@ export function criarCamadaDeEstradas(cena: Phaser.Scene, tilePx: number): Camad
       const planejadas = estado?.estradasPlanejadas ?? {};
       const ordem = estado?.predios.ordem ?? null;
       // I-TELA-RUA-SENDO-ASSENTADA: a batida do obreiro muda o estagio sem mudar o conjunto de tiles
-      const estagios = estado === null ? {} : estagiosDaRuaEmObra(estado, gameData.construcao.ticksAssentarEstradaPorTile);
+      const estagios = estado === null ? {} : estagiosDaRuaEmObra(estado, ticksAssentarEstradaPorTile);
       const assinatura = assinaturaDosEstagios(estagios);
       if (estradas !== desenhada || planejadas !== desenhadoOCanteiro || ordem !== desenhadaComPredios || assinatura !== desenhadosOsEstagios) {
         const tiles = tilesOrdenados(estradas);

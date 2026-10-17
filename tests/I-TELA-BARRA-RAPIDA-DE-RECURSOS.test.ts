@@ -69,7 +69,8 @@ describe('I-TELA-BARRA-RAPIDA-DE-RECURSOS', () => {
 
   it('(3) o CSS: centrada no alto da celula do canvas, com altura de ate 28 px, e sem pegar clique', () => {
     const css = readFileSync('src/ui/estilo.css', 'utf8');
-    const i = css.lastIndexOf('#barra-rapida {');
+    // a regra base, no inicio da linha (a do prototipo `body.premium #barra-rapida`, I-TELA-PREMIUM-PROTOTIPO, e outra)
+    const i = [...css.matchAll(/^#barra-rapida {/gm)].at(-1)?.index ?? -1;
     const bloco = css.slice(i, css.indexOf('}', i));
     expect(bloco).toContain('justify-self: center');
     expect(bloco).toContain('align-self: start');

@@ -16,6 +16,8 @@ export const rendimentosDasFontes: Readonly<Record<string, number>> = Object.fro
   Object.entries(gameData.recursos.tipos).map(([tipo, recurso]) => [tipo, recurso.rendimentoPorTile]),
 );
 export const centroDaVilaInicial = gameData.economia.estadoInicial.spawnDeUnidades;
+/** I-TELA-RUA-SENDO-ASSENTADA — os ticks de um tile de rua, para os estagios da rua em obra (`estradas.ts`). */
+export const ticksAssentarEstradaPorTile = gameData.construcao.ticksAssentarEstradaPorTile;
 import type { RecursoNoTile } from '../sim/state';
 import { TERRENOS_DE_MAPA } from '../sim/data/terrenos';
 import type { TerrenoDeMapa } from '../sim/data/types';
