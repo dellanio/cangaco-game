@@ -50,6 +50,7 @@ import type { Ajuda } from './ui/ajuda';
 import type { TelaDeCarregamento } from './ui/carregamento';
 import { montarBarra } from './ui/barra';
 import { montarArquivo } from './ui/arquivo';
+import { buscaDoReinicio } from './ui/reinicio';
 import { criarArquivoDaPartida, mapaDaGaveta } from './arquivo-da-partida';
 import { criarFerramenta } from './input/ferramenta';
 import { criarSelecao } from './input/selecao';
@@ -195,8 +196,8 @@ export function iniciarPartida(
   // entao ela pode nascer antes do resto da interface. Quem a abre e o teclado, e
   // e por isso que ela e o quarto parametro: com a ajuda aberta, o `Esc` e dela.
   const ajuda = ajudaDoMenu ?? montarAjuda(gameData);
-  // H-TELA-OPCOES-E-VOLUME — a ajuda em jogo abre as opcoes de som
-  opcoesDeSom?.ligarNaAjuda();
+  // H-TELA-OPCOES-E-VOLUME — as opcoes de som: desde a I-TELA-PARTIDA-NAS-OPCOES, o botao mora no bloco Partida da aba
+  // Opcoes (`montarArquivo`, `aoOpcoesDeSom`), e nao mais na caixa do H
   ligarTeclado(ferramenta, window, selecao, ajuda);
 
   // O laco. `?pausado` na URL o faz NASCER pausado: e o que o runner de screenshot usa para todo
@@ -464,6 +465,9 @@ export function iniciarPartida(
       selecaoMilitar.limpar();
       painelDoArquivo.mostrar({ ok: true, acao: 'escaramuca', tick: 0 });
     },
+    // I-TELA-PARTIDA-NAS-OPCOES: recomeca a mesma partida do zero (a fase, a escaramuca ou o jogo livre)
+    aoReiniciar() { irPara(buscaDoReinicio(sessao.estado)); },
+    ...(opcoesDeSom ? { aoOpcoesDeSom: () => { opcoesDeSom.abrir(); } } : {}),
     aoMenu() {
       // E-SAVE-GAVETAS: o menu inicial e a pagina sem parametro; o que nao foi guardado se perde
       window.location.assign(window.location.pathname);

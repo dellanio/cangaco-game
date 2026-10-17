@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 const {readFileSync}=require('node:fs');
 const {retanguloDoCanvas}=require('./_canvas');
 const {roteiro:regressao}=require('./F26b');
@@ -21,7 +22,7 @@ async function roteiro(ctx){
   const canvas=await retanguloDoCanvas(page);
   const texto=readFileSync('test-output/I-TELA-SELECAO-NO-PE.save.txt','utf8');
   await page.evaluate(s=>window.localStorage.setItem('cangaco:partida',s),texto);
-  await page.keyboard.press('h');await page.click('#ajuda [data-acao="carregar"]');await page.keyboard.press('Escape');
+  await carregarGaveta(page);await page.keyboard.press('Escape');
   const lista=(await estado()).unidadesRenderizadas.filter(u=>u.id.startsWith('galeria-'));
   const xs=lista.map(u=>(u.gxDesenhado+0.5)*terreno.tile_px+u.deslocamentoPx.x),ys=lista.map(u=>(u.gyDesenhado+0.5)*terreno.tile_px+u.deslocamentoPx.y);
   const cx=(Math.min(...xs)+Math.max(...xs))/2,cy=(Math.min(...ys)+Math.max(...ys))/2;

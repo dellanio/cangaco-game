@@ -1,4 +1,5 @@
 'use strict';
+const { novaEscaramuca } = require('./_partida');
 // Roteiro da C-TELA-03 — pegar a tropa inteira pela caixa e mover os 18.
 //   1. H -> "Nova escaramuca"; camera na tropa;
 //   2. caixas do jeito que a mao faz, todas DESPAUSADAS e com o botao seguro (§8):
@@ -21,9 +22,8 @@ async function roteiro(ctx) {
   const canvas = await retanguloDoCanvas(page);
   const esperarFrame = () => page.waitForTimeout(200);
 
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="escaramuca"]');
+  await novaEscaramuca(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

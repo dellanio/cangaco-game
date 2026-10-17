@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da F-REPL-e — OS ESTADOS DA ARVORE NA TELA.
 //
 // Carrega pelo botao "carregar" (F23b) a partida que `tests/F-REPL-e-arvore.test.ts`
@@ -60,9 +61,8 @@ async function roteiro(ctx) {
   }
   const plano = JSON.parse(readFileSync(`test-output/${evidencia}.json`, 'utf8'));
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync(`test-output/${evidencia}.save.txt`, 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

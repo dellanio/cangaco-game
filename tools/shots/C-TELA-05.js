@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da C-TELA-05 — O PAINEL DA FEIRA MANDA A ORDEM (SetTrade).
 //
 // Carrega a partida que `tests/F35-feira.test.ts` grava: uma feira ligada ao armazem com a
@@ -25,9 +26,8 @@ async function roteiro(ctx) {
   const arquivo = 'test-output/F35.save.txt';
   afirmar(existsSync(arquivo), `${arquivo} nao existe: rode \`npm run test\` antes`);
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync(arquivo, 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

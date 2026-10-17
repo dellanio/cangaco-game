@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro do BUG-Z (nome de unidade coberto pelas unidades da frente) — aceite 2 e 3 do BUGS.md.
 //
 // Carrega a partida da F-VIVO-h (a escola anima), onde a captura mostrou o "Carregador" cortado
@@ -64,9 +65,8 @@ async function roteiro(ctx) {
     afirmar((await estado()).modoAdmin === true, 'a pagina abriu no modo admin');
   }
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync('test-output/F-VIVO-h.save.txt', 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();
@@ -129,9 +129,8 @@ async function roteiro(ctx) {
   // tem o serrador dentro da serraria. A partida da F-VIVO-h nao tem unidade escondida (medido)
   const pausada = JSON.parse(readFileSync('test-output/F-VIVO-e-pausado.partida.json', 'utf8'));
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync('test-output/F-VIVO-e-pausado.save.txt', 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

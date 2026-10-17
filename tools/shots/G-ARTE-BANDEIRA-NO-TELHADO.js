@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // G-ARTE-BANDEIRA-NO-TELHADO: as casas dos prints do operador com a bandeira presa na cumeeira. O save
 // da vila pronta tem lenhador, serraria, pedreira, fazenda e canavial do jogador (a casa do pescador
 // nao esta nele; ela fica coberta pelo teste do ponto no sprite).
@@ -10,8 +11,8 @@ const { predios: defs } = require('../../data/buildings.json');
 async function roteiro({ page, capturar, estado, afirmar }) {
   const envelope = JSON.parse(readFileSync('saves/teste-operador-vila-pronta.txt', 'utf8'));
   await page.evaluate((v) => window.localStorage.setItem('cangaco:partida', v), JSON.stringify(envelope));
-  await page.keyboard.press('h'); await page.waitForTimeout(200);
-  await page.click('#ajuda [data-acao="carregar"]'); await page.waitForTimeout(200);
+   await page.waitForTimeout(200);
+  await carregarGaveta(page); await page.waitForTimeout(200);
   await page.keyboard.press('Escape'); await page.waitForTimeout(200);
   afirmar((await estado()).tick === envelope.estado.tick, 'save carregado');
   const canvas = await retanguloDoCanvas(page);

@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da F24c — A CASA DO GIBAO POR ENCOMENDA, e o Shift+clique que pede de dez em dez.
 //
 // Carrega a partida que `tests/F24c-casa-do-gibao-por-encomenda.test.ts` grava: a Casa do
@@ -42,7 +43,7 @@ async function roteiro(ctx) {
   await page.evaluate(() => window.document.querySelector('#ajuda [data-atalho="encomenda-dez"]')?.scrollIntoView({ block: 'center' }));
   await esperarFrame();
   await capturar('ajuda');
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

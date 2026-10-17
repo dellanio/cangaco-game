@@ -72,10 +72,11 @@ async function roteiro({ page, capturar, afirmar }) {
   // ---- 3. pelo jogo, despausado -----------------------------------------------------------------
   await page.goto(`${base}?pausado`);
   await page.waitForFunction(() => Boolean(window.__cangaco && window.__cangaco.pronto), { timeout: TIMEOUT_PRONTO_MS });
-  await page.keyboard.press('h');
+  // I-TELA-PARTIDA-NAS-OPCOES: o botao das opcoes de som mora no bloco Partida da aba Opcoes
+  await page.click('#abas [data-aba="opcoes"]');
   await page.waitForTimeout(150);
-  const botaoNaAjuda = '#ajuda button[data-acao="opcoes-de-som"]';
-  afirmar((await page.textContent(botaoNaAjuda)) === tema.som.abrirNaAjuda, 'a ajuda em jogo deveria ter o botao das opcoes de som');
+  const botaoNaAjuda = '#opcoes button[data-acao="opcoes-de-som"]';
+  afirmar((await page.textContent(botaoNaAjuda)) === tema.som.abrirNaAjuda, 'a aba Opcoes deveria ter o botao das opcoes de som');
   const tickAntes = await page.evaluate(() => window.__cangaco.tick);
   await page.keyboard.press('p');
   await apertar(botaoNaAjuda);
@@ -93,11 +94,11 @@ async function roteiro({ page, capturar, afirmar }) {
   afirmar(efeitos >= 40 && efeitos <= 60, `o aperto na metade deveria levar efeitos para perto de 50, veio ${efeitos}`);
   const final = await guardado();
   afirmar(final.mudo === true && Math.round(final.efeitos * 100) === efeitos, `o jogo guarda o mudo e os efeitos: ${JSON.stringify(final)}`);
-  afirmar(await page.isVisible(CAIXA) && await page.isVisible('#ajuda'), 'a caixa de som fica por cima da ajuda, as duas abertas');
+  afirmar(await page.isVisible(CAIXA) && await page.isVisible('#opcoes'), 'a caixa de som fica por cima, com a aba Opcoes aberta');
   await capturar('pelo-jogo');
   await page.keyboard.press('Escape');
   await page.waitForTimeout(150);
-  afirmar(await page.isHidden(CAIXA) && await page.isVisible('#ajuda'), 'o primeiro Esc fecha so a caixa de som; a ajuda fica');
+  afirmar(await page.isHidden(CAIXA) && await page.isVisible('#opcoes'), 'o Esc fecha so a caixa de som; a aba Opcoes fica');
   console.log(`[H-TELA-OPCOES-E-VOLUME] guardado: ${JSON.stringify(final)}; ticks despausado: ${tickDepois - tickAntes}`);
 }
 

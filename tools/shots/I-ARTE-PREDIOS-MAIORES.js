@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // I-ARTE-PREDIOS-MAIORES: Casa de Carne, Casa do Gibao, Curtume (+20%) e Cocheira (+30%), de pe, ao
 // lado do Moinho (referencia sem fator). O save vem de tests/I-ARTE-PREDIOS-MAIORES.test.ts.
 const { readFileSync } = require('node:fs');
@@ -8,8 +9,8 @@ const terreno = require('../../data/terrain.json');
 async function roteiro({ page, capturar, estado, afirmar }) {
   const save = readFileSync('test-output/I-ARTE-PREDIOS-MAIORES.save.txt', 'utf8');
   await page.evaluate((v) => window.localStorage.setItem('cangaco:partida', v), save);
-  await page.keyboard.press('h'); await page.waitForTimeout(200);
-  await page.click('#ajuda [data-acao="carregar"]'); await page.waitForTimeout(200);
+   await page.waitForTimeout(200);
+  await carregarGaveta(page); await page.waitForTimeout(200);
   await page.keyboard.press('Escape'); await page.waitForTimeout(200);
   const s = await estado();
   const cc = s.prediosDoEstado.cc;

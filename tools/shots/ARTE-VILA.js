@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro ARTE-VILA (integracao da arte do Codex, integra-arte-1; substitui os PILOTO-* da branch
 // de arte). Carrega a vila pronta (`saves/teste-operador-vila-pronta.txt`, D-SAVE-VILA-PRONTA) e
 // captura a vila com a arte nova em zoom 1, depois closes em zoom 2: armazem, padaria, moinho,
@@ -23,9 +24,8 @@ async function roteiro(ctx) {
   const salvo = JSON.parse(readFileSync(SAVE, 'utf8')).estado;
 
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync(SAVE, 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

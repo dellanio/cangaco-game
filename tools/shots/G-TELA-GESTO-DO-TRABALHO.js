@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // G-TELA-OBREIRO-POR-TAREFA e G-TELA-ROCEIRO-NO-CAMPO: no jogo normal (sem ?depuracao), o obreiro martela
 // a obra e assenta a pedra da estrada, e o roceiro semeia e colhe dentro do campo e volta com o milho.
 // Os saves vem do `npm run test` (D-TELA-05c e G-TELA-GESTO-DO-TRABALHO).
@@ -18,7 +19,7 @@ async function roteiro({ page, estado, afirmar, capturar }) {
   const carregar = async (arquivo) => {
     afirmar(existsSync(arquivo), `${arquivo} nao existe: rode \`npm run test\` antes`);
     await page.evaluate((t) => window.localStorage.setItem('cangaco:partida', t), readFileSync(arquivo, 'utf8'));
-    await page.keyboard.press('h'); await page.click('#ajuda [data-acao="carregar"]'); await page.keyboard.press('Escape');
+    await carregarGaveta(page); await page.keyboard.press('Escape');
     await page.waitForTimeout(150);
   };
   const avancarAte = async (predicado, limite, nome) => {

@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro do BUG-U, causa A (o quartel sem estrada ate o armazem avisa).
 //
 // Carrega a partida que `tests/BUG-U-quartel-sem-estrada.test.ts` grava: a vila inicial com
@@ -48,9 +49,8 @@ async function roteiro(ctx) {
   const arquivo = 'test-output/BUG-U.save.txt';
   afirmar(existsSync(arquivo), `${arquivo} nao existe: rode \`npm run test\` antes`);
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync(arquivo, 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

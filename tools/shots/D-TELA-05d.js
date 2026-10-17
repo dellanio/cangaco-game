@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 const { readFileSync, writeFileSync } = require('node:fs');
 const { URL } = require('node:url');
 const { retanguloDoCanvas, pontoParaApertar } = require('./_canvas');
@@ -22,8 +23,7 @@ async function roteiro({ page, estado, afirmar, capturar }) {
     afirmar(pedidos === 0, 'militia ausente nao deve carregar PNG na abertura');
     const carregar = async () => {
       await page.evaluate(texto => window.localStorage.setItem('cangaco:partida', texto), readFileSync('test-output/D-TELA-05d-inicio.save.txt', 'utf8'));
-      await page.keyboard.press('h');
-      await page.click('#ajuda [data-acao="carregar"]');
+      await carregarGaveta(page);
       await page.keyboard.press('Escape');
       await page.waitForFunction(() => !!window.__cangaco.prediosDoEstado['quartel-carga']);
     };
@@ -71,7 +71,7 @@ async function roteiro({ page, estado, afirmar, capturar }) {
     await page.goto(new URL('/?pausado&depuracao=militia', page.url()).href);
     await page.waitForFunction(() => window.__cangaco?.pronto);
     await page.evaluate(texto => window.localStorage.setItem('cangaco:partida', texto), readFileSync('test-output/D-TELA-05d-treino.save.txt', 'utf8'));
-    await page.keyboard.press('h'); await page.click('#ajuda [data-acao="carregar"]'); await page.keyboard.press('Escape');
+    await carregarGaveta(page); await page.keyboard.press('Escape');
     await page.waitForFunction(() => window.__cangaco.cargasDeUnidade['unidade:militia:atlas']?.estado === 'em-curso');
     await carregar();
     await page.waitForFunction(() => !window.__cangaco.unidadesRenderizadas.some(u => u.tipo === 'militia'));

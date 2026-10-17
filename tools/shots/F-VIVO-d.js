@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da F-VIVO-d1 e d2 — AS CAMADAS A 0,75, e a aldeia num quadro so.
 //
 // Mede, na tela, o tamanho de cada camada do predio vivo com a camera a 0,75, e grava
@@ -74,9 +75,8 @@ async function roteiro(ctx) {
     const arquivo = `test-output/F-VIVO-d-${c.nome}.save.txt`;
     afirmar(existsSync(arquivo), `${arquivo} nao existe: rode \`npm run test\` antes`);
     await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync(arquivo, 'utf8')]);
-    await page.keyboard.press('h');
     await esperarFrame();
-    await page.click('#ajuda [data-acao="carregar"]');
+    await carregarGaveta(page);
     await esperarFrame();
     await page.keyboard.press('Escape');
     await esperarFrame();

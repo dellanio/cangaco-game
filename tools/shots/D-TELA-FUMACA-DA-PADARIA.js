@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 const config = require('../../data/fumaca.json');
 const { retanguloDoCanvas, pontoDoTileNaTela, pontoParaApertar } = require('./_canvas');
 
@@ -8,9 +9,8 @@ async function roteiro({ page, estado, afirmar, capturar }) {
     const texto = await (await window.fetch('/saves/teste-operador-vila-pronta.txt')).text();
     window.localStorage.setItem('cangaco:partida', texto);
   });
-  await page.keyboard.press('h');
   await frame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await frame();
   await page.keyboard.press('Escape');
   await frame();

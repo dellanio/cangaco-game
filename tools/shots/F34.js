@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da F34 — O FIM DA ESCARAMUCA NA TELA.
 //
 // Carrega as duas partidas que `tests/F34-fim.test.ts` grava:
@@ -18,9 +19,8 @@ async function roteiro(ctx) {
   async function carregar(arquivo) {
     afirmar(existsSync(arquivo), `${arquivo} nao existe: rode \`npm run test\` antes`);
     await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync(arquivo, 'utf8')]);
-    await page.keyboard.press('h');
     await esperarFrame();
-    await page.click('#ajuda [data-acao="carregar"]');
+    await carregarGaveta(page);
     await esperarFrame();
     await page.keyboard.press('Escape');
     await esperarFrame();

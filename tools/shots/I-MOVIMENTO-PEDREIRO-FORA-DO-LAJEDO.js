@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // I-MOVIMENTO-PEDREIRO-FORA-DO-LAJEDO — a captura em jogo do aceite. Carrega a vila pronta
 // (`saves/teste-operador-vila-pronta.txt`, D-SAVE-VILA-PRONTA), avanca pela ponte ate o pedreiro estar
 // LAVRANDO (`colhendo`) e afirma, pelo estado que a ponte publica, que o tile dele nao tem rocha e e
@@ -17,9 +18,8 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   const canvas = await retanguloDoCanvas(page);
   const esperarFrame = () => page.waitForTimeout(200);
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync(SAVE, 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

@@ -22564,3 +22564,25 @@ Ressalvas:
 ### Perguntas em aberto (2026-10-16, noite)
 - Aprovar a ordem de construção do lenhador para replicar nas outras casas.
 - Homologar a árvore caída e o maciço com veios (arte do Codex).
+
+## 2026-10-17 — estoque por dificuldade, sítios, vento na copa e a partida na aba Opções
+
+Verificado (teste, roteiro de tela e captura aberta em cada um; `verify:rapido` verde antes de cada commit):
+- `I-TERRENO-ESTOQUE-POR-DIFICULDADE` (2b20e81f): pedra e madeira de 60/60 na fase 1, caindo 5 por fase até 30/35 na 8;
+  50 ou mais nas três primeiras, como pediu o operador. Nenhuma fase tinha edição manual no Tiled (conferido contra o
+  gerador antes de regerar).
+- 889aac0c: três regressões de commits anteriores que o `verify:rapido` não alcançou (só roda o `related`).
+- `I-TELA-ENFEITES-EM-SITIOS` (887b354f): carroça, cerca, poço, varal, lenha e cruz só em 3 sítios por mapa, em volta de
+  uma tapera 2x2 (arte do Codex); o resto só laje e ossada, raras. A regra do manifesto passou a limitar o enfeite por
+  tile do `footprint`.
+- `I-TELA-VENTO-SO-NA-COPA` (8af3c8f6): só a copa do juazeiro balança (`data/vento.json: copaQueBalanca`).
+- `I-TELA-PARTIDA-NAS-OPCOES`: o bloco Partida na aba Opções (Salvar, Carregar, Reiniciar fase, Nova escaramuça,
+  Opções de som, Menu inicial); Salvar e Carregar num popup com as 3 gavetas; Reiniciar pede o segundo clique. A caixa
+  do H ficou só com a ajuda. 91 roteiros trocaram "H + Retomar" pelo ajudante `tools/shots/_partida.js`; os 91 rodaram
+  um a um: 89 de primeira, F34 passou isolado (intermitente), e o `I-TELA-ACUDE-NA-TELA` falhava porque o botão do
+  Açude fica no pé da lista, sob o rodapé do sol (`#marca`, que já era assim antes): o roteiro agora rola até ele.
+
+Ressalvas:
+- Hipótese não conferida: o rodapé do sol cobrindo o último botão da lista pode atrapalhar o jogador numa janela baixa
+  (ele rola a lista e alcança). Não mexi no layout.
+- Um save de fase da campanha aparece na gaveta como "Jogo livre" (já era assim; é o item seguinte da fila).

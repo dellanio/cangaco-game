@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 const {URL}=require('node:url');
 const {readFileSync,writeFileSync}=require('node:fs');
 const {retanguloDoCanvas}=require('./_canvas');
@@ -13,7 +14,7 @@ async function roteiro({page,estado,afirmar,capturar}) {
   await abrir('?pausado&depuracao=militia');
   const carregar=async(nome)=>{
     await page.evaluate((texto)=>window.localStorage.setItem('cangaco:partida',texto),readFileSync(`test-output/D-TELA-05b-${nome}.save.txt`,'utf8'));
-    await page.keyboard.press('h');await page.click('#ajuda [data-acao="carregar"]');await page.keyboard.press('Escape');
+    await carregarGaveta(page);await page.keyboard.press('Escape');
     await page.waitForTimeout(150);
     const st=await estado(),u=st.unidadesRenderizadas.find((v)=>v.id==='piloto'),c=await retanguloDoCanvas(page);
     await page.evaluate((cam)=>window.__cangaco.fixarCamera(cam),{scrollX:u.gx*64-c.width/2,scrollY:u.gy*64-c.height/2});

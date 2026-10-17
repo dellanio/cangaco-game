@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da F28b — A TORRE DE PEDRA NA TELA.
 //
 // Carrega a partida que `tests/F28b-torre.test.ts` grava: a vila, uma torre ocupada
@@ -23,9 +24,8 @@ async function roteiro(ctx) {
   const arquivo = 'test-output/F28b.save.txt';
   afirmar(existsSync(arquivo), `${arquivo} nao existe: rode \`npm run test\` antes`);
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync(arquivo, 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

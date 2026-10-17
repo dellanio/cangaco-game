@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 const {readFileSync}=require('node:fs');
 const {retanguloDoCanvas}=require('./_canvas');
 const terreno=require('../../data/terrain.json');
@@ -9,7 +10,7 @@ async function roteiro({page,capturar,estado,afirmar}){
     const texto=readFileSync(`test-output/I-TELA-OBRAS-COM-ARTE-ATUAL-${n}.save.txt`,'utf8');
     const salvo=JSON.parse(texto),q=salvo.estado.predios.porId.quarry;
     await page.evaluate(s=>window.localStorage.setItem('cangaco:partida',s),texto);
-    await page.keyboard.press('h');await page.click('#ajuda [data-acao="carregar"]');await page.keyboard.press('Escape');
+    await carregarGaveta(page);await page.keyboard.press('Escape');
     const entendi=page.getByRole('button',{name:'Entendi',exact:true});
     if(await entendi.isVisible()){
       await page.keyboard.press('p');

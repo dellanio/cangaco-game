@@ -1,4 +1,5 @@
 'use strict';
+const { novaEscaramuca } = require('./_partida');
 // I-TELA-JORNAL: o jornal das noticias importantes. Na escaramuca, o relogio anda ate a tropa do
 // jogador entrar em alerta de fome (a sonda da sessao: a paz acaba no tick 6 000 e a fome chega no
 // 11 700). O icone aparece no canto inferior esquerdo da area do jogo, com a marca de nao lida. Com
@@ -11,9 +12,8 @@ const PASSO = 500;
 
 async function roteiro({ page, capturar, estado, afirmar }) {
   const esperarFrame = () => page.waitForTimeout(200);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="escaramuca"]');
+  await novaEscaramuca(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

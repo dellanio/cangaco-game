@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da F-VIVO-e, decisao D3 do operador (2026-10-01) — PAUSADO: O HOMEM FICA DENTRO E
 // A CASA MOSTRA O OCIOSO.
 //
@@ -59,9 +60,8 @@ async function roteiro(ctx) {
   }
   const plano = JSON.parse(readFileSync('test-output/F-VIVO-e-pausado.partida.json', 'utf8'));
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync('test-output/F-VIVO-e-pausado.save.txt', 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

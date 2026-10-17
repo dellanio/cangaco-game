@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 const { readFileSync } = require('node:fs');
 const config = require('../../data/fumaca.json');
 const { retanguloDoCanvas, pontoDoTileNaTela, pontoParaApertar } = require('./_canvas');
@@ -7,9 +8,8 @@ async function roteiro({ page, estado, afirmar, capturar }) {
   const frame = () => page.waitForTimeout(150);
   await page.evaluate((texto) => window.localStorage.setItem('cangaco:partida', texto),
     readFileSync('test-output/D-TELA-FUMACA-DA-FORJA-save.txt', 'utf8'));
-  await page.keyboard.press('h');
   await frame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await frame();
   await page.keyboard.press('Escape');
   const canvas = await retanguloDoCanvas(page);

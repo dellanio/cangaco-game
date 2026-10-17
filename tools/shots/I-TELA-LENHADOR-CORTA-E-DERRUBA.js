@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // I-TELA-LENHADOR-CORTA-E-DERRUBA (aceite 2) — na vila pronta do operador, o lenhador sai para cortar: e desenhado a
 // menos de meio tile do pe da arvore, as lascas saltam nos golpes, a arvore cai no fim do primeiro corte e fica deitada,
 // e ele volta para a cabana com a tora nas maos.
@@ -16,7 +17,7 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   }
   const texto = JSON.stringify(salvo);
   await page.evaluate((t) => window.localStorage.setItem('cangaco:partida', t), texto);
-  await page.keyboard.press('h'); await page.click('#ajuda [data-acao="carregar"]'); await page.keyboard.press('Escape');
+  await carregarGaveta(page); await page.keyboard.press('Escape');
   const canvas = await retanguloDoCanvas(page);
   const lado = terreno.tile_px;
   await page.mouse.move(canvas.left + canvas.width / 2, canvas.top + canvas.height / 2);

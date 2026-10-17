@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da F-VIVO-f — O CASO 2 SO NA FASE DA CASA.
 //
 // Carrega pelo botao "carregar" (F23b) a partida que `tests/F-VIVO-f-caso-2-na-casa.test.ts`
@@ -56,9 +57,8 @@ async function roteiro(ctx) {
   }
   const plano = JSON.parse(readFileSync('test-output/F-VIVO-f.partida.json', 'utf8'));
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync('test-output/F-VIVO-f.save.txt', 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da F-REPL-d — O SELETOR DE MODO DO LENHADOR NO PAINEL.
 //
 // Carrega a partida que `tests/F-REPL-d-seletor-de-modo.test.ts` grava: o cenario do
@@ -24,9 +25,8 @@ async function roteiro(ctx) {
   const arquivo = 'test-output/F-REPL-d.save.txt';
   afirmar(existsSync(arquivo), `${arquivo} nao existe: rode \`npm run test\` antes`);
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync(arquivo, 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

@@ -1,4 +1,5 @@
 'use strict';
+const { novaEscaramuca } = require('./_partida');
 // Roteiro da D-TELA-01 — A ABA DE ESTATISTICAS.
 //   1. H -> "Nova escaramuca". DESPAUSADO e com o botao seguro 150 ms (§8), o clique na aba
 //      Estatisticas troca o corpo para `estatisticas`;
@@ -12,9 +13,8 @@ async function roteiro(ctx) {
   const { page, capturar, estado, afirmar } = ctx;
   const esperarFrame = () => page.waitForTimeout(200);
 
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="escaramuca"]');
+  await novaEscaramuca(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

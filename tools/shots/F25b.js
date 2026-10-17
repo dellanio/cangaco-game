@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da F25b — O PAINEL DO QUARTEL NA TELA.
 //
 // Carrega a partida que `tests/F25b-painel-do-quartel.test.ts` grava: a vila e um quartel
@@ -25,9 +26,8 @@ async function roteiro(ctx) {
   const arquivo = 'test-output/F25b.save.txt';
   afirmar(existsSync(arquivo), `${arquivo} nao existe: rode \`npm run test\` antes`);
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync(arquivo, 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

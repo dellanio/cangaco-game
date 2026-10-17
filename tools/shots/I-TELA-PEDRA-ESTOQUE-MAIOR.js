@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 const {readFileSync}=require('node:fs');
 const {retanguloDoCanvas}=require('./_canvas');
 const terreno=require('../../data/terrain.json');
@@ -9,7 +10,7 @@ async function roteiro({page,capturar,estado,afirmar}){
   afirmar(p!==undefined,'fixture contem pedreira');
   p.estoque.saida.stone=3;
   await page.evaluate(s=>window.localStorage.setItem('cangaco:partida',s),JSON.stringify(salvo));
-  await page.keyboard.press('h');await page.click('#ajuda [data-acao="carregar"]');await page.keyboard.press('Escape');
+  await carregarGaveta(page);await page.keyboard.press('Escape');
   const canvas=await retanguloDoCanvas(page);
   await page.mouse.move(canvas.left+canvas.width/2,canvas.top+canvas.height/2);
   for(let i=0;i<10&&(await estado()).camera.zoom!==2;i++){

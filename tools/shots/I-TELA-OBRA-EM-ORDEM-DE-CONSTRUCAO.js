@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // I-TELA-OBRA-EM-ORDEM-DE-CONSTRUCAO (aceite 2) — uma obra de lenhador em tres momentos, na vila pronta do operador:
 // so a fundacao, os pilares de pe, e a estrutura inteira com a parede subindo. O hp de cada momento sai da conta da F17g
 // (timber 3, stone 2, hp 250: a madeira e hp*5/750 ate o hp 150; a pedra, (hp*5 - 750)/500).
@@ -30,7 +31,7 @@ async function roteiro({ page, capturar, estado, afirmar }) {
     s0.estado.unidades.ordem = s0.estado.unidades.ordem.filter((id) => longe(s0.estado.unidades.porId[id]));
     for (const id of Object.keys(s0.estado.unidades.porId)) if (!s0.estado.unidades.ordem.includes(id)) delete s0.estado.unidades.porId[id];
     await page.evaluate((t) => window.localStorage.setItem('cangaco:partida', t), JSON.stringify(s0));
-    await page.keyboard.press('h'); await page.click('#ajuda [data-acao="carregar"]'); await page.keyboard.press('Escape');
+    await carregarGaveta(page); await page.keyboard.press('Escape');
     await page.mouse.move(canvas.left + canvas.width / 2, canvas.top + canvas.height / 2);
     for (let n = 0; n < 10 && (await estado()).camera.zoom !== 2; n++) { await page.mouse.wheel(0, -200); await page.waitForTimeout(200); }
     await page.evaluate((c) => window.__cangaco.fixarCamera(c), {

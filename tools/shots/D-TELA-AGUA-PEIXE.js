@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 const fs = require('node:fs');
 const { createHash } = require('node:crypto');
 const mapa = require('../../data/maps/sertao-128.json');
@@ -75,9 +76,8 @@ async function roteiro({ page, estado, afirmar, capturar }) {
   const u = partida.unidades.porId.pescador;
   const alvo = partida.jobs.tarefas.porId[u.fsmData.tarefa].origemTile;
   await page.evaluate((save) => window.localStorage.setItem('cangaco:partida', save), texto);
-  await page.keyboard.press('h');
   await frame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await frame();
   await page.keyboard.press('Escape');
   await camera(alvo);

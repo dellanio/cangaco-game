@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // I-TELA-LENHA-NO-DEQUE-DO-LENHADOR (aceite 3) — a cabana do lenhador com 3 toras na saida: a pilha no deque da arte,
 // maior e girada com as tabuas. Fixture: a vila pronta do operador, carregada pela porta de save do jogador.
 const { readFileSync } = require('node:fs');
@@ -12,8 +13,7 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   const cabana = salvo.estado.predios.porId['woodcutters-1'];
   cabana.estoque.saida = { tree_trunk: TORAS };
   await page.evaluate((s) => window.localStorage.setItem('cangaco:partida', s), JSON.stringify(salvo));
-  await page.keyboard.press('h');
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await page.keyboard.press('Escape');
   const canvas = await retanguloDoCanvas(page);
   await page.mouse.move(canvas.left + canvas.width / 2, canvas.top + canvas.height / 2);

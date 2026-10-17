@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // BUG-SOM-BAIXA-A-CADA-TOQUE (aceite 2 e 3): a vila pronta a 3x por 60 s reais, com o cache desligado
 // como no DevTools aberto e o gesto que libera o som. Com o tocador de antes, cada toque baixava o
 // arquivo (15 toques, 15 downloads, na sonda de 2026-10-05). Agora: no maximo 1 download por arquivo
@@ -30,9 +31,8 @@ async function roteiro({ page, estado, afirmar }) {
 
   const texto = readFileSync('saves/teste-operador-vila-pronta.txt', 'utf8');
   await page.evaluate((t) => window.localStorage.setItem('cangaco:partida', t), texto);
-  await page.keyboard.press('h');
   await page.waitForTimeout(200);
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await page.waitForTimeout(500);
   await page.mouse.click(700, 400); // o gesto que libera o som
   await page.keyboard.press('p');

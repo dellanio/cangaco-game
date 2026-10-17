@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 const { execFileSync } = require('node:child_process');
 const { readFileSync, writeFileSync } = require('node:fs');
 const { retanguloDoCanvas } = require('./_canvas');
@@ -10,8 +11,8 @@ async function roteiro({ page, estado, afirmar, capturar }) {
   for (const fase of fases) {
     const texto = readFileSync(fase.path, 'utf8');
     await page.evaluate(texto => window.localStorage.setItem('cangaco:partida', texto), texto);
-    await page.keyboard.press('h'); await page.waitForTimeout(100);
-    await page.click('#ajuda [data-acao="carregar"]'); await page.waitForTimeout(150);
+     await page.waitForTimeout(100);
+    await carregarGaveta(page); await page.waitForTimeout(150);
     await page.keyboard.press('Escape'); await page.waitForTimeout(100);
     let s = await estado();
     afirmar(s.tick === fase.tick, `save ${fase.tipo}/${fase.estado} carregado no tick ${fase.tick}`);

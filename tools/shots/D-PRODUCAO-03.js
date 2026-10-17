@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da D-PRODUCAO-03b — A ENCOMENDA DA OFICINA NA TELA.
 //
 // Carrega a partida que `tests/D-PRODUCAO-03b-painel-encomenda.test.ts` grava: a cadeia do
@@ -27,9 +28,8 @@ async function roteiro(ctx) {
   const arquivo = 'test-output/D-PRODUCAO-03b.save.txt';
   afirmar(existsSync(arquivo), `${arquivo} nao existe: rode \`npm run test\` antes`);
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync(arquivo, 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

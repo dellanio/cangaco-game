@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da D-TELA-07 — O SINAL DE PAUSADO NO MAPA.
 //
 // Carrega pelo botao "carregar" (F23b) a partida que o aceite 2 de
@@ -81,9 +82,8 @@ async function roteiro(ctx) {
   }
   const plano = JSON.parse(readFileSync('test-output/D-TELA-07.partida.json', 'utf8'));
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync('test-output/D-TELA-07.save.txt', 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

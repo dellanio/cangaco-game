@@ -1,3 +1,4 @@
+const { novaEscaramuca } = require('./_partida');
 // Roteiro C-IA-02a — a vila da IA com producao
 // (plano em docs/planos/2026-09-29-C-IA-02a-vila-da-ia-com-producao.md).
 //
@@ -23,9 +24,8 @@ async function roteiro(ctx) {
   const canvas = await retanguloDoCanvas(page);
   const esperarFrame = () => page.waitForTimeout(200);
 
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="escaramuca"]');
+  await novaEscaramuca(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

@@ -1,4 +1,5 @@
 'use strict';
+const { abrirGavetas } = require('./_partida');
 
 // Roteiro da I-TELA-DICAS-NA-PRIMEIRA-VEZ — duas dicas, aceite (d), e a chave das Opcoes, (b).
 //
@@ -37,9 +38,9 @@ async function roteiro(ctx) {
   async function abrirComOSave() {
     await page.goto(`${base}?pausado`);
     await page.waitForFunction(() => Boolean(window.__cangaco && window.__cangaco.pronto), { timeout: TIMEOUT_MS });
-    await page.keyboard.press('h');
+    await abrirGavetas(page, 'carregar');
     await esperarFrame();
-    await page.click('#ajuda button[data-acao="carregar"][data-gaveta="1"]');
+    await page.click('#gavetas button[data-acao="carregar"][data-gaveta="1"]'); await page.click('#abas [data-aba="construir"]');
     await esperarFrame();
     await page.keyboard.press('Escape');
     await esperarFrame();
@@ -85,15 +86,17 @@ async function roteiro(ctx) {
   await page.evaluate((k) => window.localStorage.removeItem(k), CHAVE_DAS_DICAS);
   await page.goto(`${base}?pausado`);
   await page.waitForFunction(() => Boolean(window.__cangaco && window.__cangaco.pronto), { timeout: TIMEOUT_MS });
-  await page.keyboard.press('h');
+  // I-TELA-PARTIDA-NAS-OPCOES: as opcoes de som moram no bloco Partida da aba Opcoes
+  await page.click('#abas [data-aba="opcoes"]');
   await esperarFrame();
-  await page.click('#ajuda button[data-acao="opcoes-de-som"]');
+  await page.click('#opcoes button[data-acao="opcoes-de-som"]');
   await esperarFrame();
   afirmar(await page.isChecked('#opcoes-de-som input[data-opcao="dicas"]'), 'as dicas deveriam nascer ligadas');
   await page.uncheck('#opcoes-de-som input[data-opcao="dicas"]');
   await page.click('#opcoes-de-som button[data-acao="fechar"]');
   await esperarFrame();
-  await page.click('#ajuda button[data-acao="carregar"][data-gaveta="1"]');
+  await page.click('#opcoes [data-acao="abrir-carregar"]');
+  await page.click('#gavetas button[data-acao="carregar"][data-gaveta="1"]'); await page.click('#abas [data-aba="construir"]');
   await esperarFrame();
   await page.keyboard.press('Escape');
   await page.evaluate(() => window.__cangaco.avancar(20));

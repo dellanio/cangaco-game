@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro do BUG-X — O ESPECIALISTA TRABALHA DENTRO DA CASA, NAO NA PORTA.
 //
 // Carrega pelo botao "carregar" (F23b) a partida que `tests/BUG-X-especialista-dentro.test.ts`
@@ -57,9 +58,8 @@ async function roteiro(ctx) {
   }
   const plano = JSON.parse(readFileSync('test-output/BUG-X.partida.json', 'utf8'));
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync('test-output/BUG-X.save.txt', 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

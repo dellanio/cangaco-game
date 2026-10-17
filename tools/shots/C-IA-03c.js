@@ -1,4 +1,5 @@
 'use strict';
+const { novaEscaramuca } = require('./_partida');
 // Roteiro da C-IA-03c — JOGAR A ESCARAMUCA PELA TELA (o aceite do operador: "partindo do
 // cenario, eu acho a vila inimiga, ataco, destruo os tres predios e vejo a vitoria").
 //
@@ -42,9 +43,8 @@ async function roteiro(ctx) {
   const fimNaTela = () => page.$eval('#fim-de-partida', (n) => (n.hidden ? null : n.dataset.fim));
 
   // 1. comecar a escaramuca pelo painel H
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="escaramuca"]');
+  await novaEscaramuca(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

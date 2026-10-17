@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // I-ARTE-LENHADOR-MAIOR — a cabana do lenhador +30% (escalaDeExibicao 1,3), com um obreiro parado na frente da porta
 // para a comparacao de proporcao. A fixture e a vila pronta do operador; o obreiro ocioso u7 e posto ao pe da cabana.
 const { readFileSync } = require('node:fs');
@@ -14,8 +15,7 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   afirmar(cabana && obreiro && obreiro.fsm === 'ocioso', 'a fixture tem a cabana e o obreiro ocioso');
   e.unidades.porId.u7 = { ...obreiro, gx: cabana.gx + 1, gy: cabana.gy + 2 };
   await page.evaluate((s) => window.localStorage.setItem('cangaco:partida', s), JSON.stringify(salvo));
-  await page.keyboard.press('h');
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await page.keyboard.press('Escape');
   const canvas = await retanguloDoCanvas(page);
   await page.mouse.move(canvas.left + canvas.width / 2, canvas.top + canvas.height / 2);

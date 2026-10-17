@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // I-TELA-COMENSAIS-NA-BODEGA — a Bodega com tres civis `comendo`: a tela os senta a mesa, animados. A fixture e a
 // mesma da I-TELA-PILHAS-NAS-MESAS-DA-BODEGA (a vila pronta do operador), carregada pela porta de save do jogador;
 // tres civis entram como `comendo` encostados na Bodega, com a refeicao longa. O roteiro despausa um instante
@@ -34,8 +35,7 @@ async function roteiro({ page, capturar, estado, afirmar }) {
     e.unidades.porId[id] = { ...u, fsm: 'comendo', fsmData: { progresso: REFEICAO_LONGA }, gx: bodega.gx + 1, gy: bodega.gy + 3 };
   }
   await page.evaluate((s) => window.localStorage.setItem('cangaco:partida', s), JSON.stringify(salvo));
-  await page.keyboard.press('h');
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await page.keyboard.press('Escape');
   const canvas = await retanguloDoCanvas(page);
   await page.mouse.move(canvas.left + canvas.width / 2, canvas.top + canvas.height / 2);

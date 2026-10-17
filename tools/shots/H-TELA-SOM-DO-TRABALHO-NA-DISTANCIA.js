@@ -1,4 +1,5 @@
 'use strict';
+const { abrirGavetas } = require('./_partida');
 
 // Roteiro da H-TELA-SOM-DO-TRABALHO-NA-DISTANCIA — o laco de trabalho perto toca, longe para, aceite (c).
 //
@@ -29,9 +30,9 @@ async function roteiro(ctx) {
   const canvas = await retanguloDoCanvas(page);
 
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync(SAVE, 'utf8')]);
-  await page.keyboard.press('h');
+  await abrirGavetas(page, 'carregar');
   await esperarFrame();
-  await page.click('#ajuda button[data-acao="carregar"][data-gaveta="1"]');
+  await page.click('#gavetas button[data-acao="carregar"][data-gaveta="1"]'); await page.click('#abas [data-aba="construir"]');
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

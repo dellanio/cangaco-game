@@ -1,4 +1,5 @@
 'use strict';
+const { novaEscaramuca } = require('./_partida');
 // Roteiro da C-TELA-04 — botao direito sobre um militar inimigo, com a tropa na mao, e ataque.
 //   1. H -> "Nova escaramuca"; caixa em volta dos 18 cabras; a tropa marcha em paz ate perto da
 //      frente da IA (ela nasce na nevoa); o relogio corre (avancar, pausado) ate a paz acabar;
@@ -24,9 +25,8 @@ async function roteiro(ctx) {
   const avancar = (n) => page.evaluate((k) => window.__cangaco.avancar(k), n);
   const pazNaTela = () => page.$eval('#minimapa [data-campo="paz"]', (n) => (n.hidden ? null : n.textContent));
 
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="escaramuca"]');
+  await novaEscaramuca(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

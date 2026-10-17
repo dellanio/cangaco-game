@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // I-TELA-ACUDE-NA-TELA: carrega a partida que o teste grava (a fazenda de um tile com o Acude cheio no raio
 // dela). Com o jogo ANDANDO (§8): abre o painel do Acude e le o nivel; abre o da fazenda e le "Irrigada";
 // arma a planta do Acude pelo menu e le o raio que ela publica. Tres capturas.
@@ -17,9 +18,8 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   const arquivo = 'test-output/I-TELA-ACUDE-NA-TELA.save.txt';
   afirmar(existsSync(arquivo), `${arquivo} nao existe: rode o teste antes`);
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), ['cangaco:partida', readFileSync(arquivo, 'utf8')]);
-  await page.keyboard.press('h');
   await esperar();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperar();
   await page.keyboard.press('Escape');
   await esperar();
@@ -71,6 +71,8 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   // 3. a planta do Acude, armada pelo menu, desenha o raio
   await page.keyboard.press('Escape');
   await esperar();
+  // o Acude fica no pe da lista, sob o rodape do sol: o jogador rola ate ele, e o roteiro tambem
+  await page.locator('[data-predio="reservoir"]').scrollIntoViewIfNeeded();
   const botao = await page.locator('[data-predio="reservoir"]').boundingBox();
   afirmar(botao !== null, 'o botao do Acude deveria existir no menu');
   await page.keyboard.press('p');

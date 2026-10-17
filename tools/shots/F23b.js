@@ -40,8 +40,9 @@ const PASSO_DE_AVANCO = 50; // um `avancar` seco e grande estoura o frame (F16b)
 const TETO_DE_TICKS_DESPAUSADO = 60;
 
 const ROTULOS = tema.hud.arquivo;
-const BOTAO = (acao) => `#ajuda .arquivo button[data-acao="${acao}"]`;
-const RECADO = '#ajuda .arquivo [data-campo="arquivo"]';
+// I-TELA-PARTIDA-NAS-OPCOES: o bloco Partida mora na aba Opcoes; Guardar e Retomar (a gaveta 1, a primeira) no popup
+const BOTAO = (acao) => `#gavetas button[data-acao="${acao}"]`;
+const RECADO = '#opcoes .arquivo [data-campo="arquivo"]';
 
 async function roteiro(ctx) {
   const { page, capturar, estado, afirmar } = ctx;
@@ -59,43 +60,49 @@ async function roteiro(ctx) {
     const e = await estado();
     return { tick: e.tick, predios: JSON.stringify(e.prediosDoEstado), hud: await hud() };
   };
+  const abrirPopup = async (acao) => {
+    await page.click('#abas [data-aba="opcoes"]');
+    await page.click(`#opcoes [data-acao="abrir-${acao}"]`);
+    await esperarFrame();
+  };
   const clicar = async (acao) => {
+    await abrirPopup(acao);
     await page.click(BOTAO(acao));
     await esperarFrame();
+    if (await page.isVisible('#gavetas')) await page.click('#gavetas button[data-acao="fechar"]');
   };
 
   const caixa = (sel) => page.$eval(sel, (n) => {
     const r = n.getBoundingClientRect();
     return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, w: r.width };
   });
-  /** Abre a ajuda (H) e mede, a cada vez: os botoes dentro da caixa dela e ACIMA
-   *  do primeiro grupo de atalhos — a ajuda rola, e botao que so aparece rolando
-   *  e botao que o jogador nao acha. */
+  /** Abre a aba Opcoes e mede, a cada vez: o bloco Partida dentro da barra e ACIMA do botao da ajuda (o bloco que so
+   *  aparece rolando e o que o jogador nao acha). Antes (F23b) o bloco ficava no alto da caixa do H. */
   async function abrirAjuda() {
-    if (await page.isHidden('#ajuda')) await page.keyboard.press('h');
+    await page.click('#abas [data-aba="opcoes"]');
     await esperarFrame();
-    afirmar(await page.isVisible('#ajuda'), 'a tecla H deveria abrir a ajuda');
-    const ajuda = await caixa('#ajuda');
-    const secao = await caixa('#ajuda .arquivo');
-    const grupo = await caixa('#ajuda .grupo');
-    afirmar(secao.w > 0, 'a secao Partida deveria estar visivel na ajuda');
-    afirmar(
-      secao.left >= ajuda.left && secao.right <= ajuda.right && secao.top >= ajuda.top && secao.bottom <= ajuda.bottom,
-      `a secao Partida deveria caber na caixa da ajuda sem rolar: ${JSON.stringify({ secao, ajuda })}`,
-    );
-    afirmar(secao.bottom <= grupo.top, `a secao Partida deveria vir antes dos atalhos: ${JSON.stringify({ secao, grupo })}`);
+    const secao = await caixa('#opcoes .arquivo');
+    const botaoDaAjuda = await caixa('#opcoes [data-abrir="ajuda"]');
+    afirmar(secao.w > 0, 'o bloco Partida deveria estar visivel na aba Opcoes');
+    afirmar(secao.bottom <= botaoDaAjuda.top, `o bloco Partida deveria vir antes do botao da ajuda: ${JSON.stringify({ secao, botaoDaAjuda })}`);
   }
 
   // ---- 0. os botoes estao na ajuda, com o rotulo do tema ------------------------
   await abrirAjuda();
+  afirmar(await page.textContent('#opcoes [data-acao="abrir-salvar"]') === ROTULOS.abrirSalvar, 'o Salvar deveria usar o rotulo do tema');
+  afirmar(await page.textContent('#opcoes [data-acao="abrir-carregar"]') === ROTULOS.abrirCarregar, 'o Carregar deveria usar o rotulo do tema');
+  await abrirPopup('salvar');
   afirmar(await page.textContent(BOTAO('salvar')) === ROTULOS.salvar, 'o botao de guardar deveria usar o rotulo do tema');
+  await page.click('#gavetas button[data-acao="fechar"]');
+  await abrirPopup('carregar');
   afirmar(await page.textContent(BOTAO('carregar')) === ROTULOS.carregar, 'o botao de retomar deveria usar o rotulo do tema');
+  await page.click('#gavetas button[data-acao="fechar"]');
   afirmar((await recado()) === null, 'o recado deveria nascer escondido');
 
   // ---- 1. o jogador planta uma obra e a aldeia anda -------------------------------
   // A obra fica logo abaixo da Casa do Coronel, no primeiro lugar livre: sem ela,
   // a aldeia do tick 300 e a do tick 0 sao a mesma foto (os serfs estao parados).
-  await page.keyboard.press('h');
+  await page.click('#abas [data-aba="construir"]');
   await esperarFrame();
   const coronel = economia.estadoInicial.predios.find((p) => p.id === 'schoolhouse');
   const [largC, altC] = predios.find((p) => p.id === coronel.id).tamanho;
@@ -148,7 +155,7 @@ async function roteiro(ctx) {
   const texto = guardado[CHAVE];
   afirmar(JSON.parse(texto).estado.tick === TICKS_ANTES_DE_GUARDAR, 'o save deveria ser do tick em que o jogador guardou');
   // a aldeia, sem a ajuda por cima: e esta foto que a `retomada` tem de repetir
-  await page.keyboard.press('h');
+  await page.click('#abas [data-aba="construir"]');
   await esperarFrame();
   await capturar('guardada');
 
@@ -166,6 +173,7 @@ async function roteiro(ctx) {
   await abrirAjuda();
 
   // ---- 5. retomar DESPAUSADO, segurando o botao (§8) -------------------------------
+  await abrirPopup('carregar');
   const b = await caixa(BOTAO('carregar'));
   await page.keyboard.press('p');
   afirmar(!(await estado()).pausado, 'o passo 5 precisa do relogio correndo');
@@ -198,7 +206,7 @@ async function roteiro(ctx) {
   afirmar((await gaveta())[CHAVE] === texto, 'guardar a partida retomada deveria dar o mesmo texto, byte a byte');
   await clicar('carregar');
   await capturar('recado-retomada');
-  await page.keyboard.press('h');
+  await page.click('#abas [data-aba="construir"]');
   await esperarFrame();
   await capturar('retomada');
   await abrirAjuda();

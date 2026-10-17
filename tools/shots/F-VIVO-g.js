@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da F-VIVO-g (o curral guarda os animais), aceite 3 do BUILD_PLAN.md.
 //
 // Carrega pelo botao "carregar" (F23b) a partida que o aceite 2 de
@@ -58,9 +59,8 @@ async function roteiro(ctx) {
   const plano = JSON.parse(readFileSync('test-output/F-VIVO-g.partida.json', 'utf8'));
   const animais = (s) => s.animaisDoCurral[plano.predio] ?? [];
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync('test-output/F-VIVO-g.save.txt', 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

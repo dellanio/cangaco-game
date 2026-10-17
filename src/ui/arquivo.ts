@@ -1,5 +1,7 @@
-// F23b — os botoes de guardar e retomar a partida, e o recado do que aconteceu,
-// numa secao no topo da tela de ajuda (H), que e o menu em jogo.
+// F23b — os botoes de guardar e retomar a partida, e o recado do que aconteceu.
+// I-TELA-PARTIDA-NAS-OPCOES (pedido do operador, 2026-10-17): o bloco Partida mora no alto da aba Opcoes da barra
+// (Salvar, Carregar, Reiniciar fase, Nova escaramuca, Opcoes de som, Menu inicial e o recado); o Salvar e o Carregar
+// abrem o popup `#gavetas` com as tres gavetas. Antes a secao ficava no topo da caixa do H.
 //
 // Nao na barra do HUD, por medida: com a prancha fechada, o lembrete da primeira
 // partida e o carimbo de pausa, a barra de 1280 px ja vai ate 1163 px, e os dois
@@ -16,6 +18,7 @@
 // Os rotulos vem de `data/theme-sertao.json` (`hud.arquivo`), como os do HUD.
 import temaSertao from '../../data/theme-sertao.json';
 import type { NumeroDaGaveta, ResultadoDoArquivo, SituacaoDaGaveta } from '../arquivo-da-partida';
+import { cliqueNoReinicio } from './reinicio';
 
 export interface RotulosDoArquivo {
   readonly salvou: string;
@@ -73,20 +76,45 @@ export interface AcoesDoArquivo {
   aoEscaramuca?: () => void;
   /** E-SAVE-GAVETAS — voltar ao menu inicial. */
   aoMenu?: () => void;
+  /** I-TELA-PARTIDA-NAS-OPCOES — recomecar a partida do zero (depois da confirmacao). */
+  aoReiniciar?: () => void;
+  /** I-TELA-PARTIDA-NAS-OPCOES — abrir a caixa das opcoes de som. */
+  aoOpcoesDeSom?: () => void;
   gavetas(): readonly SituacaoDaGaveta[];
 }
 
-/** Monta a secao em `#ajuda`, uma vez, logo abaixo do titulo. Nasce DEPOIS da
- *  ajuda (`montarAjuda`), que tambem monta o DOM uma vez e nunca o recria. */
+/** Monta, uma vez, o bloco Partida no alto de `#opcoes` (a aba Opcoes da barra) e o popup `#gavetas`. */
 export function montarArquivo(acoes: AcoesDoArquivo): PainelDoArquivo {
-  const ajuda = document.getElementById('ajuda');
-  if (!ajuda) throw new Error('arquivo: #ajuda nao existe no index.html');
+  const opcoes = document.getElementById('opcoes');
+  if (!opcoes) throw new Error('arquivo: #opcoes nao existe no index.html');
   const rotulos = temaSertao.hud.arquivo;
 
   const raiz = document.createElement('section');
   raiz.className = 'arquivo';
   const titulo = document.createElement('h3');
   titulo.textContent = rotulos.titulo;
+
+  // o popup das gavetas: o mesmo para guardar e retomar; `data-modo` diz qual botao de cada linha aparece
+  const popup = document.createElement('div');
+  popup.id = 'gavetas';
+  popup.hidden = true;
+  popup.setAttribute('role', 'dialog');
+  const tituloDoPopup = document.createElement('h2');
+  function abrirPopup(modo: 'salvar' | 'carregar'): void {
+    popup.dataset.modo = modo;
+    tituloDoPopup.textContent = modo === 'salvar' ? rotulos.tituloSalvar : rotulos.tituloCarregar;
+    atualizarGavetas();
+    popup.hidden = false;
+  }
+  function fecharPopup(): boolean {
+    if (popup.hidden) return false;
+    popup.hidden = true;
+    return true;
+  }
+  // o Esc fecha o popup antes de chegar ao teclado do jogo
+  window.addEventListener('keydown', (evento) => {
+    if (evento.key === 'Escape' && fecharPopup()) evento.stopImmediatePropagation();
+  }, { capture: true });
 
   function botao(acao: string, rotulo: string, aoClicar: () => void): HTMLButtonElement {
     const b = document.createElement('button');
@@ -114,7 +142,8 @@ export function montarArquivo(acoes: AcoesDoArquivo): PainelDoArquivo {
     texto.dataset.campo = 'gaveta';
     textos.set(g.n, texto);
     const guardar = botao('salvar', rotulos.salvar, () => { acoes.aoSalvar(g.n); });
-    const retomar = botao('carregar', rotulos.carregar, () => { acoes.aoCarregar(g.n); });
+    // o Retomar que deu certo fecha o popup; o recusado deixa aberto, com o motivo no recado
+    const retomar = botao('carregar', rotulos.carregar, () => { acoes.aoCarregar(g.n); if (recado.dataset.ok === 'true') fecharPopup(); });
     guardar.dataset.gaveta = String(g.n);
     retomar.dataset.gaveta = String(g.n);
     linha.append(texto, guardar, retomar);
@@ -128,12 +157,39 @@ export function montarArquivo(acoes: AcoesDoArquivo): PainelDoArquivo {
   recado.dataset.campo = 'arquivo';
   recado.setAttribute('role', 'status');
   recado.hidden = true;
+  botoes.append(botao('abrir-salvar', rotulos.abrirSalvar, () => { abrirPopup('salvar'); }));
+  botoes.append(botao('abrir-carregar', rotulos.abrirCarregar, () => { abrirPopup('carregar'); }));
+  // I-TELA-PARTIDA-NAS-OPCOES: o Reiniciar pede a confirmacao (o primeiro clique arma, o segundo dispara)
+  if (acoes.aoReiniciar !== undefined) {
+    const aoReiniciar = acoes.aoReiniciar;
+    let armado = false;
+    const reiniciar = botao('reiniciar', rotulos.reiniciar, () => {
+      const passo = cliqueNoReinicio(armado);
+      armado = passo.armado;
+      reiniciar.dataset.armado = String(armado);
+      reiniciar.textContent = armado ? rotulos.confirmarReinicio : rotulos.reiniciar;
+      if (passo.disparar) aoReiniciar();
+    });
+    reiniciar.dataset.armado = 'false';
+    // sair da aba Opcoes desarma
+    new MutationObserver(() => {
+      if (document.body.dataset.corpo === 'opcoes' || !armado) return;
+      armado = false;
+      reiniciar.dataset.armado = 'false';
+      reiniciar.textContent = rotulos.reiniciar;
+    }).observe(document.body, { attributes: true, attributeFilter: ['data-corpo'] });
+    botoes.append(reiniciar);
+  }
   // C-IA-03c — comecar a escaramuca (cenario provisorio: vira uma fase no sistema de fases)
   if (acoes.aoEscaramuca !== undefined) botoes.append(botao('escaramuca', rotulos.escaramuca, acoes.aoEscaramuca));
+  if (acoes.aoOpcoesDeSom !== undefined) botoes.append(botao('opcoes-de-som', temaSertao.som.abrirNaAjuda, acoes.aoOpcoesDeSom));
   if (acoes.aoMenu !== undefined) botoes.append(botao('menu', rotulos.menuInicial, acoes.aoMenu));
   botoes.append(recado);
-  raiz.append(titulo, lista, botoes);
-  ajuda.insertBefore(raiz, ajuda.querySelector('h2')?.nextSibling ?? null);
+  raiz.append(titulo, botoes);
+  opcoes.prepend(raiz);
+  const fechar = botao('fechar', rotulos.fechar, () => { fecharPopup(); });
+  popup.append(tituloDoPopup, lista, fechar);
+  document.body.append(popup);
 
   function atualizarGavetas(): void {
     for (const g of acoes.gavetas()) {

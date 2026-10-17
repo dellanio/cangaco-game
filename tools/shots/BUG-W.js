@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro do BUG-W — O CAMPO RECEM-PLANTADO NAO SE DESENHA MADURO.
 //
 // Carrega pelo botao "carregar" (F23b) a partida que `tests/BUG-W-estagio-da-cultura.test.ts`
@@ -56,9 +57,8 @@ async function roteiro(ctx) {
   }
   const plano = JSON.parse(readFileSync('test-output/BUG-W.partida.json', 'utf8'));
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync('test-output/BUG-W.save.txt', 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

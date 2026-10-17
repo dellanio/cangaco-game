@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da F-VIVO-h (a escola anima enquanto ha recruta em treino), aceite do BUILD_PLAN.md.
 //
 // Carrega pelo botao "carregar" (F23b) a partida que `tests/F-VIVO-h-escola.test.ts` grava: a
@@ -57,9 +58,8 @@ async function roteiro(ctx) {
   const plano = JSON.parse(readFileSync('test-output/F-VIVO-h.partida.json', 'utf8'));
   const treino = (s) => s.quadrosDaEscola[plano.predio] ?? null;
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync('test-output/F-VIVO-h.save.txt', 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

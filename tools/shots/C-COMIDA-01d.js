@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da C-COMIDA-01d + 01f — O PAINEL DO GRUPO COM O ALIMENTAR, E O ALERTA DE TROPA
 // COM FOME NO HUD.
 //
@@ -28,9 +29,8 @@ async function roteiro(ctx) {
   const arquivo = 'test-output/C-COMIDA-01d.save.txt';
   afirmar(existsSync(arquivo), `${arquivo} nao existe: rode \`npm run test\` antes`);
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync(arquivo, 'utf8')]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

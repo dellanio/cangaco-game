@@ -52,10 +52,10 @@ async function roteiro({ page, capturar, afirmar }) {
     `a musica da paz nao tem arquivo e nao pede nada: ${JSON.stringify(audios)}`);
   await capturar('no-jogo');
 
-  // ---- 2. o Menu da ajuda: o jogo deixa de existir, e o ambiente com ele --------------------------
-  await page.keyboard.press('h');
+  // ---- 2. o Menu inicial (na aba Opcoes, I-TELA-PARTIDA-NAS-OPCOES): o jogo deixa de existir, e o ambiente com ele
+  await page.click('#abas [data-aba="opcoes"]');
   await page.waitForTimeout(150);
-  await apertar('#ajuda button[data-acao="menu"]');
+  await apertar('#opcoes button[data-acao="menu"]');
   await page.waitForSelector('#menu-inicial');
   await page.waitForTimeout(300);
   const noMenu = await page.evaluate(() => ({

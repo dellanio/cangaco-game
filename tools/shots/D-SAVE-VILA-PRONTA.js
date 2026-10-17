@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da D-SAVE-VILA-PRONTA, o save de teste do operador (`saves/teste-operador-vila-pronta.txt`, gerado e provado
 // por `tests/D-SAVE-VILA-PRONTA.test.ts`). Faz pela tela o que o operador vai fazer: o dev server
 // serve o arquivo em `/saves/...`, o console o poe na gaveta do jogo (`localStorage`, a chave do
@@ -21,9 +22,8 @@ async function roteiro(ctx) {
   }, [CHAVE_DO_SAVE, URL_DO_SAVE]);
   afirmar(servido === readFileSync(`.${URL_DO_SAVE}`, 'utf8').length, `o dev server deveria servir o save inteiro (${servido} caracteres)`);
 
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

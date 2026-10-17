@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // I-TELA-CHAO-DA-ROCA-DO-MILHO: carrega a partida que `tests/I-TELA-CHAO-DA-ROCA-DO-MILHO.test.ts` grava (um
 // rocado de milho e um de cana arados pelo jogador, metade semeada) e captura os dois. Todo tile de cultura
 // na vista tem o chao da roca desenhado, e a celula do pousio na tira de recurso e vazia (sem losango; o
@@ -15,9 +16,8 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   afirmar(existsSync(arquivo), `${arquivo} nao existe: rode o teste antes`);
   const texto = readFileSync(arquivo, 'utf8');
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), ['cangaco:partida', texto]);
-  await page.keyboard.press('h');
   await page.waitForTimeout(250);
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await page.waitForTimeout(250);
   await page.keyboard.press('Escape');
   await page.waitForTimeout(250);

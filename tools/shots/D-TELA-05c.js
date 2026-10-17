@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 const { readFileSync, writeFileSync } = require('node:fs');
 const { URL } = require('node:url');
 const { retanguloDoCanvas } = require('./_canvas');
@@ -9,7 +10,7 @@ async function roteiro({ page, estado, afirmar, capturar }) {
   afirmar(true, 'cena de depuracao abriu');
   const carregar = async nome => {
     await page.evaluate(texto => window.localStorage.setItem('cangaco:partida', texto), readFileSync(`test-output/D-TELA-05c-${nome}.save.txt`, 'utf8'));
-    await page.keyboard.press('h'); await page.click('#ajuda [data-acao="carregar"]'); await page.keyboard.press('Escape');
+    await carregarGaveta(page); await page.keyboard.press('Escape');
     await page.waitForTimeout(100);
   };
   const avancar = async n => { await page.evaluate(passos => window.__cangaco.avancar(passos), n); await page.waitForTimeout(100); };

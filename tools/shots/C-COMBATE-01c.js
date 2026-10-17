@@ -1,4 +1,5 @@
 'use strict';
+const { novaEscaramuca } = require('./_partida');
 // Roteiro da C-COMBATE-01c — os controles de formacao pela tela (plano em
 // docs/planos/2026-09-29-C-COMBATE-01c-controles-de-formacao.md):
 //   1. H -> "Nova escaramuca"; camera na tropa; a caixa pega os 18;
@@ -31,9 +32,8 @@ async function roteiro(ctx) {
     await esperarFrame();
   };
 
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="escaramuca"]');
+  await novaEscaramuca(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

@@ -1,4 +1,5 @@
 'use strict';
+const { abrirGavetas, novaEscaramuca } = require('./_partida');
 // I-TELA-PREMIUM-PROTOTIPO (aceite 1 a 4) — a mesma vista da vila com e sem `?premium`, e a tropa da escaramuca
 // selecionada no premium, com a barra de baixo. Sem `?premium`: nenhuma sombra, nenhuma gradacao, nenhuma classe
 // `premium`. Com ele: sombras de contato, gradacao, e a barra com um retrato por soldado e os comandos espelhados.
@@ -42,9 +43,8 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   await capturar('vila-premium');
 
   // 3. a escaramuca no premium, com a tropa selecionada
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="escaramuca"]');
+  await novaEscaramuca(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();
@@ -100,9 +100,9 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   const save = readFileSync('test-output/I-ARTE-PADARIA-EM-OBRA-madeira.save.txt', 'utf8');
   await abrir('?pausado&premium&semNevoa');
   await page.evaluate((v) => window.localStorage.setItem('cangaco:partida', v), save);
-  await page.keyboard.press('h');
+  await abrirGavetas(page, 'carregar');
   await esperarFrame();
-  const carregar = await page.locator('#ajuda [data-acao="carregar"][data-gaveta="1"]').boundingBox();
+  const carregar = await page.locator('#gavetas button[data-acao="carregar"][data-gaveta="1"]').boundingBox();
   afirmar(carregar !== null, 'o botao de carregar existe');
   await page.keyboard.press('p');
   await page.mouse.move(carregar.x + carregar.width / 2, carregar.y + carregar.height / 2);

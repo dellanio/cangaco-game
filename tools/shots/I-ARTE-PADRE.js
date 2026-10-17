@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // I-ARTE-PADRE: carrega a partida que `tests/I-ARTE-PADRE.test.ts` grava (o padre, tres cabras em volta e
 // um cabra inimigo a 6 tiles), captura a aura da bencao com o brilho nos abencoados, e depois, com o jogo
 // ANDANDO (§8), seleciona o padre pela caixa, arma o Converter e clica no inimigo (I-COMBATE-PADRE-SEM-INVESTIDA): o padre reza (animacao
@@ -15,9 +16,8 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   const arquivo = 'test-output/I-ARTE-PADRE.save.txt';
   afirmar(existsSync(arquivo), `${arquivo} nao existe: rode o teste antes`);
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), ['cangaco:partida', readFileSync(arquivo, 'utf8')]);
-  await page.keyboard.press('h');
   await esperar();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperar();
   await page.keyboard.press('Escape');
   await esperar();

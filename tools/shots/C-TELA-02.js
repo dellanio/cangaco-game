@@ -1,4 +1,5 @@
 'use strict';
+const { novaEscaramuca } = require('./_partida');
 // Roteiro da C-TELA-02 — o marcador de destino, pela tela:
 //   1. H -> "Nova escaramuca"; caixa em volta dos 18 cabras;
 //   2. DESPAUSADO (§8), botao direito 3 tiles acima da tropa: a marca aparece NO tile
@@ -19,9 +20,8 @@ async function roteiro(ctx) {
   const canvas = await retanguloDoCanvas(page);
   const esperarFrame = () => page.waitForTimeout(200);
 
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="escaramuca"]');
+  await novaEscaramuca(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

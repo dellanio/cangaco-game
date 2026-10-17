@@ -1,4 +1,5 @@
 'use strict';
+const { novaEscaramuca } = require('./_partida');
 // Roteiro da D-TRANSPORTE-02b — A ABA DE DISTRIBUICAO.
 // 1. H -> "Nova escaramuca"; o clique na aba Distribuicao troca o corpo para `distribuicao`;
 // 2. as secoes sao as quatro mercadorias disputadas, na ordem do dado, e todo par esta no
@@ -13,9 +14,8 @@ async function roteiro(ctx) {
   const esperarFrame = () => page.waitForTimeout(200);
   const maximo = distribuicaoDoDado.maximo;
 
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="escaramuca"]');
+  await novaEscaramuca(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

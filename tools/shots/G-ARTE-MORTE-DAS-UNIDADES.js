@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // G-ARTE-MORTE-DAS-UNIDADES: o cabra que morre de fome cai com o atlas real de pixel art (sem ?depuracao),
 // passa pela queda e pelo esmaecer e some no fim. O save e o do D-TELA-05c (gerado pelo `npm run test`).
 const { readFileSync, existsSync, writeFileSync } = require('node:fs');
@@ -10,7 +11,7 @@ async function roteiro({ page, estado, afirmar, capturar }) {
   afirmar(existsSync(save), `${save} nao existe: rode \`npm run test\` antes`);
   const quadrosReais = new Set(Object.keys(atlas.frames));
   await page.evaluate((texto) => window.localStorage.setItem('cangaco:partida', texto), readFileSync(save, 'utf8'));
-  await page.keyboard.press('h'); await page.click('#ajuda [data-acao="carregar"]'); await page.keyboard.press('Escape');
+  await carregarGaveta(page); await page.keyboard.press('Escape');
   await page.waitForTimeout(100);
   let s = await estado();
   const vivo = s.unidadesRenderizadas.find((u) => u.id === 'faminto');

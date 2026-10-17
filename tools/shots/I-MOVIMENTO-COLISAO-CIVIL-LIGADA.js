@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da I-MOVIMENTO-COLISAO-CIVIL-LIGADA, aceite (e): a estrada da pedreira com os serfs em
 // tiles distintos (o relato do BUG-CIVIS-EMPILHADOS era "tres serfs desenhados quase no mesmo lugar,
 // na estrada em frente a pedreira").
@@ -30,9 +31,8 @@ async function roteiro(ctx) {
     const texto = await (await window.fetch(url)).text();
     window.localStorage.setItem(chave, texto);
   }, [CHAVE_DO_SAVE, URL_DO_SAVE]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

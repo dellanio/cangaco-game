@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // I-TELA-DICAS-REVISADAS (aceite 3) e I-TELA-JORNAL-PREDIO-SEM-TRABALHADOR: carrega a partida que o teste
 // grava (uma serraria vaga, no comeco de uma fase longa do clima, para nenhuma outra noticia sair no
 // meio). O jornal comeca a contar no primeiro passo que ele ve. Um passo antes dos 5 min, o icone continua
@@ -13,9 +14,8 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   const arquivo = 'test-output/I-TELA-JORNAL-PREDIO-SEM-TRABALHADOR.save.txt';
   afirmar(existsSync(arquivo), `${arquivo} nao existe: rode o teste antes`);
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), ['cangaco:partida', readFileSync(arquivo, 'utf8')]);
-  await page.keyboard.press('h');
   await esperar();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperar();
   await page.keyboard.press('Escape');
   await esperar();

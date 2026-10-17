@@ -12,8 +12,9 @@ const tema = require('../../data/theme-sertao.json');
 
 const ROTULOS = tema.hud.arquivo;
 const GAVETAS = ROTULOS.gavetas;
-const NA_AJUDA = (acao, n) => `#ajuda .arquivo button[data-acao="${acao}"][data-gaveta="${n}"]`;
-const LINHA = (n) => `#ajuda .arquivo .gaveta[data-gaveta="${n}"] [data-campo="gaveta"]`;
+// I-TELA-PARTIDA-NAS-OPCOES: as gavetas moram no popup que o Salvar da aba Opcoes abre
+const NA_AJUDA = (acao, n) => `#gavetas button[data-acao="${acao}"][data-gaveta="${n}"]`;
+const LINHA = (n) => `#gavetas .gaveta[data-gaveta="${n}"] [data-campo="gaveta"]`;
 const NO_MENU = (acao) => `#menu-inicial button[data-acao="${acao}"]`;
 const TIMEOUT_PRONTO_MS = 10_000;
 /** Teto do passo despausado, com folga: seguranca contra o relogio disparar, nao medida (§8). */
@@ -33,9 +34,10 @@ async function roteiro(ctx) {
   };
 
   await page.evaluate(() => window.localStorage.clear());
-  await page.keyboard.press('h');
+  await page.click('#abas [data-aba="opcoes"]');
+  await page.click('#opcoes [data-acao="abrir-salvar"]');
   await esperarFrame();
-  afirmar(await page.isVisible('#ajuda .arquivo .gavetas'), 'a secao Partida deveria ter a lista das gavetas');
+  afirmar(await page.isVisible('#gavetas .gavetas'), 'o Salvar deveria abrir o popup com a lista das gavetas');
   for (const n of [1, 2, 3]) {
     const texto = await page.textContent(LINHA(n));
     afirmar(texto === `${GAVETAS.nome.replace('{n}', String(n))}: ${GAVETAS.vazia}`, `a gaveta ${n} deveria nascer vazia, diz '${texto}'`);
@@ -59,9 +61,10 @@ async function roteiro(ctx) {
   afirmar(linhas[1].includes(GAVETAS.tipos.livre), `a gaveta 1 deveria dizer o tipo da partida: '${linhas[1]}'`);
   afirmar(linhas[3].includes('versao'), `a gaveta 3 deveria aparecer recusada, com o motivo: '${linhas[3]}'`);
   await capturar('gavetas-no-jogo');
+  await page.click('#gavetas button[data-acao="fechar"]');
 
   // ---- 2. o menu inicial: o Carregar mostra as tres, a 3 recusada --------------------------------
-  await page.click('#ajuda .arquivo button[data-acao="menu"]');
+  await page.click('#opcoes .arquivo button[data-acao="menu"]');
   await page.waitForSelector('#menu-inicial', { timeout: TIMEOUT_PRONTO_MS });
   afirmar((await page.evaluate(() => window.document.querySelectorAll('canvas').length)) === 0, 'o menu inicial e antes do jogo: sem canvas');
   afirmar((await page.getAttribute(NO_MENU('continuar'), 'aria-disabled')) === null, 'com save, o Continuar deveria abrir');

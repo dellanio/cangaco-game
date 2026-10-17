@@ -1,4 +1,5 @@
 'use strict';
+const { abrirGavetas } = require('./_partida');
 const { readFileSync } = require('node:fs');
 const { retanguloDoCanvas } = require('./_canvas');
 const config = require('../../data/acude-arte.json');
@@ -12,9 +13,9 @@ async function roteiro({ page, estado, afirmar, capturar }) {
   for (const nivel of config.estados) {
     const save = readFileSync(`test-output/I-ARTE-ACUDE-${nivel}.save.txt`, 'utf8');
     await page.evaluate(v => window.localStorage.setItem('cangaco:partida', v), save);
-    await page.keyboard.press('h');
+    await abrirGavetas(page, 'carregar');
     await page.waitForTimeout(150);
-    const carregar = await page.locator('#ajuda [data-acao="carregar"][data-gaveta="1"]').boundingBox();
+    const carregar = await page.locator('#gavetas button[data-acao="carregar"][data-gaveta="1"]').boundingBox();
     afirmar(carregar !== null, 'botão carregar existe');
     // Um passo despausado e botão segurado: também exercita a ajuda com o jogo andando.
     await page.keyboard.press('p');
@@ -54,12 +55,12 @@ async function roteiro({ page, estado, afirmar, capturar }) {
   const aguaNaTela = async (nomeDoSave) => {
     const save = readFileSync(`test-output/${nomeDoSave}.save.txt`, 'utf8');
     await page.evaluate(v => window.localStorage.setItem('cangaco:partida', v), save);
-    await page.keyboard.press('h');
+    await abrirGavetas(page, 'carregar');
     await page.waitForTimeout(150);
-    const carregar = await page.locator('#ajuda [data-acao="carregar"][data-gaveta="1"]').boundingBox();
+    const carregar = await page.locator('#gavetas button[data-acao="carregar"][data-gaveta="1"]').boundingBox();
     await page.keyboard.press('p');
     await page.mouse.move(carregar.x + carregar.width / 2, carregar.y + carregar.height / 2);
-    await page.mouse.down(); await page.waitForTimeout(150); await page.mouse.up();
+    await page.mouse.down(); await page.waitForTimeout(150); await page.mouse.up(); await page.click('#abas [data-aba="construir"]');
     await page.waitForTimeout(200);
     await page.keyboard.press('Escape');
     if (!(await estado()).pausado) await page.keyboard.press('p');

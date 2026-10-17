@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // G-ARTE-TRABALHO-DENTRO-DO-PREDIO: o trabalhador aparece produzindo no espaco da casa. Carrega a
 // vila pronta, avanca a sim ate cada predio com quadro de trabalho publicar um quadro da arte nova
 // (`window.__cangaco.quadrosDeTrabalho`, com `sprite` verdadeiro: a textura da entrada `trabalho` existe) e captura
@@ -17,8 +18,8 @@ const CAPTURAS = 3;
 async function roteiro({ page, capturar, estado, afirmar }) {
   const envelope = JSON.parse(readFileSync('saves/teste-operador-vila-pronta.txt', 'utf8'));
   await page.evaluate((v) => window.localStorage.setItem('cangaco:partida', v), JSON.stringify(envelope));
-  await page.keyboard.press('h'); await page.waitForTimeout(200);
-  await page.click('#ajuda [data-acao="carregar"]'); await page.waitForTimeout(200);
+   await page.waitForTimeout(200);
+  await carregarGaveta(page); await page.waitForTimeout(200);
   await page.keyboard.press('Escape'); await page.waitForTimeout(200);
   afirmar((await estado()).tick === envelope.estado.tick, 'save carregado');
   const canvas = await retanguloDoCanvas(page);

@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 const {readFileSync}=require('node:fs');
 const {retanguloDoCanvas}=require('./_canvas');
 const terreno=require('../../data/terrain.json');
@@ -9,8 +10,7 @@ async function roteiro({page,capturar,estado,afirmar}){
   // Fixture carregada pela mesma porta de save do jogador; render so le o estoque.
   bodega.estoque.entrada=Object.fromEntries(economia.grupos.comida.map(m=>[m,1]));
   await page.evaluate(s=>window.localStorage.setItem('cangaco:partida',s),JSON.stringify(salvo));
-  await page.keyboard.press('h');
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await page.keyboard.press('Escape');
   const canvas=await retanguloDoCanvas(page);
   await page.mouse.move(canvas.left+canvas.width/2,canvas.top+canvas.height/2);

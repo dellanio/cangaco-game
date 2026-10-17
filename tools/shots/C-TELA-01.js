@@ -1,4 +1,5 @@
 'use strict';
+const { novaEscaramuca } = require('./_partida');
 // Roteiro da C-TELA-01 — a mensagem da ordem recusada, pela tela, como o jogador:
 //   1. H -> "Nova escaramuca"; caixa em volta dos 18 cabras;
 //   2. DESPAUSADO (§8), botao direito longe da vila: C-COMBATE-02b tirou a cerca da paz, e
@@ -22,9 +23,8 @@ async function roteiro(ctx) {
   const esperarFrame = () => page.waitForTimeout(200);
   const aviso = () => page.$eval('#aviso-de-ordem', (n) => (n.hidden ? null : n.textContent));
 
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="escaramuca"]');
+  await novaEscaramuca(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

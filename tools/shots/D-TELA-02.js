@@ -1,4 +1,5 @@
 'use strict';
+const { novaEscaramuca } = require('./_partida');
 // Roteiro da D-TELA-02 — O MINIMAPA.
 //   1. H -> "Nova escaramuca"; a tropa marcha em paz ate ver a vila da IA (ela nasce na nevoa,
 //      F-TELA-NEVOA); o minimapa desenha os predios do jogador e os da IA a vista; o pixel no
@@ -20,9 +21,8 @@ async function roteiro(ctx) {
   const canvas = await retanguloDoCanvas(page);
   const esperarFrame = () => page.waitForTimeout(200);
 
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="escaramuca"]');
+  await novaEscaramuca(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

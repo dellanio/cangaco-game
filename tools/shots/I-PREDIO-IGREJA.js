@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // I-ARTE-IGREJA e I-PREDIO-IGREJA: carrega a partida que `tests/I-PREDIO-IGREJA.test.ts` grava (a vila e
 // a Igreja completa com 5 de ouro, sem rua), captura a Igreja, abre o painel com o jogo ANDANDO (§8) e
 // contrata o padre pelo botao: o ouro cai pelo custo e o padre aparece na porta.
@@ -16,9 +17,8 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   const arquivo = 'test-output/I-PREDIO-IGREJA.save.txt';
   afirmar(existsSync(arquivo), `${arquivo} nao existe: rode o teste antes`);
   await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), ['cangaco:partida', readFileSync(arquivo, 'utf8')]);
-  await page.keyboard.press('h');
   await esperar();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperar();
   await page.keyboard.press('Escape');
   await esperar();

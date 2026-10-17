@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da F-VIVO-c — OS ANIMAIS DO CURRAL.
 //
 // Afirma o que a cena publicou (`window.__cangaco.animaisDoCurral`), nunca pixel
@@ -69,9 +70,8 @@ async function roteiro(ctx) {
   afirmar(existsSync(ARQUIVO_DO_SAVE), `${ARQUIVO_DO_SAVE} nao existe: rode \`npm run test\` antes`);
   const texto = readFileSync(ARQUIVO_DO_SAVE, 'utf8');
   await page.evaluate(([chave, valor]) => window.localStorage.setItem(chave, valor), [CHAVE_DO_SAVE, texto]);
-  await page.keyboard.press('h');
   await esperarFrame();
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await esperarFrame();
   await page.keyboard.press('Escape');
   await esperarFrame();

@@ -1,4 +1,5 @@
 'use strict';
+const { abrirGavetas } = require('./_partida');
 const { readFileSync, writeFileSync } = require('node:fs');
 const { Buffer } = require('node:buffer');
 const { URL } = require('node:url');
@@ -13,9 +14,9 @@ async function roteiro({ page, estado, afirmar, capturar }) {
   for(const nivel of config.estados) {
     const save=readFileSync(`test-output/I-ARTE-ARMAZEM-EM-OBRA-${nivel}.save.txt`,'utf8');
     await page.evaluate(v=>window.localStorage.setItem('cangaco:partida',v),save);
-    await page.keyboard.press('h'); await page.waitForTimeout(150);
-    const b=await page.locator('#ajuda [data-acao="carregar"][data-gaveta="1"]').boundingBox(); afirmar(b!==null,'carregar existe');
-    await page.keyboard.press('p'); await page.mouse.move(b.x+b.width/2,b.y+b.height/2); await page.mouse.down(); await page.waitForTimeout(150); await page.mouse.up();
+    await abrirGavetas(page, 'carregar'); await page.waitForTimeout(150);
+    const b=await page.locator('#gavetas button[data-acao="carregar"][data-gaveta="1"]').boundingBox(); afirmar(b!==null,'carregar existe');
+    await page.keyboard.press('p'); await page.mouse.move(b.x+b.width/2,b.y+b.height/2); await page.mouse.down(); await page.waitForTimeout(150); await page.mouse.up(); await page.click('#abas [data-aba="construir"]');
     await page.waitForTimeout(200); await page.keyboard.press('Escape'); if(!(await estado()).pausado) await page.keyboard.press('p');
     const s=await estado(), p=s.prediosDoEstado['storehouse-arte']; afirmar(p?.tipo==='storehouse','cenário da Armazém carregado');
     afirmar(s.spritesDePredio['storehouse-arte']===`predio:storehouse:${nivel}`,`Armazém ${nivel} usa PNG real: ${s.spritesDePredio['storehouse-arte']}`);

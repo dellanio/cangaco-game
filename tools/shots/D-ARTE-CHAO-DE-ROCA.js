@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 const { readFileSync } = require('node:fs');
 const { retanguloDoCanvas } = require('./_canvas');
 const terreno = require('../../data/terrain.json');
@@ -33,9 +34,8 @@ async function roteiro(ctx) {
     return conteudo.length;
   }, [CHAVE_DO_SAVE, `/${SAVE}`]);
   afirmar(servido === texto.length, 'o save servido precisa estar completo');
-  await page.keyboard.press('h');
   await page.waitForTimeout(200);
-  await page.click('#ajuda [data-acao="carregar"]');
+  await carregarGaveta(page);
   await page.waitForTimeout(200);
   await page.keyboard.press('Escape');
   await page.waitForTimeout(200);

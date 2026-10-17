@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 const { readFileSync, mkdirSync, writeFileSync } = require('node:fs');
 const { createHash } = require('node:crypto');
 const { retanguloDoCanvas } = require('./_canvas');
@@ -22,9 +23,8 @@ async function roteiro({ page, capturar, estado, afirmar }) {
   const esperar = () => page.waitForTimeout(200);
   async function carregar() {
     await page.evaluate((v) => window.localStorage.setItem('cangaco:partida', v), save);
-    await page.keyboard.press('h');
     await esperar();
-    await page.click('#ajuda [data-acao="carregar"]');
+    await carregarGaveta(page);
     await esperar();
     await page.keyboard.press('Escape');
     await esperar();

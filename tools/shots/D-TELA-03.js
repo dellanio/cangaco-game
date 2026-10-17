@@ -1,4 +1,5 @@
 'use strict';
+const { carregarGaveta } = require('./_partida');
 // Roteiro da D-TELA-03a (a carga sobre o serf com icone) e da D-TELA-03b (a pilha da casa com
 // icone), Leva 1 da animacao direcional.
 //
@@ -41,9 +42,8 @@ async function roteiro(ctx) {
   afirmar(existsSync(arquivo), `${arquivo} nao existe: rode \`npm run test\` antes`);
   const carregar = async () => {
     await page.evaluate(([k, v]) => window.localStorage.setItem(k, v), [CHAVE_DO_SAVE, readFileSync(arquivo, 'utf8')]);
-    await page.keyboard.press('h');
     await esperarFrame();
-    await page.click('#ajuda [data-acao="carregar"]');
+    await carregarGaveta(page);
     await esperarFrame();
     await page.keyboard.press('Escape');
     await esperarFrame();

@@ -399,6 +399,13 @@
       "recusado": "Não retomou: {detalhe}",
       "gaveta": "O navegador não guardou: {detalhe}",
       "menuInicial": "Menu inicial",
+      "abrirSalvar": "Salvar",
+      "abrirCarregar": "Carregar",
+      "tituloSalvar": "Salvar a partida",
+      "tituloCarregar": "Carregar uma partida",
+      "fechar": "Fechar",
+      "reiniciar": "Reiniciar fase",
+      "confirmarReinicio": "Confirmar: reiniciar (o que não foi salvo se perde)",
       "gavetas": {
         "_doc": "E-SAVE-GAVETAS. Uma linha por gaveta (src/ui/arquivo.ts, textoDaGaveta), no jogo e no Carregar do menu. {tipo} vem de `tipos` (o tipo da partida guardada, o nome da gaveta); {data} e a data do indice, no fuso do jogador; save da F23b nao tem data.",
         "nome": "Gaveta {n}",

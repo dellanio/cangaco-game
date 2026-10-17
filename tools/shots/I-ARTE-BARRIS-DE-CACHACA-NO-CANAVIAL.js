@@ -1,4 +1,5 @@
 ﻿'use strict';
+const { carregarGaveta } = require('./_partida');
 const {readFileSync}=require('node:fs');
 const {retanguloDoCanvas}=require('./_canvas');
 const terreno=require('../../data/terrain.json');
@@ -11,7 +12,7 @@ async function roteiro({page,capturar,estado,afirmar}){
  for(const n of [0,1,5]){
   const salvo=JSON.parse(JSON.stringify(original)),p=salvo.estado.predios.porId[id];p.estoque.saida.wine=n;
   await page.evaluate(s=>window.localStorage.setItem('cangaco:partida',s),JSON.stringify(salvo));
-  await page.keyboard.press('h');await page.click('#ajuda [data-acao="carregar"]');await page.keyboard.press('Escape');
+  await carregarGaveta(page);await page.keyboard.press('Escape');
   await page.mouse.move(canvas.left+canvas.width/2,canvas.top+canvas.height/2);
   for(let i=0;i<10&&(await estado()).camera.zoom!==2;i++){await page.mouse.wheel(0,-200);await page.waitForTimeout(200);}
   await page.evaluate(s=>window.__cangaco.fixarCamera(s),{scrollX:Math.round((p.gx+1.5)*terreno.tile_px-canvas.width/2),scrollY:Math.round((p.gy+1)*terreno.tile_px-canvas.height/2)});
