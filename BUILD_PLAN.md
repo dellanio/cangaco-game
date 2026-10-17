@@ -10613,6 +10613,26 @@ simulando presença de ferro e ouro. Já o carvão é indicado no chão (...) Co
   2. no jogo, no sertão: um bloco por tile de montanha, os veios de ferro e de ouro nos tiles deles (contados na ponte),
      nenhum morrinho de veio desenhado, e a captura do maciço com os veios.
 
+#### I-TERRENO-ESTOQUE-POR-DIFICULDADE — o estoque inicial de pedra e madeira cai fase a fase, com folga nas três primeiras
+Pedido do operador (2026-10-16): "Nas fases de campanha preciso começar com mais pedra e madeira. Cada fase deve ter um
+nível de dificuldade onde as primeiras começamos com mais recurso e em cada fase em uma dinâmica de dificuldade. Nas 3
+primeiras fases coloque pelo menos 50 pedras já de início e 50 madeiras." Substitui a tabela do §4 de
+`docs/planos/2026-10-15-pedra-e-estoque-das-fases.md` (I-TERRENO-PEDRA-EM-TODAS-AS-FASES).
+- **Decisão:** a curva cai 5 por fase (as fases 7, 9 e 10 são batalha sem vila e continuam sem estoque):
+
+  | Fase | 1 | 2 | 3 | 4 | 5 | 6 | 8 |
+  |---|---|---|---|---|---|---|---|
+  | pedra | 60 | 55 | 50 | 45 | 40 | 35 | 30 |
+  | madeira | 60 | 55 | 50 | 45 | 40 | 40 | 35 |
+
+  Nenhuma fase começa com menos do que hoje. A madeira da 6 fica em 40 (abre mais cadeias que a 5). Ouro e comida não
+  mudam.
+- **Aceite:**
+  1. as fases 1, 2 e 3 começam com pelo menos 50 de pedra e 50 de madeira;
+  2. a pedra e a madeira nunca sobem de uma fase de construir para a seguinte, e nenhuma fase fica abaixo da tabela de
+     antes;
+  3. os alvos de dificuldade da campanha (o jogador automático) continuam ok.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
