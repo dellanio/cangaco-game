@@ -1,0 +1,383 @@
+{
+  "tool": "image_gen.imagegen (built-in)",
+  "seed": null,
+  "seed_note": "A ferramenta nao expoe semente; nao foi inventada.",
+  "prompts": [
+    {
+      "name": "montanha-1",
+      "prompt": "Use case: stylized-concept. Create ONE production game sprite, isolated on true transparent background. Pianco Ferro e Mandacaru, Brazilian Paraiba dry sertao 1930s. Hand-painted detailed naturalistic RTS art matching the viewed reference buildings: earthy subdued colors, fine brushwork, readable at 80x112 pixels, NOT pixel art, NOT cartoon, NOT a 1998 game. Orthographic top-down three-quarter camera over ORTHOGONAL square grid, front is image bottom. ONE tall massive outcrop of warm gray beige granite: rises vertically like a section of a rugged Brazilian granite mountain massif, broad exposed rock face, inclined weathered slabs, deep fissures, irregular rounded jagged crest, very sparse dry olive vegetation in cracks. NOT a little pile of loose stones. NOT a rectangular box, cylinder, pillar or separate pedestal. Shape broad enough to interlock and overlap adjacent mountain blocks. Silhouette fills a tall 5:7 framing, rock height approximately 1.5 ground tiles; lowest foot centered horizontally, ground contact base 80 percent of overall width, upper rock can overhang slightly. Entire object visible with a thin transparent margin; no ground patch. Lighting ONLY overhead and slightly from FRONT/SOUTH, exactly zero east-west directional bias: left and right equally lit, upward/front surfaces brighter, deep cracks dark. No cast shadow, no text, no border, no decoration.\nVariant: No mineral. Tall broken rounded crest with a large central sloping slab and branching vertical cracks."
+    },
+    {
+      "name": "montanha-2",
+      "prompt": "Use case: stylized-concept. Create ONE production game sprite, isolated on true transparent background. Pianco Ferro e Mandacaru, Brazilian Paraiba dry sertao 1930s. Hand-painted detailed naturalistic RTS art matching the viewed reference buildings: earthy subdued colors, fine brushwork, readable at 80x112 pixels, NOT pixel art, NOT cartoon, NOT a 1998 game. Orthographic top-down three-quarter camera over ORTHOGONAL square grid, front is image bottom. ONE tall massive outcrop of warm gray beige granite: rises vertically like a section of a rugged Brazilian granite mountain massif, broad exposed rock face, inclined weathered slabs, deep fissures, irregular rounded jagged crest, very sparse dry olive vegetation in cracks. NOT a little pile of loose stones. NOT a rectangular box, cylinder, pillar or separate pedestal. Shape broad enough to interlock and overlap adjacent mountain blocks. Silhouette fills a tall 5:7 framing, rock height approximately 1.5 ground tiles; lowest foot centered horizontally, ground contact base 80 percent of overall width, upper rock can overhang slightly. Entire object visible with a thin transparent margin; no ground patch. Lighting ONLY overhead and slightly from FRONT/SOUTH, exactly zero east-west directional bias: left and right equally lit, upward/front surfaces brighter, deep cracks dark. No cast shadow, no text, no border, no decoration.\nVariant: No mineral. Asymmetric twin crags with fractured diagonal slabs and a narrow central fissure."
+    },
+    {
+      "name": "montanha-3",
+      "prompt": "Use case: stylized-concept. Create ONE production game sprite, isolated on true transparent background. Pianco Ferro e Mandacaru, Brazilian Paraiba dry sertao 1930s. Hand-painted detailed naturalistic RTS art matching the viewed reference buildings: earthy subdued colors, fine brushwork, readable at 80x112 pixels, NOT pixel art, NOT cartoon, NOT a 1998 game. Orthographic top-down three-quarter camera over ORTHOGONAL square grid, front is image bottom. ONE tall massive outcrop of warm gray beige granite: rises vertically like a section of a rugged Brazilian granite mountain massif, broad exposed rock face, inclined weathered slabs, deep fissures, irregular rounded jagged crest, very sparse dry olive vegetation in cracks. NOT a little pile of loose stones. NOT a rectangular box, cylinder, pillar or separate pedestal. Shape broad enough to interlock and overlap adjacent mountain blocks. Silhouette fills a tall 5:7 framing, rock height approximately 1.5 ground tiles; lowest foot centered horizontally, ground contact base 80 percent of overall width, upper rock can overhang slightly. Entire object visible with a thin transparent margin; no ground patch. Lighting ONLY overhead and slightly from FRONT/SOUTH, exactly zero east-west directional bias: left and right equally lit, upward/front surfaces brighter, deep cracks dark. No cast shadow, no text, no border, no decoration.\nVariant: No mineral. Broad weathered dome with steep front face and layered inclined granite sheets."
+    },
+    {
+      "name": "montanha-4",
+      "prompt": "Use case: stylized-concept. Create ONE production game sprite, isolated on true transparent background. Pianco Ferro e Mandacaru, Brazilian Paraiba dry sertao 1930s. Hand-painted detailed naturalistic RTS art matching the viewed reference buildings: earthy subdued colors, fine brushwork, readable at 80x112 pixels, NOT pixel art, NOT cartoon, NOT a 1998 game. Orthographic top-down three-quarter camera over ORTHOGONAL square grid, front is image bottom. ONE tall massive outcrop of warm gray beige granite: rises vertically like a section of a rugged Brazilian granite mountain massif, broad exposed rock face, inclined weathered slabs, deep fissures, irregular rounded jagged crest, very sparse dry olive vegetation in cracks. NOT a little pile of loose stones. NOT a rectangular box, cylinder, pillar or separate pedestal. Shape broad enough to interlock and overlap adjacent mountain blocks. Silhouette fills a tall 5:7 framing, rock height approximately 1.5 ground tiles; lowest foot centered horizontally, ground contact base 80 percent of overall width, upper rock can overhang slightly. Entire object visible with a thin transparent margin; no ground patch. Lighting ONLY overhead and slightly from FRONT/SOUTH, exactly zero east-west directional bias: left and right equally lit, upward/front surfaces brighter, deep cracks dark. No cast shadow, no text, no border, no decoration.\nVariant: No mineral. Angular split crown with curved weathered shoulders and deep irregular fractures."
+    },
+    {
+      "name": "ferro-1",
+      "prompt": "Use case: stylized-concept. Create ONE production game sprite, isolated on true transparent background. Pianco Ferro e Mandacaru, Brazilian Paraiba dry sertao 1930s. Hand-painted detailed naturalistic RTS art matching the viewed reference buildings: earthy subdued colors, fine brushwork, readable at 80x112 pixels, NOT pixel art, NOT cartoon, NOT a 1998 game. Orthographic top-down three-quarter camera over ORTHOGONAL square grid, front is image bottom. ONE tall massive outcrop of warm gray beige granite: rises vertically like a section of a rugged Brazilian granite mountain massif, broad exposed rock face, inclined weathered slabs, deep fissures, irregular rounded jagged crest, very sparse dry olive vegetation in cracks. NOT a little pile of loose stones. NOT a rectangular box, cylinder, pillar or separate pedestal. Shape broad enough to interlock and overlap adjacent mountain blocks. Silhouette fills a tall 5:7 framing, rock height approximately 1.5 ground tiles; lowest foot centered horizontally, ground contact base 80 percent of overall width, upper rock can overhang slightly. Entire object visible with a thin transparent margin; no ground patch. Lighting ONLY overhead and slightly from FRONT/SOUTH, exactly zero east-west directional bias: left and right equally lit, upward/front surfaces brighter, deep cracks dark. No cast shadow, no text, no border, no decoration.\nVariant: Visible iron ore IN the broad steep rock FACE: several large rust red dark crimson branching seams and rusty stains embedded in granite, with small cold steel metallic highlights. NOT loose ore stones."
+    },
+    {
+      "name": "ferro-2",
+      "prompt": "Use case: stylized-concept. Create ONE production game sprite, isolated on true transparent background. Pianco Ferro e Mandacaru, Brazilian Paraiba dry sertao 1930s. Hand-painted detailed naturalistic RTS art matching the viewed reference buildings: earthy subdued colors, fine brushwork, readable at 80x112 pixels, NOT pixel art, NOT cartoon, NOT a 1998 game. Orthographic top-down three-quarter camera over ORTHOGONAL square grid, front is image bottom. ONE tall massive outcrop of warm gray beige granite: rises vertically like a section of a rugged Brazilian granite mountain massif, broad exposed rock face, inclined weathered slabs, deep fissures, irregular rounded jagged crest, very sparse dry olive vegetation in cracks. NOT a little pile of loose stones. NOT a rectangular box, cylinder, pillar or separate pedestal. Shape broad enough to interlock and overlap adjacent mountain blocks. Silhouette fills a tall 5:7 framing, rock height approximately 1.5 ground tiles; lowest foot centered horizontally, ground contact base 80 percent of overall width, upper rock can overhang slightly. Entire object visible with a thin transparent margin; no ground patch. Lighting ONLY overhead and slightly from FRONT/SOUTH, exactly zero east-west directional bias: left and right equally lit, upward/front surfaces brighter, deep cracks dark. No cast shadow, no text, no border, no decoration.\nVariant: Visible iron ore IN the broad steep rock FACE: thick diagonal dark red hematite bands, burnt rust stains and thin cool silver metallic edges embedded in the rock face. NOT loose ore stones."
+    },
+    {
+      "name": "ouro-1",
+      "prompt": "Use case: stylized-concept. Create ONE production game sprite, isolated on true transparent background. Pianco Ferro e Mandacaru, Brazilian Paraiba dry sertao 1930s. Hand-painted detailed naturalistic RTS art matching the viewed reference buildings: earthy subdued colors, fine brushwork, readable at 80x112 pixels, NOT pixel art, NOT cartoon, NOT a 1998 game. Orthographic top-down three-quarter camera over ORTHOGONAL square grid, front is image bottom. ONE tall massive outcrop of warm gray beige granite: rises vertically like a section of a rugged Brazilian granite mountain massif, broad exposed rock face, inclined weathered slabs, deep fissures, irregular rounded jagged crest, very sparse dry olive vegetation in cracks. NOT a little pile of loose stones. NOT a rectangular box, cylinder, pillar or separate pedestal. Shape broad enough to interlock and overlap adjacent mountain blocks. Silhouette fills a tall 5:7 framing, rock height approximately 1.5 ground tiles; lowest foot centered horizontally, ground contact base 80 percent of overall width, upper rock can overhang slightly. Entire object visible with a thin transparent margin; no ground patch. Lighting ONLY overhead and slightly from FRONT/SOUTH, exactly zero east-west directional bias: left and right equally lit, upward/front surfaces brighter, deep cracks dark. No cast shadow, no text, no border, no decoration.\nVariant: Visible gold ore IN the broad steep rock FACE: a network of rich yellow GOLD branching thin veins and embedded flecks, highly legible sparkling yellow-white almost white glints at several points. Gold is part of cracks in rock, NOT loose nuggets or a pile. Sparkle highlights small and sharp, not star icons."
+    },
+    {
+      "name": "ouro-2",
+      "prompt": "Use case: stylized-concept. Create ONE production game sprite, isolated on true transparent background. Pianco Ferro e Mandacaru, Brazilian Paraiba dry sertao 1930s. Hand-painted detailed naturalistic RTS art matching the viewed reference buildings: earthy subdued colors, fine brushwork, readable at 80x112 pixels, NOT pixel art, NOT cartoon, NOT a 1998 game. Orthographic top-down three-quarter camera over ORTHOGONAL square grid, front is image bottom. ONE tall massive outcrop of warm gray beige granite: rises vertically like a section of a rugged Brazilian granite mountain massif, broad exposed rock face, inclined weathered slabs, deep fissures, irregular rounded jagged crest, very sparse dry olive vegetation in cracks. NOT a little pile of loose stones. NOT a rectangular box, cylinder, pillar or separate pedestal. Shape broad enough to interlock and overlap adjacent mountain blocks. Silhouette fills a tall 5:7 framing, rock height approximately 1.5 ground tiles; lowest foot centered horizontally, ground contact base 80 percent of overall width, upper rock can overhang slightly. Entire object visible with a thin transparent margin; no ground patch. Lighting ONLY overhead and slightly from FRONT/SOUTH, exactly zero east-west directional bias: left and right equally lit, upward/front surfaces brighter, deep cracks dark. No cast shadow, no text, no border, no decoration.\nVariant: Visible gold ore IN the broad steep rock FACE: several irregular diagonal rich yellow GOLD vein threads crossing the face, gold flecks with brilliant almost-white tiny specular glints. Keep stone dominant but gold clearly visible at sprite size. NOT loose nuggets or a pile, no star icons."
+    }
+  ],
+  "sources": [
+    {
+      "name": "montanha-1",
+      "source": "C:\\Users\\della\\.codex\\generated_images\\01a14724-a59d-7800-b2df-3f30c55654f7\\exec-e1cded80-a3a0-4c61-a8fa-eb4a8861c710.png",
+      "original_size": [
+        1060,
+        1484
+      ],
+      "crop": [
+        32,
+        62,
+        1032,
+        1420
+      ],
+      "sprite_size": [
+        80,
+        112
+      ],
+      "rock_size": [
+        77,
+        104
+      ],
+      "anchor": [
+        40,
+        112
+      ],
+      "sha256": "251b50fd031ae8e616d69efd7cd874e704d5212b039f9dc2180867e1a8ab08f5",
+      "output_id": "exec-e1cded80-a3a0-4c61-a8fa-eb4a8861c710",
+      "generation_session_id": "01a14724-a59d-7800-b2df-3f30c55654f7",
+      "original_sha256": "0b7651522f50289f2068efeb0a5a0794ce4df2be42427b5cc58e2fa8aba1c052",
+      "base_span_lower_16px": [
+        1,
+        0,
+        78,
+        16
+      ]
+    },
+    {
+      "name": "montanha-2",
+      "source": "C:\\Users\\della\\.codex\\generated_images\\01a14724-a59d-7800-b2df-3f30c55654f7\\exec-2ef13955-98e9-4804-a4ee-64b1bc649524.png",
+      "original_size": [
+        1060,
+        1484
+      ],
+      "crop": [
+        39,
+        95,
+        1029,
+        1427
+      ],
+      "sprite_size": [
+        80,
+        112
+      ],
+      "rock_size": [
+        77,
+        104
+      ],
+      "anchor": [
+        40,
+        112
+      ],
+      "sha256": "0c4922556da85b8e943a84ae2f8e8c033a43f9d8633cc1955a4c2575dde88447",
+      "output_id": "exec-2ef13955-98e9-4804-a4ee-64b1bc649524",
+      "generation_session_id": "01a14724-a59d-7800-b2df-3f30c55654f7",
+      "original_sha256": "9012a8d70c4febac95a33dc463377897d69f4049721ea27b551a10850ddd1b54",
+      "base_span_lower_16px": [
+        7,
+        0,
+        78,
+        16
+      ]
+    },
+    {
+      "name": "montanha-3",
+      "source": "C:\\Users\\della\\.codex\\generated_images\\01a14724-a59d-7800-b2df-3f30c55654f7\\exec-07cf3609-8f20-4385-90a6-bfe01dad5bff.png",
+      "original_size": [
+        1060,
+        1484
+      ],
+      "crop": [
+        28,
+        80,
+        1038,
+        1429
+      ],
+      "sprite_size": [
+        80,
+        112
+      ],
+      "rock_size": [
+        78,
+        104
+      ],
+      "anchor": [
+        40,
+        112
+      ],
+      "sha256": "b2753581a22d4c97e9347a3a9ecfa2fc2892cef3fb4c457b788f589047817a2d",
+      "output_id": "exec-07cf3609-8f20-4385-90a6-bfe01dad5bff",
+      "generation_session_id": "01a14724-a59d-7800-b2df-3f30c55654f7",
+      "original_sha256": "d0c831e69ea447e1ece13c2a24a57c809e1ac7abf0dd1cd120a8b6a57d4eb475",
+      "base_span_lower_16px": [
+        2,
+        0,
+        79,
+        16
+      ]
+    },
+    {
+      "name": "montanha-4",
+      "source": "C:\\Users\\della\\.codex\\generated_images\\01a14724-a59d-7800-b2df-3f30c55654f7\\exec-41edef29-30ca-44a3-93e1-89267bc90d00.png",
+      "original_size": [
+        1060,
+        1484
+      ],
+      "crop": [
+        10,
+        10,
+        1049,
+        1467
+      ],
+      "sprite_size": [
+        80,
+        112
+      ],
+      "rock_size": [
+        74,
+        104
+      ],
+      "anchor": [
+        40,
+        112
+      ],
+      "sha256": "3baf052200546fee17d21d0e17a2f9c7fb99fa34a1dc64f976561608eb6bd7bb",
+      "output_id": "exec-41edef29-30ca-44a3-93e1-89267bc90d00",
+      "generation_session_id": "01a14724-a59d-7800-b2df-3f30c55654f7",
+      "original_sha256": "224931401e308b86d6ea32c073b4c64582709f8c7b52844f51c443c7bd95621d",
+      "base_span_lower_16px": [
+        4,
+        0,
+        75,
+        16
+      ]
+    },
+    {
+      "name": "ferro-1",
+      "source": "C:\\Users\\della\\.codex\\generated_images\\01a14724-a59d-7800-b2df-3f30c55654f7\\exec-0fe20373-0eb1-4c17-a2fe-72aef8510817.png",
+      "original_size": [
+        1060,
+        1484
+      ],
+      "crop": [
+        11,
+        9,
+        1051,
+        1473
+      ],
+      "sprite_size": [
+        80,
+        112
+      ],
+      "rock_size": [
+        74,
+        104
+      ],
+      "anchor": [
+        40,
+        112
+      ],
+      "sha256": "0b3dc17c4e3a4e34ac98ae69dbb9c3f05fd5b0e87e48416336cfd6fb3d4b128b",
+      "output_id": "exec-0fe20373-0eb1-4c17-a2fe-72aef8510817",
+      "generation_session_id": "01a14724-a59d-7800-b2df-3f30c55654f7",
+      "original_sha256": "d33910f3216434e2a1108aee7b06660eae0a18f0e3577c7c3f8c123c160b69d5",
+      "base_span_lower_16px": [
+        4,
+        0,
+        76,
+        16
+      ]
+    },
+    {
+      "name": "ferro-2",
+      "source": "C:\\Users\\della\\.codex\\generated_images\\01a14724-a59d-7800-b2df-3f30c55654f7\\exec-3896ed7a-eb90-46c6-9352-7438f112831c.png",
+      "original_size": [
+        1060,
+        1484
+      ],
+      "crop": [
+        24,
+        35,
+        1042,
+        1453
+      ],
+      "sprite_size": [
+        80,
+        112
+      ],
+      "rock_size": [
+        75,
+        104
+      ],
+      "anchor": [
+        40,
+        112
+      ],
+      "sha256": "fa23069a51231e20c84852d21aa0c02fad47c5eb6190313a44bef72471c6f273",
+      "output_id": "exec-3896ed7a-eb90-46c6-9352-7438f112831c",
+      "generation_session_id": "01a14724-a59d-7800-b2df-3f30c55654f7",
+      "original_sha256": "dfb3c48a7e624443bd327e3113ad96b0968a8e6d817ec8e987f2421d7c49e25d",
+      "base_span_lower_16px": [
+        2,
+        0,
+        77,
+        16
+      ]
+    },
+    {
+      "name": "ouro-1",
+      "source": "C:\\Users\\della\\.codex\\generated_images\\01a14724-a59d-7800-b2df-3f30c55654f7\\exec-167b0ecd-44ea-44a9-9c63-8c81b7c3a559.png",
+      "original_size": [
+        1060,
+        1484
+      ],
+      "crop": [
+        8,
+        7,
+        1054,
+        1476
+      ],
+      "sprite_size": [
+        80,
+        112
+      ],
+      "rock_size": [
+        74,
+        104
+      ],
+      "anchor": [
+        40,
+        112
+      ],
+      "sha256": "ab15be54f738f12e2d78ff5696a1957bf7bb316986522b3c8ffcbc1b9427d72d",
+      "output_id": "exec-167b0ecd-44ea-44a9-9c63-8c81b7c3a559",
+      "generation_session_id": "01a14724-a59d-7800-b2df-3f30c55654f7",
+      "original_sha256": "9a3c33861c1a0e4925883212e21a46be7f52497c62e230b055a1ff0f4b5f9a80",
+      "base_span_lower_16px": [
+        9,
+        0,
+        75,
+        16
+      ]
+    },
+    {
+      "name": "ouro-2",
+      "source": "C:\\Users\\della\\.codex\\generated_images\\01a14724-a59d-7800-b2df-3f30c55654f7\\exec-f1b9b423-236e-4eb3-adf0-9be12e64d594.png",
+      "original_size": [
+        1060,
+        1484
+      ],
+      "crop": [
+        12,
+        13,
+        1048,
+        1470
+      ],
+      "sprite_size": [
+        80,
+        112
+      ],
+      "rock_size": [
+        74,
+        104
+      ],
+      "anchor": [
+        40,
+        112
+      ],
+      "sha256": "0b604607acef716f2f191637d14eb3a8e3a4bf9e70a67dd967d7c81f5d00b6e4",
+      "output_id": "exec-f1b9b423-236e-4eb3-adf0-9be12e64d594",
+      "generation_session_id": "01a14724-a59d-7800-b2df-3f30c55654f7",
+      "original_sha256": "8a1407a2f3ad76c10faa67db0361309f89093b6b04d55d396f0269c317323f43",
+      "base_span_lower_16px": [
+        7,
+        0,
+        77,
+        16
+      ]
+    }
+  ],
+  "processing": [
+    "Copy original outputs without modification to originais/; base.png is original montanha-1, without reduction.",
+    "Crop transparent margins using alpha>=16 for framing; Lanczos resize to 104 px high, at most 80 px wide; bottom-center placement on 80x112 RGBA.",
+    "No mineral painted procedurally; all rock and veins generated by native image tool.",
+    "Proof uses exact sprites and original areia.png at 64 px pitch, rows north to south; grid 5x4, 3 iron and 2 gold."
+  ],
+  "grid": [
+    [
+      "montanha-2",
+      "montanha-1",
+      "montanha-4",
+      "montanha-3",
+      "montanha-2"
+    ],
+    [
+      "montanha-4",
+      "ferro-1",
+      "ouro-1",
+      "ferro-2",
+      "montanha-1"
+    ],
+    [
+      "montanha-3",
+      "montanha-2",
+      "ferro-1",
+      "ouro-2",
+      "montanha-4"
+    ],
+    [
+      "montanha-1",
+      "montanha-4",
+      "montanha-3",
+      "montanha-2",
+      "montanha-1"
+    ]
+  ],
+  "preview_size": [
+    384,
+    352
+  ],
+  "grid_origin": [
+    32,
+    64
+  ],
+  "tile_size": 64,
+  "status": "candidato para homologacao visual",
+  "visual_review": {
+    "reviewed": [
+      "conjunto.png",
+      "macico-ampliado.png"
+    ],
+    "assessment": "Massivo rochoso continuo com veios na face; repeticao de algumas cristas visivel. Candidato, sem homologacao do operador.",
+    "lighting": "Prompt exige luz superior/sul sem componente leste-oeste; a inspecao visual nao mede fisicamente o campo de iluminacao."
+  }
+}

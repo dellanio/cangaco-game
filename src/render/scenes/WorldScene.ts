@@ -85,6 +85,7 @@ import type { LinhaDoMedidor } from '../medidor-obra';
 import { canteiroDaObra, chaveDoCanteiro, ordemDeNivelamento } from '../nivelamento-obra';
 import { cordasDoLote } from '../corda-do-canteiro';
 import { arvoreNaTela } from '../corte-da-arvore';
+import { blocoDoMacico, ID_DO_MACICO, VEIOS_NA_MONTANHA } from '../macico';
 import dadosDosRecursos from '../../../data/resources.json';
 import { ordemDeConstrucao, PASSOS as PASSOS_DA_OBRA } from '../ordem-de-construcao';
 import type { CamadaDaObra } from '../ordem-de-construcao';
@@ -252,6 +253,8 @@ export class WorldScene extends Phaser.Scene {
   /** I-TELA-LENHADOR-CORTA-E-DERRUBA: a arvore derrubada desenhada por cima do tile (no lugar da em pe), por tile */
   private readonly arvoresCortadas = new Map<string, { readonly chave: string; readonly imagem: Phaser.GameObjects.Image | null }>();
   private quedasDeArvore = 0;
+  /** I-ARTE-MONTANHA-COM-VEIOS: o bloco de cada tile de montanha (criados uma vez) e o estado da arte de cada um */
+  private macico: Map<string, { readonly imagem: Phaser.GameObjects.Image; estado: string }> | null = null;
   private degrauSazonal = -1;
   private recalculosDaCaatinga = 0;
   private repinturasDaCaatinga = 0;
@@ -951,6 +954,8 @@ export class WorldScene extends Phaser.Scene {
       estado.recursosVisiveis = this.atualizarRecursos(camadaDeRecursos);
       // I-TELA-LENHADOR-CORTA-E-DERRUBA: a arvore que o lenhador derrubou cai e fica deitada
       estado.arvoresNaTela = this.atualizarArvoresCortadas();
+      // I-ARTE-MONTANHA-COM-VEIOS: o macico de granito e os veios
+      estado.macico = this.atualizarMacico();
       estado.quedasDeArvore = this.quedasDeArvore;
       const inicioDoChao = agora();
       estado.chaoDaCanaDesenhado = this.atualizarChaoDaCana(camadaDoChaoDaCana);
@@ -1612,7 +1617,8 @@ export class WorldScene extends Phaser.Scene {
     const arte = this.desenhoPorCodigo.map((d) => (d.como === 'textura' ? d.chave : null));
     const vazias = this.desenhoPorCodigo.flatMap((d, codigo) => (d.como === 'vegetacao' ? [codigo] : []));
     for (let codigo = 0; codigo < arte.length; codigo++) {
-      if (recursoSubmerso(recursosDeRender.tipos[codigo - 1] ?? '') ||
+      // I-ARTE-MONTANHA-COM-VEIOS: o veio de ferro e de ouro aparece no bloco da montanha, e nao como morrinho
+      if (recursoSubmerso(recursosDeRender.tipos[codigo - 1] ?? '') || VEIOS_NA_MONTANHA.includes(recursosDeRender.tipos[codigo - 1] ?? '') ||
           (configDasFontes.tipos.includes(recursosDeRender.tipos[codigo - 1] ?? '') && arte[codigo] !== null)) {
         arte[codigo] = null; vazias.push(codigo);
       }
@@ -1851,6 +1857,53 @@ export class WorldScene extends Phaser.Scene {
       this.arvoresCortadas.set(chave, { chave: nova, imagem: deitada });
     }
     return saida;
+  }
+
+  /**
+   * I-ARTE-MONTANHA-COM-VEIOS — um bloco de granito em pe em cada tile de montanha (o terreno nao muda: os blocos sao
+   * criados uma vez), o pe no meio da borda de baixo do tile; os vizinhos se sobrepoem (o de baixo na frente) e formam o
+   * macico. O tile com veio de ferro ou de ouro mostra o bloco com o veio, e volta ao granito quando ele acaba. Sem a
+   * arte carregada, nada: o chao de montanha de hoje. Devolve a contagem para o roteiro.
+   */
+  private atualizarMacico(): { readonly blocos: number; readonly ferro: number; readonly ouro: number } {
+    const recursos = this.ponte.atual?.recursos ?? {};
+    const arte = (estado: string): string => chaveDeTextura('trabalho', ID_DO_MACICO, estado);
+    if (this.macico === null) {
+      this.macico = new Map();
+      if (!this.textures.exists(arte('granito_1'))) return { blocos: 0, ferro: 0, ouro: 0 };
+      const { tilePx } = configDoMapa;
+      const { codigos, largura, altura, tipos } = terrenoDeRender;
+      for (let gy = 0; gy < altura; gy++) for (let gx = 0; gx < largura; gx++) {
+        const chave = `${gx},${gy}`;
+        const estado = blocoDoMacico(tipos[codigos[gy * largura + gx] as number] ?? '', gx, gy, recursos[chave]);
+        if (estado === null || !this.textures.exists(arte(estado))) continue;
+        const canto = gridToScreen({ gx, gy }, tilePx, ESCALA_DO_MUNDO);
+        const pe = { x: canto.x + tilePx / 2, y: canto.y + tilePx };
+        const imagem = this.add.image(pe.x, pe.y, arte(estado)).setOrigin(0.5, 1).setDepth(depthDeY(pe.y));
+        this.luz?.tingir(imagem, pe.x, pe.y, `macico:${chave}`);
+        this.macico.set(chave, { imagem, estado });
+      }
+    }
+    let ferro = 0, ouro = 0;
+    const { codigos, largura, tipos } = terrenoDeRender;
+    for (const [chave, bloco] of this.macico) {
+      // so o tile com veio muda (o veio acaba); o granito puro fica como nasceu
+      if (!bloco.estado.startsWith('granito') && bloco.estado !== 'sem-veio') {
+        const { gx, gy } = tileDeChave(chave);
+        const estado = blocoDoMacico(tipos[codigos[gy * largura + gx] as number] ?? '', gx, gy, recursos[chave]);
+        if (estado === null) {
+          // o veio da rocha acabou: o bloco sai e volta o lajedo
+          bloco.imagem.setVisible(false);
+          bloco.estado = 'sem-veio';
+        } else if (estado !== bloco.estado && this.textures.exists(arte(estado))) {
+          bloco.imagem.setTexture(arte(estado));
+          bloco.estado = estado;
+        }
+      }
+      if (bloco.estado.startsWith('ferro')) ferro++;
+      else if (bloco.estado.startsWith('ouro')) ouro++;
+    }
+    return { blocos: [...this.macico.values()].filter((b) => b.estado !== 'sem-veio').length, ferro, ouro };
   }
 
   private pintarVegetacao(chave: string, codigo: number): void {

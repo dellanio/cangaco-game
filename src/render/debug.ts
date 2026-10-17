@@ -239,6 +239,8 @@ export interface EstadoDebug {
   /** I-TELA-LENHADOR-CORTA-E-DERRUBA: o estado de cada arvore derrubada na tela (`caida-<N>` ou `toco`) e quantas cairam */
   arvoresNaTela: Readonly<Record<string, string>>;
   quedasDeArvore: number;
+  /** I-ARTE-MONTANHA-COM-VEIOS: quantos blocos de montanha a cena desenhou, e quantos com veio de ferro e de ouro */
+  macico: { readonly blocos: number; readonly ferro: number; readonly ouro: number };
   /** I-TELA-OBRA-EM-ORDEM-DE-CONSTRUCAO: o passo desenhado de cada camada das obras em ordem de construcao */
   passosDasObrasEmOrdem: Readonly<Record<string, number>>;
   /** I-TELA-MODO-ADMIN — o modo admin desta pagina, e quantos rotulos de predio a cena escreveu (fora dele, 0). */
@@ -512,6 +514,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     cordasDoCanteiro: 0,
     arvoresNaTela: {},
     quedasDeArvore: 0,
+    macico: { blocos: 0, ferro: 0, ouro: 0 },
     passosDasObrasEmOrdem: {},
     modoAdmin: false,
     premium: { ligado: false, sombras: 0, gradacao: false },

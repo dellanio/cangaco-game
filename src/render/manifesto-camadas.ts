@@ -65,6 +65,9 @@ export const ID_DA_ARVORE_CAIDA = 'arvore-caida';
 export const LACOS_DA_ARVORE_CAIDA: Readonly<Record<string, number>> = { caida: 4 };
 export const ID_DA_LASCA = 'lasca-de-madeira';
 export const LACOS_DA_LASCA: Readonly<Record<string, number>> = { lasca: 1 };
+/** I-ARTE-MONTANHA-COM-VEIOS — o bloco de granito de cada tile de montanha e os veios (`render/macico.ts`). */
+export const ID_DO_MACICO = 'macico';
+export const LACOS_DO_MACICO = { granito: 4, ferro: 2, ouro: 2 } as const;
 
 /** O animal de cada criacao: o id da entrada `animal` e a mercadoria que ele vira. */
 export const ANIMAL_DA_CRIACAO: Readonly<Record<string, string>> = { swine_farm: 'pigs', stables: 'horses' };
@@ -154,6 +157,7 @@ export function violacoesDaCamadaViva(e: EntradaDeCamada, ctx: ContextoDasCamada
     if (e.id === ID_DO_COMENSAL) return violacoesDosLacos(rotulo, e.estados, LACOS_DO_COMENSAL);
     if (e.id === ID_DA_ARVORE_CAIDA) return violacoesDosLacos(rotulo, e.estados, LACOS_DA_ARVORE_CAIDA);
     if (e.id === ID_DA_LASCA) return violacoesDosLacos(rotulo, e.estados, LACOS_DA_LASCA);
+    if (e.id === ID_DO_MACICO) return violacoesDosLacos(rotulo, e.estados, LACOS_DO_MACICO);
     const caso = CASO_DO_PREDIO[e.id];
     if (caso === undefined) return [`${rotulo}: nao e predio com receita nem '${ID_DA_FUMACA}', '${ID_DO_OCIOSO}' ou '${ID_DA_ESCOLA}'`];
     if (caso === 'guarda') return [`${rotulo}: caso 1 (so guarda) nao tem animacao dentro`];
