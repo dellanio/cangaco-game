@@ -22595,3 +22595,11 @@ Ressalvas:
 - `I-TELA-GAVETA-MOSTRA-A-FASE`: a gaveta de um save da campanha diz "Fase N · Local" no lugar de "Jogo livre". A gaveta
   pronta ganhou o `faseId` (do `estado.fase`), e a tela acha número e local pelo `resumoDasFases`; o índice das gavetas
   e o save não mudaram. O teste antigo das gavetas (E-SAVE-GAVETAS) passou a esperar o `faseId: null` no objeto exato.
+
+### Pergunta em aberto (2026-10-17): a animação de trabalho dos ofícios de dentro de casa
+Verificado antes de gastar geração (`src/render/acao-de-unidade.ts:11-19` e `src/render/visibilidade.ts:32-51`): a tela só
+desenha `trabalhar` para quem colhe, semeia ou é o obreiro; o carpinteiro, padeiro, criador, açougueiro, mineiro,
+fundidor e ferreiro trabalham DENTRO do prédio e ficam invisíveis (`dentroDaCasa`). Uma animação de trabalho para eles
+nunca apareceria no jogo. Não gerei nada. Saídas para o operador escolher: (a) pular o item; (b) mostrar o ofício
+trabalhando na porta ou no quintal do prédio (regra de tela nova, mais a animação); (c) animar o próprio prédio
+(fumaça, bigorna, forno), como o KaM faz.
