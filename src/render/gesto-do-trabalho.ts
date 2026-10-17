@@ -31,6 +31,10 @@ export interface GestoDoTrabalho {
   readonly obreiroNivelando?: string;
   /** I-TELA-OBREIRO-NIVELA-O-LOTE: a velocidade do desenho do obreiro andando dentro do lote, em tiles por segundo. */
   readonly velocidadeNoLoteTilesPorSegundo?: number;
+  /** I-TELA-LENHADOR-CORTA-E-DERRUBA: quem, alem do roceiro, volta com a colheita nas maos (o lenhador com a tora). */
+  readonly tiposQueLevamAColheita?: readonly string[];
+  /** I-TELA-LENHADOR-CORTA-E-DERRUBA: o lenhador junto ao tronco e as lascas. */
+  readonly lenhador?: { readonly distanciaDoTroncoTiles: number; readonly quadrosDoGolpe: readonly number[]; readonly lascasPorGolpe: number };
 }
 
 type Animacoes = Readonly<Record<string, unknown>> | undefined;
@@ -66,7 +70,7 @@ export function levaColheita(estado: GameState, u: Pick<Unidade, 'fsm' | 'fsmDat
 export function colheitaNasMaos(
   estado: GameState, u: Pick<Unidade, 'id' | 'tipo' | 'fsm' | 'fsmData'>, config: GestoDoTrabalho,
 ): string | null {
-  if (!config.tiposDeRoceiro.includes(u.tipo) || !levaColheita(estado, u)) return null;
+  if (!(config.tiposDeRoceiro.includes(u.tipo) || (config.tiposQueLevamAColheita ?? []).includes(u.tipo)) || !levaColheita(estado, u)) return null;
   const tarefa = tarefaDa(estado, u);
   const predio = tarefa && 'destino' in tarefa ? estado.predios.porId[tarefa.destino] : undefined;
   return predio ? config.colheitaPorPredio[predio.tipo] ?? null : null;

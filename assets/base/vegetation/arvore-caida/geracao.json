@@ -1,0 +1,132 @@
+{
+  "tool": "image_gen built-in",
+  "seed": null,
+  "seed_note": "Nao fornecida pela ferramenta",
+  "prompts": {
+    "1": "Edit source fallen tree to final harvest stage: ONLY a short thick log segment right next to basal circular growth-ring cut, pointing upper right, length about one and half trunk diameters. No branches at all. Keep pale gray bark and warm light cut wood hand-painted style, lying flat on ground top-down 3/4. Keep basal cut face original scale and position, do not zoom or recenter. Transparent background strictly, no brown halo, no shadows, no ground, no text. Overhead light slightly south with no east-west component. Landscape 3:2 canvas.",
+    "2": "Precise object edit of supplied fallen tree. Harvest stage 2: remove ALL crown and side branches and the upper HALF of the long trunk, leaving only a medium length pale gray twisted trunk segment lying toward upper right from original basal cut. Fresh cut at far end. Keep original basal ringed cut face and adjacent lower trunk pixel positioning, scale, style, shape unchanged. Same canvas, do not center object or zoom. True transparent background, NO ground, NO brown haze, NO shadow. Hand painted game art, overhead slightly south light, no east-west component. No text.",
+    "3": "Precise object edit. Use this exact fallen caatinga tree image as source. Remove the outermost tips of the crown (about outer 25% of branches), showing freshly chopped pale ends. Preserve basal cut face and lower trunk EXACTLY at same coordinates, same scale, same silhouette and brushwork there. Tree remains lying diagonal toward upper right, never upright. Do not recenter or zoom. Remove ALL ground/background/shadow haze: genuine transparent background everywhere outside wood, no brown glow or shadow. Lighting overhead slightly south, no east-west light. No text. Same landscape canvas.",
+    "4": "Use case: stylized-concept. Generate ONE hand-painted RTS game sprite on real transparent background, landscape canvas 3:2. Reference images are style/material only: pale gray beige twisted caatinga bark in arvore-seca, cut wood warm pale beige from woodcutters. A felled dry caatinga tree LYING FLAT ON THE GROUND, seen top-down three-quarter for orthogonal 64px tiles, Brazilian Paraiba sertao 1930s. NOT standing, NOT upright. The round elliptical sawn basal face with fine growth rings must have its CENTER exactly at (50% canvas width,50% canvas height). From that cut face the thick twisted trunk runs diagonally toward UPPER RIGHT, ending in a spreading branching crown of bare dry twigs occupying upper right quadrant, with some side branches. All tree contained within canvas, generous transparent space to left and below. Tree length from cut to tip about 42% canvas width and 40% canvas height. Pale gray beige fibrous bark, warm pale cut end, subtle brushwork and readable game silhouette, matches provided existing game trees, NOT photorealistic, NOT pixel art, NOT 1998 RTS. Single light from overhead slightly SOUTH (screen bottom), absolutely no east-west lighting component; no long cast shadow, no ground, no leaves, no text, no borders, no other objects. Need clean alpha. Intended downsample to 192x128.",
+    "lasca": "One single tiny pale beige wood splinter particle, hand-painted game sprite, narrow irregular triangular wood chip with one subtle grain line, top-down, soft overhead light no side lighting, transparent background absolutely no shadow or halo, no other objects or text. Centered, fills canvas, intended reduction to only 6 by 4 pixels, prioritize simple clear silhouette."
+  },
+  "sources": {
+    "1": "C:\\Users\\della\\.codex\\generated_images\\01a14724-a5ad-7a32-b470-f158ee477789\\exec-f3fabb9d-bfce-4f8f-ac52-4c7351915b7a.png",
+    "2": "C:\\Users\\della\\.codex\\generated_images\\01a14724-a5ad-7a32-b470-f158ee477789\\exec-29cfb027-b46e-473c-a21a-c40680049b67.png",
+    "3": "C:\\Users\\della\\.codex\\generated_images\\01a14724-a5ad-7a32-b470-f158ee477789\\exec-f2f231e8-b39d-4a0d-80ca-4dabe49453b5.png",
+    "4": "D:\\projetos-pessoal\\cangaco-game-candidatos\\arte\\arvore-caida\\base.png",
+    "chip": "C:\\Users\\della\\.codex\\generated_images\\01a14724-a5ad-7a32-b470-f158ee477789\\exec-2f4e3d7a-cf03-4311-bbe4-74764c3c4e87.png"
+  },
+  "processing": {
+    "method": "Pillow: resample LANCZOS, translacao para registrar corte, composicao sobre areia original; sem repintura",
+    "stages": {
+      "4": {
+        "anchor_source": [
+          750,
+          620
+        ],
+        "scale": 0.105,
+        "anchor_final": [
+          96,
+          64
+        ],
+        "size": [
+          192,
+          128
+        ],
+        "alpha_bbox": [
+          80,
+          3,
+          178,
+          79
+        ]
+      },
+      "3": {
+        "anchor_source": [
+          645,
+          760
+        ],
+        "scale": 0.08,
+        "anchor_final": [
+          96,
+          64
+        ],
+        "size": [
+          192,
+          128
+        ],
+        "alpha_bbox": [
+          87,
+          7,
+          162,
+          74
+        ]
+      },
+      "2": {
+        "anchor_source": [
+          770,
+          640
+        ],
+        "scale": 0.08,
+        "anchor_final": [
+          96,
+          64
+        ],
+        "size": [
+          192,
+          128
+        ],
+        "alpha_bbox": [
+          86,
+          30,
+          142,
+          75
+        ]
+      },
+      "1": {
+        "anchor_source": [
+          575,
+          640
+        ],
+        "scale": 0.053,
+        "anchor_final": [
+          96,
+          64
+        ],
+        "size": [
+          192,
+          128
+        ],
+        "alpha_bbox": [
+          87,
+          40,
+          128,
+          75
+        ]
+      }
+    },
+    "proof_order": [
+      4,
+      3,
+      2,
+      1
+    ],
+    "lasca_size": [
+      6,
+      4
+    ]
+  },
+  "sha256": {
+    "base.png": "955389dc4a667cd4c03512e0e8b8b4812c279e47281c5e038a67f3096f4dc5a0",
+    "caida-1.png": "cd434882674750b2a3b3b8a96d2be04acc65626f8316c8610b602471abf82a72",
+    "caida-2.png": "78ed1e140a8181fca1a07c1ba74c93bf951f43ad9a47be9780b7b7d17704221d",
+    "caida-3.png": "a7c97a909e6d34cb7987cc5f6cf8ff900452f8939f8ff2e92a1fb77f67df770f",
+    "caida-4.png": "8b11833765d8d5ab987bd0629e426edb0ced232f59b52a6036ce0ee2d1c4ff4c",
+    "lasca.png": "f0705faa8cf501ff5e0d5a19c5b52431c521189b9b4d6dd8f4da4b2c2a4e9364",
+    "original-1.png": "a982b3b8cd87472d7f76aa02a53cd7e287a61be2b478b89ff333c25a58bed52c",
+    "original-2.png": "1b9f245f33bc12143c596e33b515e784a3c9bde57e33a918029e97ed07647c2e",
+    "original-3.png": "35fc7f355829a9a3d9fbaa6ea2e4d63a2c7e4b5d3e45b7cd4e0c843666b0d7af",
+    "original-lasca.png": "465d01cd4d29e716e759264c81b7e58cbd675c4956704b57f24886252aae7c96",
+    "prova-ampliada.png": "4447fa63cfbca06ccc5f0a6c9666b50dc177f254c76072b0621378d3f23e8d6f",
+    "prova.png": "87c963e2a9eb38cbc555e4e4ec23b20301b38d70bca1f92c65b3095cb1178cf3"
+  }
+}

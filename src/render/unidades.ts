@@ -33,7 +33,7 @@
 import Phaser from 'phaser';
 import temaSertao from '../../data/theme-sertao.json';
 import {
-  depthDeY, gridToScreenCentro, deslocamentoDaUnidade, ESCALA_DO_MUNDO, LADO_DA_UNIDADE_EM_TILES,
+  depthDeY, gridToScreen, gridToScreenCentro, deslocamentoDaUnidade, ESCALA_DO_MUNDO, LADO_DA_UNIDADE_EM_TILES,
   PROFUNDIDADE_DOS_NOMES,
 } from './grid';
 import { criarMemoriaDePosicoes, interpolarPosicao } from './interpolacao';
@@ -73,6 +73,7 @@ import { cargaVaiNasMaos, pontoDaCargaNasMaos } from './carga-nas-maos';
 import { animacaoDoGesto, colheitaNasMaos, deslocamentoDoTrabalho, passoNoLote, tileDoNivelamento } from './gesto-do-trabalho';
 import type { DesenhoNoLote, GestoDoTrabalho } from './gesto-do-trabalho';
 import { caixaDeTipoNoMapa } from './predios';
+import { arvoreQueCorta, entrouNoGolpe, pertoDoTronco } from './corte-da-arvore';
 import dadosDoGesto from '../../data/gesto-do-trabalho.json';
 
 const gestoDoTrabalho = dadosDoGesto as unknown as GestoDoTrabalho;
@@ -96,6 +97,10 @@ export interface UnidadeRenderizada {
   readonly peY?: number;
   readonly espelhado?: boolean;
   /** I-TELA-OBREIRO-NIVELA-O-LOTE: o desenho do obreiro dentro do lote (px a partir do tile logico) e o tile alvo */
+  /** I-TELA-LENHADOR-CORTA-E-DERRUBA: quantas lascas ja saltaram do corte deste lenhador */
+  readonly lascas?: number;
+  /** I-TELA-LENHADOR-CORTA-E-DERRUBA: o tile da arvore que o lenhador corta agora, ou `null` */
+  readonly arvoreCortada?: { readonly gx: number; readonly gy: number } | null;
   readonly noLote?: { readonly x: number; readonly y: number; readonly andando: boolean; readonly tile: { readonly gx: number; readonly gy: number } | null } | null;
   readonly id: string;
   readonly tipo: string;
@@ -218,6 +223,9 @@ interface Desenhado {
   acaoDoTrabalho: string;
   /** I-TELA-OBREIRO-NIVELA-O-LOTE: o desenho do obreiro dentro do lote que ele aplaina, ou `null` */
   noLote: DesenhoNoLote | null;
+  /** I-TELA-LENHADOR-CORTA-E-DERRUBA: o quadro da ultima leitura do corte (para a lasca sair uma vez por golpe) e quantas lascas saltaram */
+  quadroDoCorte: number | null;
+  lascas: number;
   quadro: number;
   spriteAnimado: SpriteAnimado | null;
   readonly container: Phaser.GameObjects.Container;
@@ -287,7 +295,7 @@ export function criarCamadaDeUnidades(
     marcadorDeFome.setVisible(false);
     const container = cena.add.container(0, 0, [retangulo, marcadorDeCarga, marcadorDeFome]);
     return { container, retangulo, imagem: null, direcao: 's', nome: rotulo, marcadorDeCarga, iconeDaCarga: null, placaDoIcone: null, marcadorDeFome, balao: null,
-      distancia: 0, ultimaPosicao: null, ultimoTickAnimado: -1, animacao: 'parado', acaoDoTrabalho: 'parado', noLote: null, inicioDaAcao: 0, quadro: 0, spriteAnimado: null,
+      distancia: 0, ultimaPosicao: null, ultimoTickAnimado: -1, animacao: 'parado', acaoDoTrabalho: 'parado', noLote: null, quadroDoCorte: null, lascas: 0, inicioDaAcao: 0, quadro: 0, spriteAnimado: null,
       virada: iniciarVirada('s', 0), ladoDoRotulo: ladoDaUnidade };
   }
 
@@ -514,10 +522,20 @@ export function criarCamadaDeUnidades(
         const ladoDoTile = gridToScreenCentro({ gx: 1, gy: 0 }, tilePx, ESCALA_DO_MUNDO).x - gridToScreenCentro({ gx: 0, gy: 0 }, tilePx, ESCALA_DO_MUNDO).x;
         const pontoNoLote = tileDoNivelamento(estado, unidade, caixaDeTipoNoMapa);
         const tileNoLote = pontoNoLote === null ? null : pontoNoLote.tile;
-        item.noLote = passoNoLote(item.noLote,
-          pontoNoLote === null ? null : { x: (pontoNoLote.gx - unidade.gx) * ladoDoTile, y: (pontoNoLote.gy - unidade.gy) * ladoDoTile },
-          tempoDeAnimacao(estado.tick, alfa), ((gestoDoTrabalho.velocidadeNoLoteTilesPorSegundo ?? 1.5) * ladoDoTile) / tempo.tickHz,
-          ladoDoTile / 2);
+        // I-TELA-LENHADOR-CORTA-E-DERRUBA: o lenhador que corta vai, andando, ate junto do tronco
+        const arvoreCortada = unidade.tipo === 'woodcutter' && gestoDoTrabalho.lenhador ? arvoreQueCorta(estado, unidade) : null;
+        const pertoDaArvore = arvoreCortada === null || !gestoDoTrabalho.lenhador ? null
+          : pertoDoTronco(unidade, arvoreCortada, gestoDoTrabalho.lenhador.distanciaDoTroncoTiles);
+        const alvoNoTrabalho = pontoNoLote !== null ? { x: (pontoNoLote.gx - unidade.gx) * ladoDoTile, y: (pontoNoLote.gy - unidade.gy) * ladoDoTile }
+          : pertoDaArvore !== null ? { x: pertoDaArvore.dx * ladoDoTile, y: pertoDaArvore.dy * ladoDoTile } : null;
+        // a unidade vista pela primeira vez, ou depois de a partida carregar (o tick voltou), ja esta no lugar do trabalho;
+        // so quem entra no trabalho durante o jogo anda ate la
+        const recemChegada = item.ultimoTickAnimado < 0 || estado.tick < item.ultimoTickAnimado;
+        item.noLote = recemChegada
+          ? alvoNoTrabalho === null ? null : { ...alvoNoTrabalho, tempo: tempoDeAnimacao(estado.tick, alfa), andando: false, distanciaPx: 0, dx: alvoNoTrabalho.x, dy: alvoNoTrabalho.y }
+          : passoNoLote(item.noLote, alvoNoTrabalho,
+            tempoDeAnimacao(estado.tick, alfa), ((gestoDoTrabalho.velocidadeNoLoteTilesPorSegundo ?? 1.5) * ladoDoTile) / tempo.tickHz,
+            ladoDoTile / 2);
         const noLote = item.noLote;
         if (entradaAnimada?.atlas && mudouAnimacao) {
           const naVista = unidadeNaVista({ x: centro.x + desvio.x, y: centro.y + desvio.y },
@@ -557,6 +575,14 @@ export function criarCamadaDeUnidades(
               item.spriteAnimado = spriteDoAtlas(manifestoAnimado, unidade.tipo, item.animacao, item.direcao, item.quadro,
                 (chave, frame) => cena.textures.exists(chave) && cena.textures.get(chave).has(frame));
             }
+            // I-TELA-LENHADOR-CORTA-E-DERRUBA: a cada golpe do machado no tronco, as lascas saltam
+            if (arvoreCortada !== null && acao === 'trabalhar' && gestoDoTrabalho.lenhador) {
+              if (entrouNoGolpe(item.quadroDoCorte, item.quadro, gestoDoTrabalho.lenhador.quadrosDoGolpe)) {
+                soltarLascas(cena, arvoreCortada, tilePx, gestoDoTrabalho.lenhador.lascasPorGolpe, item.lascas);
+                item.lascas += gestoDoTrabalho.lenhador.lascasPorGolpe;
+              }
+              item.quadroDoCorte = item.quadro;
+            } else item.quadroDoCorte = null;
             animacoesTrabalhadas++;
           }
           item.ultimaPosicao = desenhada;
@@ -597,6 +623,8 @@ export function criarCamadaDeUnidades(
           id, tipo: unidade.tipo, gx: posicao.gx, gy: posicao.gy,
           gxDesenhado: desenhada.gx, gyDesenhado: desenhada.gy, fsm: unidade.fsm, lado: unidade.lado, corDoBando: corDoBando(unidade.lado), corDoRotulo: item.nome.style.backgroundColor, carga, rotuloDaCarga: carga === null ? null : rotuloDaCarga(carga), marcaDaCarga: marca, placaDaCarga: item.placaDoIcone?.visible === true,
           deslocamentoPx: { x: desvio.x, y: desvio.y },
+          lascas: item.lascas,
+          arvoreCortada,
           noLote: noLote === null ? null : { x: noLote.x, y: noLote.y, andando: noLote.andando, tile: tileNoLote },
           marcadorDeFome: comFome, fracaoDeCondicao: fracaoDeCondicao(unidade),
           pensamento: pensamento === null ? null : pensamento.tipo === 'mercadoria' ? pensamento.mercadoria : pensamento.tipo, balaoComo,
@@ -621,4 +649,32 @@ export function criarCamadaDeUnidades(
       return renderizadas;
     },
   };
+}
+
+/** I-TELA-LENHADOR-CORTA-E-DERRUBA — `n` lascas saltam do tronco (um pouco acima do pe da arvore) e caem em arco,
+ *  sumindo. A lasca e a arte `trabalho:lasca-de-madeira:lasca_1` quando carregada; senao, um tracinho de madeira clara. */
+function soltarLascas(cena: Phaser.Scene, arvore: { readonly gx: number; readonly gy: number }, tilePx: number, n: number, semente: number): void {
+  const pe = gridToScreen({ gx: arvore.gx, gy: arvore.gy }, tilePx, ESCALA_DO_MUNDO);
+  const x0 = pe.x + tilePx / 2;
+  const y0 = pe.y + tilePx * 0.62;
+  const chave = 'trabalho:lasca-de-madeira:lasca_1';
+  for (let k = 0; k < n; k++) {
+    // a direcao de cada lasca varia pelo indice: um leque para cima, sem sorteio (a tela fica reproduzivel)
+    const angulo = -Math.PI / 2 + (((semente + k) * 0.618) % 1 - 0.5) * 2.2;
+    const forca = tilePx * (0.35 + (((semente + k) * 0.382) % 1) * 0.3);
+    const lasca: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle = cena.textures.exists(chave)
+      ? cena.add.image(x0, y0, chave)
+      : cena.add.rectangle(x0, y0, 4, 2, 0xe2c793);
+    lasca.setDepth(depthDeY(y0 + tilePx * 0.4)).setAngle(k * 47);
+    const vx = Math.cos(angulo) * forca, vy = Math.sin(angulo) * forca;
+    cena.tweens.addCounter({
+      from: 0, to: 1, duration: 520, ease: 'Linear',
+      onUpdate: (tw) => {
+        const t = tw.getValue() ?? 0;
+        lasca.setPosition(x0 + vx * t, y0 + vy * t + tilePx * 0.9 * t * t);
+        lasca.setAlpha(1 - t * t).setAngle(k * 47 + t * 360);
+      },
+      onComplete: () => lasca.destroy(),
+    });
+  }
 }

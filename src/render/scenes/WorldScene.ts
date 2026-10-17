@@ -84,6 +84,8 @@ import { medidorDaObra } from '../medidor-obra';
 import type { LinhaDoMedidor } from '../medidor-obra';
 import { canteiroDaObra, chaveDoCanteiro, ordemDeNivelamento } from '../nivelamento-obra';
 import { cordasDoLote } from '../corda-do-canteiro';
+import { arvoreNaTela } from '../corte-da-arvore';
+import dadosDosRecursos from '../../../data/resources.json';
 import { ordemDeConstrucao, PASSOS as PASSOS_DA_OBRA } from '../ordem-de-construcao';
 import type { CamadaDaObra } from '../ordem-de-construcao';
 import type { CanteiroDaObra } from '../nivelamento-obra';
@@ -94,7 +96,7 @@ import type { EstagioDaObra, Fracao, RevelacaoDaObra } from '../estagio-obra';
 import { centroDaVila } from '../../sim/selectors';
 import { corDoBando } from '../cor-do-bando';
 import { tileDeChave } from '../../sim/estradas';
-import type { EstadoDePredio, GameState, Predio, PredioCompleto, RecursoNoTile } from '../../sim/state';
+import type { EstadoDePredio, GameState, Predio, PredioCompleto, RecursoNoTile, Tarefa, Unidade } from '../../sim/state';
 import { ID_DO_ACUDE } from '../../sim/state';
 import type { PonteDeEstado } from '../ponte';
 import type { Ferramenta } from '../../input/ferramenta';
@@ -247,6 +249,9 @@ export class WorldScene extends Phaser.Scene {
   /** F-SPR — o sprite de vegetacao de pe por tile, para o diff. Memoria de render,
    *  como `recursosDesenhados`: a verdade continua em `state.recursos`. */
   private readonly vegetacaoDesenhada = new Map<string, Phaser.GameObjects.Image>();
+  /** I-TELA-LENHADOR-CORTA-E-DERRUBA: a arvore derrubada desenhada por cima do tile (no lugar da em pe), por tile */
+  private readonly arvoresCortadas = new Map<string, { readonly chave: string; readonly imagem: Phaser.GameObjects.Image | null }>();
+  private quedasDeArvore = 0;
   private degrauSazonal = -1;
   private recalculosDaCaatinga = 0;
   private repinturasDaCaatinga = 0;
@@ -944,6 +949,9 @@ export class WorldScene extends Phaser.Scene {
       // onde ha rocha e imutavel, quanto sobrou nao e, e o jogador tem de ver o
       // tile esgotar.
       estado.recursosVisiveis = this.atualizarRecursos(camadaDeRecursos);
+      // I-TELA-LENHADOR-CORTA-E-DERRUBA: a arvore que o lenhador derrubou cai e fica deitada
+      estado.arvoresNaTela = this.atualizarArvoresCortadas();
+      estado.quedasDeArvore = this.quedasDeArvore;
       const inicioDoChao = agora();
       estado.chaoDaCanaDesenhado = this.atualizarChaoDaCana(camadaDoChaoDaCana);
       estado.custo = somarCusto(estado.custo, 'chaoDaCana', inicioDoChao, estado.chaoDaCanaDesenhado, agora);
@@ -1779,6 +1787,72 @@ export class WorldScene extends Phaser.Scene {
     this.fontesDesenhadas.set(chave, imagem); this.repinturasDasFontes++;
   }
 
+  /**
+   * I-TELA-LENHADOR-CORTA-E-DERRUBA — a arvore que o lenhador derrubou: tomba quando o primeiro tronco sai dela (o lenhador
+   * volta para casa com ele), fica deitada e encolhe a cada tronco levado, e no ultimo some (o toco do estado). So tela:
+   * o estado so desconta o tronco no deposito. A arte deitada e `trabalho:arvore-caida:caida_<N>`; sem ela, a propria
+   * arvore em pe, deitada no chao. Devolve o estado de cada arvore cortada, para o roteiro.
+   */
+  private atualizarArvoresCortadas(): Record<string, string> {
+    const estado: GameState | null = this.ponte.atual;
+    if (estado === null || estado === undefined) return {};
+    const rendimento = (dadosDosRecursos.tipos as Record<string, { readonly rendimentoPorTile?: number }>)['tree']?.rendimentoPorTile ?? 1;
+    const aCaminho = new Map<string, number>();
+    for (const id of estado.unidades.ordem) {
+      const u: Unidade | undefined = estado.unidades.porId[id];
+      if (u?.fsm !== 'voltando' || u.fsmData.tarefa === undefined) continue;
+      const tarefa: Tarefa | undefined = estado.jobs.tarefas.porId[u.fsmData.tarefa as string];
+      if (tarefa?.tipo !== 'colher') continue;
+      const chave = `${tarefa.origemTile.gx},${tarefa.origemTile.gy}`;
+      if (estado.recursos[chave]?.tipo === 'tree') aCaminho.set(chave, (aCaminho.get(chave) ?? 0) + 1);
+    }
+    const candidatos = new Set([...this.arvoresCortadas.keys(), ...aCaminho.keys()]);
+    for (const [chave, r] of Object.entries(estado.recursos)) if (r.tipo === 'tree' && r.quantidade > 0 && r.quantidade < rendimento) candidatos.add(chave);
+    const { tilePx } = configDoMapa;
+    const saida: Record<string, string> = {};
+    for (const chave of candidatos) {
+      const r = estado.recursos[chave];
+      const atual = this.arvoresCortadas.get(chave);
+      const emPe = this.vegetacaoDesenhada.get(chave);
+      const naTela = r?.tipo === 'tree' && r.quantidade > 0 ? arvoreNaTela(r.quantidade, rendimento, aCaminho.get(chave) ?? 0) : null;
+      if (naTela === null || naTela.tipo === 'em-pe') {
+        atual?.imagem?.destroy();
+        this.arvoresCortadas.delete(chave);
+        emPe?.setVisible(true);
+        continue;
+      }
+      emPe?.setVisible(false);
+      const troncos = naTela.tipo === 'caida' ? naTela.troncos : 0;
+      const nova = naTela.tipo === 'toco' ? 'toco' : `caida-${troncos}`;
+      saida[chave] = nova;
+      if (atual?.chave === nova) continue;
+      atual?.imagem?.destroy();
+      if (nova === 'toco') { this.arvoresCortadas.set(chave, { chave: nova, imagem: null }); continue; }
+      const canto = gridToScreen(tileDeChave(chave), tilePx, ESCALA_DO_MUNDO);
+      const pe = { x: canto.x + tilePx / 2, y: canto.y + tilePx };
+      const arte = chaveDeTextura('trabalho', 'arvore-caida', `caida_${troncos}`);
+      const deitada = this.textures.exists(arte)
+        ? this.add.image(pe.x, pe.y - tilePx / 2, arte).setOrigin(0.5, 0.5)
+        : emPe === undefined ? null
+        // sem a arte: a arvore em pe, deitada no chao (girada a partir do pe), cortada do alto conforme o que sobra
+        : this.add.image(pe.x, pe.y, emPe.texture.key).setOrigin(emPe.originX, emPe.originY).setScale(emPe.scaleX * 0.8).setAngle(82)
+          .setCrop(0, emPe.height * (1 - (troncos / rendimento)), emPe.width, emPe.height * (troncos / rendimento));
+      if (deitada !== null) {
+        deitada.setDepth(depthDeY(pe.y - 1));
+        this.luz?.tingir(deitada, pe.x, pe.y, `arvore-caida:${chave}`);
+        // a queda: so na passagem da arvore em pe para a deitada, a em pe gira do pe ate o chao
+        if (atual === undefined && emPe !== undefined) {
+          this.quedasDeArvore++;
+          deitada.setVisible(false);
+          const caindo = this.add.image(pe.x, pe.y, emPe.texture.key).setOrigin(emPe.originX, emPe.originY).setScale(emPe.scaleX).setDepth(depthDeY(pe.y));
+          this.tweens.add({ targets: caindo, angle: 84, duration: 700, ease: 'Quad.easeIn', onComplete: () => { caindo.destroy(); deitada.setVisible(true); } });
+        }
+      }
+      this.arvoresCortadas.set(chave, { chave: nova, imagem: deitada });
+    }
+    return saida;
+  }
+
   private pintarVegetacao(chave: string, codigo: number): void {
     const desenho = this.desenhoPorCodigo[codigo];
     const atual = this.vegetacaoDesenhada.get(chave);
@@ -1825,6 +1899,7 @@ export class WorldScene extends Phaser.Scene {
       .setScale(escala)
       .setDepth(depthDeY(pe.y));
     this.luz?.tingir(imagem, pe.x, pe.y, `vegetacao:${chave}`);
+    if (this.arvoresCortadas.has(chave)) imagem.setVisible(false);
     this.vegetacaoDesenhada.set(chave, imagem);
   }
 

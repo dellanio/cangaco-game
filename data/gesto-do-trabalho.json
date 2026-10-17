@@ -6,6 +6,9 @@
   "_docNivelando": "I-TELA-OBREIRO-NIVELA-O-LOTE (pedido do operador, 2026-10-16): o obreiro que aplaina o lote e desenhado no tile em curso (zigue-zague, como no KaM), com a enxada (arar), avanca pelo zigue-zague no ritmo do nivelamento; entrar no lote e voltar ao posto e andar, a esta velocidade de desenho. So render.",
   "roceiroPorEstado": { "semeando": "semear", "colhendo": "colher" },
   "avancoDoMartelarPx": 10,
-  "colheitaPorPredio": { "farm": "corn", "wineyard": "grapes" },
+  "colheitaPorPredio": { "farm": "corn", "wineyard": "grapes", "woodcutters": "tree_trunk" },
+  "tiposQueLevamAColheita": ["woodcutter"],
+  "lenhador": { "distanciaDoTroncoTiles": 0.4, "quadrosDoGolpe": [3, 7], "lascasPorGolpe": 5 },
+  "_docLenhador": "I-TELA-LENHADOR-CORTA-E-DERRUBA (pedido do operador, 2026-10-16): o lenhador que corta e desenhado a distanciaDoTroncoTiles do pe da arvore; nos quadros do golpe da animacao trabalhar (o machado esticado a frente: 3 e 7 de 8), saltam lascasPorGolpe lascas do tronco; voltando, leva a tora nas maos. So render.",
   "tiposDeRoceiro": ["farmer"]
 }

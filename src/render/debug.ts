@@ -236,6 +236,9 @@ export interface EstadoDebug {
   canteiroComArte: boolean;
   /** I-TELA-CORDA-ENTRE-AS-ESTACAS: quantas cordas de canteiro a cena ja desenhou (so cresce) */
   cordasDoCanteiro: number;
+  /** I-TELA-LENHADOR-CORTA-E-DERRUBA: o estado de cada arvore derrubada na tela (`caida-<N>` ou `toco`) e quantas cairam */
+  arvoresNaTela: Readonly<Record<string, string>>;
+  quedasDeArvore: number;
   /** I-TELA-OBRA-EM-ORDEM-DE-CONSTRUCAO: o passo desenhado de cada camada das obras em ordem de construcao */
   passosDasObrasEmOrdem: Readonly<Record<string, number>>;
   /** I-TELA-MODO-ADMIN — o modo admin desta pagina, e quantos rotulos de predio a cena escreveu (fora dele, 0). */
@@ -507,6 +510,8 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     comensaisDaBodega: {},
     canteiroComArte: false,
     cordasDoCanteiro: 0,
+    arvoresNaTela: {},
+    quedasDeArvore: 0,
     passosDasObrasEmOrdem: {},
     modoAdmin: false,
     premium: { ligado: false, sombras: 0, gradacao: false },
