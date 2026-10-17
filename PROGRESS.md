@@ -22586,3 +22586,9 @@ Ressalvas:
 - Hipótese não conferida: o rodapé do sol cobrindo o último botão da lista pode atrapalhar o jogador numa janela baixa
   (ele rola a lista e alcança). Não mexi no layout.
 - Um save de fase da campanha aparece na gaveta como "Jogo livre" (já era assim; é o item seguinte da fila).
+- `I-TELA-TERRENO-NATURAL`: só na fase 1 (`data/terreno-natural.json: mapas`), a borda da areia sai de um campo suave
+  (ocupação desfocada mais ruído, 8 amostras por tile, filtro linear) em duas camadas mascaradas por cima do chão de
+  hoje, e manchas de tom (barro, palha, verde seco, ferrugem) até 22% de alfa. O chão por baixo não muda. Roteiro: no
+  sertão nada é criado; na fase 1, 2634 amostras de areia, 4497 de grama e 9441 tiles com tom.
+  Ressalva vista na captura: a própria arte dos tiles de areia e grama ainda mostra quadrados fracos e algumas linhas
+  retas entre variantes; a camada nova não mexe nisso. Espera o operador validar na fase 1 antes de ir aos outros mapas.

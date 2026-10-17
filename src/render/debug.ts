@@ -239,6 +239,8 @@ export interface EstadoDebug {
   /** I-TELA-LENHADOR-CORTA-E-DERRUBA: o estado de cada arvore derrubada na tela (`caida-<N>` ou `toco`) e quantas cairam */
   arvoresNaTela: Readonly<Record<string, string>>;
   quedasDeArvore: number;
+  /** I-TELA-TERRENO-NATURAL: o chao natural deste mapa (ligado so nos mapas da lista) */
+  terrenoNatural: { readonly ativo: boolean; readonly amostrasDeAreia: number; readonly amostrasDeGrama: number; readonly tons: number };
   /** I-ARTE-MONTANHA-COM-VEIOS: quantos blocos de montanha a cena desenhou, e quantos com veio de ferro e de ouro */
   macico: { readonly blocos: number; readonly ferro: number; readonly ouro: number };
   /** I-TELA-OBRA-EM-ORDEM-DE-CONSTRUCAO: o passo desenhado de cada camada das obras em ordem de construcao */
@@ -518,6 +520,7 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     cordasDoCanteiro: 0,
     arvoresNaTela: {},
     quedasDeArvore: 0,
+    terrenoNatural: { ativo: false, amostrasDeAreia: 0, amostrasDeGrama: 0, tons: 0 },
     macico: { blocos: 0, ferro: 0, ouro: 0 },
     passosDasObrasEmOrdem: {},
     modoAdmin: false,

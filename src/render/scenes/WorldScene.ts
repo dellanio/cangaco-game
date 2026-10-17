@@ -86,6 +86,9 @@ import { canteiroDaObra, chaveDoCanteiro, ordemDeNivelamento } from '../nivelame
 import { cordasDoLote } from '../corda-do-canteiro';
 import { arvoreNaTela } from '../corte-da-arvore';
 import { copaDaArvore } from '../copa-da-arvore';
+import { campoDaAreia, manchasDeTom, mascarasDaBorda } from '../terreno-natural';
+import type { ConfigDoTerrenoNatural } from '../terreno-natural';
+import dadosDoTerrenoNatural from '../../../data/terreno-natural.json';
 import { blocoDoMacico, ID_DO_MACICO, VEIOS_NA_MONTANHA } from '../macico';
 import dadosDosRecursos from '../../../data/resources.json';
 import { ordemDeConstrucao, PASSOS as PASSOS_DA_OBRA } from '../ordem-de-construcao';
@@ -527,6 +530,9 @@ export class WorldScene extends Phaser.Scene {
       'areia-grama': this.criarCamadaDaBordaAreiaGrama(tilePx, largura, altura, texturaDaBordaAreiaGrama),
       'rocha-grama': this.criarCamadaDaBordaRochaGrama(tilePx, largura, altura, texturaDaBordaRochaGrama),
     };
+    // I-TELA-TERRENO-NATURAL: nos mapas da lista, a borda da areia arredondada (no lugar das pecas em degrau) e os tons
+    estado.terrenoNatural = this.criarTerrenoNatural(tilePx, carregada);
+    if (estado.terrenoNatural.ativo) camadasDeTransicao['areia-grama'].setVisible(false);
     const gradeDaFerramenta = this.criarGradeDaFerramenta(tilePx, largura, altura);
     const aplicarForcaDaGrade = (modo: string): void => {
       // Com textura real a linha embutida no placeholder deixa de existir. A
@@ -1253,6 +1259,63 @@ export class WorldScene extends Phaser.Scene {
       })];
     }));
     return this.sobreporArteNaTira(CHAVE_TEXTURA_TERRENO, tilePx, arte, []);
+  }
+
+  /**
+   * I-TELA-TERRENO-NATURAL — nos mapas de `data/terreno-natural.json`: duas camadas por cima do chao de hoje, a areia
+   * (mascarada onde o campo suave diz areia, nos tiles de grama) e a grama (onde ele diz grama, nos tiles de areia), e
+   * as manchas de tom esticadas por cima. O chao de hoje fica igual por baixo: a contagem de tiles nao muda.
+   */
+  private criarTerrenoNatural(
+    tilePx: number, carregada: TexturaCarregada,
+  ): { readonly ativo: boolean; readonly amostrasDeAreia: number; readonly amostrasDeGrama: number; readonly tons: number } {
+    const config = dadosDoTerrenoNatural as unknown as ConfigDoTerrenoNatural;
+    const nada = { ativo: false, amostrasDeAreia: 0, amostrasDeGrama: 0, tons: 0 };
+    if (!config.mapas.includes(configDoMapa.idDoMapa)) return nada;
+    const areia = texturaDaCamada(manifestoDoJogo, 'terreno', 'areia', ESTADO_DO_TERRENO, carregada);
+    const grama = texturaDaCamada(manifestoDoJogo, 'terreno', 'grama', ESTADO_DO_TERRENO, carregada);
+    if (areia === null || grama === null) return nada;
+    const { codigos, largura: lt, altura: at, tipos } = terrenoDeRender;
+    const tipo = (gx: number, gy: number): 'areia' | 'grama' | 'outro' => {
+      if (gx < 0 || gy < 0 || gx >= lt || gy >= at) return 'outro';
+      const t = tipos[codigos[gy * lt + gx] as number];
+      return t === 'areia' || t === 'grama' ? t : 'outro';
+    };
+    const semente = sementeDoMapa;
+    const campo = campoDaAreia((gx, gy) => tipo(gx, gy) === 'areia', lt, at, semente, config);
+    const mascaras = mascarasDaBorda(campo, tipo, config.amostrasPorTile);
+    const escala = tilePx / config.amostrasPorTile;
+    const camadaMascarada = (chaveDaArte: string, alfa: Uint8Array, id: string, depth: number): number => {
+      const tela = this.textures.createCanvas(`terreno-natural:${id}`, campo.largura, campo.altura);
+      if (tela === null) return 0;
+      const img = tela.getContext().createImageData(campo.largura, campo.altura);
+      let n = 0;
+      for (let i = 0; i < alfa.length; i++) { img.data[i * 4 + 3] = alfa[i]!; if (alfa[i]! > 127) n++; }
+      tela.getContext().putImageData(img, 0, 0);
+      tela.refresh();
+      tela.setFilter(Phaser.Textures.FilterMode.LINEAR);
+      const mascara = this.make.image({ x: 0, y: 0, key: `terreno-natural:${id}` }, false).setOrigin(0, 0).setScale(escala);
+      this.add.tileSprite(0, 0, lt * tilePx, at * tilePx, chaveDaArte).setOrigin(0, 0).setDepth(depth)
+        .setMask(mascara.createBitmapMask());
+      return n;
+    };
+    const amostrasDeAreia = camadaMascarada(areia, mascaras.areia, 'areia', 0.12);
+    const amostrasDeGrama = camadaMascarada(grama, mascaras.grama, 'grama', 0.13);
+    // os tons: uma cor por tile, esticada (o filtro linear faz a mancha suave); nada sobre a agua
+    const tons = manchasDeTom(lt, at, semente, config);
+    for (let gy = 0; gy < at; gy++) for (let gx = 0; gx < lt; gx++) if (tipos[codigos[gy * lt + gx] as number] === 'agua') tons[(gy * lt + gx) * 4 + 3] = 0;
+    const telaDosTons = this.textures.createCanvas('terreno-natural:tons', lt, at);
+    let comTom = 0;
+    if (telaDosTons !== null) {
+      const img = telaDosTons.getContext().createImageData(lt, at);
+      img.data.set(tons);
+      telaDosTons.getContext().putImageData(img, 0, 0);
+      telaDosTons.refresh();
+      telaDosTons.setFilter(Phaser.Textures.FilterMode.LINEAR);
+      this.add.image(0, 0, 'terreno-natural:tons').setOrigin(0, 0).setScale(tilePx).setDepth(0.14);
+      for (let i = 3; i < tons.length; i += 4) if (tons[i]! > 0) comTom++;
+    }
+    return { ativo: true, amostrasDeAreia, amostrasDeGrama, tons: comTom };
   }
 
   /** As 16 mascaras N/L/S/O sao PNGs; o render apenas escolhe a combinacao. */
