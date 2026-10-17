@@ -100,7 +100,7 @@ describe('E-SAVE-GAVETAS — aceite (b): o save antigo e a gaveta 1', () => {
     const gaveta = gavetaDeMentira(new Map([[CHAVE_DO_SAVE, salvar(antiga)]]));
     expect(chaveDaGaveta(1)).toBe(CHAVE_DO_SAVE);
     const gavetas = lerGavetas(gaveta);
-    expect(gavetas[0]).toEqual({ n: 1, situacao: 'pronta', tipo: 'livre', tick: 40, data: null });
+    expect(gavetas[0]).toEqual({ n: 1, situacao: 'pronta', tipo: 'livre', faseId: null, tick: 40, data: null });
     expect(gavetas.slice(1).map((g) => g.situacao)).toEqual(['vazia', 'vazia']);
     expect(ultimaGaveta(gaveta)).toBe(1);
     const continuar = lerUltimoSave(gaveta);

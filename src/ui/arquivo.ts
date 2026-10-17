@@ -18,6 +18,7 @@
 // Os rotulos vem de `data/theme-sertao.json` (`hud.arquivo`), como os do HUD.
 import temaSertao from '../../data/theme-sertao.json';
 import type { NumeroDaGaveta, ResultadoDoArquivo, SituacaoDaGaveta } from '../arquivo-da-partida';
+import { resumoDasFases } from '../campanha';
 import { cliqueNoReinicio } from './reinicio';
 
 export interface RotulosDoArquivo {
@@ -57,8 +58,11 @@ export function textoDaGaveta(g: SituacaoDaGaveta, rotulos: RotulosDasGavetas = 
   if (g.situacao === 'vazia') return `${nome}: ${rotulos.vazia}`;
   if (g.situacao === 'recusada') return `${nome}: ${rotulos.recusada.replace('{detalhe}', g.detalhe)}`;
   const data = dataLegivel(g.data);
+  // I-TELA-GAVETA-MOSTRA-A-FASE: o save da campanha diz a fase (numero e local), no lugar do tipo
+  const fase = g.faseId === null ? undefined : resumoDasFases().find((f) => f.id === g.faseId);
+  const tipo = fase === undefined ? rotulos.tipos[g.tipo] : rotulos.fase.replace('{numero}', String(fase.numero)).replace('{local}', fase.local);
   const texto = rotulos.pronta
-    .replace('{tipo}', rotulos.tipos[g.tipo])
+    .replace('{tipo}', tipo)
     .replace('{tick}', String(g.tick));
   return `${nome}: ${texto}${data === '' ? '' : rotulos.data.replace('{data}', data)}`;
 }

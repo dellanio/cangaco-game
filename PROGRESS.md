@@ -22592,3 +22592,6 @@ Ressalvas:
   sertão nada é criado; na fase 1, 2634 amostras de areia, 4497 de grama e 9441 tiles com tom.
   Ressalva vista na captura: a própria arte dos tiles de areia e grama ainda mostra quadrados fracos e algumas linhas
   retas entre variantes; a camada nova não mexe nisso. Espera o operador validar na fase 1 antes de ir aos outros mapas.
+- `I-TELA-GAVETA-MOSTRA-A-FASE`: a gaveta de um save da campanha diz "Fase N · Local" no lugar de "Jogo livre". A gaveta
+  pronta ganhou o `faseId` (do `estado.fase`), e a tela acha número e local pelo `resumoDasFases`; o índice das gavetas
+  e o save não mudaram. O teste antigo das gavetas (E-SAVE-GAVETAS) passou a esperar o `faseId: null` no objeto exato.

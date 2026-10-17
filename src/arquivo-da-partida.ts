@@ -183,7 +183,9 @@ export function lerUltimoSave(gaveta: Gaveta | null, dados: GameData = gameData)
  *  indice. A recusada traz o motivo, e a tela a mostra sem abrir. */
 export type SituacaoDaGaveta =
   | { readonly n: NumeroDaGaveta; readonly situacao: 'vazia' }
-  | { readonly n: NumeroDaGaveta; readonly situacao: 'pronta'; readonly tipo: TipoDaPartida; readonly tick: number; readonly data: string | null }
+  | { readonly n: NumeroDaGaveta; readonly situacao: 'pronta'; readonly tipo: TipoDaPartida;
+      /** I-TELA-GAVETA-MOSTRA-A-FASE: o id da fase da campanha do save, ou nulo fora dela */
+      readonly faseId: string | null; readonly tick: number; readonly data: string | null }
   | { readonly n: NumeroDaGaveta; readonly situacao: 'recusada'; readonly causa: 'recusado' | 'gaveta'; readonly detalhe: string; readonly data: string | null };
 
 export function lerGavetas(gaveta: Gaveta | null, dados: GameData = gameData): SituacaoDaGaveta[] {
@@ -191,7 +193,7 @@ export function lerGavetas(gaveta: Gaveta | null, dados: GameData = gameData): S
   return GAVETAS.map((n): SituacaoDaGaveta => {
     const leitura = lerGaveta(gaveta, n, dados);
     const data = indice.gavetas[String(n)]?.data ?? null;
-    if (leitura.ok) return { n, situacao: 'pronta', tipo: tipoDaPartida(leitura.estado), tick: leitura.estado.tick, data };
+    if (leitura.ok) return { n, situacao: 'pronta', tipo: tipoDaPartida(leitura.estado), faseId: leitura.estado.fase?.id ?? null, tick: leitura.estado.tick, data };
     if (leitura.causa === 'sem-save') return { n, situacao: 'vazia' };
     return { n, situacao: 'recusada', causa: leitura.causa, detalhe: leitura.detalhe, data };
   });
