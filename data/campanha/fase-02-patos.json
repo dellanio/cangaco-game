@@ -56,8 +56,8 @@
       "nome": "Moita Seca",
       "estoque": {
         "gold": 15,
-        "timber": 30,
-        "stone": 25,
+        "timber": 55,
+        "stone": 55,
         "loaves": 12,
         "sausages": 6
       },

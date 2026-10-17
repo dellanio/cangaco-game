@@ -16,8 +16,14 @@ const MAX_DISTANCIA_DO_LAJEDO = 12;
 const MIN_DISTANCIA_DO_MINERIO = 25;
 const FASE_DO_OURO_E_CARVAO = 3;
 const FASE_DO_FERRO = 6;
-/** §4 do plano: o estoque de pedra e madeira por fase de construir. */
+/** I-TERRENO-ESTOQUE-POR-DIFICULDADE (pedido do operador, 2026-10-16): o estoque de pedra e madeira por fase de construir,
+ *  caindo fase a fase, com 50 ou mais nas tres primeiras. Substitui a tabela do §4 do plano. */
 const ESTOQUE: Record<number, { stone: number; timber: number }> = {
+  1: { stone: 60, timber: 60 }, 2: { stone: 55, timber: 55 }, 3: { stone: 50, timber: 50 }, 4: { stone: 45, timber: 45 },
+  5: { stone: 40, timber: 40 }, 6: { stone: 35, timber: 40 }, 8: { stone: 30, timber: 35 },
+};
+/** A tabela de antes (I-TERRENO-PEDRA-EM-TODAS-AS-FASES): nenhuma fase comeca com menos que ela. */
+const ESTOQUE_DE_ANTES: Record<number, { stone: number; timber: number }> = {
   1: { stone: 20, timber: 25 }, 2: { stone: 25, timber: 30 }, 3: { stone: 30, timber: 30 }, 4: { stone: 30, timber: 30 },
   5: { stone: 30, timber: 35 }, 6: { stone: 30, timber: 35 }, 8: { stone: 25, timber: 35 },
 };
@@ -69,6 +75,19 @@ describe('I-TERRENO-PEDRA-EM-TODAS-AS-FASES', () => {
     }
   });
 
+  it('I-TERRENO-ESTOQUE-POR-DIFICULDADE: 50 ou mais nas tres primeiras, nunca sobe de uma fase para a seguinte, nunca abaixo de antes', () => {
+    const fases = Object.keys(ESTOQUE).map(Number).sort((x, y) => x - y);
+    for (const f of [1, 2, 3]) { expect(ESTOQUE[f]!.stone).toBeGreaterThanOrEqual(50); expect(ESTOQUE[f]!.timber).toBeGreaterThanOrEqual(50); }
+    for (let i = 1; i < fases.length; i++) {
+      const [a, b] = [ESTOQUE[fases[i - 1]!]!, ESTOQUE[fases[i]!]!];
+      expect(b.stone, `pedra da fase ${fases[i]}`).toBeLessThanOrEqual(a.stone);
+      expect(b.timber, `madeira da fase ${fases[i]}`).toBeLessThanOrEqual(a.timber);
+    }
+    for (const f of fases) {
+      expect(ESTOQUE[f]!.stone).toBeGreaterThanOrEqual(ESTOQUE_DE_ANTES[f]!.stone);
+      expect(ESTOQUE[f]!.timber).toBeGreaterThanOrEqual(ESTOQUE_DE_ANTES[f]!.timber);
+    }
+  });
   it('(4) o estoque inicial: a tabela de pedra e madeira, e uma refeicao por unidade', () => {
     for (const f of construir) {
       const lado = f.lados[0];

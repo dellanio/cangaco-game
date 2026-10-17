@@ -241,7 +241,7 @@ const FASES = [
       const inimigo = [predio(p, 'barracks', 78, 54), predio(p, 'storehouse', 85, 56)];
       return {
         lados: [
-          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 10, timber: 25, stone: 20, loaves: 10 }, predios: jogador,
+          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 10, timber: 60, stone: 60, loaves: 10 }, predios: jogador,
             unidades: [tropa(p, 'serf', 4, 21, 27), tropa(p, 'laborer', 2, 25, 27), tropa(p, 'militia', 4, 30, 30)] },
           { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo, unidades: [tropa(p, 'militia', 6, 82, 62)] },
         ],
@@ -279,7 +279,7 @@ const FASES = [
       const inimigo = [predio(p, 'storehouse', 86, 90), predio(p, 'barracks', 92, 90), predio(p, 'farm', 86, 97)];
       return {
         lados: [
-          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 15, timber: 30, stone: 25, loaves: 12, sausages: 6 }, predios: jogador,
+          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 15, timber: 55, stone: 55, loaves: 12, sausages: 6 }, predios: jogador,
             unidades: [tropa(p, 'serf', 6, 20, 36), tropa(p, 'laborer', 3, 26, 36), tropa(p, 'militia', 8, 32, 40)] },
           { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo, unidades: [tropa(p, 'militia', 8, 96, 102), tropa(p, 'bowman', 4, 90, 104)] },
         ],
@@ -315,7 +315,7 @@ const FASES = [
       const inimigo = [predio(p, 'barracks', 56, 56), predio(p, 'watchtower', 62, 58), predio(p, 'barracks', 68, 66), predio(p, 'watchtower', 74, 68)];
       return {
         lados: [
-          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 20, timber: 30, stone: 30, loaves: 15, sausages: 13 }, predios: jogador,
+          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 20, timber: 50, stone: 50, loaves: 15, sausages: 13 }, predios: jogador,
             unidades: [tropa(p, 'serf', 6, 8, 68), tropa(p, 'laborer', 3, 14, 68), tropa(p, 'militia', 10, 24, 70), tropa(p, 'axe_fighter', 4, 30, 70), tropa(p, 'bowman', 4, 36, 70)] },
           { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo, unidades: [tropa(p, 'militia', 16, 64, 72), tropa(p, 'bowman', 8, 60, 66), tropa(p, 'axe_fighter', 6, 70, 72)] },
         ],
@@ -365,7 +365,7 @@ const FASES = [
       jogador.push(predio(p, 'barracks', 54, 86), predio(p, 'reservoir', 62, 64));
       return {
         lados: [
-          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 25, timber: 30, stone: 30, loaves: 20, sausages: 10 }, predios: jogador,
+          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 25, timber: 45, stone: 45, loaves: 20, sausages: 10 }, predios: jogador,
             unidades: [tropa(p, 'serf', 6, 64, 88), tropa(p, 'laborer', 3, 70, 88), tropa(p, 'militia', 8, 60, 93), tropa(p, 'axe_fighter', 4, 66, 93), tropa(p, 'bowman', 4, 72, 92)] },
           { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: [], unidades: [] },
         ],
@@ -405,7 +405,7 @@ const FASES = [
       jogador.push(predio(p, 'marketplace', 62, 62));
       return {
         lados: [
-          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 30, timber: 35, stone: 30, loaves: 20, sausages: 12 }, predios: jogador,
+          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 30, timber: 40, stone: 40, loaves: 20, sausages: 12 }, predios: jogador,
             unidades: [tropa(p, 'serf', 8, 18, 68), tropa(p, 'laborer', 3, 24, 68), tropa(p, 'militia', 8, 34, 70), tropa(p, 'bowman', 6, 40, 70), tropa(p, 'lance_carrier', 4, 46, 70)] },
           { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: [], unidades: [] },
         ],
@@ -442,7 +442,7 @@ const FASES = [
       const inimigo = [predio(p, 'metallurgists', 114, 52), predio(p, 'storehouse', 114, 62), predio(p, 'barracks', 112, 72)];
       return {
         lados: [
-          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 30, timber: 35, stone: 30, loaves: 20, sausages: 20 }, predios: jogador,
+          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 30, timber: 40, stone: 35, loaves: 20, sausages: 20 }, predios: jogador,
             unidades: [tropa(p, 'serf', 8, 14, 80), tropa(p, 'laborer', 3, 20, 80), tropa(p, 'militia', 12, 30, 84), tropa(p, 'axe_fighter', 6, 36, 84), tropa(p, 'bowman', 6, 42, 84), tropa(p, 'lance_carrier', 4, 48, 84)] },
           { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo, unidades: [tropa(p, 'sword_fighter', 8, 108, 62), tropa(p, 'crossbowman', 6, 118, 70), tropa(p, 'militia', 10, 106, 54), tropa(p, 'axe_fighter', 4, 110, 76)] },
         ],
@@ -512,7 +512,7 @@ const FASES = [
       const inimigo = [predio(p, 'mill', 144, 30), predio(p, 'mill', 90, 129), predio(p, 'storehouse', 162, 114), predio(p, 'stables', 36, 135)];
       return {
         lados: [
-          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 40, timber: 35, stone: 25, loaves: 25, sausages: 15 }, predios: jogador,
+          { lado: 0, nome: BANDO_DO_JOGADOR, estoque: { gold: 40, timber: 35, stone: 30, loaves: 25, sausages: 15 }, predios: jogador,
             unidades: [tropa(p, 'serf', 6, 12, 18), tropa(p, 'scout', 6, 24, 20), tropa(p, 'knight', 2, 30, 20), tropa(p, 'militia', 6, 36, 20)] },
           { lado: 1, nome: BANDO_INIMIGO, estoque: {}, predios: inimigo,
             unidades: [tropa(p, 'lance_carrier', 5, 150, 42), tropa(p, 'lance_carrier', 5, 96, 141), tropa(p, 'lance_carrier', 5, 168, 126), tropa(p, 'lance_carrier', 5, 42, 147)] },

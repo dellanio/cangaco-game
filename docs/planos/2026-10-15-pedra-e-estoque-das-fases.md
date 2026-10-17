@@ -60,6 +60,9 @@ Hoje faltam ouro e carvão nas fases 4, 5 e 8, ouro na 6, e ferro na 8.
 
 ## 4. O estoque inicial
 
+> **Substituída em 2026-10-16** pela `I-TERRENO-ESTOQUE-POR-DIFICULDADE` (pedido do operador): pedra e madeira caem
+> 5 por fase, de 60/60 na fase 1 a 30/35 na 8, com 50 ou mais nas três primeiras. A tabela abaixo é a de antes.
+
 Critério:
 - **pedra** = o núcleo (lenhador + pedreira + serraria, 7) + a rua até o lajedo da vila (até 12) ≈ 20 na fase 1;
   +5 por degrau da campanha, até 30, porque cada fase abre mais cadeias de uma vez. Nunca desce entre fases de
