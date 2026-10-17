@@ -85,6 +85,7 @@ import type { LinhaDoMedidor } from '../medidor-obra';
 import { canteiroDaObra, chaveDoCanteiro, ordemDeNivelamento } from '../nivelamento-obra';
 import { cordasDoLote } from '../corda-do-canteiro';
 import { arvoreNaTela } from '../corte-da-arvore';
+import { copaDaArvore } from '../copa-da-arvore';
 import { blocoDoMacico, ID_DO_MACICO, VEIOS_NA_MONTANHA } from '../macico';
 import dadosDosRecursos from '../../../data/resources.json';
 import { ordemDeConstrucao, PASSOS as PASSOS_DA_OBRA } from '../ordem-de-construcao';
@@ -253,6 +254,9 @@ export class WorldScene extends Phaser.Scene {
   /** I-TELA-LENHADOR-CORTA-E-DERRUBA: a arvore derrubada desenhada por cima do tile (no lugar da em pe), por tile */
   private readonly arvoresCortadas = new Map<string, { readonly chave: string; readonly imagem: Phaser.GameObjects.Image | null }>();
   private quedasDeArvore = 0;
+  /** I-TELA-VENTO-SO-NA-COPA: a copa que balanca por cima de cada arvore (o tronco fica parado), e a de cada textura */
+  private readonly copasDesenhadas = new Map<string, { readonly base: Phaser.GameObjects.Image; readonly copa: Phaser.GameObjects.Image }>();
+  private readonly copasDaTextura = new Map<string, { readonly chave: string; readonly pivo: { readonly x: number; readonly y: number } } | null>();
   /** I-ARTE-MONTANHA-COM-VEIOS: o bloco de cada tile de montanha (criados uma vez) e o estado da arte de cada um */
   private macico: Map<string, { readonly imagem: Phaser.GameObjects.Image; estado: string }> | null = null;
   private degrauSazonal = -1;
@@ -1965,10 +1969,13 @@ export class WorldScene extends Phaser.Scene {
   private atualizarVento(): number {
     const recursos = this.ponte.atual?.recursos;
     if (!recursos) return 0;
+    // a copa cuja arvore saiu (cortada, repintada) sai junto
+    for (const [chave, c] of this.copasDesenhadas) {
+      if (this.vegetacaoDesenhada.get(chave) !== c.base || !c.base.active) { c.copa.destroy(); this.copasDesenhadas.delete(chave); }
+      else c.copa.setVisible(c.base.visible);
+    }
     if (!this.ventoLigado) {
-      for (const imagem of this.vegetacaoDesenhada.values()) {
-        if (imagem.rotation !== 0) imagem.setRotation(0);
-      }
+      for (const c of this.copasDesenhadas.values()) if (c.copa.rotation !== 0) c.copa.setRotation(0);
       return 0;
     }
     const camera = this.cameras.main.worldView;
@@ -1993,7 +2000,7 @@ export class WorldScene extends Phaser.Scene {
     this.vegetacaoNova = false;
     let quantos = 0;
     const ticksNaVista: Record<string, number> = {};
-    const arvores: Record<string, { especie: string; anguloGraus: number }> = {};
+    const arvores: Record<string, { especie: string; anguloGraus: number; rotacaoDoTronco: number; copa: boolean }> = {};
     for (const [chave, imagem] of this.arvoresNaVista) {
       const { gx, gy } = tileDeChave(chave);
       const especie = especieDoVentoDaVegetacao(imagem.texture.key.split(':')[1] ?? '',
@@ -2001,10 +2008,12 @@ export class WorldScene extends Phaser.Scene {
       const transformacao = transformacaoDoVento(
         dadosDoVento, quadro.tick, quadro.alfa, gx, gy, imagem.x, imagem.y, especie,
       );
-      arvores[chave] = { especie, anguloGraus: transformacao.deslocamentoGraus };
-      // Gira em volta da origem que o sprite ja tem (o anchor do manifesto, posto ao nascer), e
-      // nao de uma origem fixa: com outro anchor, o pe sairia do lugar.
-      imagem.setRotation(transformacao.rotacao);
+      arvores[chave] = { especie, anguloGraus: transformacao.deslocamentoGraus, rotacaoDoTronco: 0, copa: (dadosDoVento as { readonly copaQueBalanca?: readonly string[] }).copaQueBalanca?.includes(especie) === true };
+      // I-TELA-VENTO-SO-NA-COPA: o tronco nao gira; a copa por cima dele gira em volta da base dela
+      if (imagem.rotation !== 0) imagem.setRotation(0);
+      const copa = (dadosDoVento as { readonly copaQueBalanca?: readonly string[] }).copaQueBalanca?.includes(especie)
+        ? this.copaPorCima(chave, imagem) : null;
+      copa?.setRotation(transformacao.rotacao);
       this.ultimoTickDaVegetacao.set(chave, quadro.tick);
       ticksNaVista[chave] = quadro.tick;
       quantos += 1;
@@ -2014,6 +2023,52 @@ export class WorldScene extends Phaser.Scene {
       window.__cangaco.arvoresDoVentoNaVista = arvores;
     }
     return quantos;
+  }
+
+  /**
+   * I-TELA-VENTO-SO-NA-COPA — a imagem da copa por cima da arvore `base`, criada na primeira vez: a textura so com os
+   * pixels de folha (lida uma vez por textura), com a origem na base da copa, posta no mesmo lugar da arvore. `null`
+   * quando a arte nao tem copa.
+   */
+  private copaPorCima(chave: string, base: Phaser.GameObjects.Image): Phaser.GameObjects.Image | null {
+    const feita = this.copasDesenhadas.get(chave);
+    if (feita !== undefined && feita.base === base) return feita.copa;
+    feita?.copa.destroy();
+    const fonteKey = base.texture.key;
+    let textura = this.copasDaTextura.get(fonteKey);
+    if (textura === undefined) {
+      textura = null;
+      const fonte = base.texture.getSourceImage() as CanvasImageSource & { readonly width: number; readonly height: number };
+      const tela = document.createElement('canvas');
+      tela.width = fonte.width; tela.height = fonte.height;
+      const ctx = tela.getContext('2d');
+      if (ctx !== null) {
+        ctx.drawImage(fonte, 0, 0);
+        const dados = ctx.getImageData(0, 0, tela.width, tela.height);
+        const c = copaDaArvore({ width: tela.width, height: tela.height, data: dados.data });
+        if (c.pixels > 0) {
+          const alvo = `copa:${fonteKey}`;
+          const nova = this.textures.createCanvas(alvo, tela.width, tela.height);
+          if (nova !== null) {
+            const saida = nova.getContext().createImageData(tela.width, tela.height);
+            for (let i = 0; i < c.mascara.length; i++) if (c.mascara[i] === 1) saida.data.set(dados.data.subarray(i * 4, i * 4 + 4), i * 4);
+            nova.getContext().putImageData(saida, 0, 0);
+            nova.refresh();
+            textura = { chave: alvo, pivo: c.pivo };
+          }
+        }
+      }
+      this.copasDaTextura.set(fonteKey, textura);
+    }
+    if (textura === null) { this.copasDesenhadas.delete(chave); return null; }
+    const w = base.width, h = base.height;
+    const x = base.x + (textura.pivo.x - base.originX * w) * base.scaleX;
+    const y = base.y + (textura.pivo.y - base.originY * h) * base.scaleY;
+    const copa = this.add.image(x, y, textura.chave).setOrigin(textura.pivo.x / w, textura.pivo.y / h)
+      .setScale(base.scaleX, base.scaleY).setDepth(base.depth + 0.001).setVisible(base.visible);
+    copa.setTint(base.tintTopLeft, base.tintTopRight, base.tintBottomLeft, base.tintBottomRight);
+    this.copasDesenhadas.set(chave, { base, copa });
+    return copa;
   }
 
   /** F-REPL-e — o estado de crescimento do tile, pela mesma funcao que o teste confere

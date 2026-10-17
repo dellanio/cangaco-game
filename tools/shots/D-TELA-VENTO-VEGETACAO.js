@@ -69,6 +69,9 @@ async function roteiro({ page, capturar, estado, afirmar }) {
     afirmar(Math.abs(arvore.anguloGraus) <= vento.especies[arvore.especie].amplitude * vento.amplitudeMaximaGraus,
       `${arvore.especie} respeita o teto de amplitude do dado`);
   }
+  // I-TELA-VENTO-SO-NA-COPA: o tronco nunca gira; so o juazeiro tem copa que balanca, os cactos nao
+  afirmar(arvores.every((a) => a.rotacaoDoTronco === 0), 'o tronco de toda arvore fica parado');
+  afirmar(juazeiros.every((a) => a.copa === true) && cactos.every((a) => a.copa === false), 'so o juazeiro balanca a copa');
   const angulos = { tick: novoTick.tick,
     maiorAnguloCactoGraus: Math.max(...cactos.map((a) => Math.abs(a.anguloGraus))),
     maiorAnguloJuazeiroGraus: Math.max(...juazeiros.map((a) => Math.abs(a.anguloGraus))),

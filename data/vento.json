@@ -39,12 +39,34 @@
       "amplitude": 0.3,
       "velocidade": 1
     },
-    "seca": { "amplitude": 1, "velocidade": 1 },
-    "seca:umbuzeiro": { "amplitude": 1, "velocidade": 1 },
-    "seca:mandacaru": { "amplitude": 0.15, "velocidade": 1 },
-    "seca:facheiro": { "amplitude": 0.15, "velocidade": 1 },
-    "seca:xique-xique": { "amplitude": 0.15, "velocidade": 1 },
-    "seca:macambira": { "amplitude": 0.3, "velocidade": 1 }
+    "seca": {
+      "amplitude": 1,
+      "velocidade": 1
+    },
+    "seca:umbuzeiro": {
+      "amplitude": 1,
+      "velocidade": 1
+    },
+    "seca:mandacaru": {
+      "amplitude": 0.15,
+      "velocidade": 1
+    },
+    "seca:facheiro": {
+      "amplitude": 0.15,
+      "velocidade": 1
+    },
+    "seca:xique-xique": {
+      "amplitude": 0.15,
+      "velocidade": 1
+    },
+    "seca:macambira": {
+      "amplitude": 0.3,
+      "velocidade": 1
+    }
   },
-  "variacaoPorArvore": 0.1
+  "variacaoPorArvore": 0.1,
+  "copaQueBalanca": [
+    "presente"
+  ],
+  "_docCopaQueBalanca": "I-TELA-VENTO-SO-NA-COPA (pedido do operador, 2026-10-17): so a copa (as folhas, lidas da arte por src/render/copa-da-arvore.ts) gira com o vento, em volta da base dela; o tronco fica parado. So as especies desta lista tem copa que balanca: os cactos e a macambira sao rigidos, e a arvore seca nao tem folha."
 }

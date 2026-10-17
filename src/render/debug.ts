@@ -361,7 +361,7 @@ export interface EstadoDebug {
   vegetacaoBalancando: number;
   /** Tick em que cada arvore da vista recebeu a ultima rotacao. */
   ticksDaVegetacaoNaVista: Readonly<Record<string, number>>;
-  arvoresDoVentoNaVista: Readonly<Record<string, { readonly especie: string; readonly anguloGraus: number }>>;
+  arvoresDoVentoNaVista: Readonly<Record<string, { readonly especie: string; readonly anguloGraus: number; readonly rotacaoDoTronco?: number; readonly copa?: boolean }>>;
   custo: CustoDoQuadro;
   zerarCusto: () => void;
   /** F-TELA-NEVOA — os tiles que a textura da nevoa deixou visiveis, esmaecidos e escuros, do
