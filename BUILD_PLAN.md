@@ -10664,6 +10664,29 @@ Atualmente a árvore toda balança e não existe isso no mundo real."
      sem copa); a do mandacaru é vazia por espécie; o pivô fica na base da copa;
   2. no jogo: o sprite da árvore com rotação 0 em todo quadro; a copa girando com o ângulo publicado; capturas.
 
+#### I-TELA-PARTIDA-NAS-OPCOES — os controles da partida na aba Opções, o Salvar e o Carregar em popup, e o Reiniciar fase
+Pedido do operador (2026-10-17): "No controle da partida, deve ter uma opção chamada 'reiniciar fase' que reinicia aquele
+jogo. mova alguns controles da partida para o menu 'Opções' e faça já aparecer na tela como os menus Salvar que ao ser
+acionado abre um popup com as 3 posições pra salvar."
+- **Decisão:** só UI e o laço externo; a sim não muda.
+  - A aba **Opções** (a engrenagem da barra) passa a mostrar, no alto, o bloco **Partida**: Salvar, Carregar, Reiniciar
+    fase, Nova escaramuça, Opções de som e Menu inicial, e o recado do que aconteceu. O botão da ajuda e o player da
+    trilha continuam abaixo.
+  - **Salvar** e **Carregar** abrem um popup com as 3 gavetas (o texto de cada uma, como hoje, e um botão Guardar ou
+    Retomar); o Retomar que deu certo fecha o popup. Esc e o Fechar fecham.
+  - **Reiniciar fase** recomeça a mesma partida do zero: a fase da campanha (`?campanha=<id>`), a escaramuça
+    (`?escaramuca`) ou o jogo livre (`?livre`). Pede confirmação: o primeiro clique troca o texto para a confirmação, o
+    segundo reinicia; sair da aba desarma.
+  - A caixa do H (os controles) perde a seção Partida e fica só com a ajuda, o relato e as cadeias.
+  - Os roteiros que carregavam o save pela caixa do H passam a usar um ajudante comum (`tools/shots/_partida.js`).
+- **Aceite:**
+  1. a regra pura, por tabela: a página do reinício pela partida (fase, escaramuça, livre); a confirmação (um clique
+     arma, o segundo dispara, desarmar volta ao começo);
+  2. no jogo: a aba Opções mostra o bloco Partida; o Salvar abre o popup com 3 gavetas e guarda na escolhida; o Carregar
+     retoma e fecha o popup; o Reiniciar fase, numa fase da campanha, volta ao tick 0 dela; a caixa do H não tem mais a
+     seção Partida; capturas. Um passo despausado com mouse.down / 150 ms / mouse.up (CLAUDE.md §8);
+  3. os roteiros que carregavam pelo H seguem verdes com o ajudante.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
