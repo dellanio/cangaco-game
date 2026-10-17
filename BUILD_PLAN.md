@@ -10720,6 +10720,22 @@ fase aparece na gaveta como "Jogo livre", porque o tipo da gaveta só distingue 
   2. no jogo: um save da fase 1 guardado numa gaveta, e o popup de Carregar mostra "Fase 1 · Piancó" nessa gaveta
      (captura).
 
+#### G-ARTE-TRABALHO-NAS-MINAS-E-CURRAIS — o mineiro e o criador trabalhando na boca da mina e na porta do curral
+Pedido do operador (2026-10-17), saída (c) da pergunta sobre a animação de trabalho dos ofícios de dentro de casa: animar
+o próprio prédio. **Medido:** a tela já faz isso em 13 prédios (F-VIVO-b, G-ARTE-TRABALHO-DENTRO-DO-PREDIO,
+G-ARTE-TRABALHADOR-RECORTADO); faltam os quadros dos 5 prédios dos casos `luz` e `criacao`: as três minas (mineiro) e
+o chiqueiro e o estábulo (criador). O código e as áreas (`ancoras.trabalho.area`, a boca da mina e a porta do curral)
+já existem; só falta a arte.
+- **Decisão:** o mesmo método dos 13: o personagem PixelLab do `trabalhador` do prédio, uma animação v3 por laço, no sul,
+  na escala 1 e recortada pela área. Nas minas, o laço `luz` (4 quadros): o mineiro de lamparina batendo a picareta na
+  boca da mina; o mesmo laço nas três. No chiqueiro, `laco1` jogando milho e `laco2` despejando o balde no cocho; no
+  estábulo, `laco1` escovando e `laco2` levando o feno no forcado (8 quadros cada). A montagem passa a ser um script
+  versionado, `tools/trabalho-dentro.py`, e não rascunho fora do repositório como da outra vez.
+- **Aceite:**
+  1. os 5 prédios ganham a entrada `trabalho` com os laços do caso, e o mesmo teste dos 13 vale para os 18 (validador,
+     quadro do tamanho da área com gente, o personagem da origem igual ao `trabalhador`, escala 1, recorte pela cabeça);
+  2. uma prancha dos 5 prédios com o quadro em cima, aberta; e uma captura no jogo de uma mina e de um curral trabalhando.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
