@@ -22610,3 +22610,20 @@ trabalhando na porta ou no quintal do prédio (regra de tela nova, mais a anima�
   `tools/trabalho-dentro.py`, com os brutos em `assets/base/trabalho/`. O teste dos 13 passou a valer para os 18 e grava os
   saves da mina e do chiqueiro trabalhando; o roteiro novo os carrega pela gaveta e captura (capturas abertas).
   Fica de fora: o carpinteiro, o padeiro e os demais ofícios já animavam nos seus 13 prédios desde a G-ARTE-TRABALHO-DENTRO-DO-PREDIO.
+
+### I-ARTE-PARADO-RESPIRA-NAS-24-UNIDADES — piloto do pedreiro, parado (2026-10-17)
+Verificado (medido no atlas montado e numa prancha aberta, fora do git):
+- O template `breathing-idle` (5 gerações) agacha o pedreiro: o topo da cabeça do parado de frente desce 4 a 6 px no
+  sul e até 6 no sudeste, contra o parado de antes e contra o andar do mesmo personagem (sul: andar 15–19, parado novo
+  22–24). Reprova o aceite 2. É o mesmo defeito que o obreiro teve no I-ARTE-UNIDADES-PIXELLAB-V2.
+- O v3 personalizado ("em pé, sem agachar"), que foi a saída no obreiro, travou no PixelLab: duas tentativas paradas em
+  93–94% (16 min e 7 min), canceladas. Total do piloto: 5 gerações cobradas (a v3 cancelada: hipótese de não cobrar,
+  não conferida).
+- Nada de arte entrou no git. Fica `tools/pixellab-baixar.mjs` (baixa os quadros de uma animação do get_character para a
+  pasta que o `tools/pixellab-atlas.mjs` lê). O teste e o roteiro do item estão escritos, fora do repositório, até a arte
+  passar.
+
+### Perguntas em aberto (2026-10-17)
+- Respiração das 24 unidades: (a) tentar o v3 de novo mais tarde (~2–3 gerações por direção, 24 × 5 direções); (b)
+  aceitar o template, com a unidade 4–6 px mais baixa no parado que no andar; (c) desenhar a respiração por conta, a
+  partir do parado de antes (sem custo de geração).
