@@ -5,21 +5,28 @@
  * do caso; os quadros tem o tamanho da `ancoras.trabalho.area` do predio (o render estica o quadro
  * para a area, e quadro de outra proporcao deforma o boneco); cada quadro tem gente; e o personagem
  * que a origem registra e o trabalhador do predio em `data/buildings.json`.
+ * G-ARTE-TRABALHO-NAS-MINAS-E-CURRAIS: mais as 3 minas (mineiro) e o chiqueiro e o estabulo (criador), 18 no total.
  * G-ARTE-TRABALHADOR-RECORTADO: o boneco na escala 1 (a da rua), recortado pela area quando nao cabe.
  */
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import type { EntradaDeAsset, EntradaDeCamada, Manifesto } from '../src/render/manifesto';
 import { ehEntradaDePredio } from '../src/render/manifesto';
 import { CASO_DO_PREDIO, LACOS_DO_CASO, violacoesDaCamadaViva } from '../src/render/manifesto-camadas';
-import { contextoDasCamadas } from '../src/render/predios';
+import { contextoDasCamadas, dadosDoTrabalho } from '../src/render/predios';
+import { quadroDeTrabalho } from '../src/render/trabalho';
+import type { GameState } from '../src/sim/state';
+import { salvar } from '../src/sim/save';
+import { avancar, cenarioDaCadeiaDaCarne, cenarioDaCadeiaDoOuro } from './helpers/producao-cenario';
 import { lerPng, caixaOpaca } from './helpers/png';
 import { gravarEvidencia } from './helpers/evidence';
 
 const manifesto = JSON.parse(readFileSync('assets/manifest.json', 'utf8')) as Manifesto;
 const predios = (JSON.parse(readFileSync('data/buildings.json', 'utf8')) as { predios: { id: string; trabalhador: string | null }[] }).predios;
 const trabalhadorDo = new Map(predios.map((p) => [p.id, p.trabalhador]));
-const comTrabalho = Object.entries(CASO_DO_PREDIO).filter(([, caso]) => caso === 'transforma' || caso === 'dentro').map(([id]) => id);
+// G-ARTE-TRABALHO-NAS-MINAS-E-CURRAIS: os casos `luz` (as minas) e `criacao` (chiqueiro e estabulo) entraram; fica de fora
+// so o `guarda`, cujo trabalho e no campo, fora da casa
+const comTrabalho = Object.entries(CASO_DO_PREDIO).filter(([, caso]) => caso !== 'guarda').map(([id]) => id);
 
 const camadaDe = (id: string): EntradaDeCamada | undefined =>
   manifesto.assets.find((e): e is EntradaDeCamada => !ehEntradaDePredio(e) && e.tipo === 'trabalho' && e.id === id);
@@ -27,8 +34,8 @@ const predioDe = (id: string): EntradaDeAsset =>
   manifesto.assets.find((e): e is EntradaDeAsset => ehEntradaDePredio(e) && e.id === id)!;
 
 describe('G-ARTE-TRABALHO-DENTRO-DO-PREDIO', () => {
-  it('sao os 13 predios do pedido', () => {
-    expect(comTrabalho).toHaveLength(13);
+  it('sao os 13 predios do pedido, mais as 3 minas e os 2 currais', () => {
+    expect(comTrabalho).toHaveLength(18);
   });
 
   const medidas: Record<string, unknown> = {};
@@ -86,4 +93,27 @@ describe('G-ARTE-TRABALHADOR-RECORTADO — na escala da rua, recortado pela area
     }
     expect(cabeca, 'o alto da cabeca, no quadro mais alto, longe do topo').toBeLessThanOrEqual(3);
   });
+});
+
+describe('G-ARTE-TRABALHO-NAS-MINAS-E-CURRAIS — os saves que o roteiro carrega', () => {
+  // A tela nao constroi a cadeia pela abertura; o roteiro carrega estes estados pelo gesto do jogador (a gaveta):
+  // a cadeia do ouro (a mina) e a da carne (o chiqueiro), andadas ate o predio publicar um quadro de trabalho.
+  const dadosDaTela = dadosDoTrabalho(manifesto);
+  const casos = [
+    { tipo: 'gold_mine', cenario: () => cenarioDaCadeiaDoOuro() },
+    { tipo: 'swine_farm', cenario: () => cenarioDaCadeiaDaCarne() },
+  ] as const;
+  it.each(casos)('$tipo trabalha, e o save vai para o roteiro', ({ tipo, cenario }) => {
+    let s: GameState = cenario();
+    const trabalhando = (e: GameState): boolean => e.predios.ordem.some((id) => {
+      const p = e.predios.porId[id]!;
+      if (p.tipo !== tipo || p.estado !== 'completo' || p.ocupante === null) return false;
+      return quadroDeTrabalho(p, e.unidades.porId[p.ocupante] ?? null, e.tick, dadosDaTela) !== null;
+    });
+    while (!trabalhando(s) && s.tick < 20000) s = avancar(s, 25);
+    expect(trabalhando(s), `${tipo} nao trabalhou em 20 000 ticks`).toBe(true);
+    const dir = process.env['CANGACO_EVIDENCIA_DIR'] ?? 'test-output';
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(`${dir}/G-ARTE-TRABALHO-NAS-MINAS-E-CURRAIS-${tipo}.save.txt`, salvar(s));
+  }, 60000);
 });

@@ -22596,10 +22596,17 @@ Ressalvas:
   pronta ganhou o `faseId` (do `estado.fase`), e a tela acha número e local pelo `resumoDasFases`; o índice das gavetas
   e o save não mudaram. O teste antigo das gavetas (E-SAVE-GAVETAS) passou a esperar o `faseId: null` no objeto exato.
 
-### Pergunta em aberto (2026-10-17): a animação de trabalho dos ofícios de dentro de casa
+### Pergunta respondida (2026-10-17): a animação de trabalho dos ofícios de dentro de casa — o operador escolheu (c)
 Verificado antes de gastar geração (`src/render/acao-de-unidade.ts:11-19` e `src/render/visibilidade.ts:32-51`): a tela só
 desenha `trabalhar` para quem colhe, semeia ou é o obreiro; o carpinteiro, padeiro, criador, açougueiro, mineiro,
 fundidor e ferreiro trabalham DENTRO do prédio e ficam invisíveis (`dentroDaCasa`). Uma animação de trabalho para eles
 nunca apareceria no jogo. Não gerei nada. Saídas para o operador escolher: (a) pular o item; (b) mostrar o ofício
 trabalhando na porta ou no quintal do prédio (regra de tela nova, mais a animação); (c) animar o próprio prédio
 (fumaça, bigorna, forno), como o KaM faz.
+- `G-ARTE-TRABALHO-NAS-MINAS-E-CURRAIS` (saída (c) escolhida pelo operador para a pergunta dos ofícios de dentro de casa):
+  o mineiro de picareta na boca das três minas (laço `luz`, 4 quadros, o mesmo nas três) e o criador na porta do chiqueiro
+  (jogando milho; despejando o balde) e do estábulo (escovando; o forcado). 9 gerações do PixelLab (559 restavam antes).
+  Com isso os 18 prédios que não são `guarda` animam o próprio prédio. A montagem agora é versionada,
+  `tools/trabalho-dentro.py`, com os brutos em `assets/base/trabalho/`. O teste dos 13 passou a valer para os 18 e grava os
+  saves da mina e do chiqueiro trabalhando; o roteiro novo os carrega pela gaveta e captura (capturas abertas).
+  Fica de fora: o carpinteiro, o padeiro e os demais ofícios já animavam nos seus 13 prédios desde a G-ARTE-TRABALHO-DENTRO-DO-PREDIO.
