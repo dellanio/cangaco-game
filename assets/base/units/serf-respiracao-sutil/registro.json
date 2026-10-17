@@ -1,0 +1,8 @@
+{
+  "item": "I-ARTE-SERF-RESPIRACAO-SUTIL",
+  "ferramenta": "nenhuma geracao: tools/respiracao-sutil.mjs",
+  "base": "assets/base/units/serf-pixellab-v2/rotacoes/<direcao>.png (o serf em pe do personagem 77320113-bf89-4b4a-bf70-e360bf4160d0)",
+  "parado": "4 quadros: 0 e 3 a imagem em pe; 1 e 2 com o tronco, os bracos e a cabeca 1 px acima (cintura a 0,5 da altura); 1,5 fps",
+  "antes": "o parado do template breathing-idle do I-ARTE-SERF-PIXELLAB-V2, a 5 fps (atlas em antes/)",
+  "montagem": "node tools/respiracao-sutil.mjs serf assets/base/units/serf-pixellab-v2/rotacoes"
+}

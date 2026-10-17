@@ -22627,3 +22627,19 @@ Verificado (medido no atlas montado e numa prancha aberta, fora do git):
 - Respiração das 24 unidades: (a) tentar o v3 de novo mais tarde (~2–3 gerações por direção, 24 × 5 direções); (b)
   aceitar o template, com a unidade 4–6 px mais baixa no parado que no andar; (c) desenhar a respiração por conta, a
   partir do parado de antes (sem custo de geração).
+
+### I-ARTE-SERF-RESPIRACAO-SUTIL — a respiração do serf leve e lenta (2026-10-17)
+Pedido do operador: "a respiração das unidades está muito artificial; bem leve e sutil; refaça no serf pra eu analisar".
+Verificado (teste, roteiro e captura aberta):
+- Sem geração. O parado sai da imagem em pé de cada direção (`rotacoes/`), com o pé na linha de antes; nos quadros 1 e 2
+  só o tronco, os braços e a cabeça sobem 1 px (da cintura para baixo nada muda), a 1,5 fps: um fôlego a cada 2,7 s, contra
+  o template do PixelLab a 5 fps. `tools/respiracao-sutil.mjs`; o atlas de antes em `assets/base/units/serf-respiracao-sutil/antes/`.
+- O aceite 2 foi emendado antes do teste: o serf de hoje não agachava (a imagem em pé do sul tem o topo na linha 17,
+  igual ao parado de antes); o andar do PixelLab é que sai ampliado (topo 12). A referência passou a ser a imagem em pé.
+- Roteiro: os três serfs passaram pelos 4 quadros do parado com o jogo andando. Eles também viram de direção parados
+  (já era assim). Um quadro parado não mostra 1 px de fôlego: a análise é do operador, no jogo.
+- O piloto do pedreiro (acima) mediu a descida da cabeça contra o parado de antes; aquela conclusão vale.
+
+### Perguntas em aberto (2026-10-17)
+- O operador analisa o serf no jogo. Se aprovar, o mesmo script vale para as 28 outras unidades sem gerar nada (as
+  24 de 1 quadro e as 4 do PixelLab v2, que têm o mesmo template rápido). Isso substitui as saídas (a)–(c) acima.
