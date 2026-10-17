@@ -14,16 +14,18 @@ describe('I-TELA-ENFEITES-NO-MAPA', () => {
   it('mesma semente e mapa; outra muda; exclui terreno e raio; densidade real ±20%', () => {
     expect(candidatosAEnfeite(terreno, sementeDoMapa, centroDaVilaInicial)).toEqual(candidatos);
     expect(candidatosAEnfeite(terreno, sementeDoMapa+1, centroDaVilaInicial)).not.toEqual(candidatos);
-    const cheia = { ...configDosEnfeites, densidade: 1 };
+    // I-TELA-ENFEITES-EM-SITIOS: a densidade e a dos avulsos (os do sitio contam a parte)
+    const cheia = { ...configDosEnfeites, avulsos: { ...configDosEnfeites.avulsos, densidade: 1 } };
     for (const tipo of ['agua','rocha','montanha','campoArado']) expect(enfeiteNoTile(100,100,sementeDoMapa,tipo,centroDaVilaInicial,cheia)).toBeNull();
     expect(enfeiteNoTile(centroDaVilaInicial.gx,centroDaVilaInicial.gy,sementeDoMapa,'grama',centroDaVilaInicial,cheia)).toBeNull();
     let elegiveis = 0;
     for (let gy=0;gy<terreno.altura;gy++) for(let gx=0;gx<terreno.largura;gx++) if(enfeiteNoTile(gx,gy,sementeDoMapa,terreno.tipos[terreno.codigos[gy*terreno.largura+gx]!]!,centroDaVilaInicial,cheia)) elegiveis++;
-    const densidade = candidatos.length/elegiveis;
-    expect(densidade).toBeGreaterThanOrEqual(configDosEnfeites.densidade*0.8);
-    expect(densidade).toBeLessThanOrEqual(configDosEnfeites.densidade*1.2);
+    const avulsos = candidatos.filter(e => e.id in configDosEnfeites.avulsos.pesos).length;
+    const densidade = avulsos/elegiveis;
+    expect(densidade).toBeGreaterThanOrEqual(configDosEnfeites.avulsos.densidade*0.8);
+    expect(densidade).toBeLessThanOrEqual(configDosEnfeites.avulsos.densidade*1.2);
     mkdirSync('test-output',{recursive:true});
-    writeFileSync('test-output/I-TELA-ENFEITES-NO-MAPA-densidade.json',JSON.stringify({elegiveis,enfeites:candidatos.length,densidade,alvo:configDosEnfeites.densidade},null,2));
+    writeFileSync('test-output/I-TELA-ENFEITES-NO-MAPA-densidade.json',JSON.stringify({elegiveis,enfeites:candidatos.length,avulsos,densidade,alvo:configDosEnfeites.avulsos.densidade},null,2));
   });
   it('step com predio, rua e rocado oculta; demolicao devolve o mesmo enfeite', () => {
     // Fixture com a arvore de construcao ja liberada; os comandos continuam reais.

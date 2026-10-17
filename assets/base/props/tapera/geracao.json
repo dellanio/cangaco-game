@@ -1,0 +1,93 @@
+{
+  "ferramenta": "OpenAI image_gen nativa",
+  "semente": null,
+  "semente_nota": "Nao disponibilizada pela ferramenta",
+  "geracoes": [
+    {
+      "arquivo_id": "exec-59f69426-2d46-4867-97da-591a67d8e729",
+      "prompt": "Use case: stylized-concept. Create ONE original transparent RGBA game sprite: TAPERA, tiny abandoned pau-a-pique/taipa house in Paraiba Brazilian sertao circa 1930, decorative prop for Pianco ? Ferro e Mandacaru. Hand-painted raster RTS sprite matching the visible reference buildings and props: earthy muted ochre plaster, warm brown exposed sticks, weathered terracotta canal roof tiles. Camera elevated top-down three-quarter on ORTHOGONAL square grid, NOT diamond/isometric ground axes. Front facade horizontal facing screen south, visible roof and a modest side wall, compact low house fits 2x2 64px tiles and reads clearly at 128x128 pixels. Fallen patches of mud plaster exposing woven wooden wattle on front and side. Partly collapsed roof: one slope sunken, missing channel tiles and exposed rough rafters, damaged irregular ridge. Crooked hanging wood door, small dry straw grass ONLY at threshold. House alone, no ground patch or pedestal, no surrounding props, cart, fence, well, clothesline, people, cactus or trees. Front wall foot centered at bottom of composition; keep entire roof and silhouette inside frame. Single illumination from directly above slightly toward screen south, ZERO east-west directional light component, both sides equivalently illuminated, recess ambient occlusion only, NO long cast shadow or lateral shadow. Match fine hand-painted edge and readable material detail of references, no black outlines, no cartoon exaggeration, no 3D plastic, no 1998 game style, no text, labels, watermark, border. True transparent background. Output only the isolated house at high resolution for clean downsampling.",
+      "resultado": "Descartada: camera quase frontal"
+    },
+    {
+      "arquivo_id": "exec-ce9d9d5d-9730-4e9b-9d97-c6ed07b431b0",
+      "prompt": "Use case: stylized-concept. Create ONE original transparent RGBA game sprite: TAPERA, tiny abandoned pau-a-pique/taipa house in Paraiba Brazilian sertao circa 1930, decorative prop for Pianco ? Ferro e Mandacaru. Hand-painted raster RTS sprite matching the visible reference buildings and props: earthy muted ochre plaster, warm brown exposed sticks, weathered terracotta canal roof tiles. Camera elevated top-down three-quarter on ORTHOGONAL square grid, NOT diamond/isometric ground axes. Front facade horizontal facing screen south, visible roof and a modest side wall, compact low house fits 2x2 64px tiles and reads clearly at 128x128 pixels. Fallen patches of mud plaster exposing woven wooden wattle on front and side. Partly collapsed roof: one slope sunken, missing channel tiles and exposed rough rafters, damaged irregular ridge. Crooked hanging wood door, small dry straw grass ONLY at threshold. House alone, no ground patch or pedestal, no surrounding props, cart, fence, well, clothesline, people, cactus or trees. Front wall foot centered at bottom of composition; keep entire roof and silhouette inside frame. Single illumination from directly above slightly toward screen south, ZERO east-west directional light component, both sides equivalently illuminated, recess ambient occlusion only, NO long cast shadow or lateral shadow. Match fine hand-painted edge and readable material detail of references, no black outlines, no cartoon exaggeration, no 3D plastic, no 1998 game style, no text, labels, watermark, border. True transparent background. Output only the isolated house at high resolution for clean downsampling.\nCAMERA CORRECTION IS CRITICAL: rotate camera azimuth 20 degrees to show the RIGHT SIDE WALL clearly (at least one fifth of house visible width) as well as the front. Raise camera elevation to 50 degrees looking DOWN, roof occupies roughly upper half. Current nearly frontal house is wrong. Use reference woodcutters building camera elevation and visible side depth; maintain much smaller humble one room house. Deliberately painted simplified textures for 128px final, not photographic microtexture. No east-west illumination bias.",
+      "resultado": "Selecionada; original preservado em base.png"
+    }
+  ],
+  "referencias": {
+    "areia": "D:\\projetos-pessoal\\cangaco-game\\assets\\sprites\\terrain\\areia.png",
+    "carroca": "D:\\projetos-pessoal\\cangaco-game\\assets\\sprites\\props\\ox_cart\\normal.png",
+    "cerca": "D:\\projetos-pessoal\\cangaco-game\\assets\\sprites\\props\\stick_fence\\normal.png",
+    "predios": [
+      "woodcutters/woodcutters_completo-D.png",
+      "storehouse/storehouse_completo-D-roof-straight-3tiles.png"
+    ]
+  },
+  "caminho_alternativo": "assets/sprites/enfeites nao existe neste checkout; enfeites reais encontrados em assets/sprites/props",
+  "processamento": {
+    "biblioteca": "Pillow",
+    "crop_alpha": [
+      0,
+      12,
+      1372,
+      1122
+    ],
+    "redimensionamento": "Lanczos; preserva alpha original; sem repintura",
+    "tamanho_reduzido": [
+      124,
+      100
+    ],
+    "offset": [
+      2,
+      28
+    ],
+    "canvas": [
+      128,
+      128
+    ],
+    "anchor_normalizado": [
+      0.5,
+      1
+    ],
+    "prova": "384x256 RGBA; areia repetida em 64px; tapera em (128,64); carroca em (64,144); cerca em (256,144); todos em escala nativa"
+  },
+  "homologacao_visual": "Pendente de avaliacao do usuario",
+  "arquivos": {
+    "base.png": {
+      "sha256": "4c17e484fe498af1fb44f9d527030baf2c6594b20eae3c7e6b3fd1ae7444b30e",
+      "dimensoes": [
+        1402,
+        1122
+      ],
+      "modo": "RGBA",
+      "alpha_extremos": [
+        0,
+        255
+      ]
+    },
+    "tapera.png": {
+      "sha256": "733eee961faada07fc4f90087bb6e2a349c90b52f8635c021e8b6441986c6776",
+      "dimensoes": [
+        128,
+        128
+      ],
+      "modo": "RGBA",
+      "alpha_extremos": [
+        0,
+        255
+      ]
+    },
+    "prova.png": {
+      "sha256": "2c02eec5c1f31ae72aed0fd81a7b2c4b3c785b7b929c6594a60546da9ec4a7fe",
+      "dimensoes": [
+        384,
+        256
+      ],
+      "modo": "RGBA",
+      "alpha_extremos": [
+        242,
+        255
+      ]
+    }
+  }
+}

@@ -769,6 +769,11 @@ export class WorldScene extends Phaser.Scene {
       const vistaEnfeites = camera.worldView;
       estado.enfeitesNaVista = [...this.enfeitesDesenhados.values()].filter(i => i.x >= vistaEnfeites.x && i.x < vistaEnfeites.right && i.y >= vistaEnfeites.y && i.y < vistaEnfeites.bottom).length;
       estado.recalculosDosEnfeites = this.memoriaDosEnfeites.recalculos;
+      // I-TELA-ENFEITES-EM-SITIOS: quantos de cada enfeite a cena desenhou
+      const porTipo: Record<string, number> = {};
+      for (const k of this.enfeitesDesenhados.values()) { const id = k.texture.key.split(':')[1] ?? ''; porTipo[id] = (porTipo[id] ?? 0) + 1; }
+      estado.enfeitesPorTipo = porTipo;
+      estado.enfeitesDesenhadosEm = (id: string) => [...this.enfeitesDesenhados].filter(([, i]) => i.texture.key.split(':')[1] === id).map(([k]) => { const [gx, gy] = k.split(',').map(Number); return { gx: gx ?? 0, gy: gy ?? 0 }; });
       // F-D2: o roteiro afirma o teto sobre este numero, em vez de cronometrar
       // pixel entre dois quadros e brigar com o relogio do navegador.
       estado.navegacao = {

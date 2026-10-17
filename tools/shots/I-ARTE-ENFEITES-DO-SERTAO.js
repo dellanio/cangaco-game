@@ -2,7 +2,8 @@ const { readFileSync } = require('node:fs');
 const manifesto = require('../../assets/manifest.json');
 const uri = rel => `data:image/png;base64,${readFileSync(`assets/${rel}`).toString('base64')}`;
 async function roteiro({ page, capturar, afirmar }) {
-  const enfeites = manifesto.assets.filter(e => e.tipo === 'enfeite');
+  // a prancha e dos oito enfeites 1x1; a tapera (2x2, I-TELA-ENFEITES-EM-SITIOS) tem a prova propria em base/props/tapera
+  const enfeites = manifesto.assets.filter(e => e.tipo === 'enfeite' && e.id !== 'tapera');
   afirmar(enfeites.length === 8, 'oito enfeites na prancha');
   const solo = manifesto.assets.find(e => e.tipo === 'terreno' && e.id === 'grama');
   const dados = { solo: uri(Object.values(solo.estados)[0]), sprites: enfeites.map(e => ({ id: e.id, uri: uri(e.estados.normal) })) };

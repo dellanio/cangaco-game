@@ -1,15 +1,63 @@
 {
-  "_doc": "Somente decoracao de tela: 4% dos tiles de solo/areia elegiveis fora de 20 tiles da vila. Nenhuma colisao ou efeito na sim.",
-  "densidade": 0.04,
+  "_doc": "Somente decoracao de tela, nenhuma colisao ou efeito na sim. I-TELA-ENFEITES-EM-SITIOS (pedido do operador, 2026-10-17): os enfeites de gente so aparecem juntos, num SITIO abandonado (a casa velha, a carroca, a cerca, o poco, o varal, a lenha e a cruz), poucos por mapa; o resto do mapa so tem o que e natural (laje e ossada), raro. Substitui os 4% de qualquer enfeite da I-TELA-ENFEITES-NO-MAPA.",
   "raioDaVila": 20,
-  "pesos": {
-    "stick_fence": 1,
-    "well": 1,
-    "ox_cart": 1,
-    "drying_rack": 1,
-    "firewood": 2,
-    "ox_bones": 1,
-    "roadside_cross": 1,
-    "flat_slab": 4
+  "avulsos": {
+    "densidade": 0.008,
+    "pesos": {
+      "flat_slab": 3,
+      "ox_bones": 1
+    }
+  },
+  "sitios": {
+    "_doc": "quantidadePorArea: sitios por tile de mapa (3 num 128x128). distanciaMinima: entre os centros, em tiles. arranjo: o enfeite e o deslocamento do centro (dx, dy); todo tile do arranjo cai em chao (grama ou areia) fora da vila, senao o centro nao serve.",
+    "quantidadePorArea": 0.00018310546875,
+    "distanciaMinima": 32,
+    "arranjo": [
+      {
+        "id": "tapera",
+        "dx": 0,
+        "dy": 0
+      },
+      {
+        "id": "ox_cart",
+        "dx": -2,
+        "dy": 1
+      },
+      {
+        "id": "firewood",
+        "dx": -2,
+        "dy": -1
+      },
+      {
+        "id": "well",
+        "dx": 2,
+        "dy": 1
+      },
+      {
+        "id": "drying_rack",
+        "dx": 2,
+        "dy": -1
+      },
+      {
+        "id": "stick_fence",
+        "dx": -1,
+        "dy": 2
+      },
+      {
+        "id": "stick_fence",
+        "dx": 0,
+        "dy": 2
+      },
+      {
+        "id": "stick_fence",
+        "dx": 1,
+        "dy": 2
+      },
+      {
+        "id": "roadside_cross",
+        "dx": 3,
+        "dy": 3
+      }
+    ]
   }
 }

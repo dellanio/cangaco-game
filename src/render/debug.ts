@@ -349,6 +349,10 @@ export interface EstadoDebug {
   vegetacaoRenderizada: number;
   caatinga: { readonly normal: number; readonly seca: number; readonly degrau: number; readonly recalculos: number; readonly repinturas: number };
   enfeitesNaVista: number;
+  /** I-TELA-ENFEITES-EM-SITIOS: quantos de cada enfeite a cena desenhou, por id */
+  enfeitesPorTipo: Readonly<Record<string, number>>;
+  /** I-TELA-ENFEITES-EM-SITIOS: os tiles onde a cena desenhou o enfeite `id` */
+  enfeitesDesenhadosEm: (id: string) => readonly { readonly gx: number; readonly gy: number }[];
   recalculosDosEnfeites: number;
   rochasRenderizadas: number;
   /** D-ARTE-BANDEIRA-FACCAO — panos atualizados neste quadro. */
@@ -558,6 +562,8 @@ export function publicarEstadoDebug(relogio: RelogioVisivel): EstadoDebug {
     vegetacaoRenderizada: 0,
     caatinga: { normal: 0, seca: 0, degrau: -1, recalculos: 0, repinturas: 0 },
     enfeitesNaVista: 0,
+    enfeitesPorTipo: {},
+    enfeitesDesenhadosEm: () => [],
     recalculosDosEnfeites: 0,
     rochasRenderizadas: 0,
     bandeirasRedesenhadas: 0,

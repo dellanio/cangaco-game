@@ -6,12 +6,12 @@ import { TIPOS_DE_CAMADA } from '../src/render/manifesto';
 
 const enfeites = dados.assets.filter(e => e.tipo === 'enfeite');
 describe('I-ARTE-ENFEITES-DO-SERTAO', () => {
-  it('registra oito bases e derivados 1x1 de ate 64px com os oito campos', () => {
-    expect(enfeites).toHaveLength(8);
+  it('registra nove bases (oito 1x1 de ate 64px, e a tapera 2x2 de ate 128px) com os oito campos', () => {
+    expect(enfeites).toHaveLength(9); // I-TELA-ENFEITES-EM-SITIOS: a tapera, o centro do sitio
     expect(TIPOS_DE_CAMADA).toContain('enfeite');
     for (const e of enfeites) {
       expect(errosDoEnfeite(e), e.id).toEqual([]);
-      expect(e.footprint).toEqual([1, 1]);
+      expect(e.footprint).toEqual(e.id === 'tapera' ? [2, 2] : [1, 1]);
       expect(e.anchor).toEqual([0.5, 1]);
       expect(existsSync(`assets/${e.origem.base}`)).toBe(true);
       for (const rel of Object.values(e.estados)) {
