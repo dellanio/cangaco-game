@@ -10651,6 +10651,19 @@ os oito se repetem pelo mapa todo.
      densidade nova (±20%); a mesma semente dá o mesmo mapa;
   2. no jogo: a contagem de cada enfeite na ponte, e a captura de um sítio.
 
+#### I-TELA-VENTO-SO-NA-COPA — o vento mexe só a copa da árvore; o tronco e os cactos ficam parados
+Pedido do operador (2026-10-17): "A simulação das árvores balançando deveria ser apenas as folhas e não ela por completo.
+Atualmente a árvore toda balança e não existe isso no mundo real."
+- **Decisão:** só tela. O sprite da árvore deixa de girar. Por cima dele vai a COPA (os pixels de folha, lidos da própria
+  arte: verdes, com o contorno que encosta neles), que gira em volta da base da copa com o ângulo do vento de hoje
+  (`render/vento.ts`, mesma rajada e mesma fase por tile). Por baixo da copa que se mexe ficam as folhas de trás, paradas,
+  o que dá profundidade. Só as espécies de copa (`data/vento.json: copaQueBalanca`) balançam; os cactos e a macambira
+  ficam parados (são rígidos), e a árvore seca, sem folha, também.
+- **Aceite:**
+  1. a regra pura, na arte real do juazeiro: a copa tem os pixels verdes e não o tronco (a metade de baixo do sprite quase
+     sem copa); a do mandacaru é vazia por espécie; o pivô fica na base da copa;
+  2. no jogo: o sprite da árvore com rotação 0 em todo quadro; a copa girando com o ângulo publicado; capturas.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
