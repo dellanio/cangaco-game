@@ -10736,6 +10736,24 @@ já existem; só falta a arte.
      quadro do tamanho da área com gente, o personagem da origem igual ao `trabalhador`, escala 1, recorte pela cabeça);
   2. uma prancha dos 5 prédios com o quadro em cima, aberta; e uma captura no jogo de uma mina e de um curral trabalhando.
 
+#### I-ARTE-PARADO-RESPIRA-NAS-24-UNIDADES — o parado respira nas 24 unidades que ainda têm 1 quadro
+Pedido do operador (2026-10-17, item 3 da fila do dia): a respiração do parado, que o serf, o obreiro, o lenhador, a
+cabra e o lavrador ganharam (I-ARTE-SERF-PIXELLAB-V2, I-ARTE-UNIDADES-PIXELLAB-V2), para o resto das unidades. **Medido:**
+24 unidades com `parado` de 1 quadro no manifesto; todas já são personagem v3 do PixelLab (o id está na `origem` de
+cada uma). 21 a pé (quadro 64x96, o padre 80x96) e 3 montadas (`scout`, `knight`, `vagabond`, 128x128).
+- **Decisão:** só o parado muda. Nas 21 a pé, o template `breathing-idle` do PixelLab no personagem que já existe
+  (4 quadros, 1 geração por direção, nas 5 canônicas); se ele agachar a unidade (como agachou o obreiro), o v3
+  personalizado "respirar em pé". Nas 3 montadas, v3 personalizado (o cavalo respira, o cavaleiro quieto), 4 quadros.
+  O parado fica em laço a 5 fps, como nas 5 já feitas. O atlas sai por `tools/pixellab-atlas.mjs --manter`; o de antes
+  de cada uma fica em `assets/base/units/<id>-parado-v2/antes/`, com o `registro.json` das gerações. Piloto: o pedreiro;
+  as outras só depois de a captura dele ser aberta.
+- **Aceite:**
+  1. nas 24, o manifesto declara o parado com 4 quadros em laço; o atlas tem os 4 quadros nas 5 direções, no tamanho de
+     quadro de antes, e todas as outras animações quadro a quadro iguais às de antes;
+  2. a linha do pé do parado de frente não muda mais que 2 px, e o topo da cabeça não desce mais que 2 px (a unidade não
+     agacha para respirar);
+  3. um roteiro com as 24 lado a lado na vila, despausado: cada uma passa por mais de um quadro do parado; captura aberta.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
