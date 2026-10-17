@@ -10593,6 +10593,26 @@ precisa cair no chão e o lenhador pegar o tronco e levar no braço pra casa del
   2. no jogo: o lenhador desenhado a menos de meio tile do tronco enquanto corta; lascas criadas nas batidas; a árvore
      deitada depois do primeiro corte; o lenhador voltando com a tora nas mãos; capturas.
 
+#### I-ARTE-MONTANHA-COM-VEIOS — a montanha em pé, e o ferro e o ouro como veios na face da rocha
+Pedido do operador (2026-10-16): "melhore a qualidade visual e de realismo do nosso minério de ferro e ouro. Não pode ser
+essas bolinhas ou morrinhos de minério. Precisamos ter montanhas um pouco afastadas da cidade com imagens brilhando ou
+simulando presença de ferro e ouro. Já o carvão é indicado no chão (...) Consulte o KaM Remake."
+- **O que já é assim (conferido):** a sim põe o ferro e o ouro em tiles de terreno `montanha` (F21b,
+  `data/resources.json: iron_ore._docBloqueiaPasso`), como o KaM: lá ferro e ouro são terreno de montanha e a mina só
+  entra na borda de baixo dela (`src/terrain/KM_Terrain.pas:1226-1242`, `TileGoodForIronMine`). O carvão já é do chão.
+  O que falta é a tela: a montanha é pintada como chão pedregoso plano e o veio como um morrinho por cima.
+- **Decisão:** só tela e arte; a sim e o mapa não mudam (a distância das montanhas à vila fica a da
+  I-TERRENO-MINERAIS-PERTO-DAS-VILAS). Cada tile de `montanha` recebe um bloco de granito em pé (arte do Codex, 80x112,
+  o pé no meio da borda de baixo do tile), escolhido pela posição do tile; os blocos vizinhos se sobrepõem (o de baixo
+  na frente) e formam o maciço. No tile com veio ativo (`iron_ore` ou `gold_ore` com quantidade > 0), o bloco é a
+  variante com o veio de ferro (ferrugem com brilho frio) ou de ouro (filetes que brilham); o morrinho do veio deixa de
+  ser desenhado. Veio esgotado volta ao granito.
+- **Aceite:**
+  1. a regra pura, por tabela: o bloco de cada tile pelo terreno e pelo recurso (granito, ferro, ouro; esgotado volta ao
+     granito; fora da montanha, nenhum); a mesma posição dá sempre a mesma variante;
+  2. no jogo, no sertão: um bloco por tile de montanha, os veios de ferro e de ouro nos tiles deles (contados na ponte),
+     nenhum morrinho de veio desenhado, e a captura do maciço com os veios.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
