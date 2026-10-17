@@ -10754,6 +10754,23 @@ cada uma). 21 a pé (quadro 64x96, o padre 80x96) e 3 montadas (`scout`, `knight
      agacha para respirar);
   3. um roteiro com as 24 lado a lado na vila, despausado: cada uma passa por mais de um quadro do parado; captura aberta.
 
+#### I-ARTE-SERF-RESPIRACAO-SUTIL — a respiração do serf leve e lenta, sem agachar (para o operador analisar)
+Pedido do operador (2026-10-17): "a respiração das unidades está muito artificial. Precisa ser algo bem leve e sutil.
+Refaça no serf pra eu analisar como ficou." **Medido:** o parado de hoje (template `breathing-idle` do PixelLab, 5 fps)
+agacha o serf: o topo da cabeça no sul fica na linha 17–18, contra 12–13 no andar. A imagem em pé de cada direção está
+em `assets/base/units/serf-pixellab-v2/rotacoes/`.
+- **Decisão:** sem geração. Os 4 quadros do parado saem da imagem em pé da direção (`rotacoes/<dir>.png`), com o pé na
+  linha de hoje: quadros 0 e 3 a imagem como está; 1 e 2 com o tronco, os braços e a cabeça subindo 1 px (as linhas
+  acima da cintura sobem 1 px e a linha da cintura se repete; o quadril e as pernas não mexem). O laço a 1,5 fps (um
+  fôlego a cada 2,7 s). A montagem é `tools/respiracao-sutil.mjs`; o atlas de antes fica em
+  `assets/base/units/serf-respiracao-sutil/antes/`. Só o serf; as outras unidades esperam o operador analisar.
+- **Aceite:**
+  1. o parado do serf tem 4 quadros em laço a 1,5 fps nas 5 direções; as outras animações do atlas são quadro a
+     quadro iguais às de antes;
+  2. em cada direção, entre um quadro e outro do parado, o topo da cabeça varia no máximo 1 px, e da cintura para baixo
+     os pixels são idênticos; o topo da cabeça no sul fica a no máximo 2 px do topo do andar (o serf não agacha);
+  3. o roteiro do serf parado na vila, despausado, passa por mais de um quadro do parado; captura aberta.
+
 ## Backlog com gatilho
 
 Item que não está na fila. Ele entra na fila quando o gatilho escrito acontecer, e quem planeja a
